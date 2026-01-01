@@ -14,7 +14,7 @@ export const siteConfig: SiteConfig = {
 	title: "Yaoxi Blog",
 	subtitle: "生活分享与实践",
 	description:
-		"分享网络技术、服务器部署、内网穿透、静态网站搭建、CDN优化、容器化部署等技术教程与实践经验的个人技术博客，专注于云原生、无服务器架构和前后端开发，作者为afoim/瑶曦",
+		"分享生活经验技术",
 
 	keywords: [],
 	lang: "zh_CN", // 'en', 'zh_CN', 'zh_TW', 'ja', 'ko', 'es', 'th'
@@ -37,7 +37,7 @@ export const siteConfig: SiteConfig = {
 	},
 	background: {
 		enable: true, // Enable background image
-		src: "https://jpg.yaoxi.xyz/blog.yaoxi.xyz/home.png", // Background image URL (supports HTTPS)
+		src: "https://eopfapi.acofork.com/pic?img=ua", // Background image URL (supports HTTPS)
 		position: "center", // Background position: 'top', 'center', 'bottom'
 		size: "cover", // Background size: 'cover', 'contain', 'auto'
 		repeat: "no-repeat", // Background repeat: 'no-repeat', 'repeat', 'repeat-x', 'repeat-y'
@@ -51,14 +51,14 @@ export const siteConfig: SiteConfig = {
 	favicon: [
 		// Leave this array empty to use the default favicon
 		{
-			src: "http://jpg.yaoxi.xyz/blog.yaoxi.xyz/home.png", // Path of the favicon, relative to the /public directory
+			src: "https://q2.qlogo.cn/headimg_dl?dst_uin=2726730791&spec=0", // Path of the favicon, relative to the /public directory
 			//   theme: 'light',              // (Optional) Either 'light' or 'dark', set only if you have different favicons for light and dark mode
 			//   sizes: '32x32',              // (Optional) Size of the favicon, set only if you have favicons of different sizes
 		},
 	],
 	officialSites: [
 		{ url: "https://blog.yaoxi.xyz", alias: "EdgeOne CN" },
-		{ url: "https://cs.yaoxi.xyz", alias: "Global" },
+		{ url: "https://xingye.cyou", alias: "Global" },
 	],
 };
 
@@ -91,7 +91,7 @@ export const navBarConfig: NavBarConfig = {
 
 export const profileConfig: ProfileConfig = {
 	avatar: "https://q2.qlogo.cn/headimg_dl?dst_uin=2726730791&spec=0", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
-	name: "二叉树树",
+	name: "瑶曦",
 	bio: "Protect What You Love.",
 	links: [
 		{
@@ -102,7 +102,7 @@ export const profileConfig: ProfileConfig = {
 		{
 			name: "GitHub",
 			icon: "fa6-brands:github",
-			url: "https://github.com/afoim",
+			url: "https://github.com/yaoxiovo",
 		},
 	],
 };
