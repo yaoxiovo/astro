@@ -8,33 +8,7 @@ tags:
 ---
 
 
-Cloudflare Workers 反向代理教程（小白照抄版）
-
-> 本文适合 完全没接触过 Cloudflare Workers 的新手。 只要会复制粘贴，就一定能搭好一个可用的反向代理。
-
----
-
-一、你最终能得到什么
-
-照着本文一步一步做完，你将得到：
-
-一个可用的反向代理地址（workers.dev 或自定义域名）
-
-访问代理地址 = 访问真实网站
-
-全程不需要服务器、不需要备案
-
-
-示例：
-
-访问：https://你的worker.workers.dev/test
-等同于：https://example.com/test
-
----
-
-二、开始前你需要准备什么
-
-请确认你已经准备好以下内容：
+下内容：
 
 1. 一个 Cloudflare 账号（免费即可）
 
@@ -90,8 +64,8 @@ Cloudflare 控制台地址：
 
 将下面代码 完整复制，粘贴到编辑器中：
 
-`export default {
-  async fetch(request) {
+```export default {
+async fetch(request) {
     // 这里改成你要代理的网站
     const TARGET = 'https://example.com'
 
@@ -100,7 +74,8 @@ Cloudflare 控制台地址：
 
     return fetch(newUrl, request)
   }
-}`
+}
+```
 
 ⚠️ 注意事项：
 
@@ -142,8 +117,8 @@ https://example.com/abc
 
 如果访问时报 403、页面空白或跳转异常，使用下面这个 兼容版代码。
 
-export default {
-  async fetch(request) {
+exportdefault{
+  async`fetch(request) {
     const TARGET = 'https://example.com'
     const url = new URL(request.url)
 
@@ -159,7 +134,7 @@ export default {
 
     return fetch(newRequest)
   }
-}
+} 
 
 保存并重新部署后再次测试。
 
