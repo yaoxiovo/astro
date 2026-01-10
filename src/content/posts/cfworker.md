@@ -116,7 +116,7 @@ https://example.com/abc
 六、出现 403 或异常？用这个版本
 
 如果访问时报 403、页面空白或跳转异常，使用下面这个 兼容版代码。
-
+```
 exportdefault{
   async`fetch(request) {
     const TARGET = 'https://example.com'
@@ -135,6 +135,7 @@ exportdefault{
     return fetch(newRequest)
   }
 } 
+```
 
 保存并重新部署后再次测试。
 
@@ -144,6 +145,7 @@ exportdefault{
 七、前端接口跨域（CORS）解决方案
 
 如果你是给前端项目做代理接口，请使用下面这个版本：
+```
 
 export default {
   async fetch(request) {
@@ -159,7 +161,7 @@ export default {
     return newResponse
   }
 }
-
+```
 
 ---
 
