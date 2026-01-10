@@ -33,7 +33,7 @@ export default defineConfig({
       image: {
     service: passthroughImageService()
   },
-    site: "https://blog.acofork.com",
+    site: "https://blog.yaoxi.xyz",
     base: "/",
     trailingSlash: "always",
     output: "static",
