@@ -10,7 +10,8 @@ clash meta for Android
 链接：
 
 1. [官网github直下](https://github.com/MetaCubeX/ClashMetaForAndroid/releases/download/v2.11.21/cmfa-2.11.21-meta-arm64-v8a-release.apk)
-2. [大陆加速链接]()
+2. [大陆加速链接](https://r2.yaoxi.xyz/clash.apk)
+
 
 
 
