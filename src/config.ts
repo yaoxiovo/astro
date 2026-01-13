@@ -82,8 +82,8 @@ export const navBarConfig: NavBarConfig = {
 			external: true, // Show an external link icon and will open in a new tab
 		},
 				{
-			name: "流量监控（新）",
-			url: "https://eo.acofork.com", // Internal links should not include the base path, as it is automatically added
+			name: "个人主页",
+			url: "https://yaoxi.xyz", // Internal links should not include the base path, as it is automatically added
 			external: true, // Show an external link icon and will open in a new tab
 		},
 	],
