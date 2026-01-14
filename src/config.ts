@@ -86,6 +86,11 @@ export const navBarConfig: NavBarConfig = {
 			url: "https://yaoxi.xyz", // Internal links should not include the base path, as it is automatically added
 			external: true, // Show an external link icon and will open in a new tab
 		},
+		{
+			name: "deepseek大模型",
+			url: "https://deepseek.yaoxi.xyz/", // Internal links should not include the base path, as it is automatically added
+			external: true, // Show an external link icon and will open in a new tab
+		},
 	],
 };
 
