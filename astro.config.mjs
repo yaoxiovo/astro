@@ -1,10 +1,4 @@
 import sitemap from "@astrojs/sitemap";
-import { siteDirective } from "./src/plugins/remark-directive";
-
-remarkPlugins: [
-  remarkDirective,
-  siteDirective,
-]；
 import svelte from "@astrojs/svelte";
 import tailwind from "@astrojs/tailwind";
 import swup from "@swup/astro";
