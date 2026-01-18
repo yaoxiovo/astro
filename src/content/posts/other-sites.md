@@ -7,5 +7,4 @@ image: ''
 draft: false 
 lang: ''
 ---
-
-::url{href="https://yaoxi.xyz"}
+::github{repo="yaoxi.xyz"} 
