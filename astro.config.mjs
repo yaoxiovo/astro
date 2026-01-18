@@ -3,7 +3,6 @@ import svelte from "@astrojs/svelte";
 import tailwind from "@astrojs/tailwind";
 import swup from "@swup/astro";
 import icon from "astro-icon";
-import { defineConfig } from "astro/config";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeComponents from "rehype-components";/* Render the custom directive content */
 import rehypeKatex from "rehype-katex";
