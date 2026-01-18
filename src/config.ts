@@ -1,5 +1,5 @@
 import type {
-    ExpressiveCodeConfig,
+	ExpressiveCodeConfig,
 	GitHubEditConfig,
 	ImageFallbackConfig,
 	LicenseConfig,
@@ -20,8 +20,8 @@ export const siteConfig: SiteConfig = {
 	lang: "zh_CN", // 'en', 'zh_CN', 'zh_TW', 'ja', 'ko', 'es', 'th'
 	themeColor: {
 		hue: 361, // Default hue for the theme color, from 0 to 360. e.g. red: 0, teal: 200, cyan: 250, pink: 345
-		fixed: true, // Hide the theme color picker for visitors
-		forceDarkMode: true, // Force dark mode and hide theme switcher
+		fixed: false, // Hide the theme color picker for visitors
+		forceDarkMode: false, // Force dark mode and hide theme switcher
 	},
 	banner: {
 		enable: false,
@@ -37,28 +37,37 @@ export const siteConfig: SiteConfig = {
 	},
 	background: {
 		enable: true, // Enable background image
-		src: "https://eopfapi.acofork.com/pic?img=ua", // Background image URL (supports HTTPS)
+		src: "https://t.alcy.cc/ycy", // Background image URL (supports HTTPS)
 		position: "center", // Background position: 'top', 'center', 'bottom'
 		size: "cover", // Background size: 'cover', 'contain', 'auto'
 		repeat: "no-repeat", // Background repeat: 'no-repeat', 'repeat', 'repeat-x', 'repeat-y'
 		attachment: "fixed", // Background attachment: 'fixed', 'scroll', 'local'
-		opacity: 0.5, // Background opacity (0-1)
+		opacity: 1, // Background opacity (0-1)
 	},
 	toc: {
 		enable: true, // Display the table of contents on the right side of the post
 		depth: 2, // Maximum heading depth to show in the table, from 1 to 3
 	},
+	notice: {
+		enable: true,
+		content: "本站图片资源已全面切换至 B 站图床。如出现加载异常等问题，请联系我们反馈。",
+		level: "warning",
+	},
 	favicon: [
 		// Leave this array empty to use the default favicon
 		{
-			src: "https://jpg.yaoxi.xyz/blog.yaoxi.xyz/home.png", // Path of the favicon, relative to the /public directory
+			src: "https://q2.qlogo.cn/headimg_dl?dst_uin=2726730791&spec=0", // Path of the favicon, relative to the /public directory
 			//   theme: 'light',              // (Optional) Either 'light' or 'dark', set only if you have different favicons for light and dark mode
 			//   sizes: '32x32',              // (Optional) Size of the favicon, set only if you have favicons of different sizes
 		},
 	],
 	officialSites: [
-		{ url: "https://blog.yaoxi.xyz", alias: "EdgeOne CN" },
+		{ url: "https://blog.yaoxi.xyz", alias: "CN" },
 		{ url: "https://xingye.cyou", alias: "Global" },
+	],
+	server: [
+		{ url: "", text: "博客本体节点" },
+		{ url: "https://umami.yaoxi.xyz", text: "Umami节点" }
 	],
 };
 
@@ -81,28 +90,19 @@ export const navBarConfig: NavBarConfig = {
 			url: "https://umami.yaoxi.xyz/share/CLGxRecPqPn9IidK", // Internal links should not include the base path, as it is automatically added
 			external: true, // Show an external link icon and will open in a new tab
 		},
-				{
-			name: "个人主页",
-			url: "https://yaoxi.xyz", // Internal links should not include the base path, as it is automatically added
-			external: true, // Show an external link icon and will open in a new tab
-		},
-		{
-			name: "deepseek大模型",
-			url: "https://deepseek.yaoxi.xyz/", // Internal links should not include the base path, as it is automatically added
-			external: true, // Show an external link icon and will open in a new tab
-		},
+			
 	],
 };
 
 export const profileConfig: ProfileConfig = {
-	avatar: "https://jpg.yaoxi.xyz/blog.yaoxi.xyz/home.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
+	avatar: "https://q2.qlogo.cn/headimg_dl?dst_uin=2726730791&spec=0", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 	name: "瑶曦",
 	bio: "Protect What You Love.",
 	links: [
 		{
 			name: "Bilibli",
 			icon: "fa6-brands:bilibili",
-			url: "https://space.bilibili.com/325903362",
+			url: "https://space.bilibili.com/",
 		},
 		{
 			name: "GitHub",
@@ -137,7 +137,7 @@ export const expressiveCodeConfig: ExpressiveCodeConfig = {
 
 export const gitHubEditConfig: GitHubEditConfig = {
 	enable: true,
-	baseUrl: "https://github.com/yaoxiovo/astro/blob/main/src/content/posts",
+	baseUrl: "https://github.com/yaoxi/astro/blob/main/src/content/posts",
 };
 
 // todoConfig removed from here

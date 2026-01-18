@@ -1,5 +1,4 @@
 ---
-import Analytics from '@vercel/analytics/astro'
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
@@ -115,9 +114,13 @@ const bannerOffset =
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<script src="/js/umami-share.js" defer></script>
+
+		<meta name="referrer" content="no-referrer">
+		
+		
 		
 		{/* <!-- Content Security Policy -->
-		<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://giscus.app https://hpic.072103.xyz https://umami.yaoxi.xyz https://hm.baidu.com https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://giscus.app https://fonts.googleapis.com https://api.iconify.design; font-src 'self' https://fonts.gstatic.com https://api.iconify.design; img-src 'self' data: https: http:; connect-src 'self' https://umami.yaoxi.xyz https://hm.baidu.com https://www.google-analytics.com https://analytics.google.com https://api.iconify.design https://static.cloudflareinsights.com https://pic.2x.nz https://q2.qlogo.cn https://ep1.adtrafficquality.google https://googleads.g.doubleclick.net; frame-src 'self' https://giscus.app *.bilibili.com https://www.google.com https://googleads.g.doubleclick.net https://support.nodeget.com https://*.adtrafficquality.google; object-src 'none'; base-uri 'self'; form-action 'self';"> */}
+		<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://giscus.app https://hpic.072103.xyz https://umami.2x.nz https://hm.baidu.com https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://giscus.app https://fonts.googleapis.com https://api.iconify.design; font-src 'self' https://fonts.gstatic.com https://api.iconify.design; img-src 'self' data: https: http:; connect-src 'self' https://umami.2x.nz https://hm.baidu.com https://www.google-analytics.com https://analytics.google.com https://api.iconify.design https://static.cloudflareinsights.com https://pic.2x.nz https://q2.qlogo.cn https://ep1.adtrafficquality.google https://googleads.g.doubleclick.net; frame-src 'self' https://giscus.app *.bilibili.com https://www.google.com https://googleads.g.doubleclick.net https://support.nodeget.com https://*.adtrafficquality.google; object-src 'none'; base-uri 'self'; form-action 'self';"> */}
 		{favicons.map(favicon => (
 			<link rel="icon"
 				  href={favicon.src.startsWith('/') ? url(favicon.src) : favicon.src}
@@ -134,7 +137,7 @@ const bannerOffset =
 				localStorage.setItem('theme', DARK_MODE);
 			} else {
 				// Load the theme from local storage
-				const theme = localStorage.getItem('theme') || DEFAULT_THEME;
+				const theme = localStorage.getItem('theme') || AUTO_MODE;
 				switch (theme) {
 					case LIGHT_MODE:
 						document.documentElement.classList.remove('dark');
@@ -159,7 +162,7 @@ const bannerOffset =
 			let offset = Math.floor(window.innerHeight * (BANNER_HEIGHT_EXTEND / 100));
 			offset = offset - offset % 4;
 			document.documentElement.style.setProperty('--banner-height-extend', `${offset}px`);
-
+			
 			// Background image loading detection
 			const bgUrl = getComputedStyle(document.documentElement).getPropertyValue('--bg-url').trim();
 			const bgEnable = getComputedStyle(document.documentElement).getPropertyValue('--bg-enable').trim();
@@ -213,89 +216,52 @@ const bannerOffset =
 				--bg-attachment: var(--bg-attachment);
 				--bg-opacity: var(--bg-opacity);
 			}
-			
-			body::before {
-				content: '' !important;
-				position: fixed !important;
-				top: 0 !important;
-				left: 0 !important;
-				width: 100% !important;
-				height: 100% !important;
-				background-image: var(--bg-url) !important;
-				background-position: var(--bg-position) !important;
-				background-size: var(--bg-size) !important;
-				background-repeat: var(--bg-repeat) !important;
-				background-attachment: var(--bg-attachment) !important;
-				opacity: 0 !important;
-				pointer-events: none !important;
-				z-index: -1 !important;
-				display: block !important;
-				transition: opacity 0.3s ease-in-out !important;
+
+			#bg-box {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-image: var(--bg-url);
+				background-position: var(--bg-position);
+				background-size: var(--bg-size);
+				background-repeat: var(--bg-repeat);
+				background-attachment: var(--bg-attachment);
+				opacity: 0;
+				pointer-events: none;
+				z-index: -1;
+				transition: opacity 0.5s ease-in-out;
 			}
+
+            .bg-loaded #bg-box {
+                opacity: var(--bg-opacity);
+            }
 			
-			body.bg-loaded::before {
-				opacity: calc(var(--bg-opacity) * var(--bg-enable)) !important;
-			}
-		</style>  <!-- defines global css variables. This will be applied to <html> <body> and some other elements idk why -->
+			/* #bg-box.loaded {
+				opacity: calc(var(--bg-opacity) * var(--bg-enable));
+			} */
+		</style>
 
 		<slot name="head"></slot>
+
 
 		<link rel="alternate" type="application/rss+xml" title={profileConfig.name} href={`${Astro.site}rss.xml`}/>
 		<!-- Umami分析（自建） -->
 		<script defer src="https://umami.yaoxi.xyz/script.js" data-website-id="011bd980-e5d9-44e5-b1f6-4dc30a9b0e83" data-swup-ignore-script></script>
-		{/* <!-- Umami分析（云-备用） -->
-		<!-- 超级吊的Umami eop -->
-		<script defer src="https://umami.yaoxi.xyz/script.js" data-website-id="011bd980-e5d9-44e5-b1f6-4dc30a9b0e83"></script>
-		<script defer src="https://cloud.umami.is/script.js" data-website-id="516ca30a-3c6b-4521-b1c7-2060509a935c" data-swup-ignore-script></script> */}
-
-		<!-- 百度统计 -->
-<script data-swup-ignore-script>
-var _hmt = _hmt || [];
-(function() {
-  var hm = document.createElement("script");
-  hm.src = "https://hm.baidu.com/hm.js?b219eaad631b87d273cfe72148b2138b";
-  var s = document.getElementsByTagName("script")[0]; 
-  s.parentNode.insertBefore(hm, s);
-})();
-</script>
-
-<!-- clarity 分析 -->
-<script type="text/javascript" data-swup-ignore-script>
-    (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", "t8f0gmcwtx");
-</script>
-<!-- gad -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1683686345039700"
-     crossorigin="anonymous" data-swup-ignore-script></script>
-<meta name="google-adsense-account" content="ca-pub-1683686345039700">
-
-		<!-- 谷歌分析 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-9Z4LT4H8KH" data-swup-ignore-script></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-9Z4LT4H8KH');
-</script>
-
-<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "15fe148e91b34f10a15652e1a74ab26c"}' data-swup-ignore-script></script><!-- End Cloudflare Web Analytics -->
 	</head>
 	<body class=" min-h-screen transition " class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner}]}
 		  data-overlayscrollbars-initialize
 	>
+		<div id="bg-box"></div>
 		<ConfigCarrier></ConfigCarrier>
 		<slot />
 
 		<!-- increase the page height during page transition to prevent the scrolling animation from jumping -->
-		<div id="page-height-extend" class="hidden h-[300vh]"></div>
+		
 
-
-</script>
-<Analytics />
+		
+		</script>
 	</body>
 </html>
 
@@ -342,7 +308,7 @@ import {
 	// SizeObserverPlugin,
 	// ClickScrollPlugin
 } from 'overlayscrollbars';
-import {getHue, getStoredTheme, setHue, setTheme} from "../utils/setting-utils";
+import {getHue, getStoredTheme, setHue, setTheme, getBgBlur, setBgBlur, getHideBg, setHideBg} from "../utils/setting-utils";
 import {pathsEqual, url} from "../utils/url-utils";
 import {
 	BANNER_HEIGHT,
@@ -426,6 +392,11 @@ function loadHue() {
 	setHue(getHue())
 }
 
+function loadBgBlur() {
+	setBgBlur(getBgBlur())
+    setHideBg(getHideBg())
+}
+
 function initCustomScrollbar() {
 	const bodyElement = document.querySelector('body');
 	if (!bodyElement) return;
@@ -472,6 +443,7 @@ function init() {
 	// disableAnimation()()		// TODO
 	loadTheme();
 	loadHue();
+    loadBgBlur();
 	initCustomScrollbar();
 	showBanner();
 }
@@ -560,6 +532,7 @@ if (window?.swup?.hooks) {
 }
 
 let backToTopBtn = document.getElementById('back-to-top-btn');
+let goToCommentsBtn = document.getElementById('go-to-comments-btn');
 let toc = document.getElementById('toc-wrapper');
 let navbar = document.getElementById('navbar-wrapper')
 function scrollFunction() {
@@ -572,6 +545,16 @@ function scrollFunction() {
 			backToTopBtn.classList.add('hide')
 		}
 	}
+
+    if (goToCommentsBtn) {
+        // Only show if comments exist and scrolled down
+        const commentsExist = !!document.getElementById('giscus-container');
+        if (commentsExist && (document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight)) {
+            goToCommentsBtn.classList.remove('hide')
+        } else {
+            goToCommentsBtn.classList.add('hide')
+        }
+    }
 
 	if (bannerEnabled && toc) {
 		if (document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight) {
@@ -663,3 +646,12 @@ if (window.swup) {
 	document.addEventListener("swup:enable", setup)
 }
 </script>
+
+<svg style="position: absolute; width: 0; height: 0; overflow: hidden;" aria-hidden="true">
+  <defs>
+    <filter id="liquid-glass">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="20" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </defs>
+</svg>

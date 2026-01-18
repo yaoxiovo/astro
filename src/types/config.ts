@@ -37,8 +37,18 @@ export type SiteConfig = {
 		depth: 1 | 2 | 3;
 	};
 
+	notice?: {
+		enable: boolean;
+		content: string;
+		level: "info" | "note" | "tip" | "important" | "warning" | "caution";
+	};
+
 	favicon: Favicon[];
 	officialSites?: (string | { url: string; alias: string })[];
+	server?: {
+		url: string;
+		text: string;
+	}[];
 };
 
 export type Favicon = {
@@ -91,8 +101,6 @@ export type UmamiConfig = {
 	shareId: string;
 	timezone: string;
 };
-
-
 
 export type LIGHT_DARK_MODE =
 	| typeof LIGHT_MODE

@@ -1,9 +1,8 @@
 {
-    "name": "astro",
-    "compatibility_date": "2026-1-1",
-    "assets": {
-      "directory": "./dist",
-      "not_found_handling": "404-page"
-    }
-  }
-  
+	"name": "fuwari",
+	"compatibility_date": "2025-08-11",
+	"assets": {
+		"directory": "./dist",
+		"not_found_handling": "404-page"
+	}
+}
