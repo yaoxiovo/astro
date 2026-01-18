@@ -7,8 +7,13 @@ tags:
   - Cloudflare
 ---
 
-
-下内容：
+::site{
+  title="瑶曦的个人站"
+  url="https://yaoxi.xyz"
+  description="一个偏执于体验与架构的前端实验室"
+  tech="Astro,Cloudflare,AI"
+}
+以下内容：
 
 1. 一个 Cloudflare 账号（免费即可）
 

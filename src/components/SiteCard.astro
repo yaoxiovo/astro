@@ -1,0 +1,61 @@
+---
+const { title, description, url, tech } = Astro.props;
+const techs = tech?.split(",") ?? [];
+---
+
+<a class="site-card" href={url} target="_blank">
+  <div class="header">
+    <span class="dot"></span>
+    <span class="title">{title}</span>
+  </div>
+
+  <p class="desc">{description}</p>
+
+  <div class="footer">
+    <span class="url">{new URL(url).hostname}</span>
+    <div class="tech">
+      {techs.map(t => <span>{t}</span>)}
+    </div>
+  </div>
+</a>
+
+<style>
+.site-card {
+  display: block;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  background: var(--card-bg);
+  text-decoration: none;
+  transition: .25s;
+}
+.site-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-weight: 600;
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3fb950;
+}
+.desc {
+  margin: .6rem 0;
+  color: var(--text-muted);
+}
+.footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: .8rem;
+  opacity: .8;
+}
+.tech span {
+  margin-left: .4rem;
+}
+</style>
