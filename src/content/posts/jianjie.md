@@ -13,8 +13,8 @@ lang: ""
 ---
 # 搭建：
 1. cdn提供商：cloudflare Tencent
-2. dns提供商：cloudflare aliyun
-3. 源站：托管式（GitHub作为仓库）由边缘安全加速平台eo提供pages托管服务
+2. dns提供商：cloudflare dnspod
+3. 源站：托管式（GitHub作为仓库）由边缘安全加速平台eo提供pages托管服务和cloudflare全球worker提供服务
 优点：零成本建站， eo+cf 天下无敌
 
 ## 维护：
