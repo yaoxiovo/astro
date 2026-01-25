@@ -34,7 +34,7 @@ jobs:
         id: get-pages-name
         run: |
           # 从配置中读取Pages名称，这里使用默认值blog，可根据需要修改
-          echo "pages_name=fuwari" >> $GITHUB_OUTPUT
+          echo "pages_name=astro" >> $GITHUB_OUTPUT
 
       # 获取所有代码版本并清理旧版本
       - name: Clean ESA Code Versions
