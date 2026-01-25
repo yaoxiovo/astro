@@ -142,7 +142,7 @@ export const expressiveCodeConfig: ExpressiveCodeConfig = {
 
 export const gitHubEditConfig: GitHubEditConfig = {
 	enable: true,
-	baseUrl: "https://github.com/yaoxi/astro/blob/main/src/content/posts",
+	baseUrl: "https://github.com/yaoxiovo/astro/blob/main/src/content/posts",
 };
 
 // todoConfig removed from here
