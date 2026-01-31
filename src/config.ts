@@ -1,3 +1,10 @@
+const quotes = [
+  "欲买桂花同载酒，终不似，少年游。",
+  "热爱可抵岁月漫长。",
+  "世界并不温柔，但你可以。",
+  "代码写不动的时候，先活着。",
+  "保持浪漫，持续理性。",
+];
 import type {
 	ExpressiveCodeConfig,
 	GitHubEditConfig,
@@ -102,7 +109,7 @@ export const navBarConfig: NavBarConfig = {
 export const profileConfig: ProfileConfig = {
 	avatar: "https://jpg.yaoxi.xyz/blog.yaoxi.xyz/home.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 	name: "瑶曦",
-	bio: "欲买桂花同载酒，终不似，少年游。",
+	description: quotes[Math.floor(Math.random() * quotes.length)],
 	links: [
 		{
 			name: "Bilibli",
