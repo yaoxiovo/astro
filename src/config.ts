@@ -74,7 +74,7 @@ export const siteConfig: SiteConfig = {
 	],
 	server: [
 		{ url: "", text: "博客本体节点" },
-		{ url: "https://umami.yaoxi.xyz", text: "Umami节点" }
+		{ url: "https://umami.yaoxi.wiki", text: "Umami节点" }
 	],
 };
 
@@ -99,7 +99,7 @@ export const navBarConfig: NavBarConfig = {
 		},
 		{
 			name: "统计",
-			url: "https://umami.yaoxi.xyz/share/CLGxRecPqPn9IidK", // Internal links should not include the base path, as it is automatically added
+			url: "https://umami.yaoxi.wiki/share/CLGxRecPqPn9IidK", // Internal links should not include the base path, as it is automatically added
 			external: true, // Show an external link icon and will open in a new tab
 		},
 			
@@ -138,7 +138,7 @@ export const imageFallbackConfig: ImageFallbackConfig = {
 
 export const umamiConfig: UmamiConfig = {
 	enable: true,
-	baseUrl: "https://umami.yaoxi.xyz",
+	baseUrl: "https://umami.yaoxi.wiki",
 	shareId: "CLGxRecPqPn9IidK",
 	timezone: "Asia/Shanghai",
 };
