@@ -34,7 +34,7 @@ export default defineConfig({
 	image: {
 		service: passthroughImageService(),
 	},
-	site: "https://blog.yaoxi.xyz",
+	site: "https://blog.yaoxi.wiki",
 	base: "/",
 	trailingSlash: "always",
 	output: "static",

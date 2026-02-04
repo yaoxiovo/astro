@@ -8,7 +8,7 @@ draft: false
 lang: ''
 ---
 
-::url{href="https://yaoxi.xyz"}
-::url{href="https://deepseek.yaoxi.xyz"}
-::url{href="https://gh.yaoxi.xyz"}
-::url{href="https://music.yaoxi.xyz"}
+::url{href="https://yaoxi.wiki"}
+::url{href="https://deepseek.yaoxi.wiki"}
+::url{href="https://gh.yaoxi.wili"}
+::url{href="https://music.yaoxi.wiki"}
