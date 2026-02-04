@@ -107,7 +107,7 @@ export const navBarConfig: NavBarConfig = {
 };
 
 export const profileConfig: ProfileConfig = {
-	avatar: "https://jpg.yaoxi.xyz/blog.yaoxi.xyz/home.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
+	avatar: "https://jpg.yaoxi.wiki/blog.yaoxi.xyz/home.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 	name: "瑶曦",
 	bio: quotes[Math.floor(Math.random() * quotes.length)],
 	links: [
