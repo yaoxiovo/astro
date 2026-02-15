@@ -1,11 +1,12 @@
 ---
 title: 除夕漫谈：在 0 与 1 之间，重构生活的最优解
+published: 2026-2-16
 description: 这是一篇关于技术、家庭与时光的长文。当我们谈论除夕时，我们在谈论什么？是代码的终点，还是情感的起点？
-pubDate: 2026-02-16
-author: Your Name
-heroImage:
 tags:
   - 除夕
+category: 记录
+draft: false
+lang: ""
 ---
 
 ## 引言：当终端遇上灯笼
