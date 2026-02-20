@@ -4,6 +4,13 @@ const quotes = [
   "世界并不温柔，但你可以。",
   "代码写不动的时候，先活着。",
   "保持浪漫，持续理性。",
+  "I'm gonna watch the sunrise (Am I real?)"，
+  "I'm gonna hold your hand (Am I real?)"，
+  "I wanna be a part of something (Am I real?)"，
+  "I wanna see the world out there (If I can't feel)"，
+  "I can feel the space that you're in ('Cause you can feel)"，
+  "I'm gonna breathe your air (Am I real?)"，
+  "If I could stand there with you"，
 ];
 import type {
 	ExpressiveCodeConfig,
