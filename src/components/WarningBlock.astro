@@ -1,0 +1,64 @@
+---
+// WarningBlock.astro
+interface Props {
+  title?: string;
+}
+const { title = "CRITICAL WARNING / 极高风险认知预警" } = Astro.props;
+---
+
+<div class="critical-warning-container">
+  <div class="warning-header">
+    <span class="warning-icon">⚠️</span>
+    <span class="warning-title">{title}</span>
+  </div>
+  <div class="warning-content">
+    <slot /> </div>
+</div>
+
+<style>
+  .critical-warning-container {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: rgba(255, 0, 0, 0.05);
+    border: 2px solid #ff4d4f;
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 24px rgba(255, 77, 79, 0.15);
+    font-family: system-ui, -apple-system, sans-serif;
+    animation: pulse 3s infinite;
+  }
+
+  .warning-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    color: #ff4d4f;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .warning-icon {
+    font-size: 1.5rem;
+  }
+
+  .warning-content {
+    color: #4a4a4a; /* 或者根据你的暗黑模式调整 */
+    line-height: 1.8;
+    font-size: 0.95rem;
+    text-align: justify;
+  }
+
+  /* 这种轻微的呼吸感可以增加不安感，非常符合你的文案意境 */
+  @keyframes pulse {
+    0% { border-color: rgba(255, 77, 79, 0.6); }
+    50% { border-color: rgba(255, 77, 79, 1); box-shadow: 0 4px 30px rgba(255, 77, 79, 0.25); }
+    100% { border-color: rgba(255, 77, 79, 0.6); }
+  }
+
+  /* 暗黑模式兼容 */
+  :global(.dark) .warning-content {
+    color: #e0e0e0;
+  }
+</style>
