@@ -49,7 +49,7 @@
         "state": {
           "type": "search",
           "state": {
-            "query": "tag:AI 伦理",
+            "query": "",
             "matchingCase": false,
             "explainSearch": false,
             "collapseAll": false,
@@ -100,7 +100,7 @@
         }
       }
     ],
-    "currentTab": 1
+    "currentTab": 0
   },
   "right": {
     "id": "e743b64e11c3794a",
@@ -168,7 +168,7 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "064f298a0f7669c8",
+  "active": "b60744b183a2d99f",
   "lastOpenFiles": [
     "guandian.md",
     "nuerosama.md",

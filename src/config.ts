@@ -56,8 +56,8 @@ export const siteConfig: SiteConfig = {
 		depth: 2, // Maximum heading depth to show in the table, from 1 to 3
 	},
 	notice: {
-		enable: false,
-		content: "。",
+		enable: turn,
+		content: "声明：本站所有内容均为个人观点，不代表立场，在浏览文章前请确保你的理智防火墙已打开，否则将可能造成严重影响",
 		level: "warning",
 	},
 	favicon: [
