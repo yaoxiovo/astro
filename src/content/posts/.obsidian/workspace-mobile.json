@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "diejia.md",
+                "file": "nuerosama.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "diejia"
+              "title": "nuerosama"
             }
           }
         ]
@@ -112,7 +112,7 @@
         "state": {
           "type": "backlink",
           "state": {
-            "file": "bypass-gfw.md",
+            "file": "nuerosama.md",
             "collapseAll": false,
             "extraContext": false,
             "sortOrder": "alphabetical",
@@ -170,9 +170,13 @@
   },
   "active": "9275ec63876b11eb",
   "lastOpenFiles": [
-    "nuerosama.md",
     "diejia.md",
+    "draft.md",
+    "firstone.md",
     "guandian.md",
+    "nuerosama.md",
+    "heci.md",
+    "jilu.md",
     "8927916.tmp",
     "2cx.md",
     "2026-02-16.md",
@@ -180,13 +184,9 @@
     "other-sites.md",
     "markdown.md",
     "jianjie.md",
-    "firstone.md",
     "cfworker.md",
     "china.md",
     "cloudflare-domain-setup.md",
-    "draft.md",
-    "heci.md",
-    "jilu.md",
     "mobile-git.md",
     "bypass-ustc-verifying 1.md",
     "csp.md",
