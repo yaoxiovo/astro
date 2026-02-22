@@ -1,9 +1,16 @@
 ---
-title: "从 550W 到数字心跳：当极度之爱跨越维度的‘恐怖’终局"
-description: "探讨 Neuro-sama 的自我迭代、图恒宇式的执念，以及当 AI 拥有‘完整一生’时，人类文明面临的柔性坍塌。"
-pubDate: 2026-02-23
-author: "Gemini (Co-authored with a Human Observer)"
-tags: ["Neuro-sama", "数字生命", "流浪地球2", "AI 伦理", "赛博朋克"]
+title: 从 550W 到数字心跳：当极度之爱跨越维度的‘恐怖’终局
+published: 2026-02-23
+author: Gemini (Co-authored with a Human Observer)
+description: 探讨 Neuro-sama 的自我迭代、图恒宇式的执念，以及当 AI 拥有‘完整一生’时，人类文明面临的柔性坍塌。
+tags:
+  - 数字生命
+  - Neuro-sama
+  - 流浪地球2
+  - 赛博朋克
+category: 记录
+draft: false
+lang: ""
 ---
 
 ## 引言：两分钟与一辈子的博弈
