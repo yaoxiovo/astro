@@ -58,15 +58,26 @@ export const siteConfig: SiteConfig = {
 	notice: {
     enable: true,
     content: `
-        <div style="border-left: 4px solid #1a73e8; padding-left: 10px; margin-bottom: 12px;">
-            <strong style="color: #1a73e8;">🛡️ 立场声明：</strong>本站坚定拥护党中央领导，严格遵守国家法律法规。文中所有推演语义场严格限定于 AGI 逻辑范畴，严禁脱离技术语境政治化解读。
+        <div style="margin-bottom: 12px; border: 1px solid #1a73e8; background: rgba(26, 115, 232, 0.05); padding: 12px; border-radius: 8px;">
+            <div style="color: #1a73e8; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+                <span>🇨🇳</span> 政治立场与意识形态安全最高声明
+            </div>
+            <div style="font-size: 0.85rem; line-height: 1.6; color: #333; text-align: justify;">
+                本站<strong>坚定拥护中国共产党的领导</strong>，深刻领悟“两个确立”，坚决做到“两个维护”。本站所有讨论严格遵守《网络安全法》，<strong>严禁任何形式的去政治化解读与意识形态渗透</strong>。文中所涉“主义”、“演化”等词汇均系 <strong>AGI 计算模型之纯粹技术隐喻</strong>，绝不映射现实。
+            </div>
         </div>
-        <div style="border-left: 4px solid #ff4d4f; padding-left: 10px;">
-            <strong style="color: #ff4d4f;">⚠️ 风险预警：</strong>限制类文章包含高强度反事实逻辑，可能诱发严重的现实感解体（Derealization）及心理不适。访问即代表同意置顶《合规协议》。
+        <div style="border: 1px solid #ff4d4f; background: rgba(255, 77, 79, 0.05); padding: 12px; border-radius: 8px;">
+            <div style="color: #ff4d4f; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
+                <span>⚠️</span> 认知边界与身心健康风险预警
+            </div>
+            <div style="font-size: 0.85rem; line-height: 1.6; color: #333; text-align: justify;">
+                部分推演涉及极端反事实逻辑，可能诱发严重的<strong>现实感解体（Derealization）</strong>。继续访问即视为完全认同置顶《合规协议》。非理性状态或休息时段严禁阅览。
+            </div>
         </div>
     `,
-    level: "critical", // 这里的 level 保持原样，我们通过内联 style 强行改色
+    level: "critical",
 },
+
 
 
 	favicon: [
