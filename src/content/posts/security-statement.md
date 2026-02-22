@@ -1,5 +1,5 @@
 ---
-title: 关于本站坚定政治立场、维护意识形态安全及网络空间清朗的郑重声明
+title: 关于本站坚定政治立场、维护意识形态安全及网络空间清朗的郑重声明。
 published: 2026-02-23
 description: 本站最高优先级合规准则：坚定政治方向，筑牢意识形态安全防线。
 tags:
@@ -8,7 +8,7 @@ tags:
 category: 公告
 pinned: true
 draft: false
-lang: zh-CN
+lang: "zh-CN"
 ---
 
 ### 💡 重要前言
