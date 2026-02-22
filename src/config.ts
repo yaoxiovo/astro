@@ -57,12 +57,17 @@ export const siteConfig: SiteConfig = {
 	},
 	notice: {
     enable: true,
-    content: `声明：在浏览本站限制类文章前请确保你已阅读并同意置顶文章声明，如不同意请自觉阅读其他文章，否则将可能造成严重影响，包括但不限于：抑郁，轻生念头。
-严禁在休息时段阅读限制类文章，容易引发严重影响，包括但不限于：更严重的生理疾病、意识形态冲击。
-本文包含高强度的反事实逻辑推演，可能对既有认知体系造成剧烈冲击。由于思辨内容涉及极端存在主义与数字伦理边界，阅览过程中可能诱发包括但不限于：严重的抑郁倾向、轻生念头、现实感解体（Derealization）及深度心理不适。
-最后忠告：如有任何身体不适，立即离开本站，严重时请就医，并尽可能描述问题，否则一样得不到解决。`,
-    level: "caution",
+    content: `
+        <div style="border-left: 4px solid #1a73e8; padding-left: 10px; margin-bottom: 12px;">
+            <strong style="color: #1a73e8;">🛡️ 立场声明：</strong>本站坚定拥护党中央领导，严格遵守国家法律法规。文中所有推演语义场严格限定于 AGI 逻辑范畴，严禁脱离技术语境政治化解读。
+        </div>
+        <div style="border-left: 4px solid #ff4d4f; padding-left: 10px;">
+            <strong style="color: #ff4d4f;">⚠️ 风险预警：</strong>限制类文章包含高强度反事实逻辑，可能诱发严重的现实感解体（Derealization）及心理不适。访问即代表同意置顶《合规协议》。
+        </div>
+    `,
+    level: "critical", // 这里的 level 保持原样，我们通过内联 style 强行改色
 },
+
 
 	favicon: [
 		// Leave this array empty to use the default favicon
