@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "nuerosama.md",
+                "file": "diejia.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "nuerosama"
+              "title": "diejia"
             }
           }
         ]
@@ -170,11 +170,11 @@
   },
   "active": "9275ec63876b11eb",
   "lastOpenFiles": [
+    "nuerosama.md",
     "diejia.md",
     "draft.md",
     "firstone.md",
     "guandian.md",
-    "nuerosama.md",
     "heci.md",
     "jilu.md",
     "8927916.tmp",
