@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "guandian.md",
+                "file": "nuerosama.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "guandian"
+              "title": "nuerosama"
             }
           }
         ]
@@ -49,7 +49,7 @@
         "state": {
           "type": "search",
           "state": {
-            "query": "",
+            "query": "tag:AI 伦理",
             "matchingCase": false,
             "explainSearch": false,
             "collapseAll": false,
@@ -100,7 +100,7 @@
         }
       }
     ],
-    "currentTab": 0
+    "currentTab": 1
   },
   "right": {
     "id": "e743b64e11c3794a",
@@ -168,10 +168,12 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "9275ec63876b11eb",
+  "active": "064f298a0f7669c8",
   "lastOpenFiles": [
-    "2cx.md",
     "guandian.md",
+    "nuerosama.md",
+    "8927916.tmp",
+    "2cx.md",
     "2026-02-16.md",
     "openclaw.md",
     "other-sites.md",
