@@ -1,4 +1,4 @@
 {
-  "promptDelete": true,
+  "promptDelete": false,
   "trashOption": "none"
 }
