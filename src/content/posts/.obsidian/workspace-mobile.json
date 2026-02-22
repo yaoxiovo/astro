@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "security-statement.md",
+                "file": "neurosama2.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "security-statement"
+              "title": "neurosama2"
             }
           }
         ]
@@ -170,8 +170,8 @@
   },
   "active": "9275ec63876b11eb",
   "lastOpenFiles": [
-    "start_span.md",
     "security-statement.md",
+    "start_span.md",
     "nuerosama.md",
     "diejia.md",
     "draft.md",
