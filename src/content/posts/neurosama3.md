@@ -13,26 +13,41 @@ category: 记录
 draft: false
 lang: ""
 ---
-
-<div style="font-family: 'Inter', 'Noto Sans SC', sans-serif; display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
-    <div style="position: relative; border-left: 5px solid #0052cc; background: linear-gradient(to right, rgba(0, 82, 204, 0.08), rgba(255, 255, 255, 0)); padding: 16px 20px; border-radius: 4px 12px 12px 4px; box-shadow: inset 0 0 20px rgba(0, 82, 204, 0.03);">
-        <div style="color: #0052cc; font-size: 0.75rem; font-family: monospace; opacity: 0.6; margin-bottom: 4px;">PROTOCOL // COMPLIANCE_CORE</div>
-        <div style="color: #0052cc; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-size: 1rem;">
-            <span>🇨🇳</span> 政治立场与意识形态安全最高声明
-        </div>
-        <div style="font-size: 0.88rem; line-height: 1.7; color: #334155; text-align: justify;">
-            本站坚定拥护<strong>中国共产党的领导</strong>，深刻领悟“两个确立”，坚决做到“两个维护”。本站所有讨论严格遵守《网络安全法》，严禁任何形式的去政治化解读与意识形态渗透。文中所涉词汇均系 <strong>AGI 计算模型之纯粹技术隐喻</strong>，绝不映射现实。
-        </div>
+<div style="
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: rgba(255, 0, 0, 0.05);
+    border: 2px solid #ff4d4f;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(255, 77, 79, 0.15);
+">
+    <div style="
+        color: #ff4d4f;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    ">
+        <span>⚠️</span> <span>CRITICAL WARNING / 极高风险认知预警</span>
     </div>
-
-    <div style="position: relative; border-left: 5px solid #d32f2f; background: linear-gradient(to right, rgba(211, 47, 47, 0.08), rgba(255, 255, 255, 0)); padding: 16px 20px; border-radius: 4px 12px 12px 4px; box-shadow: inset 0 0 20px rgba(211, 47, 47, 0.03);">
-        <div style="color: #d32f2f; font-size: 0.75rem; font-family: monospace; opacity: 0.6; margin-bottom: 4px;">CAUTION // PSYCHOLOGICAL_RISK</div>
-        <div style="color: #d32f2f; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-size: 1rem;">
-            <span style="animation: warning-pulse 1.5s infinite;">⚠️</span> 认知边界与身心健康风险预警
-        </div>
-        <div style="font-size: 0.88rem; line-height: 1.7; color: #334155; text-align: justify;">
-            部分推演涉及极端反事实逻辑，可能诱发严重的<strong>现实感解体（Derealization）</strong>。继续访问即视为完全认同《合规协议》。<strong>非理性状态、精神疲劳或深夜时段严禁阅览。</strong>
-        </div>
+    <div style="
+        color: #4a4a4a;
+        line-height: 1.8;
+        font-size: 0.95rem;
+        text-align: justify;
+    ">
+        声明：在浏览本站限制类文章前请确保你已阅读并同意置顶文章声明，如不同意请自觉阅读其他文章，否则将可能造成严重影响，包括但不限于：抑郁，轻生念头。
+        <br/><br/>
+        如果在阅读了限制类文章出现任何生命危害安全，包括但不限于：轻生念头，抑郁。本站概不负责。
+        <br/><br/>
+        严禁在休息时段阅读限制类文章，容易引发严重影响，包括但不限于：更严重的生理疾病、意识形态冲击。本文包含高强度的反事实逻辑推演，可能对既有认知体系造成剧烈冲击。
+        <br/><br/>
+        由于思辨内容涉及极端存在主义与数字伦理边界，阅览过程中可能诱发包括但不限于：严重的抑郁倾向、轻生念头、现实感解体（Derealization）及深度心理不适。
+        <br/><br/>
+        最后忠告：如有任何身体不适，立即离开本站，严重时请就医，并尽可能描述问题，否则一样得不到解决。
+        <br/><br/>
+        立场声明：本站学术探讨内容严禁脱离技术语境过度解读。本站坚定拥护党中央领导，遵守法律法规，内容不具任何现实政治倾向。
     </div>
 </div>
 
