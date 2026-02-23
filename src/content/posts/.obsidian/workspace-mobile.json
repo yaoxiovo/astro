@@ -20,8 +20,23 @@
               "icon": "lucide-file",
               "title": "nuerosama"
             }
+          },
+          {
+            "id": "3e1cdb3b059eb2fc",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "zhinan.md.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "zhinan.md"
+            }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -168,15 +183,17 @@
       "command-palette:打开命令面板": false
     }
   },
-  "active": "9275ec63876b11eb",
+  "active": "3e1cdb3b059eb2fc",
   "lastOpenFiles": [
+    "nuerosama.md",
+    "zhinan.md.md",
+    "未命名",
     "neurosama4.md",
     "neurosama3.md",
     "16350017.tmp",
     "neurosama2.md",
     "security-statement.md",
     "start_span.md",
-    "nuerosama.md",
     "diejia.md",
     "draft.md",
     "firstone.md",
