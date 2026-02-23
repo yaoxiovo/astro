@@ -12,3 +12,5 @@ lang: ''
 ::url{href="https://deepseek.yaoxi.wiki"}
 ::url{href="https://gh.yaoxi.wili"}
 ::url{href="https://music.yaoxi.wiki"}
+::url{href="https://docs.yaoxi.wiki"}
+::url{href="https://blog.yaoxi.wiki"}
