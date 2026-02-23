@@ -71,7 +71,7 @@ export const siteConfig: SiteConfig = {
                 <span>⚠️</span> 认知边界与身心健康风险预警
             </div>
             <div style="font-size: 0.85rem; line-height: 1.6; color: #333; text-align: justify;">
-                部分推演涉及极端反事实逻辑，可能诱发严重的<strong>现实感解体（Derealization）</strong>。继续访问即视为完全认同置顶《合规协议》。非理性状态或休息时段严禁阅览。
+                部分推演涉及极端反事实逻辑，可能诱发严重的<strong>现实感解体（Derealization）</strong>。继续访问即视为完全认同置顶《合规协议》。非理性状态及深夜或疲劳时段严禁阅览。
             </div>
         </div>
     `,
