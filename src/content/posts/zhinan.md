@@ -1,14 +1,15 @@
 ---
-title: "Archive-REF：叙事侵染后的现实锚定指南"
-date: 2026-02-23 15:00
-description: "针对 AGI 深度推演后的生理应激、解离感及现实感重构的系统性建议。"
+title: Archive-REF：叙事侵染后的现实锚定指南
+published: 2026-02-23
+description: 针对 AGI 深度推演后的生理应激、解离感及现实感重构的系统性建议。
 tags:
   - 创作者保护
-  - 心理学
   - 现实锚定
+  - 心理学
   - 脱敏指南
-category: 技术补遗
+category: 记录
 draft: false
+lang: ""
 ---
 
 <div style="font-family: 'Inter', 'Noto Sans SC', sans-serif; display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
