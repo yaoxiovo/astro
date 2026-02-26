@@ -3,19 +3,7 @@ import ArchivePanel from "@components/ArchivePanel.astro";
 
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 ---
----
-import MainLayout from '../layouts/MainLayout.astro';
-import Typewriter from '../components/Typewriter.vue';
 
-const myPhrases = ["这里是我的数字花园", "每30秒我会变一次", "Life is short, use Python/JS"];
----
-
-<MainLayout>
-  <div class="my-8 text-center">
-    <Typewriter client:load phrases={myPhrases} interval={30000} />
-  </div>
-  
-  </MainLayout>
 <MainGridLayout title="归档">
     <ArchivePanel></ArchivePanel>
 </MainGridLayout>
