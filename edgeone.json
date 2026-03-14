@@ -4,16 +4,16 @@
 			"source": "/yaoxi",
 			"destination": "https://yaoxi.wiki",
 			"statusCode": 302
-		}
-                                  {
+		},
+		{
 			"source": "/ncm",
 			"destination": "https://music.yaoxi.wiki",
 			"statusCode": 302
 		},
-                                  {
+		{
 			"source": "/docs",
 			"destination": "https://docs.yaoxi.wiki",
 			"statusCode": 302
-		},
+		}
 	]
 }
