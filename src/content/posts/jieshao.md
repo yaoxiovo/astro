@@ -51,7 +51,7 @@ lang: ""
 - **行业应用：** 深入金融、政务、文旅、教育及工业等领域，提供针对性的数字化转型工具包。
 ---
 ![](../assets/images/2.webp)
-## [(阿里云（Alibaba Cloud）](https://aliyun.com)
+# [(阿里云（Alibaba Cloud）](https://aliyun.com)
 
 阿里云成立于 2009 年，是全球领先的云计算及人工智能科技公司。作为中国云服务的开拓者，其业务规模长期位居亚太第一、全球前三。
 
@@ -91,7 +91,7 @@ lang: ""
 
 ---
 ![](../assets/images/3.webp)
-## [Cloudflare 科赋锐](https://www.cloudflare-cn.com/)
+# [Cloudflare 科赋锐](https://www.cloudflare-cn.com/)
 
 Cloudflare 是一家全球领先的“连接云（Connectivity Cloud）”公司。与传统的阿里云、腾讯云等中心化云厂商不同，Cloudflare 的核心逻辑是**“边缘优先”**，其网络节点遍布全球 300 多个城市，旨在为互联网应用提供加速、安全和无服务器计算能力。
 
