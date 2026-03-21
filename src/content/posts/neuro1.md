@@ -9,4 +9,3 @@ category: 记录
 draft: true
 lang: ""
 ---
-![alt文字](图片路径/filename.png)
