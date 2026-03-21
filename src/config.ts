@@ -21,7 +21,7 @@ export const siteConfig: SiteConfig = {
 	title: "Yaoxi Blog",
 	subtitle: "生活分享与实践",
 	description:
-		"分享生活经验技术",
+		"《Yaoxi blog》官方网站 - Yaoxi",
 
 	keywords: [],
 	lang: "zh_CN", // 'en', 'zh_CN', 'zh_TW', 'ja', 'ko', 'es', 'th'
