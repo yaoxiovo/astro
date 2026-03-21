@@ -6,7 +6,7 @@ tags:
   - Neuro-sama
   - 小剧场
 category: 记录
-draft: false
+draft: true
 lang: ""
 ---
-![[Pasted image 20260314234616.png]]
+![alt文字](图片路径/filename.png)
