@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "neuro1.md",
+                "file": "other-sites.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "neuro1"
+              "title": "other-sites"
             }
           }
         ]
@@ -185,16 +185,19 @@
   },
   "active": "7b56a5d2ea411fc4",
   "lastOpenFiles": [
+    "nuerosama.md",
+    "security-statement.md",
+    "zhinan.md",
+    "guandian.md",
+    "jianjie.md",
+    "jilu.md",
+    "neuro1.md",
     "assets/images/4.webp",
     "photo/4.webp",
     "jieshao.md",
     "cfworker.md",
-    "neuro1.md",
-    "jianjie.md",
     "cloudflare-domain-setup.md",
-    "zhinan.md",
     "other-sites.md",
-    "security-statement.md",
     "firstone.md",
     "draft.md",
     "assets/images/3.webp",
@@ -206,9 +209,7 @@
     "china.md",
     "diejia.md",
     "expressive-code.md",
-    "guandian.md",
     "heci.md",
-    "jilu.md",
     "assets/images/OIP (1).webp",
     "assets/images",
     "assets",
@@ -224,7 +225,6 @@
     "ncm-converter-intro.md",
     "neuro.md",
     "新建 文本文档.txt",
-    "photo/Pasted image 20260314230947.png",
     "photo",
     "2026-02-23.md"
   ]
