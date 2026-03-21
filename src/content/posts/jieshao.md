@@ -13,4 +13,4 @@ draft: false
 lang: ""
 ---
 
-![[1 1.webp|575]]
+![[1.webp|575]]

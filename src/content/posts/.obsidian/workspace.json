@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "neuro1.md",
+                "file": "jieshao.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "neuro1"
+              "title": "jieshao"
             }
           }
         ]
@@ -185,9 +185,9 @@
   },
   "active": "7b56a5d2ea411fc4",
   "lastOpenFiles": [
+    "neuro1.md",
     "neurosama2.md",
     "neurosama3.md",
-    "neuro1.md",
     "firstone.md",
     "heci.md",
     "jianjie.md",
