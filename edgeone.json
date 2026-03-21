@@ -4,21 +4,25 @@
 			"source": "/yaoxi",
 			"destination": "https://yaoxi.wiki",
 			"statusCode": 302
-		}
-                                  {
+		},
+		{
 			"source": "/ncm",
 			"destination": "https://music.yaoxi.wiki",
 			"statusCode": 302
 		},
-                                  {
+		{
 			"source": "/docs",
 			"destination": "https://docs.yaoxi.wiki",
 			"statusCode": 302
+<<<<<<< HEAD
 		},
                                   {
 			"source": "/",
 			"destination": "astro.ba30df2f.er.aliyun-esa.net",
 			"statusCode": 302
 		},
+=======
+		}
+>>>>>>> dc43898ca69c4d5721187cd5fc70aedf355ea038
 	]
 }

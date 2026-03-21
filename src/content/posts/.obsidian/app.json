@@ -1,4 +1,3 @@
 {
-  "promptDelete": false,
-  "trashOption": "none"
+  "attachmentFolderPath": "./photo"
 }
