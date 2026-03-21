@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "other-sites.md",
+                "file": "jianjie.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "other-sites"
+              "title": "jianjie"
             }
           }
         ]
@@ -185,6 +185,7 @@
   },
   "active": "7b56a5d2ea411fc4",
   "lastOpenFiles": [
+    "other-sites.md",
     "nuerosama.md",
     "security-statement.md",
     "zhinan.md",
@@ -197,7 +198,6 @@
     "jieshao.md",
     "cfworker.md",
     "cloudflare-domain-setup.md",
-    "other-sites.md",
     "firstone.md",
     "draft.md",
     "assets/images/3.webp",
