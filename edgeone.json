@@ -16,7 +16,7 @@
 			"statusCode": 302
 		},
                                   {
-			"source": "/*",
+			"source": "/",
 			"destination": "https://astro.ba30df2f.er.aliyun-esa.net",
 			"statusCode": 302
 		},
