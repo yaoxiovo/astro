@@ -6,9 +6,9 @@ tags:
   - 公告
   - 合规声明
 category: 公告
-pinned: true
+pinned: false
 draft: false
-lang: "zh-CN"
+lang: zh-CN
 ---
 
 ### 💡 重要前言
