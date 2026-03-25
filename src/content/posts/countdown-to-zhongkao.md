@@ -1,11 +1,11 @@
 ---
 title: 冲刺中考：在压力中保持热爱，在代码中构建梦想
-published: 2026-03-26
+published: 2025-03-26
 description: '中考倒计时自动更新方案及备考寄语'
-image: ''
 tags: [中考, 开发笔记, 自动更新]
 category: '成长记录'
 draft: false 
+lang: ''
 ---
 
 ## 📅 冲刺时刻：2026 中考倒计时
