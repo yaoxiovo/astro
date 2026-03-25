@@ -20,7 +20,7 @@ jobs:
 
       - name: 运行更新脚本
         # 确保你的脚本路径与这里一致，比如放在 scripts 文件夹下
-        run: node ./scripts/update-days.js
+        run: node ./scripts/update-days.cjs
 
       - name: 提交并推送到仓库
         run: |
