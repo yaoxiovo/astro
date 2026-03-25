@@ -1,0 +1,32 @@
+name: 自动更新中考倒计时
+
+on:
+  schedule:
+    # 每天北京时间 00:05 自动运行 (16:05 UTC)
+    - cron: '5 16 * * *'
+  workflow_dispatch: # 允许你手动点击按钮触发运行
+
+jobs:
+  update-md:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 运行更新脚本
+        # 确保你的脚本路径与这里一致，比如放在 scripts 文件夹下
+        run: node ./scripts/update-days.js
+
+      - name: 提交并推送到仓库
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          # 如果文件没变（比如同一天运行两次），git commit 会报错，加个判断防止报错
+          git diff --quiet && git diff --staged --quiet || git commit -m "chore: 自动更新中考倒计时"
+          git push
