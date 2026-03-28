@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "countdown-to-zhongkao.md",
+                "file": "markdown-extended.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "countdown-to-zhongkao"
+              "title": "markdown-extended"
             }
           },
           {
@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "26zhongkao.md",
+                "file": "diejia.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "26zhongkao"
+              "title": "diejia"
             }
           }
         ],
@@ -200,9 +200,22 @@
   },
   "active": "5157a50db4ebf69b",
   "lastOpenFiles": [
-    "diejia.md",
-    "26zhongkao.md",
+    "photo/4.webp",
+    "photo/1.webp",
+    "neurosama.md",
+    "jieshao.md",
+    "geren.md",
     "countdown-to-zhongkao.md",
+    "assets/images/5.webp",
+    "assets/images/4.webp",
+    "assets/images/3.webp",
+    "assets/images/2.webp",
+    "assets/images/1.webp",
+    "assets/images",
+    "assets",
+    "26zhongkao.md",
+    "photo/Pasted image 20260314234616.png",
+    "diejia.md",
     "cloudflare-domain-setup.md",
     "markdown-extended.md",
     "neuro1.md",
@@ -215,31 +228,17 @@
     "zhinan.md",
     "guandian.md",
     "jilu.md",
-    "assets/images/4.webp",
-    "photo/4.webp",
-    "jieshao.md",
     "cfworker.md",
     "firstone.md",
     "draft.md",
-    "assets/images/3.webp",
-    "assets/images/2.webp",
-    "assets/images/1.webp",
-    "photo/Pasted image 20260314234616.png",
-    "photo/1.webp",
     "2cx.md",
     "china.md",
     "expressive-code.md",
     "heci.md",
     "assets/images/OIP (1).webp",
-    "assets/images",
-    "assets",
     "photo/1 1.webp",
-    "markdown.md",
-    "[photo/](photo/Pasted.md",
     "[photo/](photo",
     "[photo",
-    "Pasted image 20260314234616.png",
-    "ncm-converter-intro.md",
     "新建 文本文档.txt",
     "photo"
   ]
