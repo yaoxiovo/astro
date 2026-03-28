@@ -2,9 +2,8 @@ name: 自动更新中考倒计时
 
 on:
   schedule:
-    # 每天北京时间 00:05 自动运行 (16:05 UTC)
-    - cron: '5 16 * * *'
-  workflow_dispatch: # 允许你手动点击按钮触发运行
+    - cron: '5 16 * * *' # 每天北京时间 00:05 运行
+  workflow_dispatch: 
 
 jobs:
   update-md:
@@ -12,21 +11,28 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 获取完整历史以支持 rebase
 
-      - name: 设置 Node.js 环境
+      - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: 运行更新脚本
-        # 确保你的脚本路径与这里一致，比如放在 scripts 文件夹下
         run: node ./scripts/update-days.js
 
-      - name: 提交并推送到仓库
+      - name: 提交并强制同步推送
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add .
-          # 如果文件没变（比如同一天运行两次），git commit 会报错，加个判断防止报错
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore: 自动更新中考倒计时"
-          git push
+          # 如果有改动则提交
+          if ! git diff --quiet --staged; then
+            git commit -m "chore: 自动更新中考倒计时"
+            # 关键步骤：先拉取远程改动并合并，防止冲突
+            git pull origin main --rebase
+            git push origin main
+          else
+            echo "没有天数变化，跳过更新。"
+          fi
