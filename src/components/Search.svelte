@@ -140,6 +140,38 @@ onMount(async () => {
 $: search(keywordDesktop, true);
 $: search(keywordMobile, false);
 </script>
+<div class="mb-4 overflow-hidden rounded-xl bg-black/[0.04] dark:bg-white/5 p-4 border border-black/5 dark:border-white/10">
+    <div class="text-[0.75rem] font-bold text-black/50 dark:text-white/50 mb-2 flex items-center gap-2">
+        <span class="i-material-symbols-timer-outline"></span> 2026 中考倒计时
+    </div>
+    <div id="sidebar-timer" style="font-family: 'JetBrains Mono', monospace; font-size: 1.25rem; font-weight: 800; color: #ff4757; text-align: center;">
+        载入中...
+    </div>
+</div>
+
+<script is:inline>
+    function updateSidebarTimer() {
+        const target = new Date('2026-06-30T09:00:00').getTime();
+        const now = new Date().getTime();
+        const diff = target - now;
+        const el = document.getElementById('sidebar-timer');
+        if (!el) return;
+
+        if (diff <= 0) {
+            el.innerText = "加油，少年！";
+            return;
+        }
+
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+        el.innerText = `${d}d ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+    setInterval(updateSidebarTimer, 1000);
+    setTimeout(updateSidebarTimer, 100); 
+</script>
 
 <!-- search bar for desktop view -->
 <div id="search-bar" class="hidden lg:flex transition-all items-center h-11 mr-2 rounded-lg

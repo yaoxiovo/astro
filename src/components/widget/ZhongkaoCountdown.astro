@@ -1,0 +1,52 @@
+---
+// 导入 Fuwari 原生的 Widget 布局组件
+import WidgetLayout from './WidgetLayout.astro';
+---
+
+<WidgetLayout name="2026 中考倒计时" icon="material-symbols:timer-outline">
+    <div class="countdown-container">
+        <div id="sidebar-timer">载入中...</div>
+    </div>
+</WidgetLayout>
+
+<style>
+    .countdown-container {
+        padding: 0.75rem 0;
+        display: flex;
+        justify-content: center;
+    }
+    #sidebar-timer {
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--primary); /* 自动跟随你 config.ts 里的 hue 主色调 */
+        text-shadow: 0 0 8px rgba(var(--primary-rgb), 0.2);
+    }
+</style>
+
+<script is:inline>
+    function updateSidebarTimer() {
+        const target = new Date('2026-06-30T09:00:00').getTime();
+        const now = new Date().getTime();
+        const diff = target - now;
+
+        const el = document.getElementById('sidebar-timer');
+        if (!el) return;
+
+        if (diff <= 0) {
+            el.innerText = "考试进行中！加油！";
+            return;
+        }
+
+        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+        // 侧边栏空间有限，使用更紧凑的格式
+        el.innerText = `${d}天 ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    setInterval(updateSidebarTimer, 1000);
+    updateSidebarTimer();
+</script>
