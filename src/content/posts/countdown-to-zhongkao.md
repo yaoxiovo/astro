@@ -23,6 +23,7 @@ lang: ""
 
 #### 1. 创建自动化脚本 `scripts/update-days.js`
 
+```JavaScript
 import fs from 'fs';
 import path from 'path';
 
@@ -62,10 +63,12 @@ try {
     console.error(`❌ 脚本运行失败: ${err.message}`);
     process.exit(1);
 }
+```
+
 #### 2. GitHub Actions：`.github/workflows/update-countdown.yml`
 
 这个版本增加了 `rebase` 逻辑，专门对付 `push rejected` 和冲突问题。
-```
+```yaml
 name: 自动更新中考倒计时
 
 on:
@@ -106,6 +109,6 @@ jobs:
           fi
 ```
 #### 3. 在文章开头初填入
-```
+```TXT
 > **当前剩余：96 天**
 ```
