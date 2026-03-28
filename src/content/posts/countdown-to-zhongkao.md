@@ -47,9 +47,9 @@ try {
     let content = fs.readFileSync(postPath, 'utf8');
     
  
-    content = content.replace(/<<<<<<< HEAD[\s\S]*?=======/g, '');
-    content = content.replace(/>>>>>>> main/g, '');
-    content = content.replace(/=======[\s\S]*?main/g, '');
+    content = content.replace(//g, '');
+    content = content.replace(//g, '');
+    content = content.replace(//g, '');
 
     
     const regex = /> \*\*当前剩余：\d+ 天\*\*/g;
@@ -110,5 +110,5 @@ jobs:
 ```
 #### 3. 在文章开头初填入
 ```TXT
-> **当前剩余：96 天**
+> **当前剩余：94 天**
 ```
