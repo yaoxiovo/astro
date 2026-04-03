@@ -83,14 +83,13 @@ export const siteConfig: SiteConfig = {
 	favicon: [
 		// Leave this array empty to use the default favicon
 		{
-			src: "https://jpg.yaoxi.blog/blog.yaoxi.xyz/home.png", // Path of the favicon, relative to the /public directory
+			src: "https://jpg.yaoxi.wiki/blog.yaoxi.xyz/home.png", // Path of the favicon, relative to the /public directory
 			//   theme: 'light',              // (Optional) Either 'light' or 'dark', set only if you have different favicons for light and dark mode
 			//   sizes: '32x32',              // (Optional) Size of the favicon, set only if you have favicons of different sizes
 		},
 	],
 	officialSites: [
-		{ url: "https://blog.yaoxi.xyz", alias: "CN" },
-		{ url: "https://xingye.cyou", alias: "Global" },
+		{ url: "https://blog.yaoxi.wiki", alias: "CN" },
 	],
 	server: [
 		{ url: "", text: "博客本体节点" },
@@ -127,7 +126,7 @@ export const navBarConfig: NavBarConfig = {
 };
 
 export const profileConfig: ProfileConfig = {
-	avatar: "https:/jpg.yaoxi.blog/blog.yaoxi.xyz/home.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
+	avatar: "https:/jpg.yaoxi.wiki/blog.yaoxi.xyz/home.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 	name: "瑶曦",
 	bio: quotes[Math.floor(Math.random() * quotes.length)],
 	links: [
