@@ -157,8 +157,8 @@ export const imageFallbackConfig: ImageFallbackConfig = {
 
 export const umamiConfig: UmamiConfig = {
 	enable: true,
-	baseUrl: "https://umami.yaoxi.wiki",
-	shareId: "CLGxRecPqPn9IidK",
+	baseUrl: "https://cloud.umami.is",
+	shareId: "ZCxAbIrILX8idys4",
 	timezone: "Asia/Shanghai",
 };
 
