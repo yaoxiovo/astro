@@ -124,19 +124,7 @@ export const navBarConfig: NavBarConfig = {
 			
 	],
 };
-      <script src="https://tam.cdn-go.cn/aegis-sdk/latest/aegis.min.js"></script>
-      <script>
-        if (typeof Aegis === 'function') {
-          var aegis = new Aegis({
-            id: 'r58o9cl7xl8xXDd0Wq', // 上报 id
-            uin: 'xxx', // 用户唯一 ID（可选）
-            reportApiSpeed: true, // 接口测速
-            reportAssetSpeed: true, // 静态资源测速
-            spa: true, // spa 应用页面跳转的时候开启 pv 计算
-          hostUrl: 'https://rumt-zh.com'
-          });
-        }
-      </script>
+
 export const profileConfig: ProfileConfig = {
 	avatar: "https://png.yaoxi.wiki/blog.yaoxi.xyz/home.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 	name: "瑶曦",
