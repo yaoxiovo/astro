@@ -21,9 +21,9 @@ export const siteConfig: SiteConfig = {
 	title: "Yaoxi Blog",
 	subtitle: "生活分享与实践",
 	description:
-		"《瑶佳乐 blog》官方网站 ",
+		"《瑶佳乐 blog》瑶曦的个人空间：深度聚焦 Astro 框架开发、AI 技术探索与生活实践感悟，致力于构建一个纯净、理性的技术分享与成长记录平台。 ",
 
-	keywords: [],
+	keywords: ["瑶曦", "Yaoxi", "Astro", "前端开发", "AI实践", "个人博客"，"抽象"],
 	lang: "zh_CN", // 'en', 'zh_CN', 'zh_TW', 'ja', 'ko', 'es', 'th'
 	themeColor: {
 		hue: 361, // Default hue for the theme color, from 0 to 360. e.g. red: 0, teal: 200, cyan: 250, pink: 345
