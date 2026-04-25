@@ -1,12 +1,18 @@
 ---
-title: Cloudflare Workers 反向代理教程（小白照抄版）
-description: 一篇适合新手直接复制粘贴的 Cloudflare Workers 反向代理教程，无需服务器即可搭建可用代理。
+title: 2026 极致指南：Cloudflare Workers 反向代理保姆级教程 | 解决 403 跨域 & API 中转
+description: 零成本搭建反向代理！本文提供 Cloudflare Workers 最新代码，涵盖基础版、解决 403 兼容版及 CORS 跨域版。包含 API 中转、自定义域名绑定等进阶技巧，100% 成功率。
 published: 2026-01-09
 tags:
   - 教程
   - Cloudflare
 ---
+为什么使用 Cloudflare Workers 做反向代理？
 
+全球加速：利用 Cloudflare 的边缘节点，全球访问延迟极低。
+
+免费额度高：每天 10 万次免费请求，足以支撑个人项目。
+
+无需服务器：真正的 Serverless 架构，省去运维烦恼。
 
 以下内容：
 
