@@ -93,7 +93,6 @@ export const siteConfig: SiteConfig = {
 	],
 	server: [
 		{ url: "", text: "博客本体节点" },
-		{ url: "https://umami.yaoxi.wiki", text: "Umami节点" }
 	],
 };
 
@@ -118,7 +117,7 @@ export const navBarConfig: NavBarConfig = {
 		},
 		{
 			name: "统计",
-			url: "https://umami.yaoxi.wiki/share/CLGxRecPqPn9IidK", // Internal links should not include the base path, as it is automatically added
+			url: "https://cloud.umami.is/share/ZCxAbIrILX8idys4", // Internal links should not include the base path, as it is automatically added
 			external: true, // Show an external link icon and will open in a new tab
 		},
 			
