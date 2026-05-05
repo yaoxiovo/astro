@@ -1,11 +1,16 @@
 ---
-title: Cloudflare Worker 反向代理代码
+title: Cloudflare Worker 反向代理代码：CORS、Cookie 与 302 跳转修复
 published: 2026-05-04
-description: '一份可直接部署的 Cloudflare Worker 反向代理代码，支持 CORS、Cookie 重写、路径前缀、302 跳转修复等。'
-tags: [Cloudflare, Worker, 反向代理, JavaScript]
-category: '代码'
+description: 提供可直接部署的 Cloudflare Worker 反向代理代码，支持 CORS、Cookie 重写、路径前缀代理和 301/302 跳转修复。
+tags:
+  - Cloudflare Worker
+  - 反向代理
+  - CORS
+  - Cookie
+  - JavaScript
+category: 代码教程
 draft: false
-lang: 'zh-CN'
+lang: 'zh_CN'
 ---
 
 # Cloudflare Worker 反向代理代码
