@@ -1,11 +1,16 @@
 ---
-title: 入团申请书（模板）
+title: 入团申请书模板：初中生共青团申请写作参考
 published: 2025-12-27
-description: '中国共青团入团申请书模板'
-tags: [作文]
-category: '记录'
+description: 面向初中生的中国共产主义青年团入团申请书模板，包含申请理由、个人表现、不足反思与结尾格式参考。
+tags:
+  - 入团申请书
+  - 共青团
+  - 初中作文
+  - 申请书模板
+  - 学生写作
+category: 学习资料
 draft: false 
-lang: ''
+lang: 'zh_CN'
 ---
 
 # 入团申请书
