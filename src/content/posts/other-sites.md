@@ -1,11 +1,16 @@
 ---
-title: 其他网站
+title: 瑶曦的其他网站与项目导航
 published: 1999-01-01T19:25:08
-description: 'Yaoxi 的其他网站'
+description: 汇总 Yaoxi 的个人主页、音乐站、文档站与博客入口，方便快速访问瑶曦相关网站与公开项目。
 image: ''
-
+tags:
+  - Yaoxi
+  - 个人网站
+  - 项目导航
+  - 博客
+category: 站点导航
 draft: false 
-lang: ''
+lang: 'zh_CN'
 ---
 
 ::url{href="https://yaoxi.wiki"}
