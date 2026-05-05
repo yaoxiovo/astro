@@ -1,4 +1,4 @@
-/* This is a script to create a new post markdown file with front-matter */
+/* This is a script to create a new post markdown file with SEO-friendly front matter */
 
 import fs from "fs";
 import path from "path";
@@ -45,14 +45,17 @@ if (!fs.existsSync(dirPath)) {
 	fs.mkdirSync(dirPath, { recursive: true });
 }
 
+const title = args[0];
 const content = `---
-title: ${args[0]}
+title: ${title}
 published: ${getDate()}
-description: ''
-image: ''
-
-draft: false 
-lang: ''
+description: "请用 80-120 个中文字符概括文章主题，包含核心关键词，避免空描述。"
+image: ""
+tags:
+  - 待分类
+category: 记录
+draft: false
+lang: "zh_CN"
 ---
 `;
 
