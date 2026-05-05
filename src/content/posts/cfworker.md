@@ -1,10 +1,16 @@
 ---
-title: 2026 极致指南：Cloudflare Workers 反向代理保姆级教程 | 解决 403 跨域 & API 中转
-description: 零成本搭建反向代理！本文提供 Cloudflare Workers 最新代码，涵盖基础版、解决 403 兼容版及 CORS 跨域版。包含 API 中转、自定义域名绑定等进阶技巧，100% 成功率。
+title: Cloudflare Workers 反向代理教程：免费搭建 API 中转与 CORS 代理
 published: 2026-01-09
+description: 面向新手的 Cloudflare Workers 反向代理教程，介绍免费创建 Worker、部署代理代码、处理 403、CORS 跨域和自定义域名绑定。
 tags:
+  - Cloudflare Workers
+  - 反向代理
+  - API中转
+  - CORS
   - 教程
-  - Cloudflare
+category: 代码教程
+draft: false
+lang: "zh_CN"
 ---
 为什么使用 Cloudflare Workers 做反向代理？
 
