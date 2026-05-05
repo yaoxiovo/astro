@@ -1,12 +1,16 @@
 ---
-title: 网易云音乐 NCM 格式转换网页工具介绍
+title: 网易云音乐 NCM 转 MP3/FLAC 在线工具介绍
 published: 2026-01-02
-description: 一款纯前端在线转换网易云音乐 NCM 文件为 MP3/FLAC 的网页工具，本地处理、无需上传，保护隐私。
+description: 介绍一款纯前端网易云音乐 NCM 转换工具，可在浏览器本地将 NCM 文件转换为 MP3 或 FLAC，无需上传，保护隐私。
 tags:
-  - 音乐
-category: 记录
+  - NCM转换
+  - 网易云音乐
+  - MP3
+  - FLAC
+  - 前端工具
+category: 工具资源
 draft: false
-lang: ""
+lang: "zh_CN"
 ---
 
 开源地址：
