@@ -1,14 +1,16 @@
 ---
-title: 冲刺中考：在压力中保持热爱，在代码中构建梦想
+title: 冲刺中考：倒计时自动更新方案与备考寄语
 published: 2026-03-26
-description: 中考倒计时自动更新方案及备考寄语
+description: 介绍 2026 中考倒计时的自动更新方案，包含 Node.js 脚本、GitHub Actions 配置和冲刺阶段备考寄语。
 tags:
-  - 中考
-  - 开发笔记
-  - 自动更新
-category: 成长记录
+  - 2026中考
+  - 中考倒计时
+  - GitHub Actions
+  - Node.js
+  - 自动化脚本
+category: 中考备考
 draft: false
-lang: ""
+lang: "zh_CN"
 ---
 
 ## 📅 冲刺时刻：2026 中考倒计时
