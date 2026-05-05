@@ -1,12 +1,15 @@
 ---
-title: 2026年中考实时倒计时
+title: 2026 年中考实时倒计时
+description: 在线查看 2026 年中考首场考试实时倒计时，精确显示剩余天、小时、分钟和秒，适合中考备考冲刺阶段使用。
 published: 2026-03-28
-description: 2026年中考实时倒计时
 tags:
-  - 中考
-category: 记录
+  - 2026中考
+  - 中考倒计时
+  - 备考冲刺
+  - 学习规划
+category: 中考备考
 draft: false
-lang: ""
+lang: "zh_CN"
 pinned: true
 ---
 
