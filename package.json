@@ -13,6 +13,7 @@
 		"clean": "node scripts/clean-unused-images.js",
 		"del-space": "node scripts/del-space.js",
 		"upload-bili": "node scripts/upload-bili.js",
+		"indexnow": "node scripts/indexnow.js",
 		"format": "biome format --write ./src",
 		"lint": "biome check --write ./src"
 	},
