@@ -1,13 +1,22 @@
 import type { APIRoute } from "astro";
 
-const robotsTxt = `
-User-agent: *
-Disallow: /_astro/
+export const GET: APIRoute = ({ site }) => {
+	const siteUrl = site ?? new URL("https://blog.yaoxi.wiki");
+	const sitemapUrl = new URL("sitemap-index.xml", siteUrl).href;
 
-Sitemap: ${new URL("sitemap-index.xml", import.meta.env.SITE).href}
+	const robotsTxt = `
+User-agent: *
+Allow: /
+
+User-agent: bingbot
+Allow: /
+
+User-agent: msnbot
+Allow: /
+
+Sitemap: ${sitemapUrl}
 `.trim();
 
-export const GET: APIRoute = () => {
 	return new Response(robotsTxt, {
 		headers: {
 			"Content-Type": "text/plain; charset=utf-8",
