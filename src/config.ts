@@ -56,7 +56,7 @@ export const siteConfig: SiteConfig = {
 		depth: 2, // Maximum heading depth to show in the table, from 1 to 3
 	},
 	notice: {
-    enable: true,
+    enable: false,
     content: `
         <div style="margin-bottom: 12px; border: 1px solid #1a73e8; background: rgba(26, 115, 232, 0.05); padding: 12px; border-radius: 8px;">
             <div style="color: #1a73e8; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
