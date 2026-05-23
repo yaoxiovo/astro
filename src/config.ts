@@ -117,7 +117,7 @@ export const navBarConfig: NavBarConfig = {
 		},
 		{
 			name: "统计",
-			url: "https://umami.yaoxi.cloud/share/ZCxAbIrILX8idys4", // Internal links should not include the base path, as it is automatically added
+			url: "https://umami.yaoxi.cloud/share/CLGxRecPqPn9IidK", // Internal links should not include the base path, as it is automatically added
 			external: true, // Show an external link icon and will open in a new tab
 		},
 			
@@ -157,7 +157,7 @@ export const imageFallbackConfig: ImageFallbackConfig = {
 export const umamiConfig: UmamiConfig = {
 	enable: true,
 	baseUrl: "https://umami.yaoxi.cloud",
-	shareId: "ZCxAbIrILX8idys4",
+	shareId: "CLGxRecPqPn9IidK",
 	timezone: "Asia/Shanghai",
 };
 
