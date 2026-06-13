@@ -7,6 +7,7 @@ tags:
   - Video
 category: Examples
 draft: true
+lang: ""
 ---
 
 Just copy the embed code from YouTube or other platforms, and paste it in the markdown file.

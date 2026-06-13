@@ -8,9 +8,9 @@ tags:
   - AI安全
   - 伦理审查
 category: 记录
-pinned: true
 draft: false
 lang: "zh-CN"
+pinned: true
 ---
 
 ## 🛡️ 伦理审查预警与安全对齐协议 (v2.1)

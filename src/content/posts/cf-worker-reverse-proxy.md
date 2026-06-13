@@ -10,7 +10,7 @@ tags:
   - JavaScript
 category: 代码教程
 draft: false
-lang: 'zh_CN'
+lang: "zh_CN"
 ---
 
 # Cloudflare Worker 反向代理代码

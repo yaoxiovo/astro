@@ -9,7 +9,7 @@ tags:
   - 节日
 category: 节日祝福
 draft: false
-lang: 'zh_CN'
+lang: "zh_CN"
 ---
 
 当2025年的最后一秒钟声敲响，  

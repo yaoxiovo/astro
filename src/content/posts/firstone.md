@@ -9,8 +9,8 @@ tags:
   - 申请书模板
   - 学生写作
 category: 学习资料
-draft: false 
-lang: 'zh_CN'
+draft: false
+lang: "zh_CN"
 ---
 
 # 入团申请书

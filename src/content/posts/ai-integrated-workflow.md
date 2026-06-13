@@ -12,7 +12,7 @@ tags:
   - 数字化
 category: 技术
 draft: false
-lang: zh-CN
+lang: "zh-CN"
 ---
 
 # 我如何把 AI 工具无缝衔接进我的日常工作流
