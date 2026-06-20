@@ -1,8 +1,11 @@
 ---
 import { Icon } from "astro-icon/components";
+import { getCollection } from "astro:content";
 import { profileConfig, siteConfig, umamiConfig } from "../../config";
 
 const config = profileConfig;
+const allPosts = await getCollection("posts");
+const postCount = allPosts.length;
 ---
 <div class="card-base p-3 border border-black/10 dark:border-white/10">
     <div class="relative mx-auto mt-1 lg:mx-0 lg:mt-0 mb-3 max-w-[12rem] lg:max-w-none rounded-xl overflow-hidden" style={`--theme-hue: ${siteConfig.themeColor.hue}`}>
@@ -29,7 +32,7 @@ const config = profileConfig;
         </div>
         
         <!-- 全站访问量统计 -->
-        <div class="grid grid-cols-2 mt-3 pt-3 border-t border-neutral-300 dark:border-neutral-700">
+        <div class="grid grid-cols-3 mt-3 pt-3 border-t border-neutral-300 dark:border-neutral-700">
             <div class="text-center">
                 <div class="text-xs text-neutral-500 mb-1 flex items-center justify-center gap-1">
                     <Icon name="material-symbols:visibility-outline" class="text-base"></Icon>
@@ -43,6 +46,13 @@ const config = profileConfig;
                     <span class="text-xs">访客数</span>
                 </div>
                 <div id="site-visitors" class="font-bold text-lg text-neutral-700 dark:text-neutral-300">0</div>
+            </div>
+            <div class="text-center border-l border-neutral-300 dark:border-neutral-700">
+                <div class="text-xs text-neutral-500 mb-1 flex items-center justify-center gap-1">
+                    <Icon name="material-symbols:article-outline" class="text-base"></Icon>
+                    <span class="text-xs">文章数</span>
+                </div>
+                <div class="font-bold text-lg text-neutral-700 dark:text-neutral-300">{postCount}</div>
             </div>
         </div>
     </div>
