@@ -113,4 +113,58 @@
 
 		return doFetch();
 	};
+
+	/**
+	 * 获取 Umami 事件统计数据
+	 * @param {string} baseUrl
+	 * @param {string} shareId
+	 * @param {object} queryParams
+	 * @returns {Promise<any>}
+	 */
+	global.fetchUmamiEvents = async (baseUrl, shareId, queryParams) => {
+		const cacheKey = `events|${baseUrl}|${shareId}|${JSON.stringify(queryParams)}`;
+		
+		if (global.__umamiDataCache.has(cacheKey)) {
+            const data = global.__umamiDataCache.get(cacheKey);
+            return { ...data, _fromCache: true };
+		}
+
+		async function doFetch(isRetry = false) {
+			const { websiteId, token } = await global.getUmamiShareData(
+				baseUrl,
+				shareId,
+			);
+			const currentTimestamp = Date.now();
+			const params = new URLSearchParams({
+				startAt: 0,
+				endAt: currentTimestamp,
+				unit: "hour",
+				timezone: queryParams.timezone || "Asia/Shanghai",
+				...queryParams,
+			});
+
+			// umami api: /api/websites/{websiteId}/metrics?type=event
+			const statsUrl = `${baseUrl}/api/websites/${websiteId}/metrics?type=event&${params.toString()}`;
+
+			const res = await fetch(statsUrl, {
+				headers: {
+					"x-umami-share-token": token,
+				},
+			});
+
+			if (!res.ok) {
+				if (res.status === 401 && !isRetry) {
+					global.clearUmamiShareCache();
+					return doFetch(true);
+				}
+				throw new Error("获取事件数据失败");
+			}
+
+			const data = await res.json();
+			global.__umamiDataCache.set(cacheKey, data);
+			return data;
+		}
+
+		return doFetch();
+	};
 })(window);

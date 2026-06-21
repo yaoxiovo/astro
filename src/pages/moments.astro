@@ -25,3 +25,67 @@ allMoments.sort((a, b) => new Date(b.data.published).valueOf() - new Date(a.data
         </div>
     </div>
 </MainGridLayout>
+
+<script define:vars={{ umamiConfig: (await import('../config')).umamiConfig }}>
+    async function loadMomentLikes() {
+        if (!umamiConfig.enable || !window.fetchUmamiEvents) return;
+        try {
+            const statsData = await fetchUmamiEvents(umamiConfig.baseUrl, umamiConfig.shareId, {});
+            // statsData is usually an array: [{ x: "Like_first-moment", y: 4 }, { x: "OtherEvent", y: 1 }]
+            if (Array.isArray(statsData)) {
+                statsData.forEach(item => {
+                    if (item.x && item.x.startsWith('Like_')) {
+                        const momentId = item.x.replace('Like_', '');
+                        const countSpan = document.getElementById(`like-count-${momentId}`);
+                        if (countSpan) {
+                            // Only update if it's currently 0 or smaller than fetched to avoid overriding optimistic updates
+                            const current = parseInt(countSpan.textContent) || 0;
+                            if (item.y > current) {
+                                countSpan.textContent = item.y;
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('获取朋友圈点赞数据失败:', error);
+        }
+    }
+
+    function initLikeButtons() {
+        const likeBtns = document.querySelectorAll('.moment-like-btn');
+        likeBtns.forEach(btn => {
+            // Remove old listener to avoid dupes on Swup
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            
+            newBtn.addEventListener('click', function(e) {
+                // Optimistic UI update
+                const countSpan = this.querySelector('.like-count');
+                const icon = this.querySelector('svg');
+                
+                // Avoid multi-clicks
+                if (this.classList.contains('liked')) return;
+                
+                let current = parseInt(countSpan.textContent) || 0;
+                countSpan.textContent = current + 1;
+                
+                this.classList.add('liked', 'text-red-500');
+                this.classList.remove('text-[var(--text-color-light)]');
+                
+                // Add pop animation
+                icon.style.transform = 'scale(1.3)';
+                setTimeout(() => { icon.style.transform = 'scale(1)'; }, 200);
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initLikeButtons();
+        loadMomentLikes(); 
+    });
+    document.addEventListener('swup:contentReplaced', () => {
+        initLikeButtons();
+        loadMomentLikes();
+    });
+</script>

@@ -49,23 +49,26 @@ const { Content } = await moment.render();
 
     {images.length > 0 && (
       <div class={`grid gap-2 mb-3 max-w-[300px] ${gridCols}`}>
-        {images.map((img: string) => (
-          <div class="aspect-square w-full rounded-md overflow-hidden cursor-pointer">
+        {images.map((img: string, idx: number) => (
+          <a href={img} data-fancybox={`moment-${moment.id}`} data-caption={`Photo ${idx + 1}`} class="aspect-square w-full rounded-md overflow-hidden cursor-zoom-in">
             <img src={img} alt="Moment photo" class="w-full h-full object-cover transition-transform hover:scale-105" loading="lazy" />
-          </div>
+          </a>
         ))}
       </div>
     )}
 
-    <div class="flex flex-row justify-between items-center text-sm text-[var(--text-color-light)]">
+    <div class="flex flex-row justify-between items-center text-sm text-[var(--text-color-light)] mt-2">
       <div>
         {data.published ? new Date(data.published).toLocaleString('zh-CN', {
           year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
         }) : ''}
       </div>
       <div class="flex gap-4">
-        <button class="hover:text-[var(--primary)] transition flex items-center gap-1">
-          <Icon name="fa6-regular:heart" class="w-4 h-4" />
+        <button class="moment-like-btn hover:text-red-500 transition flex items-center gap-1 active:scale-90" 
+                data-umami-event={`Like_${moment.id}`}
+                data-moment-id={moment.id}>
+          <Icon name="fa6-regular:heart" class="w-4 h-4 transition-transform duration-300" />
+          <span class="like-count text-xs" id={`like-count-${moment.id}`}>0</span>
         </button>
         <button class="hover:text-[var(--primary)] transition flex items-center gap-1">
           <Icon name="fa6-regular:comment" class="w-4 h-4" />
