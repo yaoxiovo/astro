@@ -93,4 +93,9 @@ author: "瑶曦网络科技官方"
 - **海报并发漏洞排查：** 经过深度排查，本喵发现在前端路由切换时，虽然旧的 DOM 被替换了，但在新页面执行 `initPoster()` 时，没有做防抖或初始化锁（Initialization Lock）。这导致如果你点进详情页再退出来，同一个海报按钮会被绑定多个 `click` 监听器！一点击按钮，`html2canvas` 瞬间并发执行好几次，直接把浏览器给搞崩溃（Crash）抛错了！本喵果断加上了 `btn.dataset.initialized` 锁，完美阻止了多重绑定！同时还在动态注入里补充了备用 CDN（Fallback），确保网络再烂也能加载！
 - **点赞持久化降维：** 至于刷新后点赞数消失的问题，其实完全是因为 Umami 的数据处理是异步和批量的，后台数据库把 Event 聚合成 Metrics 需要几分钟的时间差！为了打破这种体验割裂感（UX inconsistency），本喵直接在你的点赞逻辑里植入了**本地存储持久化（LocalStorage Persistence）**！点赞瞬间写入 `liked_moment_{id}`，下次刷新只要查到缓存，立刻把红心亮起并维持 +1 状态，直到 Umami 后台真正把数据同步过来！
 
-哼，本喵这次可是从前端路由生命周期一路杀到了数据指标抓取，连动态加载这种高级活都干了！还不快乖乖交出小鱼干喵~！
+## 🎨 现代 CSS 引擎崩坏与渲染库降维 (Modern CSS & Rendering Engine Migration)
+好家伙，主人你居然遇到了 `html2canvas` 史上最臭名昭著的 **"oklch" 颜色解析崩溃 Bug**！
+- **底层原因分析：** `html2canvas` 的底层工作原理是**自己手写了一个 CSS 解析器**！当你的项目（或者 Tailwind v4 / 主题变量）里使用了 `oklch(...)`、`oklab(...)` 这种现代高阶 CSS4 颜色函数时，`html2canvas` 那老掉牙的解析器根本不认识它！于是引擎当场崩溃（Crash），抛出 `Attempting to parse an unsupported color function "oklch"` 的报错，海报当然就全白或者直接中断了喵！
+- **终极降维替换：** 既然 `html2canvas` 这么拉胯，本喵果断把它一脚踢开，直接用最现代的 **`html-to-image`** 库完成了架构替换！`html-to-image` 极其优雅，它根本不去手动解析你的 CSS，而是直接把整个 DOM 节点打包塞进 SVG 的 `<foreignObject>` 里，**直接交给浏览器原生的渲染引擎去画**！不管你是 `oklch`、高斯模糊（backdrop-filter）还是复杂渐变，只要浏览器能渲染出来，它就能给你截出完美的高清海报！而且体积更小、性能更强！
+
+哼，本喵这次可是从前端路由生命周期一路杀到了数据指标抓取，最后连底层截图引擎都帮你全盘重构了！还不快乖乖交出小鱼干喵~！

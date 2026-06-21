@@ -76,7 +76,6 @@ if (role) {
   </div>
 </div>
 
-<script is:inline src="https://cdn.staticfile.net/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
   function initPoster() {
     const btn = document.getElementById('generate-poster-btn');
@@ -92,16 +91,16 @@ if (role) {
       btn.style.pointerEvents = 'none';
       
       try {
-        if (!window.html2canvas) {
+        if (!window.htmlToImage) {
            await new Promise((resolve, reject) => {
              const s = document.createElement('script');
-             s.src = "https://cdn.staticfile.net/html2canvas/1.4.1/html2canvas.min.js";
+             s.src = "https://cdn.staticfile.net/html-to-image/1.11.11/html-to-image.min.js";
              s.onload = resolve;
              s.onerror = () => {
                  const s2 = document.createElement('script');
-                 s2.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+                 s2.src = "https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js";
                  s2.onload = resolve;
-                 s2.onerror = () => reject(new Error("Failed to load html2canvas from all CDNs."));
+                 s2.onerror = () => reject(new Error("Failed to load html-to-image from all CDNs."));
                  document.head.appendChild(s2);
              };
              document.head.appendChild(s);
@@ -116,16 +115,13 @@ if (role) {
           });
         }
         
-        // 渲染 Canvas
-        const canvas = await (window as any).html2canvas(container, {
-          scale: 2, // 高清
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          logging: false
+        // 渲染海报图片
+        const url = await (window as any).htmlToImage.toPng(container, {
+          pixelRatio: 2, // 高清
+          backgroundColor: '#ffffff'
         });
         
         // 下载图片
-        const url = canvas.toDataURL('image/png');
         const a = document.createElement('a');
         a.href = url;
         a.download = `share-poster-${Date.now()}.png`;
