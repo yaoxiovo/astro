@@ -1,4 +1,4 @@
-const quotes = [
+export const quotes = [
   "欲买桂花同载酒，终不似，少年游。",
   "热爱可抵岁月漫长。",
   "世界并不温柔，但你可以。",

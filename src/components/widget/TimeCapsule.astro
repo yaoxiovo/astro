@@ -1,0 +1,90 @@
+---
+import { getSortedPosts } from "@utils/content-utils";
+import { Icon } from "astro-icon/components";
+
+const posts = await getSortedPosts();
+// 生成包含精简信息的数据集，用于客户端计算
+const historyData = posts.map(post => {
+  const d = new Date(post.data.published);
+  return {
+    title: post.data.title,
+    url: `/posts/${post.slug}/`,
+    year: d.getFullYear(),
+    month: d.getMonth() + 1,
+    date: d.getDate(),
+  };
+});
+---
+
+<div id="time-capsule-widget" class="hidden card-base p-4 border border-[var(--primary)]/20 relative overflow-hidden group">
+  <!-- 装饰背景 -->
+  <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
+    <Icon name="material-symbols:hourglass-empty-rounded" class="text-8xl text-[var(--primary)]" />
+  </div>
+  
+  <div class="flex items-center gap-2 mb-3 relative z-10">
+    <div class="w-8 h-8 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center flex-shrink-0">
+      <Icon name="material-symbols:history-toggle-off" class="text-lg" />
+    </div>
+    <div class="font-bold text-sm text-black/80 dark:text-white/80 tracking-wider">历史上的今天</div>
+  </div>
+  
+  <div id="time-capsule-content" class="relative z-10 text-sm">
+    <!-- 客户端渲染内容 -->
+  </div>
+</div>
+
+<!-- 将全量简化的日期数据传给客户端 -->
+<script id="time-capsule-data" type="application/json" set:html={JSON.stringify(historyData)}></script>
+
+<script>
+  function initTimeCapsule() {
+    const widget = document.getElementById('time-capsule-widget');
+    const content = document.getElementById('time-capsule-content');
+    const dataEl = document.getElementById('time-capsule-data');
+    if (!widget || !content || !dataEl) return;
+
+    try {
+      const posts = JSON.parse(dataEl.textContent || '[]');
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth() + 1;
+      const currentDate = today.getDate();
+
+      // 寻找历史上的今天（不含今年）
+      const matches = posts.filter((p: any) => 
+        p.month === currentMonth && 
+        p.date === currentDate && 
+        p.year < currentYear
+      );
+
+      if (matches.length > 0) {
+        // 按照年份降序排列
+        matches.sort((a: any, b: any) => b.year - a.year);
+        
+        // 随机选一篇，或者展示最新的一篇，这里展示最新的一篇
+        const latestMatch = matches[0];
+        const yearsAgo = currentYear - latestMatch.year;
+
+        content.innerHTML = `
+          <div class="text-black/60 dark:text-white/60 mb-2 leading-relaxed">
+            ⏳ <strong>${yearsAgo}年前</strong>的今天，你写下了：
+          </div>
+          <a href="${latestMatch.url}" class="block text-[var(--primary)] font-medium hover:underline decoration-dashed underline-offset-4 line-clamp-2" title="${latestMatch.title}">
+            《${latestMatch.title}》
+          </a>
+        `;
+        widget.classList.remove('hidden');
+      } else {
+        // 如果今天没有历史文章，显示占位彩蛋或者保持隐藏
+        // widget.classList.remove('hidden');
+        // content.innerHTML = `<div class="text-black/50 dark:text-white/50 italic">记忆的沙漏正在静静流淌...</div>`;
+      }
+    } catch (e) {
+      console.error('Time Capsule Error:', e);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', initTimeCapsule);
+  document.addEventListener('swup:contentReplaced', initTimeCapsule);
+</script>

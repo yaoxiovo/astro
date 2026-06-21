@@ -29,6 +29,16 @@ const { Content, headings } = await entry.render();
 
 const { remarkPluginFrontmatter } = await entry.render();
 
+// 组装思维导图数据
+let mindmapMd = `# ${entry.data.title.replace(/"/g, '')}\n`;
+headings.forEach(h => {
+    // 过滤太深的层级，保持脑图清爽
+    if (h.depth <= 4) {
+        mindmapMd += `${'#'.repeat(h.depth + 1)} ${h.text.replace(/"/g, '')}\n`;
+    }
+});
+const mindmapData = JSON.stringify(mindmapMd);
+
 // 获取同系列文章
 const allPosts = await getSortedPosts();
 const seriesName = entry.data.series;
@@ -144,6 +154,11 @@ const jsonLd = {
                             <Icon name="material-symbols:favorite-outline" class="text-[0.875rem] group-hover:scale-110 transition-transform"></Icon>
                             赞助
                         </a>
+                        <!-- 脑图切换按钮 -->
+                        <button id="toggle-mindmap-btn" class="group flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] active:bg-[var(--btn-regular-bg-active)] text-[var(--btn-content)] text-xs font-medium transition-all active:scale-95">
+                            <Icon name="material-symbols:account-tree-outline" class="text-[0.875rem] group-hover:scale-110 transition-transform"></Icon>
+                            脑图
+                        </button>
                         <!-- 海报生成器 -->
                         <PosterGenerator 
                           title={entry.data.title} 
@@ -153,6 +168,72 @@ const jsonLd = {
                         />
                     </div>
                 </div>
+
+                <!-- 思维导图容器 (默认隐藏) -->
+                <div id="mindmap-container" class="hidden w-full h-[500px] border border-[var(--primary)]/20 rounded-xl bg-black/5 dark:bg-white/5 overflow-hidden relative mb-4 transition-all duration-300">
+                    <svg id="markmap-svg" class="w-full h-full"></svg>
+                    <div class="absolute bottom-2 right-2 flex gap-2">
+                        <button id="mindmap-zoom-in" class="p-1.5 bg-white/80 dark:bg-black/80 rounded border border-black/10 dark:border-white/10 hover:text-[var(--primary)]"><Icon name="material-symbols:zoom-in" /></button>
+                        <button id="mindmap-zoom-out" class="p-1.5 bg-white/80 dark:bg-black/80 rounded border border-black/10 dark:border-white/10 hover:text-[var(--primary)]"><Icon name="material-symbols:zoom-out" /></button>
+                        <button id="mindmap-fit" class="p-1.5 bg-white/80 dark:bg-black/80 rounded border border-black/10 dark:border-white/10 hover:text-[var(--primary)]"><Icon name="material-symbols:center-focus-strong-outline" /></button>
+                    </div>
+                </div>
+                
+                <script id="mindmap-data" type="application/json" set:html={mindmapData}></script>
+                <script is:inline src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+                <script is:inline src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+                <script is:inline src="https://cdn.jsdelivr.net/npm/markmap-lib"></script>
+                <script>
+                    function initMindmap() {
+                        const btn = document.getElementById('toggle-mindmap-btn');
+                        const container = document.getElementById('mindmap-container');
+                        const dataEl = document.getElementById('mindmap-data');
+                        
+                        if (!btn || !container || !dataEl) return;
+                        
+                        let markmapInstance: any = null;
+                        
+                        btn.addEventListener('click', () => {
+                            const isHidden = container.classList.contains('hidden');
+                            if (isHidden) {
+                                container.classList.remove('hidden');
+                                // 初次渲染
+                                if (!markmapInstance && window.markmap) {
+                                    const { Transformer, Markmap, loadCSS, loadJS } = window.markmap;
+                                    const transformer = new Transformer();
+                                    const { root, features } = transformer.transform(JSON.parse(dataEl.textContent || ''));
+                                    const { styles, scripts } = transformer.getUsedAssets(features);
+                                    if (styles) loadCSS(styles);
+                                    if (scripts) loadJS(scripts, { getMarkmap: () => window.markmap });
+                                    
+                                    markmapInstance = Markmap.create('#markmap-svg', {
+                                        color: (node: any) => {
+                                            // 主题色跟随
+                                            return 'var(--primary)';
+                                        },
+                                        autoFit: true
+                                    }, root);
+                                    
+                                    // 绑定控件
+                                    document.getElementById('mindmap-zoom-in')?.addEventListener('click', () => {
+                                        markmapInstance.transition(markmapInstance.svg.transition().duration(500)).scaleBy(markmapInstance.zoom, 1.2);
+                                    });
+                                    document.getElementById('mindmap-zoom-out')?.addEventListener('click', () => {
+                                        markmapInstance.transition(markmapInstance.svg.transition().duration(500)).scaleBy(markmapInstance.zoom, 0.8);
+                                    });
+                                    document.getElementById('mindmap-fit')?.addEventListener('click', () => {
+                                        markmapInstance.fit();
+                                    });
+                                }
+                            } else {
+                                container.classList.add('hidden');
+                            }
+                        });
+                    }
+                    
+                    document.addEventListener('DOMContentLoaded', initMindmap);
+                    document.addEventListener('swup:contentReplaced', initMindmap);
+                </script>
                 
                 {gitHubEditConfig.enable && (
                     <>
