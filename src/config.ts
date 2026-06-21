@@ -157,6 +157,19 @@ export const profileConfig: ProfileConfig = {
 	],
 };
 
+export const authorRoles: Record<string, {avatar: string; verifyType: "blue"|"yellow"|"none"; verifySubject: string}> = {
+	"瑶曦": {
+		avatar: profileConfig.avatar,
+		verifyType: "yellow",
+		verifySubject: "知名科技领域生活UP主",
+	},
+	"瑶曦网络科技官方": {
+		avatar: profileConfig.avatar,
+		verifyType: "blue",
+		verifySubject: "瑶曦网络科技有限公司",
+	}
+};
+
 export const licenseConfig: LicenseConfig = {
 	enable: true,
 	name: "CC BY-NC-SA 4.0",

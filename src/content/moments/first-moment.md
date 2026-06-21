@@ -1,7 +1,5 @@
 ---
 published: 2026-06-21T10:00:00+08:00
-verifyType: "yellow"
-verifySubject: "知名科技领域生活UP主"
 images: 
   - "https://t.alcy.cc/ycy"
   - "https://t.alcy.cc/ycy"

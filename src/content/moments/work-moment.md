@@ -1,9 +1,6 @@
 ---
 author: "瑶曦网络科技官方"
-avatar: "https://png.yaoxi.wiki/blog.yaoxi.xyz/home.png"
 published: 2026-06-21T11:30:00+08:00
-verifyType: "blue"
-verifySubject: "瑶曦网络科技有限公司"
 images: []
 ---
 
