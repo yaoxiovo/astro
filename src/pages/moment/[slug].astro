@@ -6,7 +6,7 @@ import { getCollection } from 'astro:content';
 export async function getStaticPaths() {
     const allMoments = await getCollection('moments');
     return allMoments.map((moment) => ({
-        params: { slug: moment.slug },
+        params: { slug: moment.id },
         props: { moment },
     }));
 }
@@ -17,20 +17,20 @@ const allMoments = await getCollection('moments');
 // Find thread: Parent -> Current -> Children
 let parent = null;
 if (moment.data.replyTo) {
-    parent = allMoments.find(m => m.slug === moment.data.replyTo);
+    parent = allMoments.find(m => m.id === moment.data.replyTo);
 }
 
 const children = allMoments
-    .filter(m => m.data.replyTo === moment.slug)
+    .filter(m => m.data.replyTo === moment.id)
     .sort((a, b) => new Date(a.data.published).getTime() - new Date(b.data.published).getTime());
 
 // Other related moments (same author, not in thread)
-const threadSlugs = new Set([moment.slug]);
-if (parent) threadSlugs.add(parent.slug);
-children.forEach(c => threadSlugs.add(c.slug));
+const threadSlugs = new Set([moment.id]);
+if (parent) threadSlugs.add(parent.id);
+children.forEach(c => threadSlugs.add(c.id));
 
 const relatedMoments = allMoments
-    .filter(m => m.data.author === moment.data.author && !threadSlugs.has(m.slug))
+    .filter(m => m.data.author === moment.data.author && !threadSlugs.has(m.id))
     .sort((a, b) => new Date(b.data.published).getTime() - new Date(a.data.published).getTime())
     .slice(0, 3);
 ---

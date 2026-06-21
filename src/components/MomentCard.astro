@@ -74,7 +74,7 @@ const { Content } = await moment.render();
 
       <!-- Metadata (Time & Source) -->
       <div class="text-[13px] text-[var(--text-color-light)] mb-3 flex items-center gap-1.5 flex-wrap">
-        <a href={`/moment/${moment.slug}/`} class="moment-time hover:underline" data-time={data.published.toISOString()} title={new Date(data.published).toLocaleString('zh-CN')}>
+        <a href={`/moment/${moment.id}/`} class="moment-time hover:underline" data-time={data.published.toISOString()} title={new Date(data.published).toLocaleString('zh-CN')}>
           {new Date(data.published).toLocaleDateString('zh-CN')}
         </a>
         {data.source && (
@@ -88,7 +88,7 @@ const { Content } = await moment.render();
       <!-- Action Buttons -->
       <div class="flex flex-row justify-between items-center text-[var(--text-color-light)] max-w-[400px] mt-1 border-t border-black/5 dark:border-white/5 pt-3">
         <!-- Comment -->
-        <a href={`/moment/${moment.slug}/`} aria-label="Reply" class="hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 p-2 -ml-2 rounded-full transition flex items-center gap-1.5 group">
+        <a href={`/moment/${moment.id}/`} aria-label="Reply" class="hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 p-2 -ml-2 rounded-full transition flex items-center gap-1.5 group">
           <Icon name="fa6-regular:comment" class="w-4 h-4 group-active:scale-90 transition-transform" />
         </a>
         
@@ -115,7 +115,7 @@ const { Content } = await moment.render();
 
         <!-- Share -->
         <button class="moment-share-btn hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 p-2 rounded-full transition flex items-center gap-1.5 group"
-                data-moment-id={moment.slug}>
+                data-moment-id={moment.id}>
           <Icon name="fa6-solid:arrow-up-from-bracket" class="w-4 h-4 group-active:scale-90 transition-transform" />
         </button>
       </div>
