@@ -6,7 +6,7 @@ import { getCollection } from 'astro:content';
 export async function getStaticPaths() {
     const allMoments = await getCollection('moments');
     return allMoments.map((moment) => ({
-        params: { slug: moment.id },
+        params: { slug: moment.id.replace(/\.[^/.]+$/, "") },
         props: { moment },
     }));
 }
@@ -17,11 +17,11 @@ const allMoments = await getCollection('moments');
 // Find thread: Parent -> Current -> Children
 let parent = null;
 if (moment.data.replyTo) {
-    parent = allMoments.find(m => m.id === moment.data.replyTo);
+    parent = allMoments.find(m => m.id.replace(/\.[^/.]+$/, "") === moment.data.replyTo);
 }
 
 const children = allMoments
-    .filter(m => m.data.replyTo === moment.id)
+    .filter(m => m.data.replyTo === moment.id.replace(/\.[^/.]+$/, ""))
     .sort((a, b) => new Date(a.data.published).getTime() - new Date(b.data.published).getTime());
 
 // Other related moments (same author, not in thread)

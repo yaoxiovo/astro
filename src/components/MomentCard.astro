@@ -7,6 +7,7 @@ interface Props {
 }
 
 const { moment } = Astro.props;
+const momentId = moment.id.replace(/\.[^/.]+$/, "");
 const { data } = moment;
 
 const author = data.author || profileConfig.name;
@@ -23,7 +24,7 @@ const gridCols = images.length === 1 ? 'grid-cols-1' : images.length === 2 || im
 const { Content } = await moment.render();
 ---
 
-<div id={`moment-${moment.id}`} class="moment-card flex flex-col mb-8 bg-[var(--card-bg)] rounded-2xl p-6 transition shadow-md hover:shadow-lg dark:shadow-none scroll-mt-24">
+<div id={`moment-${momentId}`} class="moment-card flex flex-col mb-8 bg-[var(--card-bg)] rounded-2xl p-6 transition shadow-md hover:shadow-lg dark:shadow-none scroll-mt-24">
   <!-- Pinned indicator -->
   {data.pinned && (
     <div class="flex items-center gap-2 text-xs font-bold text-[var(--text-color-light)] mb-3 ml-10">
@@ -65,7 +66,7 @@ const { Content } = await moment.render();
       {images.length > 0 && (
         <div class={`grid gap-2 mb-3 max-w-[400px] ${gridCols}`}>
           {images.map((img: string, idx: number) => (
-            <a href={img} data-fancybox={`moment-${moment.id}`} data-caption={`Photo ${idx + 1}`} class="aspect-square w-full rounded-md overflow-hidden cursor-zoom-in">
+            <a href={img} data-fancybox={`moment-${momentId}`} data-caption={`Photo ${idx + 1}`} class="aspect-square w-full rounded-md overflow-hidden cursor-zoom-in">
               <img src={img} alt="Moment photo" class="w-full h-full object-cover transition-transform hover:scale-105" loading="lazy" />
             </a>
           ))}
@@ -74,7 +75,7 @@ const { Content } = await moment.render();
 
       <!-- Metadata (Time & Source) -->
       <div class="text-[13px] text-[var(--text-color-light)] mb-3 flex items-center gap-1.5 flex-wrap">
-        <a href={`/moment/${moment.id}/`} class="moment-time hover:underline" data-time={data.published.toISOString()} title={new Date(data.published).toLocaleString('zh-CN')}>
+        <a href={`/moment/${momentId}/`} class="moment-time hover:underline" data-time={data.published.toISOString()} title={new Date(data.published).toLocaleString('zh-CN')}>
           {new Date(data.published).toLocaleDateString('zh-CN')}
         </a>
         {data.source && (
@@ -88,7 +89,7 @@ const { Content } = await moment.render();
       <!-- Action Buttons -->
       <div class="flex flex-row justify-between items-center text-[var(--text-color-light)] max-w-[400px] mt-1 border-t border-black/5 dark:border-white/5 pt-3">
         <!-- Comment -->
-        <a href={`/moment/${moment.id}/`} aria-label="Reply" class="hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 p-2 -ml-2 rounded-full transition flex items-center gap-1.5 group">
+        <a href={`/moment/${momentId}/`} aria-label="Reply" class="hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 p-2 -ml-2 rounded-full transition flex items-center gap-1.5 group">
           <Icon name="fa6-regular:comment" class="w-4 h-4 group-active:scale-90 transition-transform" />
         </a>
         
@@ -99,23 +100,23 @@ const { Content } = await moment.render();
 
         <!-- Like -->
         <button class="moment-like-btn hover:text-red-500 hover:bg-red-500/10 p-2 rounded-full transition flex items-center gap-1.5 group" 
-                data-umami-event={`Like_${moment.id}`}
-                data-moment-id={moment.id}>
+                data-umami-event={`Like_${momentId}`}
+                data-moment-id={momentId}>
           <Icon name="fa6-regular:heart" class="w-4 h-4 group-active:scale-90 transition-transform" />
-          <span class="like-count text-xs font-medium" id={`like-count-${moment.id}`}></span>
+          <span class="like-count text-xs font-medium" id={`like-count-${momentId}`}></span>
         </button>
 
         <!-- View Impressions -->
         <div class="moment-view-btn hover:text-blue-500 hover:bg-blue-500/10 p-2 rounded-full transition flex items-center gap-1.5 cursor-default"
-             data-umami-event={`View_${moment.id}`}
-             data-moment-id={moment.id}>
+             data-umami-event={`View_${momentId}`}
+             data-moment-id={momentId}>
           <Icon name="fa6-solid:chart-simple" class="w-4 h-4" />
-          <span class="view-count text-xs font-medium" id={`view-count-${moment.id}`}></span>
+          <span class="view-count text-xs font-medium" id={`view-count-${momentId}`}></span>
         </div>
 
         <!-- Share -->
         <button class="moment-share-btn hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 p-2 rounded-full transition flex items-center gap-1.5 group"
-                data-moment-id={moment.id}>
+                data-moment-id={momentId}>
           <Icon name="fa6-solid:arrow-up-from-bracket" class="w-4 h-4 group-active:scale-90 transition-transform" />
         </button>
       </div>
