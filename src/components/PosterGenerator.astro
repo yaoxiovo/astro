@@ -10,6 +10,18 @@ interface Props {
 }
 
 const { title, excerpt, coverImage, author } = Astro.props;
+
+// 动态判断V认证主体和颜色 (不修改配置文件，直接在组件内映射)
+let verifiedIconColor = "";
+let verifiedEntity = "";
+
+if (author === "瑶曦网络科技官方" || author.includes("官方")) {
+  verifiedIconColor = "text-blue-500";
+  verifiedEntity = "企业官方认证";
+} else if (author === "瑶曦" || author === "Yaoxi") {
+  verifiedIconColor = "text-yellow-500";
+  verifiedEntity = "个人博主认证";
+}
 ---
 
 <button id="generate-poster-btn" class="group flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] active:bg-[var(--btn-regular-bg-active)] text-[var(--btn-content)] text-xs font-medium transition-all active:scale-95">
@@ -39,7 +51,15 @@ const { title, excerpt, coverImage, author } = Astro.props;
     <div class="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">
       <div class="flex flex-col">
         <span class="text-xs text-gray-400 mb-1">Author</span>
-        <span class="text-sm font-bold text-[var(--primary)]">{author}</span>
+        <div class="flex items-center gap-1">
+          <span class="text-sm font-bold text-[var(--primary)]">{author}</span>
+          {verifiedEntity && (
+            <div class="flex items-center gap-0.5 mt-0.5">
+              <Icon name="material-symbols:verified" class={`text-[0.9rem] ${verifiedIconColor}`} />
+              <span class={`text-[0.65rem] ${verifiedIconColor} font-medium`}>{verifiedEntity}</span>
+            </div>
+          )}
+        </div>
       </div>
       
       <div class="flex flex-col items-end">
@@ -90,10 +110,23 @@ const { title, excerpt, coverImage, author } = Astro.props;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        
+        // 将链接写入剪贴板
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+        } catch(e) {
+          console.warn("Failed to copy url to clipboard", e);
+        }
+        
+        // 临时修改按钮文本提示成功
+        btn.innerHTML = `<span style="color: #10b981; margin-right: 0.25rem;">✔</span> 链接已复制`;
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.pointerEvents = 'auto';
+        }, 2000);
       } catch (err) {
         console.error('Failed to generate poster', err);
         alert('海报生成失败，请重试');
-      } finally {
         btn.innerHTML = originalText;
         btn.style.pointerEvents = 'auto';
       }
