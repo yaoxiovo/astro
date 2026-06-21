@@ -8,7 +8,7 @@ const historyData = posts.map(post => {
   const d = new Date(post.data.published);
   return {
     title: post.data.title,
-    url: `/posts/${post.slug}/`,
+    url: `/posts/${post.id}/`,
     year: d.getFullYear(),
     month: d.getMonth() + 1,
     date: d.getDate(),

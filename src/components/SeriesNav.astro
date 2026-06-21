@@ -20,7 +20,7 @@ const { series, posts, currentSlug } = Astro.props;
 
 // 按发布日期升序排列
 const sortedPosts = [...posts].sort((a, b) => a.published.getTime() - b.published.getTime());
-const currentIndex = sortedPosts.findIndex(p => p.slug === currentSlug);
+const currentIndex = sortedPosts.findIndex(p => p.id === currentSlug);
 ---
 
 {sortedPosts.length > 1 && (
@@ -40,10 +40,10 @@ const currentIndex = sortedPosts.findIndex(p => p.slug === currentSlug);
     <!-- 文章列表 -->
     <div class="px-3 py-2">
       {sortedPosts.map((post, index) => {
-        const isCurrent = post.slug === currentSlug;
+        const isCurrent = post.id === currentSlug;
         return (
           <a
-            href={isCurrent ? undefined : `/posts/${post.slug}/`}
+            href={isCurrent ? undefined : `/posts/${post.id}/`}
             aria-current={isCurrent ? 'page' : undefined}
             class:list={[
               'group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 my-0.5',

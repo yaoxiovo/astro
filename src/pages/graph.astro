@@ -13,11 +13,11 @@ const tagSet = new Set<string>();
 posts.forEach(post => {
   // 添加文章节点 (组1)
   nodes.push({ 
-    id: post.slug, 
+    id: post.id, 
     name: post.data.title, 
     group: 1, 
     val: 6, // 节点大小权重
-    url: `/posts/${post.slug}/` 
+    url: `/posts/${post.id}/` 
   });
   
   // 添加标签节点并连线
@@ -34,7 +34,7 @@ posts.forEach(post => {
     }
     // 连线：文章 -> 标签
     links.push({ 
-      source: post.slug, 
+      source: post.id, 
       target: `tag-${tag}` 
     });
   });
