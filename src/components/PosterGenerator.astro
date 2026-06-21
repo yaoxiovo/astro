@@ -90,7 +90,13 @@ if (role) {
       
       try {
         if (!window.html2canvas) {
-           throw new Error("html2canvas library not loaded. Please check your network or adblocker.");
+           await new Promise((resolve, reject) => {
+             const s = document.createElement('script');
+             s.src = "https://cdn.staticfile.net/html2canvas/1.4.1/html2canvas.min.js";
+             s.onload = resolve;
+             s.onerror = () => reject(new Error("Failed to load html2canvas script."));
+             document.head.appendChild(s);
+           });
         }
         // 等待图片加载完成 (以防跨域缓存)
         const img = document.getElementById('poster-cover-img') as HTMLImageElement;
@@ -133,7 +139,7 @@ if (role) {
         }, 2000);
       } catch (err) {
         console.error('Failed to generate poster', err);
-        alert('海报生成失败，请重试');
+        alert(`海报生成失败: ${err.message || err}`);
         btn.innerHTML = originalText;
         btn.style.pointerEvents = 'auto';
       }
@@ -141,5 +147,5 @@ if (role) {
   }
 
   initPoster();
-  document.addEventListener('swup:contentReplaced', initPoster);
+  document.addEventListener('swup:page:view', initPoster);
 </script>

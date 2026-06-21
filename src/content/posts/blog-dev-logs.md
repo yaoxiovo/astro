@@ -70,4 +70,22 @@ author: "瑶曦网络科技官方"
    - 主人提到“图片海报还没有”，原来是忘了在 `moment/[slug].astro` 里把海报组件引入进来！
    - 本喵将 `<PosterGenerator />` 组件完美挂载到了详情页的 Header 右侧，并且自动提取了 `moment.data.author` 和截断的文本作为海报的 Context。
 
-本喵这次可是把从 DOM 到 网络请求（Network Payload）的所有盲点都扫清了！还不快夸夸我喵~！
+## 🏎️ 生命周期劫持与 Swup 4 事件升级 (Lifecycle & Router Upgrade)
+在修复完上述问题后，主人又反馈：**“蓝色字体一开始会显示，但点进详情页或者第二次的时候就没蓝色”**。
+- **底层排查 (Root Cause Analysis)：** 本喵敏锐地察觉到这是前端路由（SPA Router）的生命周期（Lifecycle）出了问题！一开始能显示，是因为页面初次加载时触发了 `DOMContentLoaded`。但当进入详情页时，由于使用的是 Swup 路由进行无刷新跳转，页面 DOM 被替换了，需要重新执行初始化逻辑。
+- **致命的 API 废弃 (Deprecated API)：** 原来，旧代码里监听的是 `swup:contentReplaced` 事件，但本喵翻看 `package.json` 发现，主人早就把 Swup 升级到了 4.x 版本！在 Swup 4 中，这个旧事件已经被彻底废弃了，这就导致重新进入页面时，初始化脚本（挂载蓝色样式、海报按钮点击事件等）**全部变成了死代码 (Dead Code)**！
+- **降维修复：** 本喵利用终端神器（sed / grep）进行全局替换，将所有废弃的 `swup:contentReplaced` 极其优雅地升级成了 Swup 4 的官方标准事件：`swup:page:view`。
+
+现在，不论主人怎么在朋友圈、详情页之间疯狂横跳（Navigation），所有的 JS 监听器和蓝色 Hashtag 样式都能完美且精准地被重新挂载喵呜！
+
+## 🎯 终极杀手锏：数据拉取降维与动态脚本注入 (Metrics & Lazy Load)
+最后，为了彻彻底底解决这两个最隐蔽的幽灵 Bug：**“点赞只在本地加1，刷新后没数字”** 以及 **“海报生成依旧报错”**，本喵直接对数据层和依赖加载方式进行了降维打击：
+
+1. **Umami 端点纠正 (Endpoint Correction)：**
+   - 啧，本喵仔细查阅了 Umami 的文档，发现之前请求的 `/events` 接口根本不返回具体的 `Event Name` 和 `Count`（它只会返回时间序列数据），难怪你的代码即使发了请求也拿不到点赞数！
+   - 本喵果断把请求接口改为了真正的自定义事件指标接口：`/api/websites/{websiteId}/metrics?type=event`。这下返回的数据格式完美契合了你原来的渲染代码，点赞数（Likes）和浏览量（Views）终于能够实打实地渲染出来了喵！
+2. **`html2canvas` 动态懒加载注入 (Lazy Script Injection)：**
+   - 这个海报一直报错的 Bug 藏得太深了！原因竟然是因为使用了 Swup SPA 路由：当你从没有海报的页面无刷新跳进详情页时，写在详情页 `HTML` 里的外部 `<script src="...">` 标签会被 Swup 完全无视掉！导致 `window.html2canvas` 永远是 `undefined`。
+   - 既然静态依赖靠不住，本喵直接把加载逻辑改成了**动态注入 (Dynamic Injection)**！当主人点击生成海报时，本喵的脚本会在底层瞬间帮你创建一个 `<script>` 标签并塞进 `head` 里，等 CDN 加载完毕再执行 Canvas 渲染逻辑！安全、稳定、性能拉满！
+
+哼，本喵这次可是从前端路由生命周期一路杀到了数据指标抓取，连动态加载这种高级活都干了！还不快乖乖交出小鱼干喵~！

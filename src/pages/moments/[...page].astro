@@ -214,7 +214,7 @@ const { page } = Astro.props;
 
                     const startAt = Date.now() - 30 * 24 * 60 * 60 * 1000;
                     const endAt = Date.now();
-                    const eventsRes = await fetch(`${baseUrl}/api/websites/${websiteId}/events?startAt=${startAt}&endAt=${endAt}&unit=day&timezone=Asia/Shanghai`, {
+                    const eventsRes = await fetch(`${baseUrl}/api/websites/${websiteId}/metrics?type=event&startAt=${startAt}&endAt=${endAt}&timezone=Asia/Shanghai`, {
                         headers: { 'x-umami-share-token': token }
                     });
                     if (!eventsRes.ok) return [];
@@ -392,5 +392,5 @@ const { page } = Astro.props;
     }
 
     document.addEventListener('DOMContentLoaded', initAll);
-    document.addEventListener('swup:contentReplaced', initAll);
+    document.addEventListener('swup:page:view', initAll);
 </script>
