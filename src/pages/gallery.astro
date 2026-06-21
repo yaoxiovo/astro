@@ -2,24 +2,23 @@
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { Icon } from "astro-icon/components";
 
-// 扫描 /public 目录中的图片 + content/posts/photo 目录
-// 由于 Astro 静态导入限制，这里直接用 import.meta.glob 扫描
+// 扫描 src/content/posts/photo 目录的图片
+// Astro 5 中 eager glob 返回 { default: string } 对于非处理图片
+const rawImages = import.meta.glob(
+  '/src/content/posts/photo/*.{jpg,jpeg,png,webp,avif,gif,JPG,JPEG,PNG,WEBP}',
+  { eager: true, query: '?url', import: 'default' }
+) as Record<string, string>;
 
-const rawImages = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/content/posts/photo/*.{jpg,jpeg,png,webp,avif,gif}',
-  { eager: true }
-);
+interface GalleryItem {
+  src: string;
+  title: string;
+  filename: string;
+}
 
-const images = Object.entries(rawImages).map(([path, mod]) => {
-  const filename = path.split('/').pop() ?? '';
-  return {
-    src: mod.default.src,
-    width: mod.default.width,
-    height: mod.default.height,
-    filename,
-    // 可以通过文件名约定提取标题，如 "2024-01-my-photo.jpg" → "my photo"
-    title: filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
-  };
+const images: GalleryItem[] = Object.entries(rawImages).map(([filePath, src]) => {
+  const filename = filePath.split('/').pop() ?? '';
+  const title = filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+  return { src, title, filename };
 });
 ---
 
@@ -35,8 +34,8 @@ const images = Object.entries(rawImages).map(([path, mod]) => {
         <h1 class="text-2xl font-bold text-black/90 dark:text-white/90">相册</h1>
         <p class="text-sm text-black/40 dark:text-white/40 mt-0.5">记录生活的美好瞬间</p>
       </div>
-      <div class="ml-auto text-sm text-black/30 dark:text-white/30">
-        共 {images.length} 张
+      <div class="ml-auto text-sm text-black/30 dark:text-white/30 bg-black/5 dark:bg-white/5 px-2.5 py-1 rounded-full">
+        {images.length} 张
       </div>
     </div>
 
@@ -47,34 +46,36 @@ const images = Object.entries(rawImages).map(([path, mod]) => {
           <Icon name="material-symbols:add-photo-alternate-outline" class="text-[2rem] text-black/25 dark:text-white/25" />
         </div>
         <p class="text-black/40 dark:text-white/40 text-sm">相册还没有照片</p>
-        <p class="text-black/25 dark:text-white/25 text-xs">将图片放入 <code class="font-mono">src/content/posts/photo/</code> 目录即可</p>
+        <p class="text-black/25 dark:text-white/25 text-xs">
+          将图片放入 <code class="font-mono bg-black/5 dark:bg-white/5 px-1 py-0.5 rounded">src/content/posts/photo/</code> 目录即可
+        </p>
       </div>
     ) : (
       <!-- 瀑布流网格 -->
       <div
         id="gallery-grid"
-        class="columns-2 sm:columns-3 lg:columns-4 gap-3 space-y-0"
+        class="columns-2 sm:columns-3 lg:columns-4 gap-3"
+        style="column-gap: 0.75rem;"
       >
         {images.map((img, i) => (
           <div
             class="gallery-item break-inside-avoid mb-3 group relative overflow-hidden rounded-xl cursor-zoom-in"
-            style={`animation-delay: ${i * 40}ms`}
+            style={`animation-delay: ${Math.min(i * 50, 500)}ms`}
           >
-            <!-- 实际图片 -->
             <img
               src={img.src}
               alt={img.title}
-              width={img.width}
-              height={img.height}
               loading="lazy"
               decoding="async"
-              class="w-full h-auto block transition-transform duration-500 group-hover:scale-[1.04]"
+              class="w-full h-auto block transition-all duration-500 group-hover:scale-[1.04] group-hover:brightness-95"
               data-fancybox="gallery"
               data-caption={img.title}
             />
-            <!-- hover 遮罩 -->
-            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-end p-3 opacity-0 group-hover:opacity-100">
-              <span class="text-white/90 text-xs font-medium drop-shadow truncate max-w-full">
+            <!-- hover 文字遮罩 -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent
+                        opacity-0 group-hover:opacity-100 transition-opacity duration-300
+                        flex items-end p-3 pointer-events-none">
+              <span class="text-white/90 text-xs font-medium drop-shadow-sm truncate max-w-full leading-snug">
                 {img.title}
               </span>
             </div>
@@ -93,7 +94,7 @@ const images = Object.entries(rawImages).map(([path, mod]) => {
   @keyframes galleryFadeIn {
     from {
       opacity: 0;
-      transform: translateY(12px) scale(0.97);
+      transform: translateY(10px) scale(0.98);
     }
     to {
       opacity: 1;
@@ -101,8 +102,3 @@ const images = Object.entries(rawImages).map(([path, mod]) => {
     }
   }
 </style>
-
-<script>
-  // 使用已在 Layout.astro 中全局注册的 Fancybox
-  // Fancybox 会自动处理 data-fancybox="gallery" 属性的图片
-</script>

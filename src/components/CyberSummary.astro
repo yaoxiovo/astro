@@ -1,0 +1,75 @@
+---
+// CyberSummary.astro
+interface Props {
+  summary: string;
+}
+const { summary } = Astro.props;
+// 清理可能的 markdown 标记或换行
+const cleanSummary = summary.replace(/[\n\r]+/g, ' ').replace(/"/g, '&quot;');
+---
+
+<div class="cyber-summary-container mb-6 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/5 p-4 md:p-5 relative overflow-hidden group">
+  <!-- 赛博感扫描线背景 -->
+  <div class="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_50%,rgba(0,0,0,0.05)_50%)] bg-[length:100%_4px] opacity-20 dark:opacity-40 pointer-events-none"></div>
+  <div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[var(--primary)] to-transparent opacity-70 group-hover:opacity-100 transition-opacity"></div>
+  
+  <div class="relative flex items-center gap-2 mb-3">
+    <div class="w-2.5 h-2.5 rounded-sm bg-[var(--primary)] animate-[pulse_1.5s_ease-in-out_infinite]"></div>
+    <span class="text-[var(--primary)] text-xs font-mono font-bold tracking-widest uppercase">System // AI Analysis Protocol Active</span>
+  </div>
+  
+  <div 
+    class="font-mono text-[0.85rem] leading-relaxed text-black/80 dark:text-white/80 min-h-[3rem] relative z-10" 
+    id="cyber-typewriter" 
+    data-text={cleanSummary}
+  >
+    <!-- JS 会在这里生成打字效果 -->
+    <span class="typewriter-cursor inline-block w-2 h-3.5 bg-[var(--primary)] align-middle ml-1 animate-[pulse_1s_step-end_infinite]"></span>
+  </div>
+</div>
+
+<script>
+  function initTypewriter() {
+    const el = document.getElementById('cyber-typewriter');
+    if (!el || el.dataset.typed === 'true') return;
+    
+    const text = el.dataset.text || '';
+    // 初始化清空，保留光标
+    el.innerHTML = '<span class="typewriter-cursor inline-block w-2 h-3.5 bg-[var(--primary)] align-middle ml-1 animate-[pulse_1s_step-end_infinite]"></span>';
+    const cursor = el.querySelector('.typewriter-cursor');
+    
+    let i = 0;
+    const speed = 45; // 每个字的间隔 ms
+    let typingTimer: number;
+    
+    function typeWriter() {
+      if (i < text.length) {
+        const char = text.charAt(i);
+        const textNode = document.createTextNode(char);
+        el.insertBefore(textNode, cursor);
+        i++;
+        typingTimer = window.setTimeout(typeWriter, speed);
+      } else {
+        el.dataset.typed = 'true';
+        // 5秒后光标停止闪烁变成实心
+        setTimeout(() => {
+          if(cursor) cursor.classList.remove('animate-[pulse_1s_step-end_infinite]');
+        }, 5000);
+      }
+    }
+    
+    // 延迟 600ms 等页面完全渲染后再开始打字
+    setTimeout(typeWriter, 600);
+
+    return () => {
+      clearTimeout(typingTimer);
+    };
+  }
+
+  let cleanup = initTypewriter();
+  
+  document.addEventListener('swup:contentReplaced', () => {
+    if (cleanup) cleanup();
+    cleanup = initTypewriter();
+  });
+</script>

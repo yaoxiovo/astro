@@ -1,0 +1,180 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getSortedPosts } from "@utils/content-utils";
+import { Icon } from "astro-icon/components";
+
+const posts = await getSortedPosts();
+
+// 组装节点和连线数据
+const nodes: any[] = [];
+const links: any[] = [];
+const tagSet = new Set<string>();
+
+posts.forEach(post => {
+  // 添加文章节点 (组1)
+  nodes.push({ 
+    id: post.slug, 
+    name: post.data.title, 
+    group: 1, 
+    val: 6, // 节点大小权重
+    url: `/posts/${post.slug}/` 
+  });
+  
+  // 添加标签节点并连线
+  post.data.tags.forEach(tag => {
+    if (!tagSet.has(tag)) {
+      tagSet.add(tag);
+      // 标签节点 (组2)
+      nodes.push({ 
+        id: `tag-${tag}`, 
+        name: `#${tag}`, 
+        group: 2, 
+        val: 3 
+      });
+    }
+    // 连线：文章 -> 标签
+    links.push({ 
+      source: post.slug, 
+      target: `tag-${tag}` 
+    });
+  });
+});
+
+const graphData = JSON.stringify({ nodes, links });
+---
+
+<MainGridLayout title="知识星空" description="文章双向关联与标签网络映射">
+  <div class="card-base p-0 min-h-[75vh] relative overflow-hidden flex flex-col group">
+    <!-- 顶部标题栏 -->
+    <div class="absolute top-0 left-0 w-full z-10 p-5 bg-gradient-to-b from-black/20 dark:from-black/40 to-transparent pointer-events-none flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white flex-shrink-0 shadow-lg">
+          <Icon name="material-symbols:hub-outline" class="text-[1.5rem]" />
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-white drop-shadow-md">知识星空</h1>
+          <p class="text-sm text-white/70 drop-shadow-sm mt-0.5 font-mono tracking-wide">OBSIDIAN KNOWLEDGE GRAPH</p>
+        </div>
+      </div>
+      <div class="hidden sm:flex text-white/50 text-xs font-mono bg-black/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+        NODES: {nodes.length} | EDGES: {links.length}
+      </div>
+    </div>
+
+    <!-- 图谱容器 -->
+    <div id="graph-container" class="w-full flex-1 min-h-[75vh] bg-[#1a1a1a] dark:bg-[#0d1117] cursor-move"></div>
+    
+    <!-- 悬浮提示 -->
+    <div class="absolute bottom-6 right-6 text-white/40 text-xs font-mono pointer-events-none drop-shadow-sm flex items-center gap-2">
+      <Icon name="material-symbols:mouse" class="text-lg" />
+      <span>滚轮缩放 / 拖拽平移 / 点击跳转</span>
+    </div>
+
+    <!-- 数据载体 -->
+    <script id="graph-data" type="application/json" set:html={graphData}></script>
+  </div>
+</MainGridLayout>
+
+<!-- 引入 force-graph 库 -->
+<script is:inline src="https://unpkg.com/force-graph"></script>
+
+<script is:inline>
+  function initGraph() {
+    const container = document.getElementById('graph-container');
+    const dataEl = document.getElementById('graph-data');
+    if (!container || !dataEl) return;
+    
+    // 如果已经渲染过，清除旧的（适配 Swup）
+    container.innerHTML = '';
+    
+    const gData = JSON.parse(dataEl.textContent);
+    
+    const Graph = ForceGraph()(container)
+      .graphData(gData)
+      .nodeId('id')
+      .nodeLabel('name')
+      .nodeVal('val')
+      .nodeAutoColorBy('group')
+      // 宇宙感深色配色
+      .backgroundColor('transparent')
+      // 粒子动画连线
+      .linkDirectionalParticles(2)
+      .linkDirectionalParticleSpeed(d => 0.005 + Math.random() * 0.005)
+      .linkDirectionalParticleWidth(1.5)
+      .linkColor(() => 'rgba(255,255,255,0.15)')
+      .onNodeClick(node => {
+        if (node.url) {
+          if (window.swup) {
+            window.swup.navigate(node.url);
+          } else {
+            window.location.href = node.url;
+          }
+        } else {
+          // 点击标签节点时将视图聚焦到该节点
+          Graph.centerAt(node.x, node.y, 1000);
+          Graph.zoom(3, 1000);
+        }
+      });
+      
+    // 自定义节点绘制，让文字和节点发光
+    Graph.nodeCanvasObject((node, ctx, globalScale) => {
+      const isArticle = node.group === 1;
+      const label = node.name;
+      const fontSize = (isArticle ? 14 : 10) / globalScale;
+      ctx.font = `${isArticle ? 'bold' : 'normal'} ${fontSize}px Inter, Sans-Serif`;
+      
+      const textWidth = ctx.measureText(label).width;
+      const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.4); 
+
+      // 绘制背景药丸形
+      ctx.fillStyle = isArticle ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.roundRect(
+        node.x - bckgDimensions[0] / 2, 
+        node.y - bckgDimensions[1] / 2, 
+        bckgDimensions[0], 
+        bckgDimensions[1], 
+        bckgDimensions[1] / 2
+      );
+      ctx.fill();
+      
+      // 节点外框颜色 (按组分配的默认颜色)
+      ctx.strokeStyle = node.color;
+      ctx.lineWidth = 0.5 / globalScale;
+      ctx.stroke();
+
+      // 文字绘制
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = isArticle ? 'rgba(255, 255, 255, 0.9)' : node.color;
+      ctx.fillText(label, node.x, node.y);
+      
+      node.__bckgDimensions = bckgDimensions; 
+    })
+    .nodePointerAreaPaint((node, color, ctx) => {
+      ctx.fillStyle = color;
+      const bckgDimensions = node.__bckgDimensions;
+      bckgDimensions && ctx.beginPath();
+      bckgDimensions && ctx.roundRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1], bckgDimensions[1]/2);
+      bckgDimensions && ctx.fill();
+    });
+
+    // 让图谱自适应容器大小
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        if (entry.target === container) {
+          Graph.width(entry.contentRect.width);
+          Graph.height(entry.contentRect.height);
+        }
+      }
+    });
+    resizeObserver.observe(container);
+    
+    // 初始化展开动画
+    Graph.d3Force('charge').strength(-150);
+  }
+  
+  // 初始化与 Swup 生命周期绑定
+  document.addEventListener('DOMContentLoaded', initGraph);
+  document.addEventListener('swup:contentReplaced', initGraph);
+</script>

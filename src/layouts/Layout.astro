@@ -120,7 +120,10 @@ const bannerOffset =
 
 		<meta name="referrer" content="no-referrer">
 		
-		
+		<!-- APlayer & MetingJS -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css">
+		<script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js" is:inline></script>
+		<script src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js" is:inline></script>
 		
 		{/* <!-- Content Security Policy -->
 		<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://giscus.app https://hpic.072103.xyz https://umami.yaoxi.cloud https://hm.baidu.com https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://giscus.app https://fonts.googleapis.com https://api.iconify.design; font-src 'self' https://fonts.gstatic.com https://api.iconify.design; img-src 'self' data: https: http:; connect-src 'self' https://umami.yaoxi.cloud https://hm.baidu.com https://www.google-analytics.com https://analytics.google.com https://api.iconify.design https://static.cloudflareinsights.com https://pic.2x.nz https://q2.qlogo.cn https://ep1.adtrafficquality.google https://googleads.g.doubleclick.net; frame-src 'self' https://giscus.app *.bilibili.com https://www.google.com https://googleads.g.doubleclick.net https://support.nodeget.com https://*.adtrafficquality.google; object-src 'none'; base-uri 'self'; form-action 'self';"> */}
@@ -256,6 +259,18 @@ const bannerOffset =
 		  data-overlayscrollbars-initialize
 	>
 		<div id="bg-box"></div>
+		<!-- 悬浮全局播放器 (网易云音乐歌单) -->
+		<meting-js
+			server="netease"
+			type="playlist"
+			id="10080838637"
+			fixed="true"
+			autoplay="false"
+			theme="oklch(0.70 0.14 var(--hue, 250))"
+			order="random"
+			lrc-type="0"
+			volume="0.6">
+		</meting-js>
 		<ReadingProgress />
 		<CookieConsent />
 		<ConfigCarrier></ConfigCarrier>

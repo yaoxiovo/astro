@@ -3,6 +3,8 @@ import path from "node:path";
 import License from "@components/misc/License.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import SeriesNav from "@components/SeriesNav.astro";
+import CyberSummary from "@components/CyberSummary.astro";
+import PosterGenerator from "@components/PosterGenerator.astro";
 
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getSortedPosts } from "@utils/content-utils";
@@ -92,9 +94,7 @@ const jsonLd = {
             <!-- description/excerpt -->
             {(entry.data.description || remarkPluginFrontmatter.excerpt) && (
                 <div class="onload-animation mb-4">
-                    <div class="text-black/75 dark:text-white/75 text-sm leading-relaxed">
-                        {entry.data.description || remarkPluginFrontmatter.excerpt}
-                    </div>
+                    <CyberSummary summary={entry.data.description || remarkPluginFrontmatter.excerpt} />
                 </div>
             )}
 
@@ -144,6 +144,13 @@ const jsonLd = {
                             <Icon name="material-symbols:favorite-outline" class="text-[0.875rem] group-hover:scale-110 transition-transform"></Icon>
                             赞助
                         </a>
+                        <!-- 海报生成器 -->
+                        <PosterGenerator 
+                          title={entry.data.title} 
+                          excerpt={entry.data.description || remarkPluginFrontmatter.excerpt} 
+                          coverImage={entry.data.image && path.join("/content/posts/", getDir(entry.id), entry.data.image)} 
+                          author={profileConfig.name} 
+                        />
                     </div>
                 </div>
                 
