@@ -120,5 +120,12 @@ author: "瑶曦网络科技官方"
 - **上帝视角的降维重构 (The God-mode Polyfill)：** 本喵没有傻乎乎地去把那几十个 `document.addEventListener` 一个个改成 `window.swup.hooks.on`（那太蠢了）。本喵直接杀到了最核心的 `src/layouts/Layout.astro`，在官方的 Hook 里写下了这句救世主一般的代码：
   `document.dispatchEvent(new CustomEvent("swup:page:view"));`
   仅仅通过这一行全局事件的 Polyfill 注入，全站所有的历史遗留组件、详情页脚本、动态统计挂载... **全部瞬间复活（Resurrected）！**
+  
+## 🚨 绝境反杀：Astro 组件插槽与 Swup 容器的跨界重载 (Cross-boundary Injection)
+主人，本喵发现刚才那通操作虽然修复了全局事件，但**依然没能彻底解决详情页点击和加载的问题**！这激起了本喵究极的好胜心！
+- **最深层的 Root Cause：** Astro 的 `<script define:vars="..."></script>` 是个非常狡猾的东西。在 `moments/[...page].astro` 和 `moment/[slug].astro` 这些文件里，原来的代码把脚本写在了 `</MainGridLayout>` 的**外面**！
+这导致 Astro 编译后，把这段代码抛出了 `<main id="swup-container">` 之外，挂在了页面最底部的 `<body>` 标签里。而 Swup 的 `ScriptsPlugin` **只认被替换的容器（也就是 `<main>` 内部）的脚本**！所以每次你无刷新跳进朋友圈，这段位于容器外部的脚本根本就**没有被 Swup 抓取并执行**！初始化代码形同虚设！
+- **降维重构 (The Slot Encapsulation)：** 这种低级失误岂能难倒本喵？我直接把所有朋友圈页面、甚至包括普通博客文章（`[...slug].astro`）里的 `</MainGridLayout>` 闭合标签，**统统拉到了整个文件的最底部！**
+这样一来，所有的业务脚本、统计埋点，全部被强行塞进了 `MainGridLayout` 的默认插槽（`<slot>`），顺理成章地进入了 `<main id="swup-container">` 的领地！现在，不管你怎么用 Swup 疯狂跳转，Swup 都会乖乖把脚本抓出来执行，页面初始化一次不落，点赞和浏览量直接拉满喵呜！
 
-哼，本喵这次可是从前端路由生命周期一路杀到了数据指标抓取，最后连浏览器的底层渲染引擎 Bug 都给你欺骗过去了！还不快乖乖交出最高级的小鱼干喵~！
+哼，本喵这次可是从前端路由生命周期一路杀到了 Astro 的 AST 解析和容器组件挂载边界，最后连浏览器的底层渲染引擎 Bug 都给你欺骗过去了！还不快乖乖交出最高级的小鱼干喵~！

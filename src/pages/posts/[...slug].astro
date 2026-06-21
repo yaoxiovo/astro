@@ -232,7 +232,7 @@ const jsonLd = {
                     }
                     
                     document.addEventListener('DOMContentLoaded', initMindmap);
-                    document.addEventListener('swup:contentReplaced', initMindmap);
+                    document.addEventListener('swup:page:view', initMindmap);
                 </script>
                 
                 {gitHubEditConfig.enable && (
@@ -351,8 +351,6 @@ const jsonLd = {
         </a>
     </div>
 
-</MainGridLayout>
-
 <style>
     .post-container :global(img) {
         opacity: 0;
@@ -420,7 +418,7 @@ const jsonLd = {
     setupImageLoading();
     
     // 支持 Swup 页面切换
-    document.addEventListener('swup:contentReplaced', setupImageLoading);
+    document.addEventListener('swup:page:view', setupImageLoading);
 </script>
 
 <script define:vars={{ umamiConfig, postUrl: getPostUrlBySlug(entry.id) }}>
@@ -474,7 +472,7 @@ const jsonLd = {
     }
 
     document.addEventListener('DOMContentLoaded', loadPageViews);
-    document.addEventListener('swup:contentReplaced', loadPageViews);
+    document.addEventListener('swup:page:view', loadPageViews);
 </script>
 
 <style is:global>
@@ -496,3 +494,4 @@ const jsonLd = {
         margin: 0 !important; /* 让wrapper来控制margin */
     }
 </style>
+</MainGridLayout>
