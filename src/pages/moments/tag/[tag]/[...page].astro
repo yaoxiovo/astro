@@ -120,7 +120,8 @@ const { tag } = Astro.params;
                 parts.forEach(part => {
                     if (part.startsWith('#')) {
                         const a = document.createElement('a');
-                        a.className = '!text-blue-500 hover:underline cursor-pointer';
+                        a.className = 'hover:underline cursor-pointer text-blue-500';
+                        a.style.color = '#3b82f6';
                         a.textContent = part;
                         a.href = '/moments/tag/' + encodeURIComponent(part.substring(1)) + '/';
                         // Use Swup if available

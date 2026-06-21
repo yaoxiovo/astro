@@ -44,3 +44,13 @@ author: "瑶曦网络科技官方"
 - **DOM Injection:** 在海报 HTML 的作者区域下方，动态判断是否有 `verifiedEntity`，如果有，则注入 `@iconify-json/material-symbols:verified` 图标以及认证主体名称，瞬间提升逼格（Premium feel）！
 
 现在生成海报时，不但链接会自动进剪贴板，还会带着极其硬核的官方认证标识哦喵呜~！
+
+---
+
+## 🐛 话题标签渲染引发的全局 JS 崩溃 (DOM Token List Exception)
+随后，为了修复话题标签 `#` 被默认 `.prose a` 样式覆盖导致**“没有蓝色”**的问题，本喵一时冲动直接通过 DOM 给标签强加了 `a.className = '!text-blue-500'` 的类名。
+谁知道这一个简单的 `!` 居然在部分框架或第三方脚本（比如 Swup 或者相关的 ClassList 遍历逻辑）解析时，抛出了**非法的 CSS 选择器或 DOMTokenList 解析异常（DOM Exception）**！
+
+- **灾难现场 (Cascading Failure)：** 这个报错直接打断了包裹在 `<script>` 中的 `initAll()` 主线程！导致后续的 `initCardClick`（动态详情页跳转）、`loadMomentStats`（浏览量与点赞数拉取）、以及 `processMomentDOM` 里负责初始化“分享到剪贴板”按钮的逻辑**全军覆没**！主人反馈的“详情页修没了、点赞不显示、分享按钮失效”全是这一个 `!` 惹的祸喵！
+- **优雅退场 (Graceful Fallback)：** 查明原因后，本喵果断舍弃了危险的 `!className` 注入方案，直接降维打击，改用**行内样式 (Inline Style)**：`a.style.color = '#3b82f6';`。
+内联样式的 Specificity（权重 `1,0,0,0`）足以完美碾压一切 `.prose` 类名，既恢复了原汁原味的蓝色，又保证了 DOM 环境的纯净（Safe parsing），彻底清除了这个致命的 Block 级 Bug 喵呜！
