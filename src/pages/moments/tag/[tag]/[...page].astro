@@ -1,100 +1,83 @@
 ---
 import MainGridLayout from '../../layouts/MainGridLayout.astro';
 import MomentCard from '../../components/MomentCard.astro';
+import Pagination from '../../components/control/Pagination.astro';
 import { getCollection } from 'astro:content';
 
-export async function getStaticPaths() {
+export async function getStaticPaths({ paginate }) {
     const allMoments = await getCollection('moments');
-    return allMoments.map((moment) => ({
-        params: { slug: moment.id.replace(/\.[^/.]+$/, "") },
-        props: { moment },
-    }));
+    
+    // Filter out replies, only show top-level moments on homepage
+    const topLevelMoments = allMoments.filter((moment) => !moment.data.replyTo);
+
+    // Extract all unique tags using a regex on the raw content
+    const tags = new Set();
+    topLevelMoments.forEach(m => {
+        const matches = m.body.match(/#([^\s<]+)/g);
+        if (matches) {
+            matches.forEach(tag => tags.add(tag.substring(1)));
+        }
+    });
+
+    return Array.from(tags).flatMap(tag => {
+        const filteredMoments = topLevelMoments.filter(m => m.body.includes(`#${tag}`));
+        
+        const sortedMoments = filteredMoments.sort((a, b) => {
+            if (a.data.pinned && !b.data.pinned) return -1;
+            if (!a.data.pinned && b.data.pinned) return 1;
+            return new Date(b.data.published).getTime() - new Date(a.data.published).getTime();
+        });
+        
+        return paginate(sortedMoments, {
+            params: { tag },
+            pageSize: 10
+        });
+    });
 }
 
-const { moment } = Astro.props;
-const allMoments = await getCollection('moments');
-
-// Find thread: Parent -> Current -> Children
-let parent = null;
-if (moment.data.replyTo) {
-    parent = allMoments.find(m => m.id.replace(/\.[^/.]+$/, "") === moment.data.replyTo);
-}
-
-const children = allMoments
-    .filter(m => m.data.replyTo === moment.id.replace(/\.[^/.]+$/, ""))
-    .sort((a, b) => new Date(a.data.published).getTime() - new Date(b.data.published).getTime());
-
-// Other related moments (same author, not in thread)
-const threadSlugs = new Set([moment.id]);
-if (parent) threadSlugs.add(parent.id);
-children.forEach(c => threadSlugs.add(c.id));
-
-const relatedMoments = allMoments
-    .filter(m => m.data.author === moment.data.author && !threadSlugs.has(m.id))
-    .sort((a, b) => new Date(b.data.published).getTime() - new Date(a.data.published).getTime())
-    .slice(0, 3);
+const { page } = Astro.props;
+const { tag } = Astro.params;
 ---
 
-<MainGridLayout title="动态详情" description="动态详情">
+<MainGridLayout title={`#${tag} - 朋友圈`} description={`含有 #${tag} 标签的动态`}>
     <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
         <div class="card-base z-10 px-9 py-6 relative w-full ">
-            <!-- Back button -->
-            <div class="flex items-center gap-4 mb-6 pb-4 border-b border-black/5 dark:border-white/5">
+            <!-- Back button and Title -->
+            <div class="flex items-center gap-4 mb-8 pb-4 border-b border-black/5 dark:border-white/5">
                 <a href="/moments/" class="p-2 -ml-2 rounded-full hover:bg-[var(--primary)]/10 text-[var(--primary)] transition">
                     <svg viewBox="0 0 24 24" class="w-6 h-6" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path></svg>
                 </a>
-                <div class="text-2xl font-bold text-[var(--primary)]">动态详情 (Thread)</div>
+                <div class="text-3xl font-bold text-[var(--primary)]">#{tag}</div>
             </div>
             
-            <div class="flex flex-col gap-0">
-                <!-- Thread Parent -->
-                {parent && (
-                    <div class="relative">
-                        <MomentCard moment={parent} />
-                        <!-- Connecting Line -->
-                        <div class="absolute left-6 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
+            <div id="moments-container" class="flex flex-col gap-6">
+                {page.data.map((moment) => (
+                    <MomentCard moment={moment} />
+                ))}
+                {page.data.length === 0 && (
+                    <div class="text-center text-[var(--text-color-light)] py-10">
+                        还没有发布过任何动态呢~
                     </div>
                 )}
-                
-                <!-- Main Moment -->
-                <div class="relative">
-                    {/* Add a subtle highlight to main moment if there's a thread */}
-                    <div class={(parent || children.length > 0) ? "ring-2 ring-[var(--primary)] rounded-2xl" : ""}>
-                        <MomentCard moment={moment} />
-                    </div>
-                    {children.length > 0 && (
-                        <div class="absolute left-6 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
-                    )}
-                </div>
-
-                <!-- Thread Children -->
-                {children.map((child, idx) => (
-                    <div class="relative mt-6">
-                        <MomentCard moment={child} />
-                        {idx !== children.length - 1 && (
-                            <div class="absolute left-6 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
-                        )}
-                    </div>
-                ))}
             </div>
-
-            <!-- Other Related -->
-            {relatedMoments.length > 0 && (
-                <div class="mt-12 pt-8 border-t border-black/5 dark:border-white/5">
-                    <div class="text-xl font-bold mb-6 text-[var(--text-color)]">该作者的其他动态</div>
-                    <div class="flex flex-col gap-6">
-                        {relatedMoments.map(rm => (
-                            <MomentCard moment={rm} />
-                        ))}
-                    </div>
+            
+            <!-- Infinite Scroll Trigger -->
+            {page.url.next && (
+                <div id="infinite-scroll-trigger" data-next-url={page.url.next} class="w-full h-10 flex items-center justify-center mt-6">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--primary)]"></div>
                 </div>
             )}
+            
+            <!-- Standard Pagination (Fallback) -->
+            <div id="standard-pagination" class={page.url.next ? "hidden" : "mt-8"}>
+                <Pagination page={page} baseUrl={`moments/tag/${tag}`} />
+            </div>
         </div>
     </div>
 </MainGridLayout>
 
 <script define:vars={{ umamiConfig: (await import('../../config')).umamiConfig }}>
-    // Re-use logic for moments detail page
+    // Utility for relative time
     function timeAgo(dateString) {
         const date = new Date(dateString);
         const now = new Date();
@@ -109,20 +92,27 @@ const relatedMoments = allMoments
         return `${Math.floor(diffInSeconds / 31104000)}年前`;
     }
 
+    // Process all dynamic client-side DOM updates
     function processMomentDOM() {
+        // 1. Relative Time
         document.querySelectorAll('.moment-time').forEach(el => {
             const timeStr = el.getAttribute('data-time');
             if (timeStr) el.textContent = timeAgo(timeStr);
         });
 
+        // 2. Hashtag Highlighting
         document.querySelectorAll('.moment-content').forEach(el => {
             if (el.dataset.hashtagsProcessed) return;
             el.dataset.hashtagsProcessed = "true";
+            
+            // Loop through text nodes directly to avoid breaking inner HTML elements like <a> or <img>
             const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
             const nodesToReplace = [];
             let n;
             while (n = walk.nextNode()) {
-                if (n.nodeValue.match(/#([^\s<]+)/)) nodesToReplace.push(n);
+                if (n.nodeValue.match(/#([^\s<]+)/)) {
+                    nodesToReplace.push(n);
+                }
             }
             nodesToReplace.forEach(node => {
                 const fragment = document.createDocumentFragment();
@@ -149,6 +139,7 @@ const relatedMoments = allMoments
             });
         });
 
+        // 3. Share Buttons
         document.querySelectorAll('.moment-share-btn').forEach(btn => {
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
@@ -166,11 +157,15 @@ const relatedMoments = allMoments
             });
         });
 
+        // 4. Read More Fold
         document.querySelectorAll('.moment-content-wrapper').forEach(wrapper => {
             if (wrapper.dataset.foldProcessed) return;
             wrapper.dataset.foldProcessed = "true";
+            
             const content = wrapper.querySelector('.moment-content');
             const btn = wrapper.querySelector('.moment-read-more');
+            
+            // Check if content overflows
             if (content.scrollHeight > content.clientHeight) {
                 btn.classList.remove('hidden');
                 btn.addEventListener('click', () => {
@@ -249,7 +244,7 @@ const relatedMoments = allMoments
                 });
             }
         } catch (error) {
-            console.error('获取统计数据失败:', error);
+            console.error('获取朋友圈点赞/浏览数据失败:', error);
         }
     }
 
@@ -258,20 +253,50 @@ const relatedMoments = allMoments
         likeBtns.forEach(btn => {
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
+            
             newBtn.addEventListener('click', function(e) {
                 if (this.classList.contains('liked')) return;
+                
                 const countSpan = this.querySelector('.like-count');
                 const icon = this.querySelector('svg');
                 let current = parseInt(countSpan.textContent) || 0;
                 countSpan.textContent = current + 1;
+                
                 this.classList.add('liked', 'text-red-500');
+                
+                // Track Umami Event manually for immediate dispatch if needed, but the data-umami-event attribute handles it automatically
                 icon.style.transform = 'scale(1.3)';
                 setTimeout(() => { icon.style.transform = 'scale(1)'; }, 200);
             });
         });
     }
 
+    function initViewTracking() {
+        if (!umamiConfig.enable || !window.umami) return;
+        
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const momentId = entry.target.getAttribute('data-moment-id');
+                    if (momentId) {
+                        // Manually trigger a View event via Umami script API
+                        window.umami.track(`View_${momentId}`);
+                        obs.unobserve(entry.target); // Track only once per page load
+                    }
+                }
+            });
+        }, { threshold: 0.5 }); // Trigger when 50% of the card is visible
+
+        document.querySelectorAll('.moment-card').forEach(card => {
+            // Remove the ID prefix to get actual moment ID
+            const id = card.id.replace('moment-', '');
+            card.setAttribute('data-moment-id', id);
+            observer.observe(card);
+        });
+    }
+
     function initCardClick() {
+        // Prevent duplicate global listeners
         if (window._momentCardClickInit) return;
         window._momentCardClickInit = true;
 
@@ -279,9 +304,11 @@ const relatedMoments = allMoments
             const card = e.target.closest('.moment-card');
             if (!card) return;
 
+            // Ignore if clicking interactive elements
             if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.moment-view-btn') || e.target.closest('img')) {
                 return;
             }
+
             const idAttr = card.id;
             if (!idAttr || !idAttr.startsWith('moment-')) return;
             const momentId = idAttr.replace('moment-', '');
@@ -294,10 +321,71 @@ const relatedMoments = allMoments
         });
     }
 
+    function initInfiniteScroll() {
+        const trigger = document.getElementById('infinite-scroll-trigger');
+        if (!trigger) return;
+
+        const observer = new IntersectionObserver(async (entries) => {
+            if (entries[0].isIntersecting) {
+                const nextUrl = trigger.getAttribute('data-next-url');
+                if (!nextUrl) return;
+
+                // Prevent multiple fetches
+                if (trigger.dataset.loading === 'true') return;
+                trigger.dataset.loading = 'true';
+
+                try {
+                    const res = await fetch(nextUrl);
+                    const html = await res.text();
+                    
+                    // Parse the new HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Extract new cards
+                    const newCards = doc.querySelectorAll('#moments-container .moment-card');
+                    const container = document.getElementById('moments-container');
+                    
+                    newCards.forEach(card => {
+                        container.appendChild(card);
+                    });
+
+                    // Update the trigger with the new next url
+                    const newTrigger = doc.getElementById('infinite-scroll-trigger');
+                    if (newTrigger && newTrigger.getAttribute('data-next-url')) {
+                        trigger.setAttribute('data-next-url', newTrigger.getAttribute('data-next-url'));
+                        trigger.dataset.loading = 'false';
+                    } else {
+                        // No more pages, hide the trigger
+                        trigger.style.display = 'none';
+                        const pagination = document.getElementById('standard-pagination');
+                        if(pagination) pagination.classList.remove('hidden');
+                        observer.disconnect();
+                    }
+
+                    // Re-process DOM for new elements (time, hashtags, read more, view tracking)
+                    processMomentDOM();
+                    initLikeButtons();
+                    initViewTracking();
+                    // loadMomentStats() relies on fetchUmamiEvents which processes everything by querying DOM again
+                    loadMomentStats();
+
+                } catch (error) {
+                    console.error('Infinite scroll failed:', error);
+                    trigger.dataset.loading = 'false';
+                }
+            }
+        }, { rootMargin: '200px' }); // Trigger 200px before reaching the end
+
+        observer.observe(trigger);
+    }
+
     function initAll() {
         processMomentDOM();
         initLikeButtons();
+        initViewTracking();
         initCardClick();
+        initInfiniteScroll();
         loadMomentStats(); 
     }
 

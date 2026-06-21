@@ -6,8 +6,12 @@ import { getCollection } from 'astro:content';
 
 export async function getStaticPaths({ paginate }) {
     const allMoments = await getCollection('moments');
+    
+    // Filter out replies, only show top-level moments on homepage
+    const topLevelMoments = allMoments.filter((moment) => !moment.data.replyTo);
+
     // Sort by pinned (true first), then by date (newest first)
-    const sortedMoments = allMoments.sort((a, b) => {
+    const sortedMoments = topLevelMoments.sort((a, b) => {
         if (a.data.pinned && !b.data.pinned) return -1;
         if (!a.data.pinned && b.data.pinned) return 1;
         return new Date(b.data.published).getTime() - new Date(a.data.published).getTime();
@@ -24,7 +28,7 @@ const { page } = Astro.props;
         <div class="card-base z-10 px-9 py-6 relative w-full ">
             <div class="text-3xl font-bold mb-8 text-[var(--primary)]">朋友圈 (Moments)</div>
             
-            <div class="flex flex-col gap-6">
+            <div id="moments-container" class="flex flex-col gap-6">
                 {page.data.map((moment) => (
                     <MomentCard moment={moment} />
                 ))}
@@ -35,8 +39,17 @@ const { page } = Astro.props;
                 )}
             </div>
             
-            <!-- Pagination Component -->
-            <Pagination class="mt-8" page={page} baseUrl="moments" />
+            <!-- Infinite Scroll Trigger -->
+            {page.url.next && (
+                <div id="infinite-scroll-trigger" data-next-url={page.url.next} class="w-full h-10 flex items-center justify-center mt-6">
+                    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--primary)]"></div>
+                </div>
+            )}
+            
+            <!-- Standard Pagination (Fallback) -->
+            <div id="standard-pagination" class={page.url.next ? "hidden" : "mt-8"}>
+                <Pagination page={page} baseUrl="moments" />
+            </div>
         </div>
     </div>
 </MainGridLayout>
@@ -84,10 +97,18 @@ const { page } = Astro.props;
                 const parts = node.nodeValue.split(/(#(?:[^\s<]+))/);
                 parts.forEach(part => {
                     if (part.startsWith('#')) {
-                        const span = document.createElement('span');
-                        span.className = 'text-blue-500 hover:underline cursor-pointer';
-                        span.textContent = part;
-                        fragment.appendChild(span);
+                        const a = document.createElement('a');
+                        a.className = 'text-blue-500 hover:underline cursor-pointer';
+                        a.textContent = part;
+                        a.href = '/moments/tag/' + encodeURIComponent(part.substring(1)) + '/';
+                        // Use Swup if available
+                        a.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (window.swup) window.swup.navigate(a.href);
+                            else window.location.href = a.href;
+                        });
+                        fragment.appendChild(a);
                     } else {
                         fragment.appendChild(document.createTextNode(part));
                     }
@@ -135,6 +156,46 @@ const { page } = Astro.props;
                     }
                 });
             }
+        });
+
+        // 5. Rich Media Embeds (Bilibili, YouTube, NetEase)
+        document.querySelectorAll('.moment-content').forEach(el => {
+            if (el.dataset.mediaProcessed) return;
+            el.dataset.mediaProcessed = "true";
+
+            el.querySelectorAll('a').forEach(a => {
+                const url = a.href;
+                let iframeSrc = null;
+                
+                const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+                if (ytMatch) {
+                    iframeSrc = `https://www.youtube.com/embed/${ytMatch[1]}`;
+                }
+                
+                const biliMatch = url.match(/bilibili\.com\/video\/(BV[\w]+)/);
+                if (biliMatch) {
+                    iframeSrc = `//player.bilibili.com/player.html?bvid=${biliMatch[1]}&page=1&high_quality=1&as_wide=1&allowfullscreen=true`;
+                }
+
+                const musicMatch = url.match(/music\.163\.com\/.*id=(\d+)/);
+                if (musicMatch) {
+                    iframeSrc = `//music.163.com/outchain/player?type=2&id=${musicMatch[1]}&auto=0&height=66`;
+                }
+
+                if (iframeSrc) {
+                    const iframe = document.createElement('iframe');
+                    iframe.src = iframeSrc;
+                    iframe.className = "w-full rounded-xl mt-3 shadow-sm border border-black/5 dark:border-white/5";
+                    iframe.style.height = musicMatch ? '86px' : '220px';
+                    iframe.allowFullscreen = true;
+                    
+                    if (a.parentNode.tagName === 'P' && a.parentNode.textContent.trim() === a.textContent.trim()) {
+                        a.parentNode.replaceWith(iframe);
+                    } else {
+                        a.parentNode.insertBefore(iframe, a.nextSibling);
+                    }
+                }
+            });
         });
     }
 
@@ -238,11 +299,71 @@ const { page } = Astro.props;
         });
     }
 
+    function initInfiniteScroll() {
+        const trigger = document.getElementById('infinite-scroll-trigger');
+        if (!trigger) return;
+
+        const observer = new IntersectionObserver(async (entries) => {
+            if (entries[0].isIntersecting) {
+                const nextUrl = trigger.getAttribute('data-next-url');
+                if (!nextUrl) return;
+
+                // Prevent multiple fetches
+                if (trigger.dataset.loading === 'true') return;
+                trigger.dataset.loading = 'true';
+
+                try {
+                    const res = await fetch(nextUrl);
+                    const html = await res.text();
+                    
+                    // Parse the new HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Extract new cards
+                    const newCards = doc.querySelectorAll('#moments-container .moment-card');
+                    const container = document.getElementById('moments-container');
+                    
+                    newCards.forEach(card => {
+                        container.appendChild(card);
+                    });
+
+                    // Update the trigger with the new next url
+                    const newTrigger = doc.getElementById('infinite-scroll-trigger');
+                    if (newTrigger && newTrigger.getAttribute('data-next-url')) {
+                        trigger.setAttribute('data-next-url', newTrigger.getAttribute('data-next-url'));
+                        trigger.dataset.loading = 'false';
+                    } else {
+                        // No more pages, hide the trigger
+                        trigger.style.display = 'none';
+                        const pagination = document.getElementById('standard-pagination');
+                        if(pagination) pagination.classList.remove('hidden');
+                        observer.disconnect();
+                    }
+
+                    // Re-process DOM for new elements (time, hashtags, read more, view tracking)
+                    processMomentDOM();
+                    initLikeButtons();
+                    initViewTracking();
+                    // loadMomentStats() relies on fetchUmamiEvents which processes everything by querying DOM again
+                    loadMomentStats();
+
+                } catch (error) {
+                    console.error('Infinite scroll failed:', error);
+                    trigger.dataset.loading = 'false';
+                }
+            }
+        }, { rootMargin: '200px' }); // Trigger 200px before reaching the end
+
+        observer.observe(trigger);
+    }
+
     function initAll() {
         processMomentDOM();
         initLikeButtons();
         initViewTracking();
         initCardClick();
+        initInfiniteScroll();
         loadMomentStats(); 
     }
 
