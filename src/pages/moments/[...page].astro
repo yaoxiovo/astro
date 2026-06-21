@@ -405,6 +405,10 @@ const { page } = Astro.props;
         loadMomentStats(); 
     }
 
-    document.addEventListener('DOMContentLoaded', initAll);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+        initAll();
+    }
     document.addEventListener('swup:page:view', initAll);
 </script>

@@ -2,6 +2,7 @@
 import MainGridLayout from '../../layouts/MainGridLayout.astro';
 import MomentCard from '../../components/MomentCard.astro';
 import PosterGenerator from '../../components/PosterGenerator.astro';
+import { profileConfig } from '../../config';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -30,8 +31,10 @@ const threadSlugs = new Set([moment.id]);
 if (parent) threadSlugs.add(parent.id);
 children.forEach(c => threadSlugs.add(c.id));
 
+const authorName = moment.data.author || profileConfig.name;
+
 const relatedMoments = allMoments
-    .filter(m => m.data.author === moment.data.author && !threadSlugs.has(m.id))
+    .filter(m => (m.data.author || profileConfig.name) === authorName && !threadSlugs.has(m.id))
     .sort((a, b) => new Date(b.data.published).getTime() - new Date(a.data.published).getTime())
     .slice(0, 3);
 ---
@@ -48,9 +51,9 @@ const relatedMoments = allMoments
                     <div class="text-2xl font-bold text-[var(--primary)]">动态详情 (Thread)</div>
                 </div>
                 <PosterGenerator 
-                    title={`${moment.data.author} 的动态`}
+                    title={`${authorName} 的动态`}
                     excerpt={moment.body || "查看详情"}
-                    author={moment.data.author}
+                    author={authorName}
                 />
             </div>
             
@@ -352,6 +355,10 @@ const relatedMoments = allMoments
         loadMomentStats(); 
     }
 
-    document.addEventListener('DOMContentLoaded', initAll);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+        initAll();
+    }
     document.addEventListener('swup:page:view', initAll);
 </script>

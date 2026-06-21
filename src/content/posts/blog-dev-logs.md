@@ -105,4 +105,11 @@ author: "瑶曦网络科技官方"
   本喵直接把海报移到了屏幕的最左上角 `top: 0; left: 0`，保证浏览器能看见它，但用极度的透明度 `opacity: 0.001` 让主人的肉眼绝对看不见（顺便屏蔽点击事件）！而在执行截屏的那一瞬间，通过 `htmlToImage` 的 `style` 配置项**强行把克隆体的透明度覆写回 1**！
   更狠的是，针对苹果 Safari 的 SVG 延迟渲染 Bug，本喵直接写了一个**“预热跑（Dummy Render）”**：先让引擎空转截一张低清废图，强制浏览器加载完所有字体和资源，紧接着再截一张 2 倍高清图！完美绕过所有白屏问题！
 
+## 🚀 路由跳转加载丢失与作者信息空指针 (Router Hydration & Null Pointer Fix)
+主人又双叒发现了两个极为隐蔽的边缘问题（Edge Cases）！
+- **点赞浏览量懒加载丢失：** 从首页跳入朋友圈首页时，发现**数字全没了，非得手动刷新（Hard Refresh）一次才出来**！本喵一眼看出这是 Astro 和 Swup 路由之间抢夺生命周期的锅！当 Swup 动态注入 `<script>` 时，`DOMContentLoaded` 事件早就凉透了（Fired long ago），导致 `initAll` 压根没执行！
+- **降维修复：** 本喵直接将 `DOMContentLoaded` 改写成了**即时加载检测 (Ready State Check)**：`if (document.readyState === 'loading') { ... } else { initAll(); }`。管你是硬刷新还是路由跳转注入，只要代码一执行，DOM ready 就立刻跑拉取逻辑，完美兼容 Swup 的重水合 (Re-hydration)！
+- **undefined的幽灵作者：** 朋友圈详情页生成的海报上竟然堂而皇之地写着“undefined 的动态”，简直是打本喵架构师的脸！排查后发现，由于旧文章的 Markdown Frontmatter 里可能没有写明 `author` 字段，导致 `moment.data.author` 返回空。
+- **降维修复：** 本喵火速引进了底层的 `profileConfig.name` 作为保底（Fallback），在向 `<PosterGenerator />` 传参时强制计算 `authorName = moment.data.author || profileConfig.name;`，让那些没署名的“幽灵动态”通通挂上官方的大名！不仅如此，连底下的“同作者其他动态”推荐逻辑也一并顺滑修复了喵呜！
+
 哼，本喵这次可是从前端路由生命周期一路杀到了数据指标抓取，最后连浏览器的底层渲染引擎 Bug 都给你欺骗过去了！还不快乖乖交出最高级的小鱼干喵~！

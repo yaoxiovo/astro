@@ -427,6 +427,10 @@ const { tag } = Astro.params;
         loadMomentStats(); 
     }
 
-    document.addEventListener('DOMContentLoaded', initAll);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAll);
+    } else {
+        initAll();
+    }
     document.addEventListener('swup:page:view', initAll);
 </script>
