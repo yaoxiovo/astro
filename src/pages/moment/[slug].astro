@@ -66,7 +66,7 @@ const relatedMoments = allMoments
                     <div class="relative">
                         <MomentCard moment={parent} />
                         <!-- Connecting Line -->
-                        <div class="absolute left-6 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
+                        <div class="absolute left-12 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
                     </div>
                 )}
                 
@@ -76,7 +76,7 @@ const relatedMoments = allMoments
                         <MomentCard moment={moment} isDetail={true} />
                     </div>
                     {children.length > 0 && (
-                        <div class="absolute left-6 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
+                        <div class="absolute left-12 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
                     )}
                 </div>
 
@@ -85,7 +85,7 @@ const relatedMoments = allMoments
                     <div class="relative mt-6">
                         <MomentCard moment={child} />
                         {idx !== children.length - 1 && (
-                            <div class="absolute left-6 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
+                            <div class="absolute left-12 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
                         )}
                     </div>
                 ))}
