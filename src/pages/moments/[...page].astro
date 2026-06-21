@@ -41,7 +41,7 @@ const { page } = Astro.props;
     </div>
 </MainGridLayout>
 
-<script define:vars={{ umamiConfig: (await import('../config')).umamiConfig }}>
+<script define:vars={{ umamiConfig: (await import('../../config')).umamiConfig }}>
     // Utility for relative time
     function timeAgo(dateString) {
         const date = new Date(dateString);
