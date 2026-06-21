@@ -70,7 +70,6 @@
 		// 检查全局内存缓存
 		if (global.__umamiDataCache.has(cacheKey)) {
             const data = global.__umamiDataCache.get(cacheKey);
-            // 标记数据来自缓存
             return { ...data, _fromCache: true };
 		}
 
@@ -80,23 +79,58 @@
 				shareId,
 			);
 			const currentTimestamp = Date.now();
+			const timezone = queryParams.timezone || "Asia/Shanghai";
+
+			// Share Token 下 /stats 的 url 参数会被忽略，导致总是返回全站数据
+			// 改用 /metrics?type=url 端点并在客户端按 URL 过滤
+			if (queryParams.url) {
+				const params = new URLSearchParams({
+					startAt: 0,
+					endAt: currentTimestamp,
+					timezone,
+					type: "url",
+					limit: 500,
+				});
+				const metricsUrl = `${baseUrl}/api/websites/${websiteId}/metrics?${params.toString()}`;
+				const res = await fetch(metricsUrl, {
+					headers: { "x-umami-share-token": token },
+				});
+				if (!res.ok) {
+					if (res.status === 401 && !isRetry) {
+						global.clearUmamiShareCache();
+						return doFetch(true);
+					}
+					throw new Error("获取统计数据失败");
+				}
+				const metricsData = await res.json();
+				// metricsData 是 [{x: '/posts/slug/', y: count}, ...]
+				// 尝试精确匹配，如果失败则尝试去掉末尾斜杠匹配
+				const targetUrl = queryParams.url;
+				let entry = metricsData.find((item) => item.x === targetUrl);
+				if (!entry) {
+					// 去掉末尾斜杠再尝试
+					const trimmed = targetUrl.replace(/\/$/, "");
+					entry = metricsData.find(
+						(item) => item.x === trimmed || item.x === trimmed + "/",
+					);
+				}
+				const count = entry ? entry.y : 0;
+				const data = { pageviews: { value: count }, visitors: { value: count }, visits: { value: count } };
+				global.__umamiDataCache.set(cacheKey, data);
+				return data;
+			}
+
+			// 无 url 过滤时使用原来的 /stats 全站数据端点
 			const params = new URLSearchParams({
 				startAt: 0,
 				endAt: currentTimestamp,
 				unit: "hour",
-				timezone: queryParams.timezone || "Asia/Shanghai",
-				compare: false,
-				...queryParams,
+				timezone,
 			});
-
 			const statsUrl = `${baseUrl}/api/websites/${websiteId}/stats?${params.toString()}`;
-
 			const res = await fetch(statsUrl, {
-				headers: {
-					"x-umami-share-token": token,
-				},
+				headers: { "x-umami-share-token": token },
 			});
-
 			if (!res.ok) {
 				if (res.status === 401 && !isRetry) {
 					global.clearUmamiShareCache();
@@ -104,9 +138,7 @@
 				}
 				throw new Error("获取统计数据失败");
 			}
-
 			const data = await res.json();
-			// 写入全局缓存
 			global.__umamiDataCache.set(cacheKey, data);
 			return data;
 		}
