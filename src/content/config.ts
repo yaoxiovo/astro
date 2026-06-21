@@ -38,6 +38,8 @@ const momentsCollection = defineCollection({
 		images: z.array(z.string()).optional().default([]),
 		verifyType: z.enum(['blue', 'yellow', 'none']).optional().default('none'),
 		verifySubject: z.string().optional().default(''),
+		source: z.string().optional(),
+		pinned: z.boolean().optional().default(false),
 	}),
 });
 

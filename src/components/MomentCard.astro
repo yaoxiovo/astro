@@ -1,6 +1,5 @@
 ---
 import { profileConfig, authorRoles } from '../config';
-import { formatDateToYYYYMMDD } from '../utils/date-utils';
 import { Icon } from 'astro-icon/components';
 
 interface Props {
@@ -24,58 +23,97 @@ const gridCols = images.length === 1 ? 'grid-cols-1' : images.length === 2 || im
 const { Content } = await moment.render();
 ---
 
-<div class="flex flex-row gap-4 mb-8 bg-[var(--card-bg)] rounded-2xl p-6 transition shadow-md hover:shadow-lg dark:shadow-none">
-  <!-- Avatar -->
-  <div class="flex-shrink-0 relative group">
-    <img src={avatar} alt={author} class="w-12 h-12 rounded-lg object-cover" />
-    {verifyType && verifyType !== 'none' && (
-      <div class={`absolute -bottom-1 -right-1 rounded-full shadow-sm cursor-help ${verifyType === 'blue' ? 'text-blue-500' : 'text-yellow-500'}`} title={verifySubject || '已认证'}>
-        <svg viewBox="0 0 24 24" class="w-5 h-5" aria-label="Verified account" role="img"><g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.792-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.728 2.76 1.848 3.52-.06.335-.09.68-.09 1.03 0 2.21 1.71 3.998 3.918 3.998.47 0 .92-.084 1.336-.25.52 1.333 1.817 2.25 3.337 2.25s2.816-.917 3.337-2.25c.416.165.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.35-.03-.695-.09-1.03 1.12-.76 1.848-2.06 1.848-3.52z" fill="currentColor"></path><path d="M10.89 16.03L7.75 12.87l1.41-1.41 1.73 1.73 4.95-4.95 1.41 1.41-6.36 6.38z" fill="#fff"></path></g></svg>
-      </div>
-    )}
-  </div>
+<div id={`moment-${moment.id}`} class="moment-card flex flex-col mb-8 bg-[var(--card-bg)] rounded-2xl p-6 transition shadow-md hover:shadow-lg dark:shadow-none scroll-mt-24">
+  <!-- Pinned indicator -->
+  {data.pinned && (
+    <div class="flex items-center gap-2 text-xs font-bold text-[var(--text-color-light)] mb-3 ml-10">
+      <Icon name="fa6-solid:thumbtack" class="w-3 h-3 text-[var(--primary)]" />
+      <span>置顶动态</span>
+    </div>
+  )}
 
-  <!-- Content -->
-  <div class="flex flex-col flex-grow min-w-0">
-    <div class="flex items-center gap-2 mb-1 flex-wrap">
-      <div class="font-bold text-lg text-[var(--primary)]">{author}</div>
-      {verifyType && verifyType !== 'none' && verifySubject && (
-        <div class={`text-xs px-2 py-0.5 rounded border opacity-80 cursor-default ${verifyType === 'blue' ? 'text-blue-600 border-blue-200 bg-blue-50/50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-900/30' : 'text-yellow-600 border-yellow-200 bg-yellow-50/50 dark:text-yellow-400 dark:border-yellow-800 dark:bg-yellow-900/30'}`} title={verifySubject}>
-          <svg viewBox="0 0 24 24" class="inline-block w-3.5 h-3.5 mr-1 mb-0.5" aria-hidden="true"><g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.792-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.728 2.76 1.848 3.52-.06.335-.09.68-.09 1.03 0 2.21 1.71 3.998 3.918 3.998.47 0 .92-.084 1.336-.25.52 1.333 1.817 2.25 3.337 2.25s2.816-.917 3.337-2.25c.416.165.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.35-.03-.695-.09-1.03 1.12-.76 1.848-2.06 1.848-3.52z" fill="currentColor"></path><path d="M10.89 16.03L7.75 12.87l1.41-1.41 1.73 1.73 4.95-4.95 1.41 1.41-6.36 6.38z" fill="#fff"></path></g></svg>
-          {verifySubject}
+  <div class="flex flex-row gap-4">
+    <!-- Avatar -->
+    <div class="flex-shrink-0 relative group">
+      <img src={avatar} alt={author} class="w-12 h-12 rounded-lg object-cover" />
+      {verifyType && verifyType !== 'none' && (
+        <div class={`absolute -bottom-1 -right-1 rounded-full shadow-sm cursor-help ${verifyType === 'blue' ? 'text-blue-500' : 'text-yellow-500'}`} title={verifySubject || '已认证'}>
+          <svg viewBox="0 0 24 24" class="w-5 h-5" aria-label="Verified account" role="img"><g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.792-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.728 2.76 1.848 3.52-.06.335-.09.68-.09 1.03 0 2.21 1.71 3.998 3.918 3.998.47 0 .92-.084 1.336-.25.52 1.333 1.817 2.25 3.337 2.25s2.816-.917 3.337-2.25c.416.165.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.35-.03-.695-.09-1.03 1.12-.76 1.848-2.06 1.848-3.52z" fill="currentColor"></path><path d="M10.89 16.03L7.75 12.87l1.41-1.41 1.73 1.73 4.95-4.95 1.41 1.41-6.36 6.38z" fill="#fff"></path></g></svg>
         </div>
       )}
     </div>
-    
-    <div class="text-[var(--text-color)] text-base mb-3 prose dark:prose-invert break-words">
-      <Content />
-    </div>
 
-    {images.length > 0 && (
-      <div class={`grid gap-2 mb-3 max-w-[300px] ${gridCols}`}>
-        {images.map((img: string, idx: number) => (
-          <a href={img} data-fancybox={`moment-${moment.id}`} data-caption={`Photo ${idx + 1}`} class="aspect-square w-full rounded-md overflow-hidden cursor-zoom-in">
-            <img src={img} alt="Moment photo" class="w-full h-full object-cover transition-transform hover:scale-105" loading="lazy" />
-          </a>
-        ))}
+    <!-- Content -->
+    <div class="flex flex-col flex-grow min-w-0">
+      <div class="flex items-center gap-2 mb-1 flex-wrap">
+        <div class="font-bold text-lg text-[var(--primary)]">{author}</div>
+        {verifyType && verifyType !== 'none' && verifySubject && (
+          <div class={`text-xs px-2 py-0.5 rounded border opacity-80 cursor-default ${verifyType === 'blue' ? 'text-blue-600 border-blue-200 bg-blue-50/50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-900/30' : 'text-yellow-600 border-yellow-200 bg-yellow-50/50 dark:text-yellow-400 dark:border-yellow-800 dark:bg-yellow-900/30'}`} title={verifySubject}>
+            <svg viewBox="0 0 24 24" class="inline-block w-3.5 h-3.5 mr-1 mb-0.5" aria-hidden="true"><g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.792-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.728 2.76 1.848 3.52-.06.335-.09.68-.09 1.03 0 2.21 1.71 3.998 3.918 3.998.47 0 .92-.084 1.336-.25.52 1.333 1.817 2.25 3.337 2.25s2.816-.917 3.337-2.25c.416.165.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.35-.03-.695-.09-1.03 1.12-.76 1.848-2.06 1.848-3.52z" fill="currentColor"></path><path d="M10.89 16.03L7.75 12.87l1.41-1.41 1.73 1.73 4.95-4.95 1.41 1.41-6.36 6.38z" fill="#fff"></path></g></svg>
+            {verifySubject}
+          </div>
+        )}
       </div>
-    )}
+      
+      <div class="moment-content text-[var(--text-color)] text-base mb-3 prose dark:prose-invert break-words">
+        <Content />
+      </div>
 
-    <div class="flex flex-row justify-between items-center text-sm text-[var(--text-color-light)] mt-2">
-      <div>
-        {data.published ? new Date(data.published).toLocaleString('zh-CN', {
-          year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
-        }) : ''}
+      {images.length > 0 && (
+        <div class={`grid gap-2 mb-3 max-w-[400px] ${gridCols}`}>
+          {images.map((img: string, idx: number) => (
+            <a href={img} data-fancybox={`moment-${moment.id}`} data-caption={`Photo ${idx + 1}`} class="aspect-square w-full rounded-md overflow-hidden cursor-zoom-in">
+              <img src={img} alt="Moment photo" class="w-full h-full object-cover transition-transform hover:scale-105" loading="lazy" />
+            </a>
+          ))}
+        </div>
+      )}
+
+      <!-- Metadata (Time & Source) -->
+      <div class="text-[13px] text-[var(--text-color-light)] mb-3 flex items-center gap-1.5 flex-wrap">
+        <span class="moment-time hover:underline cursor-help" data-time={data.published.toISOString()} title={new Date(data.published).toLocaleString('zh-CN')}>
+          {new Date(data.published).toLocaleDateString('zh-CN')}
+        </span>
+        {data.source && (
+          <>
+            <span>·</span>
+            <span class="font-medium text-[var(--primary)] hover:underline cursor-pointer">{data.source}</span>
+          </>
+        )}
       </div>
-      <div class="flex gap-4">
-        <button class="moment-like-btn hover:text-red-500 transition flex items-center gap-1 active:scale-90" 
+
+      <!-- Action Buttons -->
+      <div class="flex flex-row justify-between items-center text-[var(--text-color-light)] max-w-[400px] mt-1 border-t border-black/5 dark:border-white/5 pt-3">
+        <!-- Comment -->
+        <button class="hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 p-2 -ml-2 rounded-full transition flex items-center gap-1.5 group">
+          <Icon name="fa6-regular:comment" class="w-4 h-4 group-active:scale-90 transition-transform" />
+        </button>
+        
+        <!-- Retweet -->
+        <button class="hover:text-green-500 hover:bg-green-500/10 p-2 rounded-full transition flex items-center gap-1.5 group">
+          <Icon name="fa6-solid:retweet" class="w-4 h-4 group-active:scale-90 transition-transform" />
+        </button>
+
+        <!-- Like -->
+        <button class="moment-like-btn hover:text-red-500 hover:bg-red-500/10 p-2 rounded-full transition flex items-center gap-1.5 group" 
                 data-umami-event={`Like_${moment.id}`}
                 data-moment-id={moment.id}>
-          <Icon name="fa6-regular:heart" class="w-4 h-4 transition-transform duration-300" />
-          <span class="like-count text-xs" id={`like-count-${moment.id}`}>0</span>
+          <Icon name="fa6-regular:heart" class="w-4 h-4 group-active:scale-90 transition-transform" />
+          <span class="like-count text-xs font-medium" id={`like-count-${moment.id}`}></span>
         </button>
-        <button class="hover:text-[var(--primary)] transition flex items-center gap-1">
-          <Icon name="fa6-regular:comment" class="w-4 h-4" />
+
+        <!-- View Impressions -->
+        <div class="moment-view-btn hover:text-blue-500 hover:bg-blue-500/10 p-2 rounded-full transition flex items-center gap-1.5 cursor-default"
+             data-umami-event={`View_${moment.id}`}
+             data-moment-id={moment.id}>
+          <Icon name="fa6-solid:chart-simple" class="w-4 h-4" />
+          <span class="view-count text-xs font-medium" id={`view-count-${moment.id}`}></span>
+        </div>
+
+        <!-- Share -->
+        <button class="moment-share-btn hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 p-2 rounded-full transition flex items-center gap-1.5 group"
+                data-moment-url={`#moment-${moment.id}`}>
+          <Icon name="fa6-solid:arrow-up-from-bracket" class="w-4 h-4 group-active:scale-90 transition-transform" />
         </button>
       </div>
     </div>
