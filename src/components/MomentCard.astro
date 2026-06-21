@@ -4,9 +4,10 @@ import { Icon } from 'astro-icon/components';
 
 interface Props {
   moment: any;
+  isDetail?: boolean;
 }
 
-const { moment } = Astro.props;
+const { moment, isDetail = false } = Astro.props;
 const momentId = moment.id.replace(/\.[^/.]+$/, "");
 const { data } = moment;
 
@@ -24,7 +25,7 @@ const gridCols = images.length === 1 ? 'grid-cols-1' : images.length === 2 || im
 const { Content } = await moment.render();
 ---
 
-<div id={`moment-${momentId}`} class="moment-card flex flex-col mb-8 bg-[var(--card-bg)] rounded-2xl p-6 transition shadow-md hover:shadow-lg dark:shadow-none scroll-mt-24 cursor-pointer">
+<div id={`moment-${momentId}`} class={`moment-card flex flex-col mb-8 bg-[var(--card-bg)] rounded-2xl p-6 transition shadow-md dark:shadow-none scroll-mt-24 ${isDetail ? '' : 'hover:shadow-lg cursor-pointer'}`}>
   <!-- Pinned indicator -->
   {data.pinned && (
     <div class="flex items-center gap-2 text-xs font-bold text-[var(--text-color-light)] mb-3 ml-10">
@@ -57,10 +58,10 @@ const { Content } = await moment.render();
       </div>
       
       <div class="moment-content-wrapper relative mb-3">
-        <div class="moment-content text-[var(--text-color)] text-base prose dark:prose-invert break-words line-clamp-6 transition-all duration-300">
+        <div class={`moment-content text-[var(--text-color)] text-base prose dark:prose-invert break-words transition-all duration-300 ${isDetail ? '' : 'line-clamp-6'}`}>
           <Content />
         </div>
-        <button class="moment-read-more text-[var(--primary)] text-sm font-bold mt-1 hidden hover:underline">展开全文</button>
+        {!isDetail && <button class="moment-read-more text-[var(--primary)] text-sm font-bold mt-1 hidden hover:underline">展开全文</button>}
       </div>
 
       {images.length > 0 && (
