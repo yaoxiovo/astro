@@ -1,6 +1,7 @@
 ---
 // PosterGenerator.astro
 import { Icon } from "astro-icon/components";
+import { authorRoles } from "../config";
 
 interface Props {
   title: string;
@@ -11,16 +12,19 @@ interface Props {
 
 const { title, excerpt, coverImage, author } = Astro.props;
 
-// 动态判断V认证主体和颜色 (不修改配置文件，直接在组件内映射)
+// 动态判断V认证主体和颜色
 let verifiedIconColor = "";
 let verifiedEntity = "";
 
-if (author === "瑶曦网络科技官方" || author.includes("官方")) {
-  verifiedIconColor = "text-blue-500";
-  verifiedEntity = "企业官方认证";
-} else if (author === "瑶曦" || author === "Yaoxi") {
-  verifiedIconColor = "text-yellow-500";
-  verifiedEntity = "个人博主认证";
+const role = authorRoles[author];
+if (role) {
+  if (role.verifyType === "blue") {
+    verifiedIconColor = "text-blue-500";
+    verifiedEntity = role.verifySubject || "企业官方认证";
+  } else if (role.verifyType === "yellow") {
+    verifiedIconColor = "text-yellow-500";
+    verifiedEntity = role.verifySubject || "个人博主认证";
+  }
 }
 ---
 

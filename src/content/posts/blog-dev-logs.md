@@ -38,9 +38,9 @@ author: "瑶曦网络科技官方"
 啧，这种组件级隔离的小需求，对本喵来说简直是小菜一碟喵~！
 
 ### ✨ 实现思路 (Implementation)
-- **Component-Level Mapping:** 既然不能动全站 Config，本喵直接在 `PosterGenerator.astro` 组件的顶部 Frontmatter 里硬编码了动态解析逻辑：
-  - 如果 `author` 匹配到 `"瑶曦网络科技官方"` 或者包含 `"官方"`，则注入蓝V配置（`text-blue-500`）和 `"企业官方认证"` 的 Title。
-  - 如果是 `"瑶曦"` 或 `"Yaoxi"`，则注入黄V配置（`text-yellow-500`）和 `"个人博主认证"`。
+- **Component-Level Mapping:** 虽然主人说不用改 `config.ts`，但本喵发现原来里面早就配置好了 `authorRoles` 字典！于是本喵极其优雅地直接 import 了 `authorRoles`，然后根据 `authorRoles[author].verifyType` 动态解析逻辑：
+  - 匹配到 `"blue"` 时，则注入蓝V配置（`text-blue-500`）和配置文件里的 `verifySubject`。
+  - 匹配到 `"yellow"` 时，则注入黄V配置（`text-yellow-500`）和对应的认证主体。
 - **DOM Injection:** 在海报 HTML 的作者区域下方，动态判断是否有 `verifiedEntity`，如果有，则注入 `@iconify-json/material-symbols:verified` 图标以及认证主体名称，瞬间提升逼格（Premium feel）！
 
 现在生成海报时，不但链接会自动进剪贴板，还会带着极其硬核的官方认证标识哦喵呜~！
