@@ -55,8 +55,11 @@ const { Content } = await moment.render();
         )}
       </div>
       
-      <div class="moment-content text-[var(--text-color)] text-base mb-3 prose dark:prose-invert break-words">
-        <Content />
+      <div class="moment-content-wrapper relative mb-3">
+        <div class="moment-content text-[var(--text-color)] text-base prose dark:prose-invert break-words line-clamp-6 transition-all duration-300">
+          <Content />
+        </div>
+        <button class="moment-read-more text-[var(--primary)] text-sm font-bold mt-1 hidden hover:underline">展开全文</button>
       </div>
 
       {images.length > 0 && (

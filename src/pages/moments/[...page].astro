@@ -1,15 +1,22 @@
 ---
-import MainGridLayout from '../layouts/MainGridLayout.astro';
-import MomentCard from '../components/MomentCard.astro';
+import MainGridLayout from '../../layouts/MainGridLayout.astro';
+import MomentCard from '../../components/MomentCard.astro';
+import Pagination from '../../components/control/Pagination.astro';
 import { getCollection } from 'astro:content';
 
-const allMoments = await getCollection('moments');
-// Sort by pinned (true first), then by date (newest first)
-const sortedMoments = allMoments.sort((a, b) => {
-    if (a.data.pinned && !b.data.pinned) return -1;
-    if (!a.data.pinned && b.data.pinned) return 1;
-    return new Date(b.data.published).getTime() - new Date(a.data.published).getTime();
-});
+export async function getStaticPaths({ paginate }) {
+    const allMoments = await getCollection('moments');
+    // Sort by pinned (true first), then by date (newest first)
+    const sortedMoments = allMoments.sort((a, b) => {
+        if (a.data.pinned && !b.data.pinned) return -1;
+        if (!a.data.pinned && b.data.pinned) return 1;
+        return new Date(b.data.published).getTime() - new Date(a.data.published).getTime();
+    });
+    // Return a paginated collection, e.g., 10 moments per page
+    return paginate(sortedMoments, { pageSize: 10 });
+}
+
+const { page } = Astro.props;
 ---
 
 <MainGridLayout title="朋友圈" description="我的生活瞬间与絮语">
@@ -18,16 +25,18 @@ const sortedMoments = allMoments.sort((a, b) => {
             <div class="text-3xl font-bold mb-8 text-[var(--primary)]">朋友圈 (Moments)</div>
             
             <div class="flex flex-col gap-6">
-            <div class="flex flex-col gap-6">
-                {sortedMoments.map((moment) => (
+                {page.data.map((moment) => (
                     <MomentCard moment={moment} />
                 ))}
-                {sortedMoments.length === 0 && (
+                {page.data.length === 0 && (
                     <div class="text-center text-[var(--text-color-light)] py-10">
                         还没有发布过任何动态呢~
                     </div>
                 )}
             </div>
+            
+            <!-- Pagination Component -->
+            <Pagination class="mt-8" page={page} baseUrl="moments" />
         </div>
     </div>
 </MainGridLayout>
@@ -103,6 +112,29 @@ const sortedMoments = allMoments.sort((a, b) => {
                     }, 1000);
                 });
             });
+        });
+
+        // 4. Read More Fold
+        document.querySelectorAll('.moment-content-wrapper').forEach(wrapper => {
+            if (wrapper.dataset.foldProcessed) return;
+            wrapper.dataset.foldProcessed = "true";
+            
+            const content = wrapper.querySelector('.moment-content');
+            const btn = wrapper.querySelector('.moment-read-more');
+            
+            // Check if content overflows
+            if (content.scrollHeight > content.clientHeight) {
+                btn.classList.remove('hidden');
+                btn.addEventListener('click', () => {
+                    if (content.classList.contains('line-clamp-6')) {
+                        content.classList.remove('line-clamp-6');
+                        btn.textContent = '收起';
+                    } else {
+                        content.classList.add('line-clamp-6');
+                        btn.textContent = '展开全文';
+                    }
+                });
+            }
         });
     }
 
