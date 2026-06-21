@@ -30,7 +30,19 @@ const assetsCollection = defineCollection({
 	}),
 });
 
+const momentsCollection = defineCollection({
+	schema: z.object({
+		published: z.date(),
+		author: z.string().optional(),
+		avatar: z.string().optional(),
+		images: z.array(z.string()).optional().default([]),
+		verifyType: z.enum(['blue', 'yellow', 'none']).optional().default('none'),
+		verifySubject: z.string().optional().default(''),
+	}),
+});
+
 export const collections = {
 	posts: postsCollection,
 	assets: assetsCollection,
+	moments: momentsCollection,
 };

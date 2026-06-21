@@ -1,0 +1,27 @@
+---
+import MainGridLayout from '../layouts/MainGridLayout.astro';
+import MomentCard from '../components/MomentCard.astro';
+import { getCollection } from 'astro:content';
+
+const allMoments = await getCollection('moments');
+allMoments.sort((a, b) => new Date(b.data.published).valueOf() - new Date(a.data.published).valueOf());
+---
+
+<MainGridLayout title="朋友圈" description="我的生活瞬间与絮语">
+    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+        <div class="card-base z-10 px-9 py-6 relative w-full ">
+            <div class="text-3xl font-bold mb-8 text-[var(--primary)]">朋友圈 (Moments)</div>
+            
+            <div class="flex flex-col gap-6">
+                {allMoments.map((moment) => (
+                    <MomentCard moment={moment} />
+                ))}
+                {allMoments.length === 0 && (
+                    <div class="text-center text-[var(--text-color-light)] py-10">
+                        还没有发布过任何动态呢~
+                    </div>
+                )}
+            </div>
+        </div>
+    </div>
+</MainGridLayout>

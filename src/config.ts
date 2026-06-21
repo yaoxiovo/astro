@@ -116,6 +116,11 @@ export const navBarConfig: NavBarConfig = {
 			external: false,
 		},
 		{
+			name: "朋友圈",
+			url: "/moments/",
+			external: false,
+		},
+		{
 			name: "星空图谱",
 			url: "/graph/",
 			external: false,
