@@ -57,11 +57,11 @@ const relatedMoments = allMoments
             </div>
         </div>
 
-    <div class="mt-8 w-full flex flex-col items-stretch">
-        <div id="moments-container" class="flex flex-col gap-6 w-full items-stretch">
+    <div class="mt-8 w-full min-w-full flex flex-col items-stretch">
+        <div id="moments-container" class="flex flex-col gap-6 w-full min-w-full items-stretch">
                 <!-- Thread Parent -->
                 {parent && (
-                    <div class="relative w-full flex flex-col items-stretch">
+                    <div class="relative w-full min-w-full flex flex-col items-stretch">
                         <MomentCard moment={parent} />
                         <!-- Connecting Line -->
                         <div class="absolute left-12 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
@@ -69,8 +69,8 @@ const relatedMoments = allMoments
                 )}
                 
                 <!-- Main Moment -->
-                <div class="relative w-full flex flex-col items-stretch">
-                    <div class={`w-full flex flex-col items-stretch ${(parent || children.length > 0) ? "ring-2 ring-[var(--primary)] rounded-2xl" : ""}`}>
+                <div class="relative w-full min-w-full flex flex-col items-stretch">
+                    <div class={`w-full min-w-full flex flex-col items-stretch ${(parent || children.length > 0) ? "ring-2 ring-[var(--primary)] rounded-2xl" : ""}`}>
                         <MomentCard moment={moment} isDetail={true} />
                     </div>
                     {children.length > 0 && (
@@ -80,7 +80,7 @@ const relatedMoments = allMoments
 
                 <!-- Thread Children -->
                 {children.map((child, idx) => (
-                    <div class="relative mt-6 w-full flex flex-col items-stretch">
+                    <div class="relative mt-6 w-full min-w-full flex flex-col items-stretch">
                         <MomentCard moment={child} />
                         {idx !== children.length - 1 && (
                             <div class="absolute left-12 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
@@ -91,9 +91,9 @@ const relatedMoments = allMoments
 
             <!-- Other Related -->
             {relatedMoments.length > 0 && (
-                <div class="mt-12 pt-8 border-t border-black/5 dark:border-white/5 w-full flex flex-col items-stretch">
+                <div class="mt-12 pt-8 border-t border-black/5 dark:border-white/5 w-full min-w-full flex flex-col items-stretch">
                     <div class="text-xl font-bold mb-6 text-[var(--text-color)] px-4">该作者的其他动态</div>
-                    <div class="flex flex-col gap-6 w-full items-stretch">
+                    <div class="flex flex-col gap-6 w-full min-w-full items-stretch">
                         {relatedMoments.map(rm => (
                             <MomentCard moment={rm} />
                         ))}

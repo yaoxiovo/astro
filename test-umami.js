@@ -18,13 +18,22 @@ async function run() {
     const tokenData = await tokenRes.json();
     const token = tokenData.token;
     const websiteId = tokenData.websiteId;
-    
-    const startAt = Date.now() - 365 * 24 * 60 * 60 * 1000;
+    const startAt = 0; // Test startAt=0
     const endAt = Date.now();
     
-    const res = await fetch(`${baseUrl}/api/websites/${websiteId}/metrics?type=path&startAt=${startAt}&endAt=${endAt}`, {
-        headers: { 'x-umami-share-token': token }
-    });
-    console.log(await res.text());
+    try {
+        console.log("Sending request with startAt=0...");
+        const res = await fetch(`${baseUrl}/api/websites/${websiteId}/metrics?type=path&startAt=${startAt}&endAt=${endAt}`, {
+            headers: { 'x-umami-share-token': token }
+        });
+        console.log("METRICS RESP STATUS:", res.status);
+        const text = await res.text();
+        console.log("METRICS RESP LENGTH:", text.length);
+        if (res.status !== 200) {
+            console.log("METRICS ERROR BODY:", text);
+        }
+    } catch(e) {
+        console.error("METRICS ERROR:", e);
+    }
 }
 run();

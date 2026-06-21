@@ -102,18 +102,19 @@
 					}
 					throw new Error("获取统计数据失败");
 				}
-				const metricsData = await res.json();
-				// metricsData 是 [{x: '/posts/slug/', y: count}, ...]
-				// 尝试精确匹配，如果失败则尝试去掉末尾斜杠匹配
+				const cleanPath = (p) => {
+					if (!p) return "";
+					return p.toLowerCase()
+						.replace(/^https?:\/\/[^\/]+/, "")
+						.replace(/^\/+|\/+$/g, "")
+						.replace(/\.html$/, "")
+						.replace(/\/index$/, "");
+				};
+
 				const targetUrl = queryParams.url;
-				let entry = metricsData.find((item) => item.x === targetUrl);
-				if (!entry) {
-					// 去掉末尾斜杠再尝试
-					const trimmed = targetUrl.replace(/\/$/, "");
-					entry = metricsData.find(
-						(item) => item.x === trimmed || item.x === trimmed + "/",
-					);
-				}
+				const cleanTarget = cleanPath(targetUrl);
+				const entry = metricsData.find((item) => cleanPath(item.x) === cleanTarget);
+
 				const count = entry ? entry.y : 0;
 				const data = { pageviews: count, visitors: count, visits: count };
 				global.__umamiDataCache.set(cacheKey, data);

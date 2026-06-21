@@ -25,7 +25,7 @@ const gridCols = images.length === 1 ? 'grid-cols-1' : images.length === 2 || im
 const { Content } = await moment.render();
 ---
 
-<div id={`moment-${momentId}`} class={`moment-card w-full flex flex-col bg-[var(--card-bg)] rounded-2xl p-6 transition shadow-md dark:shadow-none scroll-mt-24 ${isDetail ? '' : 'hover:shadow-lg cursor-pointer'}`}>
+<div id={`moment-${momentId}`} class={`moment-card card-base w-full flex flex-col p-6 transition shadow-md dark:shadow-none scroll-mt-24 ${isDetail ? '' : 'hover:shadow-lg cursor-pointer'}`}>
   <!-- Pinned indicator -->
   {data.pinned && (
     <div class="flex items-center gap-2 text-xs font-bold text-[var(--text-color-light)] mb-3 ml-10">
