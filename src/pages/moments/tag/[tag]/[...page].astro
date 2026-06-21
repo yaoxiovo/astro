@@ -49,8 +49,11 @@ const { tag } = Astro.params;
                 </a>
                 <div class="text-3xl font-bold text-[var(--primary)]">#{tag}</div>
             </div>
-            
-            <div id="moments-container" class="flex flex-col gap-6">
+        </div>
+    </div>
+    
+    <div class="mt-8">
+        <div id="moments-container" class="flex flex-col gap-6">
                 {page.data.map((moment) => (
                     <MomentCard moment={moment} />
                 ))}
@@ -71,8 +74,6 @@ const { tag } = Astro.params;
             <!-- Standard Pagination (Fallback) -->
             <div id="standard-pagination" class={page.url.next ? "hidden" : "mt-8"}>
                 <Pagination page={page} baseUrl={`moments/tag/${tag}`} />
-            </div>
-        </div>
     </div>
 
 <script define:vars={{ umamiConfig: (await import('../../../../config')).umamiConfig }}>
