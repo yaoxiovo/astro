@@ -286,17 +286,36 @@ const relatedMoments = allMoments
     }
 
     function initLikeButtons() {
-        const likeBtns = document.querySelectorAll('.moment-like-btn');
-        likeBtns.forEach(btn => {
-            const newBtn = btn.cloneNode(true);
-            btn.parentNode.replaceChild(newBtn, btn);
-            newBtn.addEventListener('click', function(e) {
-                if (this.classList.contains('liked')) return;
-                const countSpan = this.querySelector('.like-count');
+        document.querySelectorAll('.moment-like-btn').forEach(btn => {
+            if (btn.dataset.likeInitialized) return;
+            btn.dataset.likeInitialized = "true";
+            
+            const momentId = btn.dataset.momentId;
+            const storageKey = `liked_moment_${momentId}`;
+            
+            // 恢复本地点赞状态
+            if (localStorage.getItem(storageKey) === "true") {
+                btn.dataset.liked = "true";
+                btn.classList.add('text-red-500');
+            }
+
+            btn.addEventListener('click', function(e) {
+                if (this.dataset.liked === "true") return;
+                this.dataset.liked = "true";
+                this.classList.add('text-red-500');
+                localStorage.setItem(storageKey, "true");
+                
+                const span = this.querySelector('.like-count');
+                if (span) {
+                    const current = parseInt(span.textContent) || 0;
+                    span.textContent = current + 1;
+                }
+                
+                if (window.umami) {
+                    window.umami.track(`Like_${momentId}`);
+                }
+                
                 const icon = this.querySelector('svg');
-                let current = parseInt(countSpan.textContent) || 0;
-                countSpan.textContent = current + 1;
-                this.classList.add('liked', 'text-red-500');
                 icon.style.transform = 'scale(1.3)';
                 setTimeout(() => { icon.style.transform = 'scale(1)'; }, 200);
             });

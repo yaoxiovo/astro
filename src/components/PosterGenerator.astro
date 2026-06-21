@@ -12,6 +12,8 @@ interface Props {
 
 const { title, excerpt, coverImage, author } = Astro.props;
 
+const isExternal = coverImage && (coverImage.startsWith('http://') || coverImage.startsWith('https://'));
+
 // 动态判断V认证主体和颜色
 let verifiedIconColor = "";
 let verifiedEntity = "";
@@ -34,12 +36,12 @@ if (role) {
 </button>
 
 <!-- 隐藏的海报 DOM 结构 -->
-<div id="poster-hidden-container" class="fixed top-[-9999px] left-[-9999px] w-[400px] bg-white text-black p-6 rounded-2xl shadow-2xl overflow-hidden" style="z-index: -99;">
+<div id="poster-hidden-container" class="absolute top-[-9999px] left-[-9999px] w-[400px] bg-white text-black p-6 rounded-2xl shadow-2xl overflow-hidden" style="z-index: -99;">
   <div class="relative z-10">
     <!-- 封面图 -->
     {coverImage && (
       <div class="w-full h-[200px] mb-4 rounded-xl overflow-hidden">
-        <img src={coverImage} class="w-full h-full object-cover" id="poster-cover-img" />
+        <img src={coverImage} class="w-full h-full object-cover" id="poster-cover-img" crossorigin={isExternal ? "anonymous" : undefined} />
       </div>
     )}
     
@@ -78,7 +80,8 @@ if (role) {
 <script>
   function initPoster() {
     const btn = document.getElementById('generate-poster-btn');
-    if (!btn) return;
+    if (!btn || btn.dataset.initialized) return;
+    btn.dataset.initialized = 'true';
     
     btn.addEventListener('click', async () => {
       const container = document.getElementById('poster-hidden-container');
@@ -94,7 +97,13 @@ if (role) {
              const s = document.createElement('script');
              s.src = "https://cdn.staticfile.net/html2canvas/1.4.1/html2canvas.min.js";
              s.onload = resolve;
-             s.onerror = () => reject(new Error("Failed to load html2canvas script."));
+             s.onerror = () => {
+                 const s2 = document.createElement('script');
+                 s2.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+                 s2.onload = resolve;
+                 s2.onerror = () => reject(new Error("Failed to load html2canvas from all CDNs."));
+                 document.head.appendChild(s2);
+             };
              document.head.appendChild(s);
            });
         }
