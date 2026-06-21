@@ -52,21 +52,32 @@ const className = Astro.props.class;
                 <div class="meta-icon">
                     <Icon name="material-symbols:visibility-outline-rounded" class="text-xl"></Icon>
                 </div>
-                <span class="text-50 text-sm font-medium" id={`page-views-${slug}`}>0 次</span>
+                <span class="text-50 text-sm font-medium post-pageviews" 
+                      id={`page-views-${slug}`}
+                      data-url={`/posts/${slug}/`}
+                      data-umami-base-url={umamiConfig.baseUrl}
+                      data-umami-share-id={umamiConfig.shareId}
+                      data-umami-timezone={umamiConfig.timezone}
+                >0 次</span>
             </div>
             <div class="flex items-center">
                 <div class="meta-icon">
                     <Icon name="material-symbols:person" class="text-xl"></Icon>
                 </div>
-                <span class="text-50 text-sm font-medium" id={`page-visitors-${slug}`}>0 人</span>
+                <span class="text-50 text-sm font-medium post-visitors" 
+                      id={`page-visitors-${slug}`}
+                      data-url={`/posts/${slug}/`}
+                      data-umami-base-url={umamiConfig.baseUrl}
+                      data-umami-share-id={umamiConfig.shareId}
+                      data-umami-timezone={umamiConfig.timezone}
+                >0 人</span>
             </div>
         </>
     )}
 </div>
 
-{slug && (
-    <script define:vars={{ slug, umamiConfig }}>
-    // 数字动画函数
+<script>
+    // 全局数字动画函数
     function animateValue(obj, start, end, duration, suffix = '') {
         let startTimestamp = null;
         const step = (timestamp) => {
@@ -82,59 +93,77 @@ const className = Astro.props.class;
         window.requestAnimationFrame(step);
     }
 
-    // 获取访问量统计
-    async function fetchPageViews() {
-        if (!umamiConfig.enable) return;
-        try {
-            const statsData = await fetchUmamiStats(umamiConfig.baseUrl, umamiConfig.shareId, {
-                timezone: umamiConfig.timezone,
-                path: `eq./posts/${slug}/`
-            });
-            
-            const pageViews = (statsData.pageviews && statsData.pageviews.value) || statsData.pageviews || 0;
-            const visits = (statsData.visitors && statsData.visitors.value) || statsData.visitors || 0;
-            
-            const viewsElement = document.getElementById(`page-views-${slug}`);
-            const visitorsElement = document.getElementById(`page-visitors-${slug}`);
-            
-            // 如果数据来自缓存，直接显示结果，跳过动画
-            if (statsData._fromCache) {
-                if (viewsElement) viewsElement.innerHTML = `${pageViews} 次`;
-                if (visitorsElement) visitorsElement.innerHTML = `${visits} 人`;
-                return;
+    async function loadAllPostStats() {
+        const viewElements = document.querySelectorAll('.post-pageviews');
+        
+        const urlMap = new Map();
+        viewElements.forEach(el => {
+            if (el.dataset.loaded === 'true' && el.textContent !== '0 次') return;
+            const url = el.dataset.url;
+            if (!urlMap.has(url)) {
+                urlMap.set(url, {
+                    url,
+                    baseUrl: el.dataset.umamiBaseUrl,
+                    shareId: el.dataset.umamiShareId,
+                    timezone: el.dataset.umamiTimezone,
+                    viewEls: [],
+                    visitorEls: []
+                });
             }
+            urlMap.get(url).viewEls.push(el);
+        });
 
-            if (viewsElement) {
-                const currentViews = parseInt(viewsElement.textContent) || 0;
-                if (currentViews !== pageViews) {
-                    if (currentViews === 0) {
-                         animateValue(viewsElement, currentViews, pageViews, 1000, '次');
-                    } else {
-                         viewsElement.innerHTML = `${pageViews} 次`;
-                    }
-                }
+        const visitorElements = document.querySelectorAll('.post-visitors');
+        visitorElements.forEach(el => {
+            if (el.dataset.loaded === 'true' && el.textContent !== '0 人') return;
+            const url = el.dataset.url;
+            if (urlMap.has(url)) {
+                urlMap.get(url).visitorEls.push(el);
             }
-            
-            if (visitorsElement) {
-                const currentVisits = parseInt(visitorsElement.textContent) || 0;
-                if (currentVisits !== visits) {
-                    if (currentVisits === 0) {
-                         animateValue(visitorsElement, currentVisits, visits, 1000, '人');
+        });
+
+        for (const [url, data] of urlMap.entries()) {
+            if (!data.baseUrl || !data.shareId || typeof window.fetchUmamiStats !== 'function') continue;
+            try {
+                const statsData = await window.fetchUmamiStats(data.baseUrl, data.shareId, {
+                    url: url,
+                    timezone: data.timezone
+                });
+                
+                const views = (statsData.pageviews && statsData.pageviews.value) || statsData.pageviews || 0;
+                const visitors = (statsData.visitors && statsData.visitors.value) || statsData.visitors || 0;
+                
+                data.viewEls.forEach(el => {
+                    el.dataset.loaded = 'true';
+                    if (statsData._fromCache) {
+                        el.innerHTML = `${views} 次`;
                     } else {
-                         visitorsElement.innerHTML = `${visits} 人`;
+                        const current = parseInt(el.textContent) || 0;
+                        if (current !== views) animateValue(el, current, views, 1000, '次');
                     }
-                }
+                });
+                
+                data.visitorEls.forEach(el => {
+                    el.dataset.loaded = 'true';
+                    if (statsData._fromCache) {
+                        el.innerHTML = `${visitors} 人`;
+                    } else {
+                        const current = parseInt(el.textContent) || 0;
+                        if (current !== visitors) animateValue(el, current, visitors, 1000, '人');
+                    }
+                });
+            } catch(e) {
+                console.error('Failed to load stats for', url, e);
             }
-        } catch (error) {
-            console.error('Error fetching page views:', error);
         }
     }
 
-    // 页面加载完成后获取统计数据
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', fetchPageViews);
+        document.addEventListener('DOMContentLoaded', loadAllPostStats);
     } else {
-        fetchPageViews();
+        loadAllPostStats();
     }
+    
+    // 兼容 Swup 4
+    document.addEventListener('swup:page:view', loadAllPostStats);
 </script>
-)}
