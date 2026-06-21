@@ -224,23 +224,25 @@ const relatedMoments = allMoments
     }
 
     function initCardClick() {
-        document.querySelectorAll('.moment-card').forEach(card => {
-            if (card.dataset.clickProcessed) return;
-            card.dataset.clickProcessed = "true";
-            card.addEventListener('click', (e) => {
-                if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.moment-view-btn') || e.target.closest('img')) {
-                    return;
-                }
-                const idAttr = card.id;
-                if (!idAttr || !idAttr.startsWith('moment-')) return;
-                const momentId = idAttr.replace('moment-', '');
-                
-                if (window.swup) {
-                    window.swup.navigate(`/moment/${momentId}/`);
-                } else {
-                    window.location.href = `/moment/${momentId}/`;
-                }
-            });
+        if (window._momentCardClickInit) return;
+        window._momentCardClickInit = true;
+
+        document.addEventListener('click', (e) => {
+            const card = e.target.closest('.moment-card');
+            if (!card) return;
+
+            if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.moment-view-btn') || e.target.closest('img')) {
+                return;
+            }
+            const idAttr = card.id;
+            if (!idAttr || !idAttr.startsWith('moment-')) return;
+            const momentId = idAttr.replace('moment-', '');
+            
+            if (window.swup) {
+                window.swup.navigate(`/moment/${momentId}/`);
+            } else {
+                window.location.href = `/moment/${momentId}/`;
+            }
         });
     }
 
