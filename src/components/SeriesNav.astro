@@ -1,0 +1,84 @@
+---
+// SeriesNav.astro - 文章系列导航组件
+// 用法：传入 series (系列名), posts (系列所有文章), currentSlug
+
+import { Icon } from 'astro-icon/components';
+
+interface SeriesPost {
+  title: string;
+  slug: string;
+  published: Date;
+}
+
+interface Props {
+  series: string;
+  posts: SeriesPost[];
+  currentSlug: string;
+}
+
+const { series, posts, currentSlug } = Astro.props;
+
+// 按发布日期升序排列
+const sortedPosts = [...posts].sort((a, b) => a.published.getTime() - b.published.getTime());
+const currentIndex = sortedPosts.findIndex(p => p.slug === currentSlug);
+---
+
+{sortedPosts.length > 1 && (
+  <div class="series-nav card-base mb-6 overflow-hidden onload-animation">
+    <!-- 标题行 -->
+    <div class="flex items-center gap-2 px-5 py-3.5 border-b border-[var(--line-divider)]">
+      <div class="h-6 w-6 rounded-md bg-[var(--primary)] flex items-center justify-center flex-shrink-0">
+        <Icon name="material-symbols:format-list-numbered-rounded" class="text-white dark:text-black/70 text-[0.875rem]" />
+      </div>
+      <span class="text-sm font-semibold text-black/80 dark:text-white/80">系列文章</span>
+      <span class="text-sm text-black/40 dark:text-white/40 font-normal truncate">· {series}</span>
+      <span class="ml-auto text-xs text-black/30 dark:text-white/30 flex-shrink-0">
+        {currentIndex + 1} / {sortedPosts.length}
+      </span>
+    </div>
+
+    <!-- 文章列表 -->
+    <div class="px-3 py-2">
+      {sortedPosts.map((post, index) => {
+        const isCurrent = post.slug === currentSlug;
+        return (
+          <a
+            href={isCurrent ? undefined : `/posts/${post.slug}/`}
+            aria-current={isCurrent ? 'page' : undefined}
+            class:list={[
+              'group flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 my-0.5',
+              isCurrent
+                ? 'bg-[var(--primary)]/10 cursor-default pointer-events-none'
+                : 'hover:bg-[var(--btn-regular-bg)] active:scale-[0.99]',
+            ]}
+          >
+            <!-- 序号角标 -->
+            <div class:list={[
+              'h-5 w-5 rounded text-[0.65rem] font-bold flex items-center justify-center flex-shrink-0 transition-colors',
+              isCurrent
+                ? 'bg-[var(--primary)] text-white dark:text-black/70'
+                : 'bg-black/8 dark:bg-white/10 text-black/50 dark:text-white/50 group-hover:bg-[var(--primary)]/20 group-hover:text-[var(--primary)]',
+            ]}>
+              {index + 1}
+            </div>
+
+            <!-- 标题 -->
+            <span class:list={[
+              'text-sm leading-snug flex-1 truncate transition-colors',
+              isCurrent
+                ? 'text-[var(--primary)] font-semibold'
+                : 'text-black/70 dark:text-white/70 group-hover:text-black/90 dark:group-hover:text-white/90',
+            ]}>
+              {post.title}
+            </span>
+
+            <!-- 当前箭头 -->
+            {isCurrent && (
+              <Icon name="material-symbols:play-arrow-rounded" class="text-[var(--primary)] text-[1rem] flex-shrink-0" />
+            )}
+          </a>
+        );
+      })}
+    </div>
+  </div>
+)}

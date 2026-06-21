@@ -2,6 +2,7 @@
 import path from "node:path";
 import License from "@components/misc/License.astro";
 import Markdown from "@components/misc/Markdown.astro";
+import SeriesNav from "@components/SeriesNav.astro";
 
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getSortedPosts } from "@utils/content-utils";
@@ -25,6 +26,15 @@ const { entry } = Astro.props;
 const { Content, headings } = await entry.render();
 
 const { remarkPluginFrontmatter } = await entry.render();
+
+// 获取同系列文章
+const allPosts = await getSortedPosts();
+const seriesName = entry.data.series;
+const seriesPosts = seriesName
+  ? allPosts
+      .filter(p => p.data.series === seriesName)
+      .map(p => ({ title: p.data.title, slug: p.slug, published: p.data.published }))
+  : [];
 
 const jsonLd = {
 	"@context": "https://schema.org",
@@ -106,6 +116,10 @@ const jsonLd = {
                 <ImageWrapper id="post-cover" src={entry.data.image} basePath={path.join("content/posts/", getDir(entry.id))} class="mb-8 rounded-xl banner-container onload-animation"/>
             }
 
+            {/* 系列导航 */}
+            {seriesName && seriesPosts.length > 1 && (
+                <SeriesNav series={seriesName} posts={seriesPosts} currentSlug={entry.slug} />
+            )}
 
             <Markdown class="mb-6 markdown-content onload-animation">
                 <Content />

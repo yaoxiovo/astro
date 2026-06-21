@@ -1,0 +1,143 @@
+---
+// CookieConsent.astro - Cookie 同意条款横幅
+---
+
+<div
+  id="cookie-consent-banner"
+  role="dialog"
+  aria-label="Cookie 使用声明"
+  style="
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    z-index: 9998;
+    width: min(calc(100vw - 2rem), 560px);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+  "
+>
+  <div style="
+    backdrop-filter: blur(16px) saturate(1.8);
+    -webkit-backdrop-filter: blur(16px) saturate(1.8);
+    background: oklch(0.18 0.01 var(--hue, 250) / 0.85);
+    border: 1px solid oklch(0.40 0.05 var(--hue, 250) / 0.5);
+    border-radius: 1rem;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 8px 32px oklch(0 0 0 / 0.4), 0 0 0 1px oklch(0.70 0.14 var(--hue, 250) / 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  ">
+    <!-- 图标 -->
+    <div style="
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 0.625rem;
+      background: oklch(0.70 0.14 var(--hue, 250) / 0.15);
+      border: 1px solid oklch(0.70 0.14 var(--hue, 250) / 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.1rem;
+    ">🍪</div>
+
+    <!-- 文字 -->
+    <div style="flex: 1; min-width: 200px;">
+      <p style="
+        color: oklch(0.92 0.01 var(--hue, 250));
+        font-size: 0.82rem;
+        line-height: 1.55;
+        margin: 0;
+      ">
+        本站使用 <strong style="color: oklch(0.80 0.14 var(--hue, 250))">Umami</strong> 进行匿名访问统计，不追踪个人身份信息。继续浏览即表示您同意我们的
+        <a href="/posts/diejia/" style="color: oklch(0.72 0.14 var(--hue, 250)); text-decoration: underline; text-underline-offset: 2px;">隐私声明</a>。
+      </p>
+    </div>
+
+    <!-- 按钮组 -->
+    <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+      <button
+        id="cookie-reject-btn"
+        style="
+          padding: 0.4rem 0.875rem;
+          border-radius: 0.5rem;
+          border: 1px solid oklch(0.50 0.02 var(--hue, 250) / 0.5);
+          background: transparent;
+          color: oklch(0.70 0.02 var(--hue, 250));
+          font-size: 0.78rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          white-space: nowrap;
+        "
+        onmouseover="this.style.background='oklch(0.30 0.01 var(--hue) / 0.5)'"
+        onmouseout="this.style.background='transparent'"
+      >
+        仅必要
+      </button>
+      <button
+        id="cookie-accept-btn"
+        style="
+          padding: 0.4rem 0.875rem;
+          border-radius: 0.5rem;
+          border: none;
+          background: oklch(0.70 0.14 var(--hue, 250));
+          color: white;
+          font-size: 0.78rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          white-space: nowrap;
+          box-shadow: 0 2px 8px oklch(0.70 0.14 var(--hue, 250) / 0.4);
+        "
+        onmouseover="this.style.background='oklch(0.65 0.16 var(--hue))'"
+        onmouseout="this.style.background='oklch(0.70 0.14 var(--hue))'"
+      >
+        同意全部
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const COOKIE_KEY = 'yaoxi-cookie-consent';
+  const banner = document.getElementById('cookie-consent-banner');
+
+  function showBanner() {
+    if (!banner) return;
+    banner.style.pointerEvents = 'auto';
+    banner.style.opacity = '1';
+    banner.style.transform = 'translateX(-50%) translateY(0)';
+  }
+
+  function hideBanner() {
+    if (!banner) return;
+    banner.style.pointerEvents = 'none';
+    banner.style.opacity = '0';
+    banner.style.transform = 'translateX(-50%) translateY(120%)';
+  }
+
+  function init() {
+    const consent = localStorage.getItem(COOKIE_KEY);
+    if (!consent) {
+      // 延迟 1.5s 弹出，避免页面初始化时抢注意力
+      setTimeout(showBanner, 1500);
+    }
+  }
+
+  document.getElementById('cookie-accept-btn')?.addEventListener('click', () => {
+    localStorage.setItem(COOKIE_KEY, 'accepted');
+    hideBanner();
+  });
+
+  document.getElementById('cookie-reject-btn')?.addEventListener('click', () => {
+    localStorage.setItem(COOKIE_KEY, 'rejected');
+    hideBanner();
+  });
+
+  init();
+</script>

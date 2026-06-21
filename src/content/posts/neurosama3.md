@@ -12,6 +12,7 @@ tags:
 category: 记录
 draft: true
 lang: ""
+series: "Neuro-sama 数字生命系列"
 ---
 <div style="font-family: 'Inter', 'Noto Sans SC', sans-serif; display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
     <div style="position: relative; border-left: 5px solid #ff4d4f; background: linear-gradient(to right, rgba(255, 77, 79, 0.08), rgba(255, 255, 255, 0)); padding: 16px 20px; border-radius: 4px 12px 12px 4px; box-shadow: inset 0 0 20px rgba(255, 77, 79, 0.03);">

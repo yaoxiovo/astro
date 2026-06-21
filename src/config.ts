@@ -111,6 +111,11 @@ export const navBarConfig: NavBarConfig = {
 			external: false, // Show an external link icon and will open in a new tab
 		},
 		{
+			name: "相册",
+			url: "/gallery/",
+			external: false,
+		},
+		{
 			name: "其他网站",
 			url: "/posts/other-sites/", // Internal links should not include the base path, as it is automatically added
 			external: false, // Show an external link icon and will open in a new tab
