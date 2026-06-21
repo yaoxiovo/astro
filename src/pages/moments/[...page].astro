@@ -212,10 +212,33 @@ const { page } = Astro.props;
         });
     }
 
+    function initCardClick() {
+        document.querySelectorAll('.moment-card').forEach(card => {
+            if (card.dataset.clickProcessed) return;
+            card.dataset.clickProcessed = "true";
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.moment-view-btn') || e.target.closest('img')) {
+                    return;
+                }
+                // Try to get moment ID, it might be already set by observer or we can parse the id attribute
+                const idAttr = card.id;
+                if (!idAttr || !idAttr.startsWith('moment-')) return;
+                const momentId = idAttr.replace('moment-', '');
+                
+                if (window.swup) {
+                    window.swup.navigate(`/moment/${momentId}/`);
+                } else {
+                    window.location.href = `/moment/${momentId}/`;
+                }
+            });
+        });
+    }
+
     function initAll() {
         processMomentDOM();
         initLikeButtons();
         initViewTracking();
+        initCardClick();
         loadMomentStats(); 
     }
 
