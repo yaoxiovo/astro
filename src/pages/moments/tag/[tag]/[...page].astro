@@ -1,7 +1,7 @@
 ---
-import MainGridLayout from '../../layouts/MainGridLayout.astro';
-import MomentCard from '../../components/MomentCard.astro';
-import Pagination from '../../components/control/Pagination.astro';
+import MainGridLayout from '../../../../layouts/MainGridLayout.astro';
+import MomentCard from '../../../../components/MomentCard.astro';
+import Pagination from '../../../../components/control/Pagination.astro';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths({ paginate }) {
@@ -76,7 +76,7 @@ const { tag } = Astro.params;
     </div>
 </MainGridLayout>
 
-<script define:vars={{ umamiConfig: (await import('../../config')).umamiConfig }}>
+<script define:vars={{ umamiConfig: (await import('../../../../config')).umamiConfig }}>
     // Utility for relative time
     function timeAgo(dateString) {
         const date = new Date(dateString);

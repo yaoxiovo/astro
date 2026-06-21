@@ -60,6 +60,9 @@ lang: "zh_CN"
    - **Hashtag 标签路由引擎 (Hashtag Filtering System)**：利用 Astro 的动态路由机制新增了 `tag/[tag]/[...page].astro`，将原本只是变蓝的 `#标签` 升级为了真·超链接！现在点击任何 `#日常` 都会通过 Swup 无感平滑跳转到一个专属的标签归档页，优雅筛选出所有相关的推文！
    - **富媒体解析器 (Rich Media Embeds)**：在 DOM 处理周期加入了智能媒体嗅探器。现在只要你在推文里贴上 B站、YouTube 或者是网易云音乐的纯网址（例如 `bilibili.com/video/BV...`），底层就会自动识别并把它原地替换成带有精致阴影圆角的 `iframe` 播放器！听歌看视频不再需要跳出博客！
    - **无限滚动加载 (Infinite Scroll)**：抛弃了上古时代的翻页按钮，手写了一个高性能的 `IntersectionObserver`。当你滑到页面底部触发指示器时，JS 会自动去后台静默 fetch 下一页并剥离提取新卡片追加到列表末尾，同时重新初始化 Umami 追踪器和各类事件，实现了德芙般丝滑的瀑布流体验喵！
+   
+8. **紧急热修复：标签动态路由深度导入路径错误**：
+   在上线 Hashtag 功能的 `tag/[tag]/[...page].astro` 路由时，由于目录层级加深了两级，导致顶部组件（`MainGridLayout`、`MomentCard`）以及底部 `<script>` 中 `config.ts` 的相对路径 `../../` 全部失效，引发 Vite 打包崩溃。本喵已光速重构了所有导入路径，精确修正为 `../../../../`，云端构建通道再次畅通无阻喵！
 
 ### 📊 运行状态 (Run-time Status)
 本地 Type-Check 验证通过，云端静态文件（static entrypoints）成功生成。当前博客底层代码已完全兼容并适配 Astro 5 时代的内容集合标准。
