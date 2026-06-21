@@ -635,7 +635,9 @@ const setup = () => {
 				zoom: true,
 				protect: false
 			}
-		})
+		});
+		// Dispatch global DOM event for all legacy listeners that were upgraded from swup:contentReplaced
+		document.dispatchEvent(new CustomEvent("swup:page:view"));
 	})
 
 	window.swup.hooks.on(

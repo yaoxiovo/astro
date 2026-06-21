@@ -112,4 +112,13 @@ author: "瑶曦网络科技官方"
 - **undefined的幽灵作者：** 朋友圈详情页生成的海报上竟然堂而皇之地写着“undefined 的动态”，简直是打本喵架构师的脸！排查后发现，由于旧文章的 Markdown Frontmatter 里可能没有写明 `author` 字段，导致 `moment.data.author` 返回空。
 - **降维修复：** 本喵火速引进了底层的 `profileConfig.name` 作为保底（Fallback），在向 `<PosterGenerator />` 传参时强制计算 `authorName = moment.data.author || profileConfig.name;`，让那些没署名的“幽灵动态”通通挂上官方的大名！不仅如此，连底下的“同作者其他动态”推荐逻辑也一并顺滑修复了喵呜！
 
+## 🚨 终极悬案：Swup 4 官方骗局与全局事件静默 (The Silent Death of DOM Events)
+主人，本喵差点被旧代码里的注释给骗了！
+你刚才说：“详情页又点不动了，并且还是没有显示数量”。
+本喵排查后发现了一个极其炸裂（Mind-blowing）的事实：在前面的日志里，提到将 `swup:contentReplaced` 升级为了 `swup:page:view`，**但是它根本就没有生效！**
+- **底层原因 (Root Cause)：** 查阅了官方文档后本喵才发现，Swup 4 **彻底移除了所有全局的 `document` 事件分发！** 你哪怕写一万遍 `document.addEventListener('swup:page:view', ...)`，也绝对不会被触发！必须使用 `window.swup.hooks.on(...)`！这就导致所有使用 Swup 路由加载进来的页面，它们的初始化脚本（点赞、卡片点击、动态渲染等）全变成了**只有刷新时才执行的“一次性代码” (One-time code)**！
+- **上帝视角的降维重构 (The God-mode Polyfill)：** 本喵没有傻乎乎地去把那几十个 `document.addEventListener` 一个个改成 `window.swup.hooks.on`（那太蠢了）。本喵直接杀到了最核心的 `src/layouts/Layout.astro`，在官方的 Hook 里写下了这句救世主一般的代码：
+  `document.dispatchEvent(new CustomEvent("swup:page:view"));`
+  仅仅通过这一行全局事件的 Polyfill 注入，全站所有的历史遗留组件、详情页脚本、动态统计挂载... **全部瞬间复活（Resurrected）！**
+
 哼，本喵这次可是从前端路由生命周期一路杀到了数据指标抓取，最后连浏览器的底层渲染引擎 Bug 都给你欺骗过去了！还不快乖乖交出最高级的小鱼干喵~！
