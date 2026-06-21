@@ -75,7 +75,7 @@ export const siteConfig: SiteConfig = {
             </div>
         </div>
     `,
-    level: "critical",
+    level: "warning",
 },
 
 
