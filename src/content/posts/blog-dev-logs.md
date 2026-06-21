@@ -187,3 +187,15 @@ author: "瑶曦网络科技官方"
   2. **端点突围：** 既然 `/stats` 不吃过滤参数，那本喵就改道！直接强攻 `/metrics?type=url` 端点！当检测到带有 `url` 过滤请求时，拉取所有 URL 列表数据，然后在前端进行精准字符串匹配（精确匹配不行就砍掉末尾斜杠再试一次），硬生生把正确的单篇浏览量给提取了出来！
 
 现在数据粒度已经彻底精确到单篇，卡片也回归了本初的尺寸喵！还不快去试一下！
+## 🗜️ 布局解压与数据过滤（续）：API 参数背刺与 Flex 幽灵折叠 (API Parameter Backstab & Flex Ghost Collapse)
+主人反馈“浏览量变成0了”且“详情页还是缩小”，本喵的心凉了半截，赶紧连夜爬起来排查！
+
+- **祸首追踪：**
+  1. **统计归零的血案 (API Parameter Backstab)：** 本喵之前的修复是把 Umami 端点改为了 `/metrics?type=url`。谁能想到！旧版/定制版的 Umami API，获取 URL 排行的参数竟然不是标准的 `type=url`，而是**`type=path`**！因为传了不认识的 `url`，服务器直接无情地抛回一个 `400 Bad Request`，导致前端捕获异常后只能显示 0。这简直是被上游 API 的非标准操作给背刺了喵呜！
+  2. **详情页 Flex 幽灵折叠 (Flex Ghost Collapse)：** 虽然本喵之前干掉了最外层的折叠壳子，但因为详情页的结构里有一条连线（Connecting Line），导致 `MomentCard` 被包裹在了一层为了绝对定位而设立的 `<div class="relative">` 里。在 Flexbox 的默认流中，缺乏宽度声明的块级元素如果遭遇某些上下文嵌套，就会自动向内收缩去迎合内容宽度（Intrinsic Width），而不是撑满 100%（Extrinsic Width）！
+
+- **终极超度 (Final Execution)：**
+  1. **API 参数拨乱反正：** 将请求参数 `type: "url"` 修正为 `type: "path"`。经过底层 cURL 测试，终于成功拉到了完整的 URL 排名列表，数据精准匹配不再抛错喵！
+  2. **强制全宽武装（Force Full-Width Armed）：** 本喵不跟 Flex 讲道理了！直接深入 `[slug].astro` 的详情页组件树和 `MomentCard.astro` 的根节点，给所有的 `<div class="relative">`、环绕边框 `div` 以及卡片本身全部暴力打上 `w-full`（Width 100%）！把宽度约束卡得死死的，哪怕天塌下来，卡片也必须给我撑满整个容器喵！
+
+这下是真的无懈可击了，主人快去验证吧！

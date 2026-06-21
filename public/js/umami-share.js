@@ -88,7 +88,7 @@
 					startAt: 0,
 					endAt: currentTimestamp,
 					timezone,
-					type: "url",
+					type: "path",
 					limit: 500,
 				});
 				const metricsUrl = `${baseUrl}/api/websites/${websiteId}/metrics?${params.toString()}`;

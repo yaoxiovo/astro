@@ -61,7 +61,7 @@ const relatedMoments = allMoments
         <div id="moments-container" class="flex flex-col gap-6">
                 <!-- Thread Parent -->
                 {parent && (
-                    <div class="relative">
+                    <div class="relative w-full">
                         <MomentCard moment={parent} />
                         <!-- Connecting Line -->
                         <div class="absolute left-12 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
@@ -69,8 +69,8 @@ const relatedMoments = allMoments
                 )}
                 
                 <!-- Main Moment -->
-                <div class="relative">
-                    <div class={(parent || children.length > 0) ? "ring-2 ring-[var(--primary)] rounded-2xl" : ""}>
+                <div class="relative w-full">
+                    <div class={`w-full ${(parent || children.length > 0) ? "ring-2 ring-[var(--primary)] rounded-2xl" : ""}`}>
                         <MomentCard moment={moment} isDetail={true} />
                     </div>
                     {children.length > 0 && (
@@ -80,7 +80,7 @@ const relatedMoments = allMoments
 
                 <!-- Thread Children -->
                 {children.map((child, idx) => (
-                    <div class="relative mt-6">
+                    <div class="relative mt-6 w-full">
                         <MomentCard moment={child} />
                         {idx !== children.length - 1 && (
                             <div class="absolute left-12 top-16 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -z-10" style="transform: translateX(-50%); height: calc(100% + 24px);"></div>
