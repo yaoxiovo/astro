@@ -40,6 +40,7 @@ const momentsCollection = defineCollection({
 		verifySubject: z.string().optional().default(''),
 		source: z.string().optional(),
 		pinned: z.boolean().optional().default(false),
+		replyTo: z.string().optional(),
 	}),
 });
 
