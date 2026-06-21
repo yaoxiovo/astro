@@ -39,7 +39,7 @@ if (role) {
     <!-- 封面图 -->
     {coverImage && (
       <div class="w-full h-[200px] mb-4 rounded-xl overflow-hidden">
-        <img src={coverImage} class="w-full h-full object-cover" crossorigin="anonymous" id="poster-cover-img" />
+        <img src={coverImage} class="w-full h-full object-cover" id="poster-cover-img" />
       </div>
     )}
     
@@ -74,7 +74,7 @@ if (role) {
   </div>
 </div>
 
-<script is:inline src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script is:inline src="https://cdn.staticfile.net/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
   function initPoster() {
     const btn = document.getElementById('generate-poster-btn');
@@ -89,6 +89,9 @@ if (role) {
       btn.style.pointerEvents = 'none';
       
       try {
+        if (!window.html2canvas) {
+           throw new Error("html2canvas library not loaded. Please check your network or adblocker.");
+        }
         // 等待图片加载完成 (以防跨域缓存)
         const img = document.getElementById('poster-cover-img') as HTMLImageElement;
         if (img && !img.complete) {

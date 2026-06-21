@@ -223,7 +223,30 @@ const { tag } = Astro.params;
     }
 
     async function loadMomentStats() {
-        if (!umamiConfig.enable || !window.fetchUmamiEvents) return;
+        if (!umamiConfig.enable) return;
+
+        if (!window.fetchUmamiEvents) {
+            window.fetchUmamiEvents = async function(baseUrl, shareId) {
+                try {
+                    const tokenRes = await fetch(`${baseUrl}/api/share/${shareId}`);
+                    if (!tokenRes.ok) return [];
+                    const tokenData = await tokenRes.json();
+                    const token = tokenData.token;
+                    const websiteId = tokenData.websiteId;
+
+                    const startAt = Date.now() - 30 * 24 * 60 * 60 * 1000;
+                    const endAt = Date.now();
+                    const eventsRes = await fetch(`${baseUrl}/api/websites/${websiteId}/events?startAt=${startAt}&endAt=${endAt}&unit=day&timezone=Asia/Shanghai`, {
+                        headers: { 'x-umami-share-token': token }
+                    });
+                    if (!eventsRes.ok) return [];
+                    return await eventsRes.json();
+                } catch (e) {
+                    console.error("fetchUmamiEvents error", e);
+                    return [];
+                }
+            }
+        }
         try {
             const statsData = await fetchUmamiEvents(umamiConfig.baseUrl, umamiConfig.shareId, {});
             if (Array.isArray(statsData)) {
