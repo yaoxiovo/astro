@@ -446,7 +446,7 @@ const jsonLd = {
                 timezone: umamiConfig.timezone
             });
             
-            const pageviews = (statsData.pageviews && statsData.pageviews.value) || statsData.pageviews || 0;
+            const pageviews = (statsData.pageviews && typeof statsData.pageviews === 'object' && statsData.pageviews.value !== undefined) ? statsData.pageviews.value : (Number(statsData.pageviews) || 0);
             const element = document.getElementById('post-pageviews');
             
             if (element) {

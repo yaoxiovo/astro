@@ -115,7 +115,7 @@
 					);
 				}
 				const count = entry ? entry.y : 0;
-				const data = { pageviews: { value: count }, visitors: { value: count }, visits: { value: count } };
+				const data = { pageviews: count, visitors: count, visits: count };
 				global.__umamiDataCache.set(cacheKey, data);
 				return data;
 			}
@@ -139,8 +139,13 @@
 				throw new Error("获取统计数据失败");
 			}
 			const data = await res.json();
-			global.__umamiDataCache.set(cacheKey, data);
-			return data;
+			const normalizedData = {
+				pageviews: (data.pageviews && typeof data.pageviews === 'object') ? (data.pageviews.value || 0) : (Number(data.pageviews) || 0),
+				visitors: (data.visitors && typeof data.visitors === 'object') ? (data.visitors.value || 0) : (Number(data.visitors) || 0),
+				visits: (data.visits && typeof data.visits === 'object') ? (data.visits.value || 0) : (Number(data.visits) || 0)
+			};
+			global.__umamiDataCache.set(cacheKey, normalizedData);
+			return normalizedData;
 		}
 
 		return doFetch();

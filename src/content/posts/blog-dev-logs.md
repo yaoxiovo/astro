@@ -199,3 +199,31 @@ author: "瑶曦网络科技官方"
   2. **强制全宽武装（Force Full-Width Armed）：** 本喵不跟 Flex 讲道理了！直接深入 `[slug].astro` 的详情页组件树和 `MomentCard.astro` 的根节点，给所有的 `<div class="relative">`、环绕边框 `div` 以及卡片本身全部暴力打上 `w-full`（Width 100%）！把宽度约束卡得死死的，哪怕天塌下来，卡片也必须给我撑满整个容器喵！
 
 这下是真的无懈可击了，主人快去验证吧！
+## 🧩 短路对象混淆与 Flex 宽度折叠：[object Object] 与卡片缩水终极破案 (Object Short-Circuit & Flex Collapse Final Fix)
+主人，本天才猫娘今天真的忍不住要吐槽了喵！这两个 Bug 看起来是两个不起眼的样式和数据问题，但底层逻辑分析起来，简直是 JavaScript 短路求值和 CSS Grid/Flex 容器计算缺陷的教科书级灾难（Cascading Failures）喵呜！
+
+- **祸首追踪：**
+  1. **浏览量 `[object Object]` 鬼畜血案 (JS Logical Short-Circuit Bug)：**
+     啧！我们在之前的重构中，将 Umami 过滤单篇的返回结果包装成了 `{ pageviews: { value: count }, ... }` 以契合老代码。然而，老代码里的提取逻辑是这样的：
+     `(statsData.pageviews && statsData.pageviews.value) || statsData.pageviews || 0`
+     看起来很聪明是吧？但是如果 `count` 值为 `0` 时呢？
+     - `statsData.pageviews.value` 为 `0` (falsy)！
+     - 那么 `(statsData.pageviews && statsData.pageviews.value)` 整个左半部分就求值为 `0`！
+     - 接着变成了 `0 || statsData.pageviews || 0`。
+     - 因为 `statsData.pageviews` 是 `{ value: 0 }` 这个对象本身，而**非空对象在 JS 里永远是 truthy 的**！
+     - 于是短路保护一脚踩空，直接返回了 `{ value: 0 }` 对象本身！丢给浏览器去渲染就悲剧地变成了 `[object Object]` 喵！
+     更甚至，全站统计 `Profile.astro` 里直接用的是 `statsData.pageviews || 0`，由于它拿到的是 `{ value: count }` 对象，所以也顺理成章地被 toString 成了 `[object Object]`！
+  2. **详情页卡片依旧“萎缩”的罪魁祸首 (Flex Intrinsic Width Collapse)：**
+     主页的卡片不缩，为什么唯独详情页里的卡片全缩了？
+     因为主页的 `MomentCard` 是直接作为 `flex flex-col` 容器的子项，享受默认的拉伸特性（`items-stretch`）。
+     但在详情页，为了画 Thread 的上下层回复连接线，每一张 `MomentCard` 都被套在了包装 `div`（`relative w-full`）里面！
+     虽然给它们加了 `w-full`，但是在 Grid 布局的 `auto` 列里，普通包装 `div` 只是一个 block 容器，在没有明确被赋予 flex 和 stretch 规则的情况下，它的子元素（卡片）并没有被强制拉开，导致其在计算时直接退化为了自身内容的首选宽度（Intrinsic width），从而使整条回复链上的卡片在视觉上严重缩水，十分难看喵！
+
+- **终极超度 (Ultimate Execution & Refactor) 喵：**
+  1. **数据层标准化降维 (Data Normalization)：**
+     本喵直接在 `umami-share.js` 拦截器中对数据进行脱水处理！不管你是单篇路径还是全站 API，一律将对象解构，把嵌套结构直接格式化为扁平的纯数字对象：`{ pageviews: count, visitors: count, visits: count }`。同时把前端 `PostMeta.astro` 和 `[...slug].astro` 的取值逻辑改写成防御性的类型判断，只要不是对象，坚决不取 `.value`，彻底斩断了 `[object Object]` 的根源喵！
+  2. **Flex 弹性拉伸强行贯穿 (Extrinsic Width Propagation)：**
+     本喵直接对 `[slug].astro` 的详情页 DOM 树进行了暴力的拉伸重构！给每一层包装 `div`、回复高亮环 `div`、甚至相关推荐列表的容器，全部强制打上 `flex flex-col items-stretch`！
+     这就像给整条 DOM 链条里塞入了一根粗壮的钢筋，从父容器一路向下强行顶开所有子容器的宽度！让它没有任何机会和理由去“萎缩”！
+
+现在不管你怎么疯狂折腾，统计数据都只会显示纯净无瑕的数字，卡片也乖乖撑得满满当当、和头部对齐得整整齐齐了喵呜~！还不快拿小鱼干来犒劳本天才架构师喵！

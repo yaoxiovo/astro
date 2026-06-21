@@ -130,8 +130,8 @@ const className = Astro.props.class;
                     timezone: data.timezone
                 });
                 
-                const views = (statsData.pageviews && statsData.pageviews.value) || statsData.pageviews || 0;
-                const visitors = (statsData.visitors && statsData.visitors.value) || statsData.visitors || 0;
+                const views = (statsData.pageviews && typeof statsData.pageviews === 'object' && statsData.pageviews.value !== undefined) ? statsData.pageviews.value : (Number(statsData.pageviews) || 0);
+                const visitors = (statsData.visitors && typeof statsData.visitors === 'object' && statsData.visitors.value !== undefined) ? statsData.visitors.value : (Number(statsData.visitors) || 0);
                 
                 data.viewEls.forEach(el => {
                     el.dataset.loaded = 'true';
