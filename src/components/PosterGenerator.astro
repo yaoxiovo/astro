@@ -36,12 +36,12 @@ if (role) {
 </button>
 
 <!-- 隐藏的海报 DOM 结构 -->
-<div id="poster-hidden-container" class="fixed w-[400px] bg-white text-black p-6 rounded-2xl shadow-2xl overflow-hidden pointer-events-none" style="top: 0; left: -9999px; z-index: -9999; opacity: 0.001;">
+<div id="poster-hidden-container" class="fixed top-[-9999px] left-[-9999px] w-[400px] bg-white text-black p-6 rounded-2xl shadow-2xl overflow-hidden" style="z-index: -99;">
   <div class="relative z-10">
     <!-- 封面图 -->
     {coverImage && (
       <div class="w-full h-[200px] mb-4 rounded-xl overflow-hidden">
-        <img src={coverImage} class="w-full h-full object-cover" id="poster-cover-img" crossorigin={isExternal ? "anonymous" : undefined} />
+        <img src={coverImage} class="w-full h-full object-cover" crossorigin="anonymous" id="poster-cover-img" />
       </div>
     )}
     
@@ -76,6 +76,7 @@ if (role) {
   </div>
 </div>
 
+<script is:inline src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 <script>
   function initPoster() {
     const btn = document.getElementById('generate-poster-btn');
@@ -91,21 +92,6 @@ if (role) {
       btn.style.pointerEvents = 'none';
       
       try {
-        if (!window.htmlToImage) {
-           await new Promise((resolve, reject) => {
-             const s = document.createElement('script');
-             s.src = "https://cdn.staticfile.net/html-to-image/1.11.11/html-to-image.min.js";
-             s.onload = resolve;
-             s.onerror = () => {
-                 const s2 = document.createElement('script');
-                 s2.src = "https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js";
-                 s2.onload = resolve;
-                 s2.onerror = () => reject(new Error("Failed to load html-to-image from all CDNs."));
-                 document.head.appendChild(s2);
-             };
-             document.head.appendChild(s);
-           });
-        }
         // 等待图片加载完成 (以防跨域缓存)
         const img = document.getElementById('poster-cover-img') as HTMLImageElement;
         if (img && !img.complete) {
@@ -115,25 +101,29 @@ if (role) {
           });
         }
         
-        // 渲染海报图片 - 修复白屏 Bug
-        // 1. Safari/WebKit 首次渲染包含外链或 SVG 时容易白屏，必须“空跑”一次预热
-        await (window as any).htmlToImage.toPng(container, { pixelRatio: 1 });
+        // 临时将容器移入可视区域，避免 html2canvas 因元素在屏幕外而渲染为空白
+        const originalClasses = container.className;
+        const originalCssText = container.style.cssText;
+        container.classList.remove('top-[-9999px]', 'left-[-9999px]');
+        container.style.cssText = 'position: fixed; top: 0px; left: 0px; z-index: -9999; pointer-events: none;';
         
-        // 2. 正式高清渲染，并强行覆盖其原有的不可见样式
-        const url = await (window as any).htmlToImage.toPng(container, {
-          pixelRatio: 2, // 高清
+        // 稍微等待，确保浏览器完成重排
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // 渲染 Canvas
+        const canvas = await (window as any).html2canvas(container, {
+          scale: 2, // 高清
+          useCORS: true,
           backgroundColor: '#ffffff',
-          style: {
-            opacity: '1',
-            transform: 'none',
-            top: '0',
-            left: '0',
-            position: 'relative',
-            margin: '0'
-          }
+          logging: false
         });
         
+        // 恢复隐藏状态
+        container.className = originalClasses;
+        container.style.cssText = originalCssText;
+        
         // 下载图片
+        const url = canvas.toDataURL('image/png');
         const a = document.createElement('a');
         a.href = url;
         a.download = `share-poster-${Date.now()}.png`;
