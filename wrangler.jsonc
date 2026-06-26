@@ -8,8 +8,8 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "yaoxi-blog-db",
-			"database_id": "PLACEHOLDER_DATABASE_ID"
+			"database_name": "astro",
+			"database_id": "b645d7e4-3f3c-4737-926c-878b797743f2"
 		}
 	]
 }
