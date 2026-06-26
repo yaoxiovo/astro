@@ -1,17 +1,8 @@
 {
 	"name": "astro",
 	"compatibility_date": "2025-08-11",
-	"main": "src/worker.ts",
 	"assets": {
 		"directory": "./dist",
 		"not_found_handling": "404-page"
-	},
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "astro",
-			"database_id": "b645d7e4-3f3c-4737-926c-878b797743f2"
-		}
-	]
+	}
 }
-
