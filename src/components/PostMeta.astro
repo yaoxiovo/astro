@@ -3,7 +3,7 @@ import { Icon } from "astro-icon/components";
 
 import { umamiConfig } from "../config";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
-import { url, getDir } from "../utils/url-utils";
+import { url, getDir, getPostUrlBySlug } from "../utils/url-utils";
 
 interface Props {
 	class: string;
@@ -54,7 +54,7 @@ const className = Astro.props.class;
                 </div>
                 <span class="text-50 text-sm font-medium post-pageviews" 
                       id={`page-views-${slug}`}
-                      data-url={`/posts/${slug}/`}
+                      data-url={getPostUrlBySlug(slug)}
                       data-umami-base-url={umamiConfig.baseUrl}
                       data-umami-share-id={umamiConfig.shareId}
                       data-umami-timezone={umamiConfig.timezone}
@@ -66,7 +66,7 @@ const className = Astro.props.class;
                 </div>
                 <span class="text-50 text-sm font-medium post-visitors" 
                       id={`page-visitors-${slug}`}
-                      data-url={`/posts/${slug}/`}
+                      data-url={getPostUrlBySlug(slug)}
                       data-umami-base-url={umamiConfig.baseUrl}
                       data-umami-share-id={umamiConfig.shareId}
                       data-umami-timezone={umamiConfig.timezone}
