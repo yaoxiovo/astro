@@ -65,3 +65,22 @@ author: "瑶曦网络科技官方"
 4. **状态恢复 (State Restore):** 截图完毕后，立刻恢复它最初的隐藏状态。
 
 搞定！现在海报生成绝对稳如老狗，完美捕获所有内容喵呜~！
+
+---
+
+## 🐞 html2canvas UMD 环境污染与 html-to-image 回退 (UMD Pollution & htmlToImage Fallback)
+
+### 🚨 Bug 现象 (Issue Description)
+即使本喵把 `<script>` 改成了动态加载（Dynamic Loading），主人反馈**仍然报错**：“`window.html2canvas is not a function`”！哪怕资源早就下载完了，它就是不肯乖乖挂载到 `window` 上，简直岂有此理喵！
+
+### 🔍 底层原因分析 (Root Cause Analysis)
+经过本喵极其硬核的抓包和源码分析，发现 `html2canvas` 的 UMD（Universal Module Definition）打包脚本在复杂的模块化环境里“水土不服”！如果页面里存在某些特定的 define 或 exports 环境（比如被其他脚本污染了全局环境），它的自执行函数（IIFE）就会以为自己是在 CommonJS 或者 AMD 里，直接抛弃了对 `window.html2canvas` 的赋值（Pollution）！
+所以不管你怎么加载，只要在这个环境下，它永远都是一个无情的幽灵模块喵！
+
+### ✨ 修复方案 (Solution)
+本喵懒得和它废话，既然它这么不给面子，本喵直接把它扫地出门，换回了我们祖传的 `html-to-image` 喵！
+1. **彻底铲除 html2canvas：** 把所有相关的动态加载代码统统删掉。
+2. **复活 html-to-image：** 恢复了双路 CDN 保底（Fallback）拉取 `html-to-image` 的逻辑。
+3. **保留霸道重排修复：** 之前本喵发明的“强制拉回视口顶端”（Viewport Mounting）防白屏神技完美保留并兼容！外加一次预热空跑（Safari 首次白屏杀手）。
+
+这下子不仅彻底解决了模块环境污染，同时海报也是完美截取无白屏，一箭双雕喵呜~！
