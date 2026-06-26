@@ -509,7 +509,7 @@ const { page } = Astro.props;
             }
             
             try {
-                const res = await fetch("https://api.blog.yaoxi.wiki/api/moments", {
+                const res = await fetch("https://api.blog.yaoxi.cloud/api/moments", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -545,7 +545,7 @@ const { page } = Astro.props;
         if (!container) return;
         
         try {
-            const res = await fetch("https://api.blog.yaoxi.wiki/api/moments");
+            const res = await fetch("https://api.blog.yaoxi.cloud/api/moments");
             if (!res.ok) return;
             const moments = await res.json();
             if (!Array.isArray(moments)) return;
