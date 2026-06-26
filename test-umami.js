@@ -1,39 +1,34 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const baseUrl = "https://umami.yaoxi.cloud";
+const shareId = "011bd980-e5d9-44e5-b1f6-4dc30a9b0e83";
+const currentTimestamp = Date.now();
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+async function test() {
+    const resShare = await fetch(`${baseUrl}/api/share/${shareId}`);
+    const shareData = await resShare.json();
+    const { websiteId, token } = shareData;
+    
+    // Test /stats with url filter
+    const params = new URLSearchParams({
+        startAt: 0,
+        endAt: currentTimestamp,
+        url: "/posts/1-hello-world/",
+        timezone: "Asia/Shanghai"
+    });
+    const statsUrl = `${baseUrl}/api/websites/${websiteId}/stats?${params.toString()}`;
+    const resStats = await fetch(statsUrl, { headers: { "x-umami-share-token": token } });
+    const stats = await resStats.json();
+    console.log("Stats with URL filter:", stats);
 
-async function run() {
-    const configPath = path.join(__dirname, 'src', 'config.ts');
-    let configStr = fs.readFileSync(configPath, 'utf8');
-    
-    // Quick hack to extract url and shareId
-    const baseUrlMatch = configStr.match(/baseUrl:\s*['"]([^'"]+)['"]/);
-    const shareIdMatch = configStr.match(/shareId:\s*['"]([^'"]+)['"]/);
-    const baseUrl = baseUrlMatch[1];
-    const shareId = shareIdMatch[1];
-    
-    const tokenRes = await fetch(`${baseUrl}/api/share/${shareId}`);
-    const tokenData = await tokenRes.json();
-    const token = tokenData.token;
-    const websiteId = tokenData.websiteId;
-    const startAt = 0; // Test startAt=0
-    const endAt = Date.now();
-    
-    try {
-        console.log("Sending request with startAt=0...");
-        const res = await fetch(`${baseUrl}/api/websites/${websiteId}/metrics?type=path&startAt=${startAt}&endAt=${endAt}`, {
-            headers: { 'x-umami-share-token': token }
-        });
-        console.log("METRICS RESP STATUS:", res.status);
-        const text = await res.text();
-        console.log("METRICS RESP LENGTH:", text.length);
-        if (res.status !== 200) {
-            console.log("METRICS ERROR BODY:", text);
-        }
-    } catch(e) {
-        console.error("METRICS ERROR:", e);
-    }
+    // Test /metrics with type=path
+    const params2 = new URLSearchParams({
+        startAt: 0,
+        endAt: currentTimestamp,
+        type: "path",
+        limit: 5
+    });
+    const metricsUrl = `${baseUrl}/api/websites/${websiteId}/metrics?${params2.toString()}`;
+    const resMetrics = await fetch(metricsUrl, { headers: { "x-umami-share-token": token } });
+    const metrics = await resMetrics.json();
+    console.log("Metrics type=path:", metrics.slice(0, 2));
 }
-run();
+test();

@@ -81,18 +81,15 @@
 			const currentTimestamp = Date.now();
 			const timezone = queryParams.timezone || "Asia/Shanghai";
 
-			// Share Token 下 /stats 的 url 参数会被忽略，导致总是返回全站数据
-			// 改用 /metrics?type=url 端点并在客户端按 URL 过滤
 			if (queryParams.url) {
 				const params = new URLSearchParams({
 					startAt: 0,
 					endAt: currentTimestamp,
 					timezone,
-					type: "path",
-					limit: 500,
+					path: queryParams.url
 				});
-				const metricsUrl = `${baseUrl}/api/websites/${websiteId}/metrics?${params.toString()}`;
-				const res = await fetch(metricsUrl, {
+				const statsUrl = `${baseUrl}/api/websites/${websiteId}/stats?${params.toString()}`;
+				const res = await fetch(statsUrl, {
 					headers: { "x-umami-share-token": token },
 				});
 				if (!res.ok) {
@@ -102,24 +99,14 @@
 					}
 					throw new Error("获取统计数据失败");
 				}
-				const metricsData = await res.json();
-				const cleanPath = (p) => {
-					if (!p) return "";
-					return p.toLowerCase()
-						.replace(/^https?:\/\/[^\/]+/, "")
-						.replace(/^\/+|\/+$/g, "")
-						.replace(/\.html$/, "")
-						.replace(/\/index$/, "");
+				const data = await res.json();
+				const normalizedData = {
+					pageviews: (data.pageviews && typeof data.pageviews === 'object') ? (data.pageviews.value || 0) : (Number(data.pageviews) || 0),
+					visitors: (data.visitors && typeof data.visitors === 'object') ? (data.visitors.value || 0) : (Number(data.visitors) || 0),
+					visits: (data.visits && typeof data.visits === 'object') ? (data.visits.value || 0) : (Number(data.visits) || 0)
 				};
-
-				const targetUrl = queryParams.url;
-				const cleanTarget = cleanPath(targetUrl);
-				const entry = metricsData.find((item) => cleanPath(item.x) === cleanTarget);
-
-				const count = entry ? entry.y : 0;
-				const data = { pageviews: count, visitors: count, visits: count };
-				global.__umamiDataCache.set(cacheKey, data);
-				return data;
+				global.__umamiDataCache.set(cacheKey, normalizedData);
+				return normalizedData;
 			}
 
 			// 无 url 过滤时使用原来的 /stats 全站数据端点
