@@ -23,6 +23,7 @@ const clientId = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID || siteConfig.googleCli
       
       // Save user profile in localStorage
       localStorage.setItem("user_profile", JSON.stringify(payload));
+      localStorage.setItem("google_token", response.credential);
       
       // Optional: alert welcome message or dispatch event
       alert("欢迎登录，" + payload.name + "！喵~");

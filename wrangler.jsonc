@@ -4,5 +4,12 @@
 	"assets": {
 		"directory": "./dist",
 		"not_found_handling": "404-page"
-	}
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "yaoxi-blog-db",
+			"database_id": "PLACEHOLDER_DATABASE_ID"
+		}
+	]
 }
