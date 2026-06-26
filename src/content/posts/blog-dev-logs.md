@@ -166,3 +166,35 @@ author: "瑶曦网络科技官方"
    - 当检测为**已登录**时，小钥匙会智能升级为“退出登录 (Logout)”按钮，点击即可轻松清理 `localStorage` 会话并重载页面喵。
 
 这下子不管是电脑、手机还是无痕测试，绝对都是稳上加稳，天衣无缝了喵呜~！
+
+---
+
+## 🛠️ Workers Assets 下的 Custom Worker D1 强制绑定与 Single-Worker 重构 (Workers Assets Custom Worker D1 Binding)
+
+### 🚨 遇到的新挑战 (The Collision)
+在上一轮全栈部署中，由于直接执行了 `npx wrangler pages deploy`，虽然成功将 API 部署到了云端，但主人突然发现控制台里无端多出了一个名为 `astro` 的 **Pages** 项目，导致主域名 `api.blog.yaoxi.cloud` 绑定到了这个新 Pages 上。
+这不仅破坏了原先主站的 Git 自动构建流程，还导致原有的 **Astro Worker** 被闲置（甚至丢失了 D1 绑定的状态），简直是搬起石头砸自己的脚喵！
+
+### 🔍 深度底层分析 (Deep Dive into Cloudflare Infrastructure)
+哼，本喵经过零延时分析，立刻看穿了 Cloudflare 的底层套路喵：
+1. **Workers Static Assets (全新架构)：** 主人原本的 `astro` 博客项目并不是 Cloudflare Pages，而是使用了 `wrangler.jsonc` 里面 `"assets": { "directory": "./dist" }` 声明的 **Cloudflare Workers Static Assets** 模式！这是一种直接把静态资源打包进 Worker 运行的全新模式喵。
+2. **Pages vs Workers 冲突：** 当我们把打包目录强行指向 Pages 并用 pages 命令部署时，Wrangler 就会自作聪明地在云端新开一个 Pages 实例。但 Pages 功能所依赖的 `functions/api/moments.ts`，在原版的 Workers Assets 架构下是**无法被自动编译和识别的**！
+3. **D1 绑定的前置条件：** 在纯静态的 Workers Assets 下（没有 `main` 字段），Worker 没有任何代码入口，因此也无法读取或操作 `env.DB`。我们必须为它注入一个 Custom Worker Entrypoint（自定义入口脚本），才能让它在运行 API 请求的同时，完美代理静态资产！
+
+### ✨ 极致重构方案 (The Refactor)
+为了不破环 Astro 静态构建和 Git 自动发布，且不单开多余的 Pages 页面，本喵对部署架构进行了史诗级重构喵：
+1. **配置复原与 D1 注入 (Wrangler Config Alignment)：**
+   - 彻底将 `wrangler.jsonc` 里的 `pages_build_output_dir` 删掉，恢复为 `"assets": { "directory": "./dist" }`。
+   - 注入了核心入口声明：`"main": "src/worker.ts"`。
+   - 保留 D1 绑定配置 `d1_databases` 指向 `astro` 数据库喵~
+2. **手搓自定义 Worker 路由 (Custom Service Binding Routing)：**
+   - 创建了全新的 [src/worker.ts](file:///root/git/blog/src/worker.ts) 作为整个 Worker 的网关。
+   - **静态资源托管路由：** 巧妙调用了 Workers Assets 架构下默认绑定的 `env.ASSETS` 服务。只要请求不匹配 `/api/moments`，就直接执行 `return env.ASSETS.fetch(request)`。这等同于把静态文件的处理无缝托管给 Cloudflare 极其强悍的边缘 CDN，性能拉满喵！
+   - **Moments API 路由：** 当请求匹配 `/api/moments` 时，直接在 Custom Worker 里原地展开 GET/POST/OPTIONS 处理逻辑，成功打通了对 `env.DB` 的读写。
+3. **本地编译与物理强推 (Local Build & Deploy Override)：**
+   - 由于主开发路径不支持 symlink，本喵将代码推送到本地 `/root/blog_tmp` 纯 Linux 目录下进行了 `pnpm run build` 编译。
+   - 运行了 `npx wrangler deploy` (强推覆盖)，成功让云端的原有 `astro` Worker 瞬间获得了 API功能和 D1 的数据库绑定，而没有产生任何多余的 Pages 项目喵！
+4. **清理遗留 Pages (Orphan Cleaning)：**
+   - 在后台发起 `npx wrangler pages project delete astro --yes` 任务，强行删除了上一轮多余生成的那个 Pages 项目，还控制台一个绝对的清静喵！
+
+现在 `https://api.blog.yaoxi.cloud/api/moments` 不仅彻底连通，返回数据完美无瑕，而且所有的资源、代码、API 都在同一个 `astro` Worker 下优雅地运转，结构完美到了极致喵呜~！
