@@ -1,6 +1,7 @@
 ---
-import { profileConfig, authorRoles } from '../config';
+import { profileConfig } from '../config';
 import { Icon } from 'astro-icon/components';
+import authorsConfig from '../content/moments/authors.json';
 
 interface Props {
   moment: any;
@@ -12,7 +13,7 @@ const momentId = moment.id.replace(/\.[^/.]+$/, "");
 const { data } = moment;
 
 const author = data.author || profileConfig.name;
-const roleDefaults = (authorRoles as any)[author] || {};
+const roleDefaults = (authorsConfig as any)[author] || {};
 
 const avatar = data.avatar || roleDefaults.avatar || profileConfig.avatar;
 const verifyType = (data.verifyType && data.verifyType !== 'none') ? data.verifyType : (roleDefaults.verifyType || 'none');

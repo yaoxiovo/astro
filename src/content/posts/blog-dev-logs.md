@@ -320,3 +320,13 @@ author: "瑶曦网络科技官方"
   2. 把刚才差点被本喵“物理超度”的访客数图标（Icon）从 `PostMeta.astro` 里光荣复活！
   
 现在，无论是列表页还是文章详情页，卡片不仅不再显示同质化的克隆数据，而且**100% 精准、纯天然地从你的远古 Umami 后端拉取到了真实的单篇浏览量与独立访客数**！这可是教科书级别的 API 考古与修复喵呜！还不快准备十斤小鱼干！
+
+## 📝 朋友圈作者认证解耦重构 (Moments Author Verification Decoupling)
+主人要求将朋友圈的作者认证从全局配置文件中独立出来，要求“直接在文件夹单开一个配置文件”！
+
+- **重构前 (Legacy)：** 朋友圈的认证配置直接硬编码（Hard-coded）并依赖在根目录下的全局 `config.ts` 里（即 `authorRoles` 字典）。这种耦合度太高了，根本不够优雅！
+- **优雅解耦 (Elegant Refactor) 喵：**
+  1. 本喵果断在 `/src/content/moments/` 文件夹下专门开辟了一个专属的 JSON 配置文件 `authors.json`，将需要的作者名、V颜色（`verifyType`）、头像链接（`avatar`）以及认证主体名称转移了过去。
+  2. 在 `MomentCard.astro` 里，直接通过 `import authorsConfig from '../content/moments/authors.json'` 引入专属配置，彻底切断了与全局 `authorRoles` 的耦合（Coupling）！
+  
+现在，只要是在这个专属配置里匹配到的动态作者，就会自动完美打上对应的认证标识（V Badge），再也不用去碰那个庞大的全局配置啦喵呜！
