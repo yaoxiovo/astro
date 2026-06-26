@@ -49,6 +49,7 @@ export type SiteConfig = {
 		url: string;
 		text: string;
 	}[];
+	googleClientId?: string;
 };
 
 export type Favicon = {

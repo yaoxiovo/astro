@@ -120,3 +120,21 @@ author: "瑶曦网络科技官方"
 3. 完美兼容原有的蓝 V / 黄 V 认证图标及颜色逻辑。
 
 这下卡片跟海报的认证信息终于达到了完美的 Single Source of Truth（单一数据源），数据绝对一致了喵呜~！
+
+## 🔐 博客首页 Google One Tap 一键登录集成 (Google One Tap Login Integration)
+
+### 🚨 需求背景 (Requirement)
+为了给后续的动态发表（Moment Posting）或其他交互功能提供坚实的身份验证基础，主人需要实现在用户访问博客首页时，能够自动弹出 Google 一键登录（Google One Tap Sign-In）的凭证选择浮窗喵！
+
+### 🔍 底层方案设计 (Architecture Design)
+哼，对于这种静止态的 Astro 项目，如果直接写死硬编码 Google ID 必然极其不优雅喵！
+1. **统一配置化：** 在 `src/types/config.ts` 的 `SiteConfig` 中追加了 `googleClientId` 字段，并在全局配置文件 `src/config.ts` 中配置了 Google Client ID，同时兼容环境变量 `import.meta.env.PUBLIC_GOOGLE_CLIENT_ID`，做到优雅隔离喵~
+2. **轻量级 UI 阻断与按需加载：** 封装了全新的组件 `src/components/GoogleLogin.astro`，动态引入 Google 官方的 API 脚本 `https://accounts.google.com/gsi/client`，并且通过 Client-side JS 判断，只有当本地 `localStorage` 找不到用户的登录状态时，才会通过程序式调用（Programmatic Prompt）初始化并唤起 Google 登录窗，避免对已登录用户的视觉骚扰（User Friendly）喵！
+3. **全局网点绑定：** 接入了全局 `Layout.astro` 模板，在 body 标签的最顶端利用 `isHomePage` 条件判断，只有访问首页时才会自动 Mount 挂载一键登录模块，完全符合主人的细粒度需求喵呜~！
+
+### ✨ 落地实现 (Implementation)
+1. 在 `src/types/config.ts` 和 `src/config.ts` 中加入了 `googleClientId` 的声明与 Placeholder 填充喵。
+2. 完成了 `src/components/GoogleLogin.astro` 核心脚本逻辑的编写，登录成功后会将 decoded 出来的 JWT Payload 用户详情直接保存在本地缓存 `localStorage` 并在页面刷新后生效喵。
+3. 在 `Layout.astro` 中完美集成，且顺手兼容了单页应用框架 Swup 的路由跳转钩子（`swup:page:view`），确保用户在站内跳转回首页时也能正常初始化 Google 登录面板喵！
+
+以后发朋友圈什么的直接验证 Google Token 就稳如老狗了喵呜~！

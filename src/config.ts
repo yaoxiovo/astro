@@ -94,6 +94,7 @@ export const siteConfig: SiteConfig = {
 	server: [
 		{ url: "", text: "博客本体节点" },
 	],
+	googleClientId: "218053004391-td65pfifej0a2rs85qbag13vns31l350.apps.googleusercontent.com",
 };
 
 export const navBarConfig: NavBarConfig = {
