@@ -604,7 +604,56 @@ const { page } = Astro.props;
                     .replace(/"/g, "&quot;")
                     .replace(/'/g, "&#039;")
                     .replace(/\n/g, "<br/>");
+
+                // Dynamic Author Profile Mapping
+                const authorsConfig = {
+                    "瑶曦": {
+                        "avatar": "https://png.yaoxi.wiki/blog.yaoxi.xyz/home.png",
+                        "verifyType": "yellow",
+                        "verifySubject": "知名科技领域生活UP主"
+                    },
+                    "瑶曦网络科技官方": {
+                        "avatar": "https://png.yaoxi.wiki/blog.yaoxi.xyz/home.png",
+                        "verifyType": "blue",
+                        "verifySubject": "瑶曦网络科技团队"
+                    }
+                };
+
+                const authorInfo = authorsConfig[m.author] || authorsConfig["瑶曦网络科技官方"];
+                const avatarUrl = authorInfo.avatar;
                 
+                // Construct verified badge HTML dynamically
+                let badgeHTML = "";
+                let verifyLabelHTML = "";
+                const badgeSvg = `<svg viewBox="0 0 24 24" class="w-5 h-5" aria-label="Verified account" role="img"><g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.792-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.728 2.76 1.848 3.52-.06.335-.09.68-.09 1.03 0 2.21 1.71 3.998 3.918 3.998.47 0 .92-.084 1.336-.25.52 1.333 1.817 2.25 3.337 2.25s2.816-.917 3.337-2.25c.416.165.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.35-.03-.695-.09-1.03 1.12-.76 1.848-2.06 1.848-3.52z" fill="currentColor"></path><path d="M10.89 16.03L7.75 12.87l1.41-1.41 1.73 1.73 4.95-4.95 1.41 1.41-6.36 6.38z" fill="#fff"></path></g></svg>`;
+                const badgeSvgInline = `<svg viewBox="0 0 24 24" class="inline-block w-3.5 h-3.5 mr-1 mb-0.5" aria-hidden="true"><g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.792-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.728 2.76 1.848 3.52-.06.335-.09.68-.09 1.03 0 2.21 1.71 3.998 3.918 3.998.47 0 .92-.084 1.336-.25.52 1.333 1.817 2.25 3.337 2.25s2.816-.917 3.337-2.25c.416.165.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.35-.03-.695-.09-1.03 1.12-.76 1.848-2.06 1.848-3.52z" fill="currentColor"></path><path d="M10.89 16.03L7.75 12.87l1.41-1.41 1.73 1.73 4.95-4.95 1.41 1.41-6.36 6.38z" fill="#fff"></path></g></svg>`;
+
+                if (authorInfo.verifyType === "yellow") {
+                    badgeHTML = `
+                      <div class="absolute -bottom-1 -right-1 rounded-full shadow-sm cursor-help text-yellow-500" title="${authorInfo.verifySubject}">
+                        ${badgeSvg}
+                      </div>
+                    `;
+                    verifyLabelHTML = `
+                      <div class="text-xs px-2 py-0.5 rounded border opacity-80 cursor-default text-yellow-600 border-yellow-200 bg-yellow-50/50 dark:text-yellow-400 dark:border-yellow-800 dark:bg-yellow-900/30" title="${authorInfo.verifySubject}">
+                        ${badgeSvgInline}
+                        ${authorInfo.verifySubject}
+                      </div>
+                    `;
+                } else {
+                    badgeHTML = `
+                      <div class="absolute -bottom-1 -right-1 rounded-full shadow-sm cursor-help text-blue-500" title="${authorInfo.verifySubject}">
+                        ${badgeSvg}
+                      </div>
+                    `;
+                    verifyLabelHTML = `
+                      <div class="text-xs px-2 py-0.5 rounded border opacity-80 cursor-default text-blue-600 border-blue-200 bg-blue-50/50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-900/30" title="${authorInfo.verifySubject}">
+                        ${badgeSvgInline}
+                        ${authorInfo.verifySubject}
+                      </div>
+                    `;
+                }
+
                 const timeISO = new Date(m.published).toISOString();
                 const timeLocale = new Date(m.published).toLocaleDateString('zh-CN');
                 const timeFull = new Date(m.published).toLocaleString('zh-CN');
@@ -614,21 +663,15 @@ const { page } = Astro.props;
                   <div class="flex flex-row gap-4">
                     <!-- Avatar -->
                     <div class="flex-shrink-0 relative group">
-                      <img src="https://png.yaoxi.wiki/blog.yaoxi.xyz/home.png" alt="瑶曦网络科技官方" class="w-12 h-12 rounded-lg object-cover" />
-                      <!-- Blue Verification Badge -->
-                      <div class="absolute -bottom-1 -right-1 rounded-full shadow-sm cursor-help text-blue-500" title="瑶曦网络科技有限公司">
-                        <svg viewBox="0 0 24 24" class="w-5 h-5" aria-label="Verified account" role="img"><g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.792-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.728 2.76 1.848 3.52-.06.335-.09.68-.09 1.03 0 2.21 1.71 3.998 3.918 3.998.47 0 .92-.084 1.336-.25.52 1.333 1.817 2.25 3.337 2.25s2.816-.917 3.337-2.25c.416.165.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.35-.03-.695-.09-1.03 1.12-.76 1.848-2.06 1.848-3.52z" fill="currentColor"></path><path d="M10.89 16.03L7.75 12.87l1.41-1.41 1.73 1.73 4.95-4.95 1.41 1.41-6.36 6.38z" fill="#fff"></path></g></svg>
-                      </div>
+                      <img src="${avatarUrl}" alt="${m.author}" class="w-12 h-12 rounded-lg object-cover" />
+                      ${badgeHTML}
                     </div>
                 
                     <!-- Content -->
                     <div class="flex flex-col flex-grow min-w-0">
                       <div class="flex items-center gap-2 mb-1 flex-wrap">
                         <div class="font-bold text-lg text-[var(--primary)]">${m.author || '瑶曦网络科技官方'}</div>
-                        <div class="text-xs px-2 py-0.5 rounded border opacity-80 cursor-default text-blue-600 border-blue-200 bg-blue-50/50 dark:text-blue-400 dark:border-blue-800 dark:bg-blue-900/30" title="瑶曦网络科技有限公司">
-                          <svg viewBox="0 0 24 24" class="inline-block w-3.5 h-3.5 mr-1 mb-0.5" aria-hidden="true"><g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.792-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.728 2.76 1.848 3.52-.06.335-.09.68-.09 1.03 0 2.21 1.71 3.998 3.918 3.998.47 0 .92-.084 1.336-.25.52 1.333 1.817 2.25 3.337 2.25s2.816-.917 3.337-2.25c.416.165.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.35-.03-.695-.09-1.03 1.12-.76 1.848-2.06 1.848-3.52z" fill="currentColor"></path><path d="M10.89 16.03L7.75 12.87l1.41-1.41 1.73 1.73 4.95-4.95 1.41 1.41-6.36 6.38z" fill="#fff"></path></g></svg>
-                          瑶曦网络科技有限公司
-                        </div>
+                        ${verifyLabelHTML}
                       </div>
                       
                       <div class="moment-content-wrapper relative mb-3">

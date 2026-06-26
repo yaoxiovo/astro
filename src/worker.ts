@@ -27,6 +27,32 @@ export default {
 
       if (method === "GET") {
         try {
+          const id = url.searchParams.get("id");
+          if (id) {
+            // 查询单条动态
+            const result = await env.DB.prepare(
+              "SELECT * FROM moments WHERE id = ?"
+            ).bind(id).first();
+            
+            if (!result) {
+              return new Response(JSON.stringify({ error: "Moment not found" }), {
+                status: 404,
+                headers: { 
+                  "Content-Type": "application/json",
+                  "Access-Control-Allow-Origin": "*",
+                },
+              });
+            }
+            
+            return new Response(JSON.stringify(result), {
+              headers: {
+                "Content-Type": "application/json; charset=utf-8",
+                "Access-Control-Allow-Origin": "*",
+              },
+            });
+          }
+
+          // 查询全部动态
           const { results } = await env.DB.prepare(
             "SELECT * FROM moments ORDER BY pinned DESC, published DESC"
           ).all();
@@ -100,7 +126,7 @@ export default {
           }
           
           const body: any = await request.json();
-          const { content, media } = body;
+          const { content, media, author: reqAuthor, published: reqPublished } = body;
           
           if (!content || typeof content !== "string" || content.trim() === "") {
             return new Response(JSON.stringify({ error: "Content is required" }), {
@@ -112,9 +138,20 @@ export default {
             });
           }
           
+          // 笔名合法性限制与回退，只允许 "瑶曦" 或 "瑶曦网络科技官方"
+          const author = (reqAuthor === "瑶曦" || reqAuthor === "瑶曦网络科技官方") 
+            ? reqAuthor 
+            : "瑶曦网络科技官方";
+            
+          // 自定义发布日期，如无或非法则用当前时间
+          let published = new Date().toISOString();
+          if (reqPublished) {
+            try {
+              published = new Date(reqPublished).toISOString();
+            } catch (e) {}
+          }
+          
           const id = crypto.randomUUID();
-          const published = new Date().toISOString();
-          const author = "瑶曦网络科技官方";
           const mediaStr = media ? JSON.stringify(media) : null;
           
           await env.DB.prepare(
@@ -143,7 +180,39 @@ export default {
       return new Response("Method not allowed", { status: 405 });
     }
 
-    // 其它请求转发给 ASSETS (静态资源服务)
-    return env.ASSETS.fetch(request);
+    // 尝试拉取静态资源 (Astro 编译的 HTML 等)
+    const response = await env.ASSETS.fetch(request);
+    
+    // 如果静态资源存在且正常返回，直接输出
+    if (response.status !== 404) {
+      return response;
+    }
+    
+    // 如果静态资源 404，且符合新朋友圈动态的详情页模式: /moment/[id]
+    const momentIdMatch = url.pathname.match(/^\/moment\/([^\/]+)\/?$/);
+    if (momentIdMatch) {
+      const momentId = momentIdMatch[1];
+      
+      // 内联请求朋友圈主页，作为框架骨架返回
+      const tplUrl = new URL("/moments/", request.url);
+      const tplResponse = await env.ASSETS.fetch(new Request(tplUrl));
+      
+      if (tplResponse.status === 200) {
+        let html = await tplResponse.text();
+        
+        // 在 head 底部注入 window.singleMomentId 全局标记以告知客户端只渲染单条详情
+        const injectScript = `<script>window.singleMomentId = "${momentId}";</script></head>`;
+        html = html.replace("</head>", injectScript);
+        
+        return new Response(html, {
+          headers: {
+            "Content-Type": "text/html; charset=utf-8"
+          }
+        });
+      }
+    }
+
+    // 默认返回 404
+    return response;
   }
 };
