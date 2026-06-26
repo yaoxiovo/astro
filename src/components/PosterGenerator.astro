@@ -1,7 +1,7 @@
 ---
 // PosterGenerator.astro
 import { Icon } from "astro-icon/components";
-import { authorRoles } from "../config";
+import authorsConfig from "../content/moments/authors.json";
 
 interface Props {
   title: string;
@@ -18,7 +18,7 @@ const isExternal = coverImage && (coverImage.startsWith('http://') || coverImage
 let verifiedIconColor = "";
 let verifiedEntity = "";
 
-const role = authorRoles[author];
+const role = (authorsConfig as any)[author];
 if (role) {
   if (role.verifyType === "blue") {
     verifiedIconColor = "text-blue-500";

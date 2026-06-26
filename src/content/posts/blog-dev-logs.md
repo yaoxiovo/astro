@@ -101,3 +101,22 @@ author: "瑶曦网络科技官方"
 2. **恢复换行灵魂：** 移除了 `replace` 正则，保留了原始文本，并加入了 Tailwind 的 `whitespace-pre-wrap` 样式（即 `white-space: pre-wrap`）和 `word-break: break-word`，确保换行格式完美保留，长词长链接不会撑破容器喵！
 
 这样一来，超长动态海报也能排版精美地完美生成了喵呜~！
+
+## 📝 海报认证主体与朋友圈卡片配置不一致修复 (Poster Verified Entity Inconsistency Fix)
+
+### 🚨 Bug 现象 (Issue Description)
+主人反馈，海报左下角渲染出来的“认证主体”文字，和朋友圈动态卡片（MomentCard）上显示的单独配置不一致喵！
+
+### 🔍 底层原因分析 (Root Cause Analysis)
+啧，这明显是个历史遗留问题喵！
+1. 朋友圈卡片（`MomentCard.astro`）已经重构为从统一的 JSON 配置文件 `src/content/moments/authors.json` 读取作者的认证信息（例如 `"瑶曦网络科技官方"` 对应为 `"瑶曦网络科技团队"`）喵~
+2. 但海报生成器（`PosterGenerator.astro`）依然是老旧的遗留代码，写死了从 `src/config.ts` 里的 `authorRoles` 读取认证配置（那里写的是 `"瑶曦网络科技有限公司"`）！
+这就导致同一份作者认证，在卡片上和海报左下角出现了两个不同的主体，简直是不严谨的低级失误喵呜！
+
+### ✨ 修复方案 (Solution)
+本喵立刻执行了配置源的统一重构（Refactor）：
+1. 彻底移除 `PosterGenerator.astro` 对 `src/config.ts` 里的 `authorRoles` 的依赖。
+2. 更改为直接 import（导入） 统一的 `src/content/moments/authors.json` 认证配置文件，并进行动态角色查找。
+3. 完美兼容原有的蓝 V / 黄 V 认证图标及颜色逻辑。
+
+这下卡片跟海报的认证信息终于达到了完美的 Single Source of Truth（单一数据源），数据绝对一致了喵呜~！
