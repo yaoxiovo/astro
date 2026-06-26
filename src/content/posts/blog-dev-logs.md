@@ -198,3 +198,29 @@ author: "瑶曦网络科技官方"
    - 在后台发起 `npx wrangler pages project delete astro --yes` 任务，强行删除了上一轮多余生成的那个 Pages 项目，还控制台一个绝对的清静喵！
 
 现在 `https://api.blog.yaoxi.cloud/api/moments` 不仅彻底连通，返回数据完美无瑕，而且所有的资源、代码、API 都在同一个 `astro` Worker 下优雅地运转，结构完美到了极致喵呜~！
+
+---
+
+## ↩️ D1 实时写入功能下线与极简静态 Markdown 朋友圈复归 (D1 Moments Rollback & Pure Markdown Revival)
+
+### 🚨 需求变更 (Requirement Pivot)
+啧，全栈动态数据库方案虽然用起来很爽，但为了追求极致的纯粹性与极简主义，主人最终决定：“撤除实时写入功能，重新改回最纯粹的静态 Markdown 朋友圈，但必须保留 Google 登录功能”。
+行吧行吧，既然主人想要极致的静态化，那本喵自然要用最利落的手法把之前的 D1 写入与动态逻辑全部“回滚 (Rollback)”清理干净喵呜！
+
+### 🔍 重构与清理逻辑 (Refactor & Cleanup)
+要把混合 D1 朋友圈退回到纯粹的 md (Content Collection) 朋友圈，可不是简单的 `git reset` 就可以搞定的。我们需要实现“代码净空 (Pure Cleanup)”与“登录保留 (Authentication Retention)”的完美平衡喵：
+1. **撤销 D1 数据库与 Worker 绑定 (Database Detachment)：**
+   - 彻底将 `wrangler.jsonc` 还原回纯静态的 Assets 托管模式，去掉了 `"main": "src/worker.ts"` 入口，并无情地摘掉了 D1 databases 绑定。
+   - 物理删除了不再需要的底层依赖文件，包括 `src/worker.ts` 网关代码、`db/schema.sql` 结构定义，以及 `functions/api/moments.ts` 动态接口，从源头杜绝了无用的 Overhead 喵！
+2. **复原朋友圈页面至纯静态 (Pure Static Moments)：**
+   - 将 `src/pages/moments/[...page].astro` 和 `src/pages/moment/[slug].astro` 彻底覆写还原为基于 `getCollection('moments')` 的 Astro 静态编译（Static Compilation）和渲染逻辑。
+   - 将之前页面上包含的“发布动态卡片 (Publish Card)”、“小钥匙 (Admin Trigger Key)”及手动登录 DOM 弹窗等元素全数移除，恢复了朋友圈页面的纯净与美观。
+   - 客户端的 Script 脚本重新聚焦于时间格式化（Relative Time）、Hashtag 识别与高亮、海报分享（Share Poster）、Umami 浏览/点赞埋点分析等前端增强功能，不再向 `/api/moments` 接口发送任何 Fetch 请求。
+3. **保留 Google 一键登录 (Google Sign-In Preservation)：**
+   - 尽管朋友圈下线了实时发布功能，但全局的 Google 登录模块依然保持正常运作。
+   - 首页和朋友圈加载时，`Layout.astro` 中引入 `GoogleLogin.astro` 依然会被静默挂载，利用 Google One Tap SDK 和 `localStorage` 机制，保障主人的登录凭证能在本地正常保存与校验，方便后续可能需要的其他交互特性喵。
+
+### ✨ 落地成效 (Results)
+- 朋友圈再次恢复了 Astro 静态构建生成全部 HTML 的极简架构，彻底消除了客户端异步拉取动态时产生的网络延时与排版抖动（Layout Shift）喵！
+- 每个新写的 Markdown 动态在构建时会重新为每个 md 文件渲染并生成对应的 `/moment/[slug]/index.html` 静态页面，先前新发动态 404 无法访问的问题已不攻自破。
+- 本地所有的 `wrangler dev` 或部署进程已安全中止，未来所有的更新仅需通过 Git 提交，并在 GitHub/Cloudflare 边缘端自动构建即可，开发心智负担降至最低，完美回归纯粹喵呜~！
