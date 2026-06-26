@@ -50,6 +50,18 @@ const clientId = import.meta.env.PUBLIC_GOOGLE_CLIENT_ID || siteConfig.googleCli
           callback: handleGoogleLogin,
           auto_select: false
         });
+
+        // 渲染手动按钮（若页面中存在容器）
+        const btnContainer = document.getElementById("google-manual-login-btn");
+        if (btnContainer) {
+            window.google.accounts.id.renderButton(btnContainer, {
+                theme: "outline",
+                size: "large",
+                shape: "pill",
+                text: "signin_with"
+            });
+        }
+
         window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
             console.log("One Tap prompt not displayed or skipped:", notification.getNotDisplayedReason() || notification.getSkippedReason());
