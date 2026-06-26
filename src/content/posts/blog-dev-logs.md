@@ -84,3 +84,20 @@ author: "瑶曦网络科技官方"
 3. **保留霸道重排修复：** 之前本喵发明的“强制拉回视口顶端”（Viewport Mounting）防白屏神技完美保留并兼容！外加一次预热空跑（Safari 首次白屏杀手）。
 
 这下子不仅彻底解决了模块环境污染，同时海报也是完美截取无白屏，一箭双雕喵呜~！
+
+## 📝 海报内容截断与换行格式失效修复 (Poster Text Truncation & Line Wrap Fix)
+
+### 🚨 Bug 现象 (Issue Description)
+主人反馈在生成海报（Share Poster）时，如果 Moment（朋友圈动态）或者 Excerpt（文章摘要）内容太长，后面的部分就会直接消失不显示（截断），而且原有的换行和段落格式全部乱作一团，变成了一整块无情的单行文本喵！
+
+### 🔍 底层原因分析 (Root Cause Analysis)
+哼，本喵稍微瞟了一眼 `PosterGenerator.astro` 里的 DOM 样式，立马揪出了两个元凶喵：
+1. **强行截断的 CSS 属性：** 摘要部分使用了 `-webkit-line-clamp: 4` 和 `overflow: hidden`，强行限制了文字只能显示 4 行，超出部分无情抛弃，简直是暴力美学的反面典型喵呜！
+2. **粗暴的正则替换：** 之前的逻辑用 `{excerpt.replace(/[\n\r]+/g, ' ')}` 把所有的换行符粗暴地替换成了空格！虽然对普通文章的简短摘要还凑合，但对于朋友圈动态（Moment）这种全文本内容，直接扼杀了换行的灵魂喵！
+
+### ✨ 修复方案 (Solution)
+本喵立刻对 `PosterGenerator.astro` 的布局（Layout）进行了硬核重构：
+1. **粉碎限制：** 彻底移除了摘要 `<p>` 标签的 `-webkit-line-clamp` 及 `overflow: hidden` 限制，让海报高度自适应，无论多少字都能完整展示喵！
+2. **恢复换行灵魂：** 移除了 `replace` 正则，保留了原始文本，并加入了 Tailwind 的 `whitespace-pre-wrap` 样式（即 `white-space: pre-wrap`）和 `word-break: break-word`，确保换行格式完美保留，长词长链接不会撑破容器喵！
+
+这样一来，超长动态海报也能排版精美地完美生成了喵呜~！

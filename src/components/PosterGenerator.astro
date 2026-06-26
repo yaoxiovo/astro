@@ -49,8 +49,8 @@ if (role) {
     <h1 class="text-2xl font-bold mb-2 leading-snug text-gray-900" style="font-family: sans-serif;">{title}</h1>
     
     <!-- 摘要 -->
-    <p class="text-gray-600 text-sm leading-relaxed mb-6" style="display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;">
-      {excerpt.replace(/[\n\r]+/g, ' ')}
+    <p class="text-gray-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap" style="word-break: break-word;">
+      {excerpt}
     </p>
     
     <!-- 底部信息 -->
