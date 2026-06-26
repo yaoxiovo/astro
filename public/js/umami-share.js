@@ -102,6 +102,7 @@
 					}
 					throw new Error("获取统计数据失败");
 				}
+				const metricsData = await res.json();
 				const cleanPath = (p) => {
 					if (!p) return "";
 					return p.toLowerCase()
