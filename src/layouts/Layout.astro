@@ -30,9 +30,10 @@ interface Props {
 	description?: string;
 	lang?: string;
 	setOGTypeArticle?: boolean;
+	image?: string;
 }
 
-let { title, banner, description, lang, setOGTypeArticle } = Astro.props;
+let { title, banner, description, lang, setOGTypeArticle, image } = Astro.props;
 
 // apply a class to the body element to decide the height of the banner, only used for initial page load
 // Swup can update the body for each page visit, but it's after the page transition, causing a delay for banner height change
@@ -68,6 +69,26 @@ if (!description) {
 	description = siteConfig.description || pageTitle;
 }
 
+const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
+
+// ogImage selection with absolute path check
+let ogImage = image || banner || profileConfig.avatar;
+if (ogImage && ogImage.startsWith("/")) {
+	ogImage = new URL(ogImage, Astro.site).href;
+}
+
+const defaultJsonLd = {
+	"@context": "https://schema.org",
+	"@type": "WebSite",
+	"name": siteConfig.title,
+	"url": Astro.site,
+	"description": description,
+	"author": {
+		"@type": "Person",
+		"name": profileConfig.name
+	}
+};
+
 const favicons: Favicon[] =
 	siteConfig.favicon.length > 0 ? siteConfig.favicon : defaultFavicons;
 
@@ -100,11 +121,13 @@ const bannerOffset =
 		{siteConfig.keywords && (
 			<meta name="keywords" content={siteConfig.keywords.join(", ")}>
 		)}
+		<link rel="canonical" href={canonicalURL} />
 
 		<meta property="og:site_name" content={siteConfig.title}>
-		<meta property="og:url" content={Astro.url}>
+		<meta property="og:url" content={canonicalURL}>
 		<meta property="og:title" content={pageTitle}>
 		<meta property="og:description" content={description}>
+		<meta property="og:image" content={ogImage}>
 		{setOGTypeArticle ? (
         <meta property="og:type" content="article" />
         ) : (
@@ -112,9 +135,10 @@ const bannerOffset =
         )}
 
 		<meta name="twitter:card" content="summary_large_image">
-		<meta property="twitter:url" content={Astro.url}>
+		<meta property="twitter:url" content={canonicalURL}>
 		<meta name="twitter:title" content={pageTitle}>
 		<meta name="twitter:description" content={description}>
+		<meta name="twitter:image" content={ogImage}>
 
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
@@ -251,6 +275,9 @@ const bannerOffset =
 			} */
 		</style>
 
+		{!setOGTypeArticle && (
+			<script type="application/ld+json" set:html={JSON.stringify(defaultJsonLd)}></script>
+		)}
 		<slot name="head"></slot>
 
 
