@@ -1,0 +1,236 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import MusicCard from "@components/widget/MusicCard.astro";
+import { Icon } from "astro-icon/components";
+import musicMoments from "../data/music-moments.json";
+
+function getFriendlyTime(dateStr: string) {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 60) {
+    return diffMins <= 1 ? "刚刚" : `${diffMins} 分钟前`;
+  } else if (diffHours < 24) {
+    return `${diffHours} 小时前`;
+  } else if (diffDays === 1) {
+    return "昨天";
+  } else if (diffDays === 2) {
+    return "前天";
+  } else {
+    return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
+  }
+}
+---
+
+<MainGridLayout title="音乐馆" description="瑶曦的沉浸式音乐朋友圈">
+  <div class="w-full flex flex-col gap-6">
+    <!-- 朋友圈头部大 Banner -->
+    <div class="card-base w-full relative h-48 md:h-64 rounded-2xl overflow-hidden shadow-md border border-white/40 group">
+      <!-- 背景图 -->
+      <img 
+        src="https://images.unsplash.com/photo-1507838153414-b4b713384a76?w=1000&auto=format&fit=crop&q=80" 
+        alt="Music Banner" 
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
+      
+      <!-- 磨砂玻璃大标题 -->
+      <div class="absolute left-6 bottom-6 md:left-8 md:bottom-8 flex flex-col gap-1 relative z-10 text-white">
+        <h1 class="text-3xl md:text-4xl font-black tracking-wider flex items-center gap-2 drop-shadow-md">
+          <Icon name="material-symbols:library-music-rounded" class="text-2xl md:text-3xl text-[var(--primary)] animate-pulse" />
+          <span>音乐馆</span>
+        </h1>
+        <p class="text-xs md:text-sm text-white/70 font-light tracking-widest uppercase">
+          Music Moments & Live Lyrics
+        </p>
+      </div>
+
+      <!-- 用户信息 (浮动在右下角，经典朋友圈设计) -->
+      <div class="absolute right-6 -bottom-5 md:right-8 flex items-end gap-3 z-20">
+        <span class="text-white font-bold text-base md:text-lg mb-6 drop-shadow-md tracking-wide">瑶曦</span>
+        <div class="relative group/avatar">
+          <img 
+            src="https://png.yaoxi.wiki/blog.yaoxi.xyz/home.png" 
+            alt="Avatar" 
+            class="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover border-4 border-white/90 shadow-xl"
+          />
+          <div class="absolute -bottom-1.5 -right-1.5 bg-yellow-500 rounded-full p-0.5 border-2 border-white shadow-md">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-white" aria-label="Verified account" role="img"><g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.792-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.728 2.76 1.848 3.52-.06.335-.09.68-.09 1.03 0 2.21 1.71 3.998 3.918 3.998.47 0 .92-.084(1.336-.25.52 1.333 1.817 2.25 3.337 2.25s2.816-.917 3.337-2.25c.416.165.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.35-.03-.695-.09-1.03 1.12-.76 1.848-2.06 1.848-3.52z" fill="currentColor"></path><path d="M10.89 16.03L7.75 12.87l1.41-1.41 1.73 1.73 4.95-4.95 1.41 1.41-6.36 6.38z" fill="#fff"></path></g></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 占位高度补全 -->
+    <div class="h-4"></div>
+
+    <!-- 朋友圈 Timeline 流 -->
+    <div class="w-full flex flex-col gap-6 relative">
+      {musicMoments.map((moment) => (
+        <div class="music-moment-card card-base p-6 backdrop-blur-xl bg-white/80 dark:bg-white/85 border border-white/80 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col gap-4">
+          <!-- 晶莹渐变反光 -->
+          <div class="absolute inset-0 bg-gradient-to-tr from-white/10 via-white/30 to-white/50 pointer-events-none"></div>
+
+          <!-- 头部用户信息 -->
+          <div class="flex items-center gap-3 relative z-10">
+            <div class="relative flex-shrink-0">
+              <img 
+                src={moment.avatar} 
+                alt={moment.author} 
+                class="w-10 h-10 rounded-xl object-cover ring-2 ring-white"
+              />
+              {moment.verifyType && moment.verifyType !== 'none' && (
+                <div class={`absolute -bottom-1 -right-1 rounded-full p-0.5 border border-white shadow-sm ${moment.verifyType === 'blue' ? 'bg-blue-500' : 'bg-yellow-500'}`}>
+                  <svg viewBox="0 0 24 24" class="w-2.5 h-2.5 text-white" aria-label="Verified" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                </div>
+              )}
+            </div>
+            
+            <div class="flex flex-col">
+              <div class="flex items-center gap-1.5">
+                <span class="font-bold text-sm text-[var(--primary)]">{moment.author}</span>
+                {moment.verifySubject && (
+                  <span class="hidden sm:inline text-[9px] px-1.5 py-0.5 rounded border border-yellow-500/30 bg-yellow-500/10 text-yellow-600 dark:text-yellow-600 font-medium">
+                    {moment.verifySubject}
+                  </span>
+                )}
+              </div>
+              <span class="text-[10px] text-neutral-500 dark:text-neutral-500 font-mono mt-0.5">
+                {getFriendlyTime(moment.published)}
+              </span>
+            </div>
+          </div>
+
+          <!-- 说说文字内容 (强制亮白色背景下使用深灰色文字) -->
+          <div class="text-sm text-neutral-800 dark:text-neutral-800 leading-relaxed px-1 relative z-10 whitespace-pre-line font-normal">
+            {moment.content}
+          </div>
+
+          <!-- 嵌入拟玻璃音乐播放卡片 -->
+          <div class="w-full relative z-10">
+            <MusicCard 
+              src={moment.music.src} 
+              title={moment.music.title} 
+              artist={moment.music.artist} 
+              cover={moment.music.cover}
+              lrc={moment.music.lrc}
+            />
+          </div>
+
+          <!-- 底部发布来源与交互按键 (同样强制深色文字) -->
+          <div class="flex items-center justify-between border-t border-neutral-200/80 pt-3.5 mt-1 text-xs text-neutral-500 dark:text-neutral-500 relative z-10">
+            <span class="font-mono">来自 {moment.source}</span>
+
+            <div class="flex items-center gap-4">
+              <!-- 点赞按钮 -->
+              <button 
+                class="music-moment-like-btn flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-neutral-100 active:scale-90 group text-neutral-500 dark:text-neutral-500"
+                data-id={moment.id}
+              >
+                <Icon name="fa6-regular:heart" class="like-icon w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110" />
+                <span class="like-count font-semibold font-mono text-neutral-600 dark:text-neutral-600">{moment.likes}</span>
+              </button>
+
+              <!-- 分享按钮 -->
+              <button 
+                class="music-moment-share-btn flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-neutral-100 active:scale-90 text-neutral-500 dark:text-neutral-500 hover:text-[var(--primary)]"
+                data-id={moment.id}
+                data-content={`【瑶曦的听歌日志】今天推荐一首《${moment.music.title}》- ${moment.music.artist}。来自网页端听歌链接：${moment.music.src}`}
+              >
+                <Icon name="fa6-solid:share-nodes" class="w-3.5 h-3.5" />
+                <span>分享</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</MainGridLayout>
+
+<script>
+  function initMusicMoments() {
+    const likeBtns = document.querySelectorAll(".music-moment-like-btn");
+    
+    likeBtns.forEach((btn: any) => {
+      const id = btn.dataset.id;
+      const countSpan = btn.querySelector(".like-count");
+      const icon = btn.querySelector(".like-icon");
+      if (!id || !countSpan || !icon) return;
+
+      const storageKey = `music-moment-liked-${id}`;
+      let isLiked = localStorage.getItem(storageKey) === "true";
+      let baseLikes = parseInt(countSpan.textContent || "0", 10);
+
+      if (isLiked) {
+        icon.classList.remove("text-neutral-400", "dark:text-neutral-500");
+        icon.classList.add("text-red-500", "fill-red-500");
+        icon.setAttribute("style", "color: rgb(239, 68, 68);");
+      }
+
+      btn.addEventListener("click", () => {
+        isLiked = !isLiked;
+        localStorage.setItem(storageKey, isLiked ? "true" : "false");
+        
+        let newCount = isLiked ? baseLikes + 1 : baseLikes;
+        countSpan.textContent = newCount.toString();
+
+        if (isLiked) {
+          icon.classList.remove("text-neutral-400", "dark:text-neutral-500");
+          icon.classList.add("text-red-500", "fill-red-500");
+          icon.setAttribute("style", "color: rgb(239, 68, 68); transform: scale(1.2); transition: transform 0.2s;");
+          showToast("点赞成功了喵~ ❤️");
+        } else {
+          icon.classList.remove("text-red-500", "fill-red-500");
+          icon.classList.add("text-neutral-400", "dark:text-neutral-500");
+          icon.setAttribute("style", "color: ''; transform: scale(1.0); transition: transform 0.2s;");
+        }
+      });
+    });
+
+    const shareBtns = document.querySelectorAll(".music-moment-share-btn");
+    shareBtns.forEach((btn: any) => {
+      const content = btn.dataset.content;
+      btn.addEventListener("click", () => {
+        if (!content) return;
+        navigator.clipboard.writeText(content)
+          .then(() => {
+            showToast("推荐语与音频直链已复制到剪贴板喵~ 📋");
+          })
+          .catch((err) => {
+            console.error("Copy failed:", err);
+            showToast("复制失败了喵，请手动复制吧...");
+          });
+      });
+    });
+
+    function showToast(message: string) {
+      let oldToast = document.querySelector(".glass-toast");
+      if (oldToast) oldToast.remove();
+
+      const toast = document.createElement("div");
+      toast.className = "glass-toast fixed bottom-12 left-1/2 -translate-x-1/2 px-5 py-3 rounded-2xl backdrop-blur-xl bg-white/90 border border-white/60 text-neutral-800 text-xs md:text-sm font-semibold shadow-lg z-[9999] transition-all duration-300 opacity-0 translate-y-3 pointer-events-none";
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove("opacity-0", "translate-y-3");
+        toast.classList.add("opacity-100", "translate-y-0");
+      }, 50);
+
+      setTimeout(() => {
+        toast.classList.remove("opacity-100", "translate-y-0");
+        toast.classList.add("opacity-0", "translate-y-3");
+        setTimeout(() => toast.remove(), 300);
+      }, 2200);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", initMusicMoments);
+  document.addEventListener("swup:contentReplaced", initMusicMoments);
+  document.addEventListener("swup:page:view", initMusicMoments);
+</script>

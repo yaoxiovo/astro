@@ -376,3 +376,43 @@ author: "瑶曦网络科技官方"
 - 成功为当前工作区引入了 30 个包含领域特化指令集的子代理技能，使子代理团队协作库精准维持在 30 个核心特化角色喵呜！
 - 经本喵物理盘点，所有导入技能的 `SKILL.md` 引导文件皆已到位，可在后续任务中通过 Agent 引擎自动触发或通过 `invoke_subagent` 派发执行，大幅提升了系统的智能化上限喵呜~！
 - 更新并生成了完整的 [subagents_configuration.md](file:///root/.gemini/antigravity-cli/brain/69e68b98-d816-4893-8f95-b76318c247c3/subagents_configuration.md) 详细使用文档供主人查阅喵呜~！
+
+---
+
+## 🎵 拟玻璃化音乐朋友圈与沉浸式歌词卡片开发 (Glassmorphism Music Moments & Live Lyrics Page)
+
+### 🚨 🚨 优化背景 (Optimization Context)
+主人希望在博客（Blog）中加入能够实时解析歌词文件（LRC）、实现音乐播放的音乐卡片与歌词本组件。并且，希望直接打造一个高度沉浸的、像微信朋友圈（Moments）那样的流式音乐说说页面，让博客具备社交动态质感的听歌日志功能喵！
+
+### 🔍 架构设计与底层实现 (Architecture & Implementation)
+1. **音乐卡片高透白亮玻璃化重构 (White Glassmorphism MusicCard)**：
+   - 物理新建并重构了 [MusicCard.astro](file:///root/git/blog/src/components/widget/MusicCard.astro) 组件，将整体背景调整为高亮白透玻璃态（`bg-white/85 dark:bg-white/90`），搭配高对比度亮白色描边（`border-white/80`），无论系统处于日间还是夜间模式，均呈现出晶莹剔透的白亮拟玻璃视觉喵！
+   - 将原黑胶唱盘重构为极具艺术感的**瓷白色乳胶唱片风格**，唱片纹路使用亮灰色渲染，唱针也替换为亮银质感。
+   - 强制将文字颜色重构为高对比度深灰（`text-neutral-800`），完美解决了夜间模式下白亮背景与浅色文字冲突的问题喵！
+2. **高精度 LRC 歌词实时解析与点击交互 (LRC Sync & Click-to-Skip)**：
+   - 使用正则表达式（Regex）在前端实时处理 `[分:秒.毫秒]` 歌词数据，并转换成以秒为单位的结构化数组。
+   - 监听音频的 `timeupdate` 事件，通过二分查找匹配当前时间，通过平滑滚动将当前歌词行锁定在歌词本正中央高亮展示。
+   - 为每一行歌词绑定了点击事件，主人在歌词本上直接点击某行歌词，播放器即可瞬间 Seek（跳进）至对应的播放时间点并自动继续播放，极大提升了听歌时的操作体验喵呜！
+3. **沉浸式朋友圈时间流设计 (Music Moments Page)**：
+   - 物理新建了 [music.astro](file:///root/git/blog/src/pages/music.astro) 页面，基于博客内置的 `<MainGridLayout>` 布局，构建了经典微信朋友圈（Timeline Feed）单侧流式布局。
+   - 顶部加入了高颜值毛玻璃磨砂大 Banner 头部，右下角带有圆角边框、黄V/蓝V认证标识的作者头像和昵称。
+   - 将朋友圈的说说数据与歌曲资源（包含歌词文本）完全模块化拆分至物理 JSON 配置文件 [music-moments.json](file:///root/git/blog/src/data/music-moments.json) 中，实现了解耦，便于未来主人随时增添自己的听歌日记喵！
+4. **LocalStorage 点赞记忆与拟玻璃 Toast 提示 (Interactive Features)**：
+   - 为每条动态集成了心形“点赞”交互，前端使用客户端 JS 在 LocalStorage 存储点赞状态以保持刷新后的爱心点亮效果；
+   - 集成了“一键分享”功能，自动将歌曲名称、歌手及音频直链复制到剪贴板。
+   - 物理手写了一个精美的轻量级拟玻璃 Toast 悬浮提示泡，在复制成功或点赞时给主人带来超赞的即时通知反馈喵~
+5. **多端路由与单例防混音支持 (Swup Router & Single Instance)**：
+   - 注册了 `DOMContentLoaded` 以及 Swup 框架下的 `swup:contentReplaced` 和 `swup:page:view` 钩子，确保博客进行单页跳转后播放器事件仍能被完美绑定。
+   - 对同一页面包含多个音乐卡片的情形进行了单例限制，当任意播放器启动时自动暂停其他活动音频，防止多音轨混杂喵！
+
+### ✨ 落地成效 (Results)
+- 成功交付了具有**极致白亮晶莹质感**的 [MusicCard.astro](file:///root/git/blog/src/components/widget/MusicCard.astro)、[music-moments.json](file:///root/git/blog/src/data/music-moments.json) 以及沉浸页面 [music.astro](file:///root/git/blog/src/pages/music.astro)。
+- **物理规范并保留了静态音频资源存放目录 (Static Music Assets Spec)**：
+  - 在 [public/music/mp3/](file:///root/git/blog/public/music/mp3/) 目录下新增了 `.gitkeep` 占位文件，作为存放常规 MP3 音频的官方路径喵！
+  - 在 [public/music/flac/](file:///root/git/blog/public/music/flac/) 目录下新增了 `.gitkeep` 占位文件，作为存放 FLAC 无损音频的官方路径喵！
+  - 在 [public/music/lrc/](file:///root/git/blog/public/music/lrc/) 目录下新增了 `.gitkeep` 占位文件，作为存放歌词文件（.lrc）的官方根路径喵！
+  - 配合主人的测试资源，将上传的文件物理重命名并对齐为了 `/music/mp3/literature.mp3` 与 `/music/lrc/literature.lrc`，并在 [music-moments.json](file:///root/git/blog/src/data/music-moments.json) 数据源中完成了完美对接，开箱即听，歌词自动拉取喵！
+  - 这种设计优雅地避开了相对路径的寻址陷阱，直接通过绝对路径（如 `/music/flac/xxx.flac` 和 `/music/lrc/xxx.lrc`）加载，绝不报 404 错误喵呜~！
+- 整个页面呈现极其治愈、干净通透的白色奶油色调，提供了极其高端的听歌与歌词同步体验，大幅提升了博客的主观美感与多媒体交互水准，喵呜~！
+
+

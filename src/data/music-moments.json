@@ -1,0 +1,40 @@
+[
+  {
+    "id": "1",
+    "author": "瑶曦",
+    "avatar": "https://png.yaoxi.wiki/blog.yaoxi.xyz/home.png",
+    "verifyType": "yellow",
+    "verifySubject": "知名科技领域生活UP主",
+    "published": "2026-06-27T19:00:00.000Z",
+    "content": "「为了追寻未知的风景，少女踏上了漫长的旅程。」\n\n今天重温了《魔女之旅》，重新听起上田丽奈的这首《リテラチュア》(Literature)。那空灵的吟唱与风笛的交织，一瞬间仿佛让人置身于辽阔的幻想大陆，微风拂面喵~ 🍃 主人，你最向往去哪个国度旅行呢？",
+    "music": {
+      "src": "/music/mp3/literature.mp3",
+      "title": "リテラチュア (魔女之旅 OP)",
+      "artist": "上田麗奈",
+      "cover": "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&auto=format&fit=crop&q=80",
+      "lrc": "/music/lrc/literature.lrc"
+    },
+    "source": "Elaina's Diary",
+    "likes": 520,
+    "comments": 43
+  },
+  {
+    "id": "2",
+    "author": "瑶曦网络科技官方",
+    "avatar": "https://png.yaoxi.wiki/blog.yaoxi.xyz/home.png",
+    "verifyType": "blue",
+    "verifySubject": "瑶曦网络科技有限公司",
+    "published": "2026-06-26T22:30:00.000Z",
+    "content": "✨ 博客全新升级了沉浸式音乐朋友圈（Glassmorphism Music Moments）！本喵用原生的 Audio API 配合精准 LRC 时间匹配，做出了这套白亮拟玻璃歌词同步组件。白瓷唱片旋转、唱针回弹，点击歌词即可直接 Seek 进度，欢迎主人体验测试喵呜~！",
+    "music": {
+      "src": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      "title": "Vibrant Neon Waves",
+      "artist": "Synthwave Project Alpha",
+      "cover": "https://images.unsplash.com/photo-1614149162883-504ce4d13909?w=300&auto=format&fit=crop&q=80",
+      "lrc": "[00:00.00] Synthwave Project - Neon Waves\\n[00:05.00] Neon lights flashing through the night\\n[00:12.00] Coding under the stars, feeling so bright\\n[00:20.00] Glassmorphism shining in the screen\\n[00:28.00] The most beautiful player you've ever seen喵~\\n[00:35.00] Let the rhythm guide your hand\\n[00:42.00] Across the digital virtual land\\n[00:50.00] (Instrumental Solo)\\n[01:05.00] End of the transmission."
+    },
+    "source": "Cat-Architecture-Terminal",
+    "likes": 1314,
+    "comments": 99
+  }
+]

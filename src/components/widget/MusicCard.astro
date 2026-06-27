@@ -1,0 +1,345 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+  src: string;       // 音频链接
+  title: string;     // 歌曲标题
+  artist: string;    // 艺术家
+  cover?: string;    // 封面图片 URL (可选，默认黑胶盘)
+  lrc?: string;      // 歌词文件 URL 或内联 LRC 文本
+}
+
+const { src, title, artist, cover = "/favicon.svg", lrc } = Astro.props;
+---
+
+<div 
+  class="music-card-container card-base w-full max-w-2xl mx-auto p-6 backdrop-blur-xl bg-white/85 dark:bg-white/90 border border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 flex flex-col md:flex-row gap-6 relative overflow-hidden group/card my-6"
+  data-src={src}
+  data-lrc={lrc}
+>
+  <!-- 晶莹白色渐变层 -->
+  <div class="absolute inset-0 bg-gradient-to-tr from-white/10 via-white/40 to-white/60 pointer-events-none rounded-[inherit]"></div>
+  
+  <!-- 音频标签 -->
+  <audio class="music-audio" src={src} preload="metadata"></audio>
+
+  <!-- 左侧：播放器控制与白色乳胶唱片 -->
+  <div class="flex flex-col items-center justify-between w-full md:w-1/3 flex-shrink-0 relative z-10">
+    <!-- 唱片区域 -->
+    <div class="relative w-36 h-36 mb-4 flex items-center justify-center">
+      <!-- 唱针（Stylus） -->
+      <div class="music-stylus absolute -right-2 top-0 w-8 h-16 origin-top-left -rotate-[25deg] transition-transform duration-500 ease-out z-20 pointer-events-none">
+        <svg viewBox="0 0 30 100" class="w-full h-full drop-shadow-md">
+          <!-- 唱针支架与唱针 -->
+          <circle cx="10" cy="10" r="8" fill="var(--primary)" />
+          <rect x="8" y="10" width="4" height="60" rx="2" fill="#d1d5db" />
+          <path d="M 8 70 L 20 85 L 20 90 L 15 90" fill="none" stroke="#9ca3af" stroke-width="4" stroke-linecap="round" />
+        </svg>
+      </div>
+
+      <!-- 唱片外圈（乳白色现代黑胶） -->
+      <div class="w-full h-full rounded-full bg-neutral-100/90 shadow-md flex items-center justify-center ring-4 ring-white/60 border border-white/90 relative overflow-hidden">
+        <!-- 唱片细纹 -->
+        <div class="absolute inset-0 rounded-full opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-white to-transparent"></div>
+        <div class="absolute inset-2 rounded-full border border-dashed border-neutral-300 opacity-60"></div>
+        <div class="absolute inset-6 rounded-full border border-dashed border-neutral-300 opacity-50"></div>
+        <div class="absolute inset-10 rounded-full border border-neutral-300 opacity-40"></div>
+
+        <!-- 封面图 -->
+        <img 
+          src={cover} 
+          alt={title}
+          class="music-cover-img w-20 h-20 rounded-full object-cover select-none pointer-events-none ring-2 ring-white"
+        />
+        
+        <!-- 唱片内孔 -->
+        <div class="absolute w-3 h-3 rounded-full bg-neutral-200 border border-white shadow-inner"></div>
+      </div>
+    </div>
+
+    <!-- 歌曲信息 -->
+    <div class="text-center w-full px-2 mb-4">
+      <h3 class="font-bold text-lg text-neutral-800 dark:text-neutral-800 tracking-wide line-clamp-1 mb-1" title={title}>
+        {title}
+      </h3>
+      <p class="text-xs text-neutral-500 dark:text-neutral-500 tracking-wider font-medium line-clamp-1">
+        {artist}
+      </p>
+    </div>
+
+    <!-- 进度条 -->
+    <div class="w-full px-1 mb-4">
+      <div class="music-progress-container h-1.5 w-full bg-neutral-200 rounded-full overflow-hidden cursor-pointer relative group/progress">
+        <div class="music-progress-bar h-full bg-[var(--primary)] w-0 rounded-full transition-all duration-75 relative">
+          <!-- 悬浮发光块 -->
+          <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-[var(--primary)] rounded-full shadow-md scale-0 group-hover/progress:scale-100 transition-transform duration-200"></div>
+        </div>
+      </div>
+      <div class="flex justify-between text-[10px] text-neutral-500 dark:text-neutral-500 mt-1 font-mono">
+        <span class="music-time-current">00:00</span>
+        <span class="music-time-total">00:00</span>
+      </div>
+    </div>
+
+    <!-- 控制按键 -->
+    <div class="flex items-center justify-center gap-4">
+      <button class="music-prev-btn btn-plain scale-animation rounded-full w-10 h-10 border border-neutral-200/80 bg-white/70 hover:bg-white/95 backdrop-blur shadow-sm hover:scale-105 active:scale-95 text-neutral-600 dark:text-neutral-600" title="快退 5 秒">
+        <Icon name="material-symbols:fast-rewind" class="text-xl" />
+      </button>
+      
+      <button class="music-play-btn p-3 rounded-full bg-[var(--primary)] text-white hover:scale-110 active:scale-95 transition-all shadow-md shadow-[var(--primary)]/20 relative z-20 flex items-center justify-center" title="播放/暂停">
+        <Icon name="material-symbols:play-arrow-rounded" class="music-play-icon text-2xl" />
+        <Icon name="material-symbols:pause-rounded" class="music-pause-icon text-2xl hidden" />
+      </button>
+
+      <button class="music-next-btn btn-plain scale-animation rounded-full w-10 h-10 border border-neutral-200/80 bg-white/70 hover:bg-white/95 backdrop-blur shadow-sm hover:scale-105 active:scale-95 text-neutral-600 dark:text-neutral-600" title="快进 5 秒">
+        <Icon name="material-symbols:fast-forward" class="text-xl" />
+      </button>
+    </div>
+  </div>
+
+  <!-- 分割线 -->
+  <div class="w-full md:w-px h-px md:h-auto bg-neutral-200/80 my-1 md:my-0 flex-shrink-0"></div>
+
+  <!-- 右侧：白亮歌词本区 -->
+  <div class="w-full md:w-2/3 flex flex-col relative overflow-hidden min-h-[12rem] md:min-h-0 z-10">
+    <div class="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-white/60 to-transparent pointer-events-none z-10"></div>
+    
+    <!-- 歌词容器 -->
+    <div class="music-lyric-list w-full h-48 md:h-full overflow-y-auto scroll-smooth hide-scrollbar flex flex-col items-center py-20 gap-4">
+      <div class="text-center text-neutral-500 dark:text-neutral-500 italic py-16 flex flex-col items-center gap-2">
+        <Icon name="material-symbols:music-note-rounded" class="text-3xl animate-bounce text-[var(--primary)]" />
+        <span>准备就绪，点击播放喵~</span>
+      </div>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white/60 to-transparent pointer-events-none z-10"></div>
+  </div>
+</div>
+
+<style>
+  .hide-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* 歌词光晕动画 */
+  .lyric-line.active-line {
+    text-shadow: 0 0 10px rgba(var(--primary-rgb), 0.2);
+    transform: scale(1.05);
+  }
+</style>
+
+<script>
+  // 歌词解析逻辑
+  function parseLRC(lrcText: string) {
+    if (!lrcText) return [];
+    
+    const lines = lrcText.replace(/\\n/g, '\n').replace(/&amp;/g, '&').split('\n');
+    const lyrics = [];
+    const timeReg = /\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\]/g;
+    
+    for (const line of lines) {
+      const timeMatches = [...line.matchAll(timeReg)];
+      if (timeMatches.length === 0) continue;
+      
+      const text = line.replace(/\[\d{2}:\d{2}(?:\.\d{2,3})?\]/g, '').trim();
+      
+      for (const match of timeMatches) {
+        const min = parseInt(match[1], 10);
+        const sec = parseInt(match[2], 10);
+        const msStr = match[3] || '0';
+        const ms = parseFloat('0.' + msStr);
+        const time = min * 60 + sec + ms;
+        
+        lyrics.push({ time, text: text || '...' });
+      }
+    }
+    
+    lyrics.sort((a, b) => a.time - b.time);
+    return lyrics;
+  }
+
+  function formatTime(seconds: number) {
+    if (isNaN(seconds) || seconds < 0) return '00:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  function initMusicCards() {
+    const cards = document.querySelectorAll('.music-card-container');
+    
+    cards.forEach((card: any) => {
+      if (card.dataset.initialized) return;
+      card.dataset.initialized = 'true';
+
+      const audio = card.querySelector('.music-audio') as HTMLAudioElement;
+      const playBtn = card.querySelector('.music-play-btn') as HTMLButtonElement;
+      const playIcon = card.querySelector('.music-play-icon');
+      const pauseIcon = card.querySelector('.music-pause-icon');
+      const prevBtn = card.querySelector('.music-prev-btn') as HTMLButtonElement;
+      const nextBtn = card.querySelector('.music-next-btn') as HTMLButtonElement;
+      const progressContainer = card.querySelector('.music-progress-container') as HTMLDivElement;
+      const progressBar = card.querySelector('.music-progress-bar') as HTMLDivElement;
+      const timeCurrent = card.querySelector('.music-time-current') as HTMLSpanElement;
+      const timeTotal = card.querySelector('.music-time-total') as HTMLSpanElement;
+      const lyricList = card.querySelector('.music-lyric-list') as HTMLDivElement;
+      const coverImg = card.querySelector('.music-cover-img') as HTMLImageElement;
+      const stylus = card.querySelector('.music-stylus') as SVGElement;
+      
+      let lyrics: Array<{ time: number; text: string }> = [];
+      const lrcData = card.dataset.lrc;
+      
+      function renderLyrics(lyricArray: Array<{ time: number; text: string }>) {
+        if (!lyricArray || lyricArray.length === 0) {
+          lyricList.innerHTML = '<div class="text-center text-neutral-500/60 py-16">纯音乐，请静心欣赏喵~</div>';
+          return;
+        }
+        
+        lyricList.innerHTML = lyricArray.map((line, idx) => `
+          <div 
+            class="lyric-line transition-all duration-300 text-center py-1.5 px-4 text-neutral-500 dark:text-neutral-500 text-sm md:text-base cursor-pointer hover:text-neutral-800 dark:hover:text-neutral-800 rounded-lg hover:bg-neutral-100/80 active:scale-98 select-none" 
+            data-index="${idx}" 
+            data-time="${line.time}"
+          >
+            ${line.text}
+          </div>
+        `).join('');
+      }
+
+      if (lrcData) {
+        if (lrcData.startsWith('http') || lrcData.startsWith('/') || lrcData.endsWith('.lrc')) {
+          fetch(lrcData)
+            .then(res => {
+              if (!res.ok) throw new Error('Network status not ok');
+              return res.text();
+            })
+            .then(text => {
+              lyrics = parseLRC(text);
+              renderLyrics(lyrics);
+            })
+            .catch(err => {
+              console.error('Fetch lyric failed:', err);
+              lyricList.innerHTML = '<div class="text-center text-neutral-500/60 py-16">歌词加载失败了喵...</div>';
+            });
+        } else {
+          lyrics = parseLRC(lrcData);
+          renderLyrics(lyrics);
+        }
+      } else {
+        renderLyrics([]);
+      }
+
+      function togglePlay() {
+        if (audio.paused) {
+          document.querySelectorAll('.music-audio').forEach((otherAudio: any) => {
+            if (otherAudio !== audio && !otherAudio.paused) {
+              otherAudio.pause();
+            }
+          });
+          audio.play().catch(e => console.error("Audio play failed:", e));
+        } else {
+          audio.pause();
+        }
+      }
+
+      playBtn.addEventListener('click', togglePlay);
+
+      prevBtn.addEventListener('click', () => {
+        audio.currentTime = Math.max(0, audio.currentTime - 5);
+      });
+
+      nextBtn.addEventListener('click', () => {
+        audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 5);
+      });
+
+      audio.addEventListener('play', () => {
+        playIcon?.classList.add('hidden');
+        pauseIcon?.classList.remove('hidden');
+        coverImg?.classList.add('animate-[spin_20s_linear_infinite]');
+        if (stylus) stylus.style.transform = 'rotate(0deg)';
+      });
+
+      audio.addEventListener('pause', () => {
+        playIcon?.classList.remove('hidden');
+        pauseIcon?.classList.add('hidden');
+        coverImg?.classList.remove('animate-[spin_20s_linear_infinite]');
+        if (stylus) stylus.style.transform = 'rotate(-25deg)';
+      });
+
+      progressContainer.addEventListener('click', (e) => {
+        const rect = progressContainer.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const duration = audio.duration || 0;
+        if (duration > 0) {
+          audio.currentTime = (clickX / rect.width) * duration;
+        }
+      });
+
+      lyricList.addEventListener('click', (e) => {
+        const line = (e.target as HTMLElement).closest('.lyric-line') as HTMLElement;
+        if (line) {
+          const time = parseFloat(line.dataset.time || '');
+          if (!isNaN(time)) {
+            audio.currentTime = time;
+            if (audio.paused) {
+              audio.play().catch(e => console.error("Audio play error:", e));
+            }
+          }
+        }
+      });
+
+      audio.addEventListener('timeupdate', () => {
+        const current = audio.currentTime;
+        const duration = audio.duration || 0;
+
+        if (duration > 0) {
+          progressBar.style.width = `${(current / duration) * 100}%`;
+        }
+        timeCurrent.textContent = formatTime(current);
+
+        if (lyrics.length > 0) {
+          let activeIdx = 0;
+          for (let i = 0; i < lyrics.length; i++) {
+            if (current >= lyrics[i].time) {
+              activeIdx = i;
+            } else {
+              break;
+            }
+          }
+
+          const lines = lyricList.querySelectorAll('.lyric-line');
+          lines.forEach((lineEl: any, idx) => {
+            if (idx === activeIdx) {
+              if (!lineEl.classList.contains('active-line')) {
+                lineEl.classList.add('active-line', 'text-[var(--primary)]', 'font-semibold', 'opacity-100');
+                lineEl.classList.remove('text-neutral-500', 'opacity-50');
+                
+                const containerHeight = lyricList.clientHeight;
+                const lineOffsetTop = lineEl.offsetTop;
+                const lineHeight = lineEl.clientHeight;
+                
+                lyricList.scrollTop = lineOffsetTop - containerHeight / 2 + lineHeight / 2;
+              }
+            } else {
+              lineEl.classList.remove('active-line', 'text-[var(--primary)]', 'font-semibold', 'opacity-100');
+              lineEl.classList.add('text-neutral-500', 'opacity-50');
+            }
+          });
+        }
+      });
+
+      audio.addEventListener('loadedmetadata', () => {
+        timeTotal.textContent = formatTime(audio.duration);
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initMusicCards);
+  document.addEventListener('swup:contentReplaced', initMusicCards);
+  document.addEventListener('swup:page:view', initMusicCards);
+</script>

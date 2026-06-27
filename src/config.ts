@@ -122,6 +122,11 @@ export const navBarConfig: NavBarConfig = {
 			external: false,
 		},
 		{
+			name: "音乐馆",
+			url: "/music/",
+			external: false,
+		},
+		{
 			name: "星空图谱",
 			url: "/graph/",
 			external: false,
