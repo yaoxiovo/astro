@@ -301,4 +301,33 @@ author: "瑶曦网络科技官方"
 - **权限闭环验证与全量提交成功 (Permissions Verified & 100% Success)：** 协助主人完成了 Google Search Console 老版控制台的直达设置，将服务账号成功添加为二级网址前缀属性（`https://blog.yaoxi.wiki/`）的**“拥有者 (Owner)”**。随后，全量 Sitemap 测试完美通过，40 个站点链接全部被 Google Indexing API 与微软 IndexNow 双通道瞬间成功接收并受理，标志着整个自动化收录闭环体系全部坚实落地喵呜~！
 - **主副推送程序解耦与极限额度保留 (Quota Protection & Program Decoupling)：** 为了防止日常的频繁构建与非文章的无谓更新将 Google Indexing API 每日固定的配额额度（默认每天 200 个）瞬间吃满，本喵重构了主副指令的分工：
   - **副程序（Sitemap 模式）：** 在 `package.json` 里添加了 `"submit-urls:all": "node scripts/submit-urls.js --all"` 命令，仅在需要全量初始化时手动调用。
-  - **主程序（Git 增量模式）：** 默认主命令 `"submit-urls": "node scripts/submit-urls.js"` 内置了超智能的 Git 改动判定，只有检测到有实际的 `.md` 文章文件或 Moments 发生发布/更改时，才会启动 API 提交通道，且只把对应的文章与首页附带进行推送。若工作区无任何新文章或动态变更，则直接终止运行，完美做到了“零冗余提交，将 API 额度留给真正的新内容”喵呜~！
+  - **主程序（Git 增量模式）：** 默认主命令 `"submit-urls": "node scripts/submit-urls.js"` 内置了超智能的 Git 改动判定，只有检测到有实际 of `.md` 文章文件或 Moments 发生发布/更改时，才会启动 API 提交通道，且只把对应的文章与首页附带进行推送。若工作区无任何新文章或动态变更，则直接终止运行，完美做到了“零冗余提交，将 API 额度留给真正的新内容”喵呜~！
+
+---
+
+## ⚡ 各云服务状态聚合监视器与 API 面板构建 (CloudStatus Serverless Dashboard)
+
+### 🚨 需求背景与调试挑战 (Context)
+主人需要一个庞大的各云服务（如 GitHub, Cloudflare, Vercel, Supabase, OpenAI, AWS 等）实时状态聚合面板，并能通过统一的 API 接口返回状态数据。由于项目涉及本地开发、Git 推送以及 Cloudflare Pages 边缘端部署，在开发中遇到了两大底层环境挑战：
+1. **FAT32/exFAT 软链接限制 (Symlink Failure)：** 在本地 Android 挂载的 `/mnt/sdcard` 开发目录下运行 `npm install` 时，触发了 `EACCES: permission denied, symlink` 错误。
+2. **SSH 22 端口防火墙阻断 (SSH Port 22 Timeout)：** 往 GitHub 推送代码时，遭遇 `ssh: connect to host github.com port 22: Connection timed out` 超时限制。
+
+### 🔍 架构设计与底层实现 (Architecture & Implementation)
+为了提供无缝的“本地双轨调试 + 边缘端 Serverless 托管”体验，本喵设计了以下全栈解决方案喵：
+1. **Cloudflare Pages Functions 边缘架构 (Edge Functions API)：**
+   - 彻底摒弃了必须依赖服务器的传统 Node.js Express 方案，改用 **Cloudflare Pages Functions** 机制喵！
+   - 在 [/functions/api/status.js](file:///root/git/cloud-status/functions/api/status.js) 中通过 `onRequest` 实现轻量级无状态的并发聚合抓取。
+   - 使用 `Promise.allSettled` 并行抓取各大网关 Statuspage 标准 JSON 数据，提供超高性能和极致容错兜底喵！
+2. **本地环境无软链接兼容 (No-Bin-Links Bypass)：**
+   - 针对本地 SD 卡的 Symlink 物理限制，使用 `npm install --no-bin-links` 指令成功绕过，打通了本地开发依赖安装链。
+3. **SSH Over HTTPS 备用端口配置 (SSH Port 443 Tunneling)：**
+   - 针对 GitHub 的 22 端口屏蔽，本喵为主人物理新建了 `/root/.ssh/config` 配置文件，强制指定 `Host github.com` 使用备用主机 `ssh.github.com` 并走 `443` 端口进行 SSH 协议通信。
+   - 在后台以非交互模式运行时，对首次建立连接产生的指纹认证，通过 `send_input` 强行写入 `yes\n` 完成 Host 信任登记，实现了一键无痛推送 GitHub 喵呜！
+4. **玻璃态现代 UI 与 Tooltip 动效 (Premium Glassmorphism UI)：**
+   - 前端采用 React 配合纯 Vanilla CSS 变量设计系统，设计了带有磨砂玻璃滤镜（backdrop-filter）、柔和发光边框（glow effect）以及呼吸指示灯的卡片网格。
+   - 渲染了 **30 天的 Uptime 历史小斑块**，支持对每个 Block 进行 Hover 时浮现具有 3D 浮动感和精准定位的 Tooltip 信息气泡喵~
+
+### ✨ 落地成效 (Results)
+- 本地前后端及 Cloudflare 部署的双规链路全部打通，代码已 100% 成功推送到 GitHub 远程仓库 `git@github.com:yaoxiovo/cloud-status.git` 的 `main` 分支。
+- 主人只需在 Cloudflare Pages 面板中一键绑定该仓库，即可零配置构建部署出完全免费、全球多活的云状态监视器喵呜~！
+
