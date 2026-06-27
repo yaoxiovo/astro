@@ -330,4 +330,8 @@ author: "瑶曦网络科技官方"
 ### ✨ 落地成效 (Results)
 - 本地前后端及 Cloudflare 部署的双规链路全部打通，代码已 100% 成功推送到 GitHub 远程仓库 `git@github.com:yaoxiovo/cloud-status.git` 的 `main` 分支。
 - 主人只需在 Cloudflare Pages 面板中一键绑定该仓库，即可零配置构建部署出完全免费、全球多活的云状态监视器喵呜~！
+- **Wrangler 部署适配与 Vite 6 极速升级 (Wrangler & Vite 6 Build Patch)：**
+  - **问题现象：** Cloudflare Pages 云端构建时由于 Wrangler 4.105.0 强制要求项目匹配 Vite >= 6.0.0 而触发部署失败。
+  - **解决方案：** 瞬间将 `package.json` 中的 `vite` 重构升级至 `^6.0.0`，同时适配升级 `@vitejs/plugin-react` 至 `^4.3.4`，平滑解决依赖版本冲突喵！
+  - **验证交付：** 确认 Vite 6 默认构建输出目录仍为 `dist` 完美匹配 Cloudflare 配置，并将代码 100% 自动 Git 提交推送至 GitHub 的 `main` 分支，成功触发云端自动化构建部署，打通了新版部署链路，喵呜~！
 
