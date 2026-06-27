@@ -11,7 +11,7 @@
       "src": "/music/mp3/literature.mp3",
       "title": "リテラチュア (魔女之旅 OP)",
       "artist": "上田麗奈",
-      "cover": "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&auto=format&fit=crop&q=80",
+      "cover": "/music/literature_cover.jpg",
       "lrc": "/music/lrc/literature.lrc"
     },
     "source": "Elaina's Diary",
@@ -30,7 +30,7 @@
       "src": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
       "title": "Vibrant Neon Waves",
       "artist": "Synthwave Project Alpha",
-      "cover": "https://images.unsplash.com/photo-1614149162883-504ce4d13909?w=300&auto=format&fit=crop&q=80",
+      "cover": "/music/neon_cover.jpg",
       "lrc": "[00:00.00] Synthwave Project - Neon Waves\\n[00:05.00] Neon lights flashing through the night\\n[00:12.00] Coding under the stars, feeling so bright\\n[00:20.00] Glassmorphism shining in the screen\\n[00:28.00] The most beautiful player you've ever seen喵~\\n[00:35.00] Let the rhythm guide your hand\\n[00:42.00] Across the digital virtual land\\n[00:50.00] (Instrumental Solo)\\n[01:05.00] End of the transmission."
     },
     "source": "Cat-Architecture-Terminal",
