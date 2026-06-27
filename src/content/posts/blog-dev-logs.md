@@ -341,6 +341,18 @@ author: "瑶曦网络科技官方"
     - 修改了 [App.jsx](file:///root/git/cloud-status/src/App.jsx)，在前端 fetch 请求的端点前插入 `import.meta.env.VITE_API_BASE_URL` 变量。
     - 在项目根目录下新增了 [.env.production](file:///root/git/cloud-status/.env.production) 文件并配置 `VITE_API_BASE_URL=https://cloud-status-api.yaoxiovo.workers.dev`，使得生产环境在构建阶段自动将 API 请求指向正确的目标，同时保留了本地开发时通过 Vite Proxy 代理本地 Express 服务器（未定义环境变量时走相对路径 `/api`）的完整兼容喵！
   - **部署提交：** 改动已 100% 成功 Push 到 GitHub，云端自动化部署直接顺利通过构建喵呜！
+- **私人服务部署状态与主站流量大盘重构 (CF Private Analytics & Worker Monitor)：**
+  - **需求变革：** 彻底将 CloudStatus 从检测外部公共云服务，重构为监控主人的私人服务状态（各 CF Worker 的部署健康状态）以及主站 Zone 的安全访问流量（今日访问量、被阻断的 WAF 威胁拦截数、出站数据流量）喵！
+  - **解决方案：**
+    - **后端零配置 API (Zero-Config Backends)：** 在 [server.js](file:///root/git/cloud-status/server.js) 中自动探测加载本地 `~/.config/.wrangler/config/default.toml` 里的 `oauth_token` 凭据。使用本地子进程 `curl` 反向代理方式，优雅规避 Node 22 沙盒内 fetch 默认不走系统 HTTP 代理导致超时的问题喵！
+    - **云端 Worker 双轨兼容：** 重构了 [worker/index.js](file:///root/git/cloud-status/worker/index.js)，通过 env 支持，完美兼容生产环境的 API Token 抓取喵！
+    - **GraphQL 流量大盘与 Deployment 提取：**
+      - 并发请求各私人 Worker（如 `astro`, `cloud-status`, `umami`, `zhishiku`, `yaoxi`）的 deployments API，提取最新版本的 Deployment ID、作者和最后更新时间，作为在线状态的真实凭据。
+      - 利用 Cloudflare GraphQL Analytics API 发起 POST 聚合查询，统计过去 24 小时内的总访问数、安全拦截数及总传输体积喵！
+    - **玻璃态流量看板前端 (Glassmorphism Traffic UI)：** 
+      - 修改了 [App.jsx](file:///root/git/cloud-status/src/App.jsx)，在顶部渲染了炫酷的三个大盘指标卡片（今日访问、WAF拦截、出站流量），完美配以霓虹玻璃特效和 Outfit 字体，在卡片内部新增渲染了部署详情。
+      - 补充了 [index.css](file:///root/git/cloud-status/src/index.css) 相关的毛玻璃磨砂以及呼吸发光边框特效样式喵！
+  - **验证交付：** 所有优化代码已成功 Git Push 触发部署，云端自动化编译通过并全面启用真实私人数据，喵呜~！
 
 ---
 
