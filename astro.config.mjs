@@ -7,8 +7,6 @@ import swup from "@swup/astro";
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
 import { defineConfig, passthroughImageService } from "astro/config";
-import fs from "node:fs";
-import path from "node:path";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeComponents from "rehype-components"; /* Render the custom directive content */
 import rehypeExternalLinks from "rehype-external-links";
@@ -30,40 +28,15 @@ import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 
-// Build backlink whitelist from official configurations and all友情链接 JSON files
+// Build backlink whitelist only for official yaoxi.wiki and subdomains
 const backlinkWhitelist = new Set([
-	"blog.yaoxi.wiki",
 	"yaoxi.wiki",
-	"yaoxi.xyz",
+	"blog.yaoxi.wiki",
 	"png.yaoxi.wiki",
 	"api.blog.yaoxi.cloud",
-	"umami.yaoxi.cloud"
+	"umami.yaoxi.cloud",
+	"yaoxi.xyz"
 ]);
-
-try {
-	const friendsDir = path.resolve("./src/data/friends");
-	if (fs.existsSync(friendsDir)) {
-		const files = fs.readdirSync(friendsDir);
-		for (const file of files) {
-			if (file.endsWith(".json")) {
-				const content = fs.readFileSync(path.join(friendsDir, file), "utf-8");
-				const data = JSON.parse(content);
-				if (data.url) {
-					try {
-						const urlObj = new URL(data.url);
-						const hostname = urlObj.hostname;
-						backlinkWhitelist.add(hostname);
-						backlinkWhitelist.add(hostname.replace(/^www\./, ""));
-					} catch (err) {
-						// ignore invalid url
-					}
-				}
-			}
-		}
-	}
-} catch (e) {
-	console.warn("Failed to build backlink whitelist:", e);
-}
 
 // https://astro.build/config
 export default defineConfig({

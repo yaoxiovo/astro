@@ -10,6 +10,8 @@
 		"astro": "astro",
 		"type-check": "tsc --noEmit --isolatedDeclarations",
 		"new-post": "node scripts/new-post.js",
+		"submit-urls": "node scripts/submit-urls.js",
+		"submit-urls:all": "node scripts/submit-urls.js --all",
 		"clean": "node scripts/clean-unused-images.js",
 		"del-space": "node scripts/del-space.js",
 		"upload-bili": "node scripts/upload-bili.js",

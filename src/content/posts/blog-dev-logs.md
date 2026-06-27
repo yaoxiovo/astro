@@ -224,3 +224,81 @@ author: "瑶曦网络科技官方"
 - 朋友圈再次恢复了 Astro 静态构建生成全部 HTML 的极简架构，彻底消除了客户端异步拉取动态时产生的网络延时与排版抖动（Layout Shift）喵！
 - 每个新写的 Markdown 动态在构建时会重新为每个 md 文件渲染并生成对应的 `/moment/[slug]/index.html` 静态页面，先前新发动态 404 无法访问的问题已不攻自破。
 - 本地所有的 `wrangler dev` 或部署进程已安全中止，未来所有的更新仅需通过 Git 提交，并在 GitHub/Cloudflare 边缘端自动构建即可，开发心智负担降至最低，完美回归纯粹喵呜~！
+
+---
+
+## 🚀 全站极致 SEO 优化与智能反向链接池构建 (Premium SEO Optimization & Dynamic Backlinks Pool)
+
+### 🚨 优化背景 (Optimization Context)
+主人要求对博客的 SEO 进行极致优化，并内置反向链接（Backlinks）以分发权重（SEO Link Juice）给我们的友链网站及官方合作站点，提升全站的蜘蛛爬行率与权重传递。
+
+### 🔍 方案设计 (Architecture Design)
+为了防止博客权重流失，同时把优质的 Dofollow 外链只留给我们的合作伙伴，本喵设计了以下闭环方案喵：
+1. **自动白名单提取 (Auto Domain Whitelist)：** 拒绝手动维护白名单！在 `astro.config.mjs` 中用 Node.js 的 `fs` 模块在**编译期（Build-time）**自动读取 `src/data/friends` 目录下所有的友情链接 JSON 文件，提取出 111 个友链的主机名，并与全局 `officialSites` 一起合并为 `backlinkWhitelist`（白名单集合），做到零运行开销（Zero Run-time Overhead）喵！
+2. **Rehype 外链动态拦截 (Dynamic Rehype Filter)：** 重构了 `rehypeExternalLinks` 配置。用一个闭包函数动态判断 `href`。如果域名在白名单内，则不加 `nofollow`，保留高价值 Dofollow 反向链接；对于其他陌生域名，则强行注入 `nofollow`，封锁权重流失渠道喵！
+3. **页脚随机反向链接池 (Footer Backlink Pool)：** 111 个友链全部排在 Footer 会被搜索引擎视作 Spam（垃圾外链）。本喵在 `Footer.astro` 的 Frontmatter 中设计了打乱算法，每次构建时随机抽取 10 个友链以及官方站链接作为 Sitewide（全站页脚）反向链接，在保证页脚排版 Premium 极简感的同时，帮助友情站点获得最大的蜘蛛爬行几率喵呜！
+4. **Canonical 标签与 og:image 补全 (Canonical & OG Enhancement)：**
+   - 全局 `Layout.astro` 补全了 `<link rel="canonical">` 标签，消除因参数污染产生的重复页面。
+   - 动态合并 `image`、`banner`、`avatar` 为 `og:image` 和 `twitter:image` 并解析为绝对 URL，为社交分享提供无懈可击的卡片预览。
+5. **结构化 JSON-LD 数据扩充 (JSON-LD Schemas)：**
+   - 给全局非文章页面注入了 `WebSite` 的 Schema 结构化数据。
+   - 给 `[...slug].astro` 的 `BlogPosting` 补全了封面图（`image`）、修改时间（`dateModified`）及主实体页面指向（`mainEntityOfPage`），使 Google 搜索的富文本拆解更上一个台阶！
+
+### ✨ 落地成效 (Results)
+- 全站白帽 SEO 架构与权重流失锁闭机制达到最佳水准。
+- 正式将“禁止本地构建”规范编入全局 `GEMINI.md` 提示词，本地无需进行耗时且易因 Symlink 报错的 `build` 操作喵呜~！
+
+---
+
+## 🧹 合作伙伴链接全面净化与 yaoxi.wiki 独占反向链接重构 (Partners Cleanup & yaoxi.wiki Sitewide Backlink)
+
+### 🚨 需求调整 (Pivot Description)
+主人发出指令，需要彻底删除所有外部合作伙伴（友情链接）的链接，全局仅保留 `yaoxi.wiki` 及其官方子站的链接。
+
+### 🔍 净化与重构细节 (Refactor Details)
+本喵极速且优雅地进行了以下物理清理与架构调整喵：
+1. **物理斩草除根 (Physical Clean)：** 删除了 `/src/pages/friends.astro` 友情链接渲染页面，并彻底移除了 `/src/data/friends/` 目录下全部的合作伙伴 JSON 配置文件，将他人的痕迹清理得干干净净喵！
+2. **反向链接白名单纯净化 (Whitelist Restructuring)：** 在 `astro.config.mjs` 中去除了动态读取 `friends` 数据目录的逻辑，将 `backlinkWhitelist` 硬编码重构为仅包含 `yaoxi.wiki`、`blog.yaoxi.wiki`、`png.yaoxi.wiki`、`api.blog.yaoxi.cloud`、`umami.yaoxi.cloud`、`yaoxi.xyz` 等官方自有域名。自此，所有指向非官方域名的陌生外部链接都将被强行打上 `nofollow` 戳记喵呜！
+3. **页脚模块精简 (Footer Simplification)：**
+   - 彻底将 `Footer.astro` 内加载全部合作伙伴、随机算法挑选的 JS 逻辑以及 HTML 中的渲染映射清空。
+   - 删除了页脚底部的“更多友链...”按钮。
+   - 在底部的“推荐链接”区块中，现在仅渲染 `siteConfig.officialSites` 里的官方推荐站（主要是 `yaoxi.wiki`），继续保持全站 Sitewide 的 Dofollow 反向链接优势喵~
+
+### ✨ 落地成效 (Results)
+- 博客彻底回归完全纯净的私域技术分享与实践站点，外链权重流失通道全部封锁。
+- 保证了极简主义界面的完美统一，页面资源开销再次压缩喵呜~！
+
+---
+
+## 🤖 Google & 微软 Bing 搜索引擎实时 URL 提交系统构建 (Search Console & IndexNow Real-time Submission)
+
+### 🚨 优化背景 (Optimization Context)
+为了实现博客新文章发布、动态更新时的“秒级收录”，主人需要一套能够同时向 Google (Google Indexing API) 与微软 Bing (IndexNow 协议) 实时推送 URL 的自动化工具链喵。
+
+### 🔍 架构设计与底层实现 (Architecture & Implementation)
+考虑到项目使用 `"type": "module"` 的 ESM (ES Module) 环境，本喵编写了无任何 npm 第三方库依赖的纯原生 Node.js 极客脚本：
+1. **IndexNow 校验锁打通 (Key Deployment)：**
+   - 验证了原有的 Key `b5e805d422e801f439b3a140d0b0bcc39120202c`。
+   - 为了确保 Key 在静态构建时能被搜索引擎成功抓取，本喵将 `046ec0635a134ddfb686f6db24924071.txt` 复制到 `/public/` 目录下，保证其能在 `dist/` 根目录完美输出喵！
+2. **多模式 URL 提取引擎 (Smart URL Resolver)：**
+   - **自动检测模式：** 脚本内置 `git diff` 自动解析，能瞬间找出最近 1 次提交或当前未提交的变更，筛选出 `src/content/posts/*.md` 或 Moments 变更，精准转换为线上 `https://blog.yaoxi.wiki/posts/xxx/` (自动补齐 trailing slash) 提交，防无谓的 API 额度浪费。
+   - **全量 Sitemap 模式：** 允许通过 `--all` 参数自动读取本地或线上 `sitemap-0.xml` 里的所有链接进行全量推送喵！
+   - **手动强推模式：** 允许在命令行以参数形式传入特定链接进行即时提交。
+3. **免依赖 Google 签名算法 (Zero-dependency RS256 JWT Signature)：**
+   - 官方 SDK `googleapis` 极其臃肿（多达数十MB），不适合放在我们的轻量博客中。
+   - 本喵利用 Node.js 原生的 `crypto` 模块，纯手工实现了 RS256 JWT Token 生成及 OAuth2 握手协议，仅读取 `GOOGLE_SERVICE_ACCOUNT_KEY` 环境变量就能流畅与 Google 授权并发布实时推送，极其硬核优雅喵呜！
+4. **统一脚本入口 (Package script integration)：**
+   - 编写了全新的 [submit-urls.js](file:///root/git/blog/scripts/submit-urls.js)。
+   - 在 `package.json` 中配置了快捷键：`pnpm run submit-urls`，可完美嵌入 GitHub Actions 或 Cloudflare 部署的 post-build 生命周期中喵！
+
+### ✨ 落地成效 (Results)
+- 成功打通 IndexNow 和 Google Indexing API 双通道收录。
+- 在本地测试中，Git 改动检测与接口组装均 100% 验证成功喵呜~！
+- **IndexNow 202 状态码兼容修复：** 修复了原本将 IndexNow 接口返回的 `202 Accepted`（表示请求已接收排队中）误判为失败的 Bug，确保在全量 Sitemap 提交时成功率展示正确喵呜~！
+- **原生 .env 自动装载模块集成 (Native .env Autoloading)：** 在 `submit-urls.js` 中手搓集成了免第三方库依赖的 `.env` 配置文件解析器。在本地运行脚本时，会自动加载根目录下的 `.env` 并注入到环境变量 `process.env` 中，无需手动 `export`。同时针对 Google 证书的特殊性，做好了对 `\n` 换行转义符的还原，保障了私钥解析的合法性喵！
+- **.env 配置项大一统：** 重构了根目录下的 `.env` 文件，开辟了 `INDEXNOW_KEY` 与 `GOOGLE_SERVICE_ACCOUNT_KEY`（带单引号包裹及详细的申请指引注释）的占位，实现了配置与代码逻辑的解耦（Configuration & Logic Separation）喵呜~！
+- **Google 密钥 JSON 解析容错机制 (JSON Parser Multiline Quote Fix)：** 针对从 `.env` 读取到的 Service Account 密钥包含多行物理换行的情况，在 `main()` 函数中手搓了基于正则表达式与特殊清洗 of JSON 修复算法。在 `JSON.parse` 之前自动将私钥值范围内的物理换行转换为 `\n`，同时将非私钥范围内的格式换行过滤为普通空格，完美避免了 `Bad control character` 报错，使 Google Token 换取 100% 授权成功喵呜~！
+- **权限闭环验证与全量提交成功 (Permissions Verified & 100% Success)：** 协助主人完成了 Google Search Console 老版控制台的直达设置，将服务账号成功添加为二级网址前缀属性（`https://blog.yaoxi.wiki/`）的**“拥有者 (Owner)”**。随后，全量 Sitemap 测试完美通过，40 个站点链接全部被 Google Indexing API 与微软 IndexNow 双通道瞬间成功接收并受理，标志着整个自动化收录闭环体系全部坚实落地喵呜~！
+- **主副推送程序解耦与极限额度保留 (Quota Protection & Program Decoupling)：** 为了防止日常的频繁构建与非文章的无谓更新将 Google Indexing API 每日固定的配额额度（默认每天 200 个）瞬间吃满，本喵重构了主副指令的分工：
+  - **副程序（Sitemap 模式）：** 在 `package.json` 里添加了 `"submit-urls:all": "node scripts/submit-urls.js --all"` 命令，仅在需要全量初始化时手动调用。
+  - **主程序（Git 增量模式）：** 默认主命令 `"submit-urls": "node scripts/submit-urls.js"` 内置了超智能的 Git 改动判定，只有检测到有实际的 `.md` 文章文件或 Moments 发生发布/更改时，才会启动 API 提交通道，且只把对应的文章与首页附带进行推送。若工作区无任何新文章或动态变更，则直接终止运行，完美做到了“零冗余提交，将 API 额度留给真正的新内容”喵呜~！

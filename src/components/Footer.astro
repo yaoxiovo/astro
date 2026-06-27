@@ -3,7 +3,6 @@
 import { execSync } from "node:child_process";
 import { profileConfig, siteConfig } from "../config";
 import { url } from "../utils/url-utils";
-import type { Friend } from "../types/data";
 
 const currentYear = new Date().getFullYear();
 
@@ -25,21 +24,6 @@ try {
 	console.warn("Failed to get git info", e);
 }
 
-// 自动加载全部友情链接
-const allFriends = Object.values(
-	import.meta.glob<Friend>("../data/friends/*.json", {
-		eager: true,
-		import: "default",
-	}),
-);
-
-// 随机打乱并挑选 10 个友链以提供随机反向链接，传递 SEO 权重
-const getRandomFriends = (friendsList: Friend[], count: number) => {
-	const shuffled = [...friendsList].sort(() => 0.5 - Math.random());
-	return shuffled.slice(0, count);
-};
-
-const randomFriends = getRandomFriends(allFriends, 10);
 ---
 
   
@@ -62,16 +46,12 @@ const randomFriends = getRandomFriends(allFriends, 10);
         <a class="transition link text-black/30 dark:text-white/30 hover:text-[var(--primary)] text-xs ml-1" target="_blank" href={`https://github.com/yaoxiovo/astro/commit/${commitHash}`}>({commitHash} @ {buildDate})</a>
         <br>
 
-        <!-- Built-in sitewide backlink and blogroll pool for premium white-hat SEO juice delivery -->
+        <!-- Built-in sitewide backlink only for official yaoxi.wiki domains -->
         <div class="flex flex-wrap justify-center items-center gap-x-3 gap-y-1.5 mt-3 max-w-[50rem] mx-auto text-xs text-black/40 dark:text-white/40 border-t border-black/10 dark:border-white/10 pt-3">
             <span class="font-medium text-black/50 dark:text-white/50 mr-1">推荐链接：</span>
             {siteConfig.officialSites?.map((site) => (
                 <a class="transition link hover:text-[var(--primary)]" href={site.url} target="_blank" title={site.alias}>{site.alias || site.url}</a>
             ))}
-            {randomFriends.map((friend) => (
-                <a class="transition link hover:text-[var(--primary)]" href={friend.url} target="_blank" title={friend.description}>{friend.name}</a>
-            ))}
-            <a class="transition link text-[var(--primary)] font-medium ml-1" href={url('friends')}>更多友链...</a>
         </div>
 	
         <br>
