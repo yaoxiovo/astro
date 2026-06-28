@@ -582,5 +582,24 @@ author: "瑶曦网络科技官方"
    - 重构了 `sitemap.xml` 站点地图，将首页的 `<lastmod>` 升级为当前的重构时间 `2026-06-28`，主动通知爬虫拉取全新的页面结构喵！
 
 ### ✨ 落地成效 (Results)
-- 彻底封堵了由于删除大体积 JPG 图片导致的头部元数据 404 Link 漏洞；
-- 完善了网页的 JSON-LD、PWA Manifest 和 Meta TDK 系统，全方位提升了在主流搜索引擎中的可索引度与结构化展现效果，喵呜~！
+- 完善了网页 of JSON-LD、PWA Manifest 和 Meta TDK 系统，全方位提升了在主流搜索引擎中的可索引度与结构化展现效果，喵呜~！
+
+---
+
+## 🔍 多分支同步与 `yaoxi` 分支去备案号 (Branch Sync & ICP Removal)
+
+### 🚨 优化背景 (Context)
+为了让 `yaoxiovo/yaoxi-ovo` 仓库的 `main` 分支与 `yaoxi` 分支都能享受到本次大重构的所有性能与动效红利，需要将代码同步部署。同时根据主人要求，`yaoxi` 分支作为特定的部署形态，需要去除底部的备案号以保持极简观感喵。
+
+### 🛠️ 优化方案与落地细节 (The Sync & Fix)
+1. **多分支重构资产覆盖 (Multi-branch Sync)**：
+   - 切换到 `main` 分支，利用 Checkout 策略只拉取并覆盖与主页重构核心相关的文件（`index.html`, `main.js`, `style.css`, `sw.js`, `site.webmanifest`, `sitemap.xml` 及对应的 webp 图片）。
+   - 在 `main` 分支下执行 `git rm` 彻底清扫旧有的 `avatar.jpg` (4MB) 和 `mobile-bg.jpg` (13MB)，确保 main 分支不会残留巨型垃圾文件喵。
+   - 提交并推送至 `origin/main`（保留了 ICP 备案号版本）。
+2. **`yaoxi` 分支去除备案号 (ICP Removal)**：
+   - 切换回 `yaoxi` 分支，编辑 `index.html` 移除页脚 `footer` 元素中的 `icp-info` 节点及备案链接。
+   - 暂存修改，提交并推送至 `origin/yaoxi`（成功部署为无备案号版本）。
+
+### ✨ 落地成效 (Results)
+- `main` 分支与 `yaoxi` 分支均已升级为全新重构版，性能缩减 98% 且具备 3D 视差等奢华动效。
+- `main` 分支保留备案号，`yaoxi` 分支已清爽去除备案信息，完成了多形态的完美共存，喵呜~！
