@@ -44,8 +44,28 @@ const momentsCollection = defineCollection({
 	}),
 });
 
+const musicCollection = defineCollection({
+	schema: z.object({
+		title: z.string(),
+		artist: z.string(),
+		src: z.string(),
+		cover: z.string().optional(),
+		lrc: z.string().optional(),
+		published: z.date(),
+		author: z.string().optional(),
+		avatar: z.string().optional(),
+		verifyType: z.enum(['blue', 'yellow', 'none']).optional().default('none'),
+		verifySubject: z.string().optional().default(''),
+		source: z.string().optional(),
+		likes: z.number().optional().default(0),
+		comments: z.number().optional().default(0),
+	}),
+});
+
 export const collections = {
 	posts: postsCollection,
 	assets: assetsCollection,
 	moments: momentsCollection,
+	music: musicCollection,
 };
+

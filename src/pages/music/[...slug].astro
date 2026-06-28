@@ -1,0 +1,71 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import MusicCard from "@components/widget/MusicCard.astro";
+import { Icon } from "astro-icon/components";
+import { profileConfig } from "@/config";
+import { getCollection } from "astro:content";
+
+export async function getStaticPaths() {
+  const musicEntries = await getCollection("music");
+  return musicEntries.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+---
+
+<MainGridLayout title={`${entry.data.title} - 听歌随笔`} description={`关于 ${entry.data.title} 的沉浸式听歌随笔喵`}>
+  <div class="w-full flex flex-col gap-6">
+    <!-- 返回音乐馆按钮 (磨砂玻璃微悬浮) -->
+    <div class="flex justify-start">
+      <a 
+        href="/music" 
+        class="flex items-center gap-2 py-2 px-4 rounded-xl text-neutral-700 dark:text-neutral-300 hover:text-[var(--primary)] backdrop-blur-xl bg-white/30 dark:bg-black/10 border border-black/5 dark:border-white/10 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 font-semibold text-sm"
+      >
+        <Icon name="material-symbols:arrow-back-ios-new-rounded" class="w-4 h-4" />
+        <span>返回音乐馆</span>
+      </a>
+    </div>
+
+    <!-- 上方：音乐卡片组件 -->
+    <div class="w-full relative z-10">
+      <MusicCard 
+        src={entry.data.src} 
+        title={entry.data.title} 
+        artist={entry.data.artist} 
+        cover={entry.data.cover}
+        lrc={entry.data.lrc}
+      />
+    </div>
+
+    <!-- 下方：随笔展示区 -->
+    <div class="backdrop-blur-xl bg-white/80 dark:bg-white/85 border border-white/80 rounded-2xl p-8 shadow-md flex flex-col gap-4 text-neutral-800 dark:text-neutral-800">
+      <div class="flex items-center justify-between border-b border-neutral-200 pb-4 mb-2">
+        <div class="flex items-center gap-3">
+          <img 
+            src={entry.data.avatar || profileConfig.avatar} 
+            alt={entry.data.author} 
+            class="w-10 h-10 rounded-xl object-cover ring-2 ring-white"
+          />
+          <div class="flex flex-col">
+            <span class="font-bold text-sm text-[var(--primary)]">{entry.data.author}</span>
+            <span class="text-[10px] text-neutral-500 font-mono mt-0.5">
+              发布于 {entry.data.published.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+            </span>
+          </div>
+        </div>
+        <div class="text-xs text-neutral-500 font-mono">
+          来自 {entry.data.source}
+        </div>
+      </div>
+
+      <!-- 渲染 Markdown 正文 -->
+      <article class="prose prose-neutral dark:prose-invert max-w-none text-neutral-800 dark:text-neutral-800 leading-relaxed font-normal">
+        <Content />
+      </article>
+    </div>
+  </div>
+</MainGridLayout>

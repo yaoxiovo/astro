@@ -3,10 +3,13 @@ import MainGridLayout from "@layouts/MainGridLayout.astro";
 import MusicCard from "@components/widget/MusicCard.astro";
 import { Icon } from "astro-icon/components";
 import { profileConfig, siteConfig } from "@/config";
-import musicMoments from "../data/music-moments.json";
+import { getCollection } from "astro:content";
 
-function getFriendlyTime(dateStr: string) {
-  const date = new Date(dateStr);
+const musicMoments = (await getCollection("music")).sort(
+  (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
+);
+
+function getFriendlyTime(date: Date) {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / (1000 * 60));
@@ -80,12 +83,12 @@ function getFriendlyTime(dateStr: string) {
           <div class="flex items-center gap-3 relative z-10">
             <div class="relative flex-shrink-0">
               <img 
-                src={moment.author === "瑶曦" || moment.author === "瑶曦网络科技官方" ? profileConfig.avatar : moment.avatar} 
-                alt={moment.author} 
+                src={moment.data.avatar || profileConfig.avatar} 
+                alt={moment.data.author} 
                 class="w-10 h-10 rounded-xl object-cover ring-2 ring-white"
               />
-              {moment.verifyType && moment.verifyType !== 'none' && (
-                <div class={`absolute -bottom-1 -right-1 rounded-full p-0.5 border border-white shadow-sm ${moment.verifyType === 'blue' ? 'bg-blue-500' : 'bg-yellow-500'}`}>
+              {moment.data.verifyType && moment.data.verifyType !== 'none' && (
+                <div class={`absolute -bottom-1 -right-1 rounded-full p-0.5 border border-white shadow-sm ${moment.data.verifyType === 'blue' ? 'bg-blue-500' : 'bg-yellow-500'}`}>
                   <svg viewBox="0 0 24 24" class="w-2.5 h-2.5 text-white" aria-label="Verified" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 </div>
               )}
@@ -93,38 +96,38 @@ function getFriendlyTime(dateStr: string) {
             
             <div class="flex flex-col">
               <div class="flex items-center gap-1.5">
-                <span class="font-bold text-sm text-[var(--primary)]">{moment.author}</span>
-                {moment.verifySubject && (
+                <span class="font-bold text-sm text-[var(--primary)]">{moment.data.author}</span>
+                {moment.data.verifySubject && (
                   <span class="hidden sm:inline text-[9px] px-1.5 py-0.5 rounded border border-yellow-500/30 bg-yellow-500/10 text-yellow-600 dark:text-yellow-600 font-medium">
-                    {moment.verifySubject}
+                    {moment.data.verifySubject}
                   </span>
                 )}
               </div>
               <span class="text-[10px] text-neutral-500 dark:text-neutral-500 font-mono mt-0.5">
-                {getFriendlyTime(moment.published)}
+                {getFriendlyTime(moment.data.published)}
               </span>
             </div>
           </div>
 
           <!-- 说说文字内容 (强制亮白色背景下使用深灰色文字) -->
           <div class="text-sm text-neutral-800 dark:text-neutral-800 leading-relaxed px-1 relative z-10 whitespace-pre-line font-normal">
-            {moment.content}
+            {moment.body}
           </div>
 
           <!-- 嵌入拟玻璃音乐播放卡片 -->
           <div class="w-full relative z-10">
             <MusicCard 
-              src={moment.music.src} 
-              title={moment.music.title} 
-              artist={moment.music.artist} 
-              cover={moment.music.cover}
-              lrc={moment.music.lrc}
+              src={moment.data.src} 
+              title={moment.data.title} 
+              artist={moment.data.artist} 
+              cover={moment.data.cover}
+              lrc={moment.data.lrc}
             />
           </div>
 
           <!-- 底部发布来源与交互按键 (同样强制深色文字) -->
           <div class="flex items-center justify-between border-t border-neutral-200/80 pt-3.5 mt-1 text-xs text-neutral-500 dark:text-neutral-500 relative z-10">
-            <span class="font-mono">来自 {moment.source}</span>
+            <span class="font-mono">来自 {moment.data.source}</span>
 
             <div class="flex items-center gap-4">
               <!-- 点赞按钮 -->
@@ -133,18 +136,27 @@ function getFriendlyTime(dateStr: string) {
                 data-id={moment.id}
               >
                 <Icon name="fa6-regular:heart" class="like-icon w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110" />
-                <span class="like-count font-semibold font-mono text-neutral-600 dark:text-neutral-600">{moment.likes}</span>
+                <span class="like-count font-semibold font-mono text-neutral-600 dark:text-neutral-600">{moment.data.likes}</span>
               </button>
 
               <!-- 分享按钮 -->
               <button 
                 class="music-moment-share-btn flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-neutral-100 active:scale-90 text-neutral-500 dark:text-neutral-500 hover:text-[var(--primary)]"
                 data-id={moment.id}
-                data-content={`【瑶曦的听歌日志】今天推荐一首《${moment.music.title}》- ${moment.music.artist}。来自网页端听歌链接：${moment.music.src}`}
+                data-content={`【瑶曦的听歌日志】今天推荐一首《${moment.data.title}》- ${moment.data.artist}。来自网页端听歌链接：${moment.data.src}`}
               >
                 <Icon name="fa6-solid:share-nodes" class="w-3.5 h-3.5" />
                 <span>分享</span>
               </button>
+
+              <!-- 进入详情/听歌随笔 -->
+              <a 
+                href={`/music/${moment.slug}/`}
+                class="flex items-center gap-1 py-1 px-2.5 rounded-lg text-neutral-500 dark:text-neutral-500 hover:text-[var(--primary)] backdrop-blur-md bg-white/30 dark:bg-black/10 border border-black/5 dark:border-white/10 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 font-medium"
+              >
+                <Icon name="material-symbols:menu-book-outline-rounded" class="w-3.5 h-3.5" />
+                <span>听歌随笔</span>
+              </a>
             </div>
           </div>
         </div>
