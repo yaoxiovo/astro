@@ -561,3 +561,26 @@ author: "瑶曦网络科技官方"
 ### ✨ 落地成效 (Results)
 - 静态资产总体积狂泄 **29MB**，首屏秒开，彻底解脱服务器和读者带宽；
 - 成功将原本单调的静态毛玻璃卡片重构为集 **3D 视差倾斜、随动镜面微光、SVG 噪声噪点材质、交错呼吸淡入、流光进度条**于一体的奢华交互艺术品，视觉高级感与交互灵动感拉满，喵呜~！
+
+---
+
+## 🔍 瑶曦个人主页 SEO 重构优化 (YaoXi Homepage SEO Optimization)
+
+### 🚨 优化背景 (Optimization Context)
+在完成主页 3D 视差与极致性能重构后，由于原有的 `avatar.jpg` 大图已被彻底替换为 `avatar.webp` 格式，原 HTML/配置中仍有部分残留的 404 图片路径（指向已被删的 JPG 原图），且原本的 Meta Keywords 缺失、页面 Title 较为平淡，有碍于搜索引擎（如 Google、百度等）的收录权重喵。
+
+### 🛠️ 优化方案与落地细节 (The SEO Fixes)
+为了确保个人主页在各大 Search Engines 的完美展现，本喵优雅地进行了以下 SEO 升级喵~：
+1. **彻底拔除 404 资产链接 (Asset Link Cleanup)**：
+   - 将 `index.html` 中的 OpenGraph 协议 `og:image` 与 Twitter Card 协议 `twitter:image` 路径统一从 `avatar.jpg` 修复为 `avatar.webp`，并同步修改了 JSON-LD 结构化数据 (Schema.org) 内 `Person` 实体的 `image` 字段，确保爬虫不再抓取 404 无效图，维护站点 Trust 值喵！
+   - 修正了 `site.webmanifest` 中 `icons` 内指向 `avatar.jpg` 的定义，改用最新的 `avatar.webp` 并同步修正 mime-type 为 `image/webp` 喵呜！
+2. **网页元数据升级与分词命中 (Metadata & TDK System)**：
+   - 将网页标题 `<title>` 优化为更具描述力与关键词匹配度的 `yaoxi | 瑶曦的个人主页 - 前端学习与探索`，同时同步升级 OpenGraph 与 Twitter 的 title 元数据。
+   - 新增 `<meta name="keywords">` 关键标签，包含 `yaoxi, 瑶曦, 瑶曦个人主页, 前端开发, 个人网站, 独立博客, Web前端, 3D视差, PWA`，提升特定垂直搜索的权重。
+   - 优化 `<meta name="description">` 内容，使其更加通顺且自然嵌入技术栈关键词（HTML5/CSS3/JavaScript）喵。
+3. **爬虫引导数据校准 (Sitemap Update)**：
+   - 重构了 `sitemap.xml` 站点地图，将首页的 `<lastmod>` 升级为当前的重构时间 `2026-06-28`，主动通知爬虫拉取全新的页面结构喵！
+
+### ✨ 落地成效 (Results)
+- 彻底封堵了由于删除大体积 JPG 图片导致的头部元数据 404 Link 漏洞；
+- 完善了网页的 JSON-LD、PWA Manifest 和 Meta TDK 系统，全方位提升了在主流搜索引擎中的可索引度与结构化展现效果，喵呜~！
