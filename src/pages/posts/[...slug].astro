@@ -13,7 +13,7 @@ import { Icon } from "astro-icon/components";
 import { gitHubEditConfig, licenseConfig } from "src/config";
 import PostMetadata from "../../components/PostMeta.astro";
 import ImageWrapper from "../../components/misc/ImageWrapper.astro";
-import { profileConfig, siteConfig, umamiConfig } from "../../config";
+import { profileConfig, siteConfig, umamiConfig, authorRoles } from "../../config";
 import { formatDateToYYYYMMDD } from "../../utils/date-utils";
 
 export async function getStaticPaths() {
@@ -52,6 +52,15 @@ const articleImageUrl = entry.data.image
 	? (entry.data.image.startsWith("http") ? entry.data.image : new URL(entry.data.image, Astro.site).href)
 	: new URL(profileConfig.avatar, Astro.site).href;
 
+const datePublishedISO = entry.data.published.toISOString();
+const dateModifiedISO = entry.data.updated
+	? entry.data.updated.toISOString()
+	: datePublishedISO;
+
+const authorName = profileConfig.name;
+const authorRole = authorRoles[authorName];
+const isOrg = authorRole?.verifyType === "blue";
+
 const jsonLd = {
 	"@context": "https://schema.org",
 	"@type": "BlogPosting",
@@ -59,14 +68,21 @@ const jsonLd = {
 	description: entry.data.description || entry.data.title,
 	image: articleImageUrl,
 	author: {
-		"@type": "Person",
-		name: profileConfig.name,
+		"@type": isOrg ? "Organization" : "Person",
+		name: authorName,
 		url: Astro.site,
+		...(isOrg ? {} : { logo: profileConfig.avatar })
 	},
-	datePublished: formatDateToYYYYMMDD(entry.data.published),
-	dateModified: entry.data.updated
-		? formatDateToYYYYMMDD(entry.data.updated)
-		: formatDateToYYYYMMDD(entry.data.published),
+	publisher: {
+		"@type": "Organization",
+		name: siteConfig.title,
+		logo: {
+			"@type": "ImageObject",
+			url: new URL(profileConfig.avatar, Astro.site).href
+		}
+	},
+	datePublished: datePublishedISO,
+	dateModified: dateModifiedISO,
 	inLanguage: entry.data.lang
 		? entry.data.lang.replace("_", "-")
 		: siteConfig.lang.replace("_", "-"),

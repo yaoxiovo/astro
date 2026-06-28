@@ -41,7 +41,9 @@ const backlinkWhitelist = new Set([
 // https://astro.build/config
 export default defineConfig({
 	image: {
-		service: passthroughImageService(),
+		service: (process.env.NODE_ENV === "development" || process.env.LOCAL_AARCH64 === "true")
+			? passthroughImageService()
+			: undefined,
 	},
 	site: "https://blog.yaoxi.wiki",
 	base: "/",

@@ -69,7 +69,8 @@ if (!description) {
 	description = siteConfig.description || pageTitle;
 }
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
+const canonicalPath = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`;
+const canonicalURL = new URL(canonicalPath, Astro.site).href;
 
 // ogImage selection with absolute path check
 let ogImage = image || banner || profileConfig.avatar;

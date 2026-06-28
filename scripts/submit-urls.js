@@ -153,7 +153,10 @@ async function getUrls() {
             if (cleanLine.startsWith('src/content/posts/') && cleanLine.endsWith('.md')) {
                 const fileBasename = path.basename(cleanLine, '.md');
                 if (fileBasename !== 'blog-dev-logs') { // 忽略日志文章
-                    urls.add(`${SITE_URL}/posts/${fileBasename}/`);
+                    const relativePath = cleanLine
+                        .substring('src/content/posts/'.length)
+                        .replace(/\.md$/, '');
+                    urls.add(`${SITE_URL}/posts/${relativePath}/`);
                     hasRealChange = true;
                 }
             }

@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /cdn/
+Disallow: /draft/
+
+Sitemap: https://blog.yaoxi.wiki/sitemap-index.xml
