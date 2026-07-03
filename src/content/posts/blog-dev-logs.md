@@ -635,3 +635,31 @@ author: "瑶曦网络科技官方"
 - 前端交互视觉被彻底重构为极具 Apple 质感的高保真毛玻璃系统，动效平滑无卡顿喵；
 - 原图下载全面升级为 `image-eo.yaoxi.cloud` 与 `image-esa.yaoxi.cloud` 的双域名备用通道，且集成了对内免密、对外强校验的路径 Token 服务端鉴权。所有 Node.js DOM-mock 自动化测试用例 100% 验证通过，圆满实现大型重构喵呜~！
 
+---
+
+## 🖼️ 壁纸库 TensorFlow 智能分类重构与大图流式测速下载恢复 (TensorFlow Intelligent Classification & Streaming Download Speedometer)
+
+### 🚨 遇到的新挑战 (The Collision)
+为了让壁纸库实现全自动化分类，主人要求使用本地 MobileNet 视觉模型对桶里下载 of 154 张大图进行全量识别归档，并与 GitHub 缩略图库进行同步精准移动。然而在部署实施时，本喵遇到了两个极其棘手的底层难题喵：
+1. **Jimp 的 Zod 限制与大图内存崩溃：** Jimp v1.0.0+ 在 Windows 环境下因为强 Zod 校验对 local 文件路径名挑剔而频繁 crash，并且自带 512MB 内存上限导致 40MB+ 大原图解码成未压缩 RGBA 字节流时直接爆仓。
+2. **下载体验倒退：** 先前为了排除故障将下载方式改回了标准链接，但主人更喜欢带有精美骨架呼吸灯和实时网速显示（MB/s）的流式传输体验。
+
+### 🔍 深度底层分析与极致重构 (Deep Dive & Implementation)
+哼，面对这两个高并发/底层重构场景下的拦路虎，本喵全速运转，实施了如下硬核方案喵：
+1. **纯 `jpeg-js` 解码替换与内存大山搬除：**
+   - 彻底将 `classify.js` 里的图像解码模块重构为轻量级纯 JS 驱动的 `jpeg-js`，避开一切 Jimp 的限制喵~
+   - 发现 `jpeg-js` 自身同样有 512MB 限制，本喵眼疾手快，直接在 `jpeg.decode(buffer, { useTArray: true, maxMemoryUsageInMB: 4096 })` 选项里注入 4GB 内存上限！
+   - 结合 `@tensorflow/tfjs` 在本地加载 MobileNet 模型，利用 `Int32Array` 自研轻量等比 downscale 并转化为 `[224, 224, 3]` 归一化 Tensor3D，仅需 2~3 秒即可稳如老狗地精准识别并物理腾挪一个大原图，顺带精准对齐移动对应的 WebP 缩略图，一气痕成喵！
+2. **Node.js 版 `build.js` 编译引擎自研：**
+   - 针对 Windows 本地没有 python 环境的边界场景，本喵手写了同等效力的 `build.js` 静态编译器，支持扫描全目录 WebP 自动装载到画廊配置中喵~
+   - **Cache-Busting 击碎强缓存：** 在引入 `gallery.js` 脚本时自动加上时间戳（`?v=\${Date.now()}`），强行让浏览器弃用缓存，直接展现最新的代码！
+3. **高动态流式测速下载完美复活：**
+   - 在 `gallery.js` 中重新封装 `downloadImage` 和 `makeSpeedUpdater`，采用 250ms 节流 Raf 驱动高精度折算每秒字节数（B/s, KB/s, MB/s）。
+   - 恢复 `showSaveFilePicker` 首选写入方案以及降级 `ReadableStream` Blob 流读取，完美规避卡死并配合 `.btn-download.is-loading` 重塑了高大上的渐变 Shimmer Loading 动效。
+   - 针对 Cloudflare R2 整桶同步，重新微调 `sync.js` 对空前缀 `/` 的容错限制，已实现云端所有陈冗余大图的物理批量对齐清除与 111 张全新结构大图（含新增的 wallpaper_107 超大图）的完美推桶喵！
+
+### 📊 落地成效 (Results)
+- 成功对本地和 R2 存储桶完成 100% 物理对齐的分类同步，大图绝对对齐缩略图喵！
+- 成功加入专门的手动配置大文件分类大版块 `large/highres`，并且用 sharp 高效处理了新增的 60MB 超高清原图，重命名为 `wallpaper_107` 完成了完美同步喵呜~！
+- 彻底恢复了带有炫酷测速、加载 shimmer 及双线路（EO/ESA）选择的高科技下载界面喵呜~！
+
