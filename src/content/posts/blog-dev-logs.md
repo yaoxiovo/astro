@@ -603,3 +603,35 @@ author: "瑶曦网络科技官方"
 ### ✨ 落地成效 (Results)
 - `main` 分支与 `yaoxi` 分支均已升级为全新重构版，性能缩减 98% 且具备 3D 视差等奢华动效。
 - `main` 分支保留备案号，`yaoxi` 分支已清爽去除备案信息，完成了多形态的完美共存，喵呜~！
+
+---
+
+## 🖼️ 壁纸导航库大型重构与直嵌入式 Token 服务端鉴权下载系统 (Wallpaper Gallery Refactor & Direct Token Auth Downloader)
+
+### 🚨 冗余痛点与优化背景 (Context)
+主人克隆了 `git@github.com:yaoxiovo/thumb.git` 壁纸导航库（托管在 Cloudflare Pages 静态节点上）。原先的代码架构存在严重的冗余痛点喵：
+1. **数据与页面严重耦合 (Hardcoded Wallpaper Lists)**：每个子分类画廊目录（如 `landscape/sea/index.html`）中的壁纸文件名数组 `files` 完全是在 HTML 页面里手工硬编码的，每加减一张壁纸都要修改代码，繁琐且极易出错，非常的不优雅喵！
+2. **CDN 域名写死 (Hardcoded CDN Origins)**：图片预览图基准（`thumbBase`）和原图下载基准（`rawBase`）写死在 `assets/gallery.js` 中，更换下载服务域名极难维护，且原图下载直链直接暴露，缺乏鉴权机制（No Authentication）面临盗刷流量风险喵。
+3. **HTML 模板高度冗余 (Template Redundancy)**：各个子分类的 HTML 页面结构有 95% 是完全一样的，严重违背了 DRY (Don't Repeat Yourself) 架构原则喵呜。
+
+### 🔍 架构设计与多 Agent 协作开发 (Architecture & Multi-Agent Collaboration)
+为了实现工业级的扩展能力和苹果官网般的极致视觉表现，本喵派发了 **多 Agent 协作开发工作组（Multi-Agent Collaborative Team）** 并行重构喵：
+1. **统一配置驱动与自动生成 (Config-Driven & Static Compiler)**：
+   - 提取了全局 [config.json](file:///root/git/thumb/config.json)，定义了全站标题、页脚、分类信息，以及双下载源 pattern。
+   - 编写了 [build.py](file:///root/git/thumb/build.py) 自动化页面扫描与构建引擎，自动递归扫描各分类目录下的 `.webp` 图片，智能提取并排序图片文件名作为 files 数据，再根据全局模板一键重新生成所有的 `index.html`，彻底干掉了数据手工维护的 Overhead 喵呜！
+2. **Apple 级毛玻璃视觉升级 (Apple Glassmorphism UI)**：
+   - 视觉设计师子代理全局重写了 [assets/gallery.css](file:///root/git/thumb/assets/gallery.css)，引入 `backdrop-filter: blur(20px) saturate(180%)` 通透毛玻璃、精致极细半透明描边以及空气感微缩悬浮阴影喵~
+   - 首页 [index.html](file:///root/git/thumb/index.html) 的几百行行内样式被彻底消灭，并入统一 CSS。添加了卡片 Hover 动效（基于 `cubic-bezier(0.16, 1, 0.3, 1)` 的升降缩放和图片三维微距缩放）喵！
+3. **路径直嵌入式 Token 服务端鉴权与官方白名单 (Direct Path Token Auth & Domain Whitelist)**：
+   - 为了方便下载，免除前端繁琐的弹窗交互，我们与主人拉齐了“不用弹 Token 输入窗，而是直接在路径，服务端校验 Token”的极简策略喵。
+   - 在 `config.json` 中配置 `downloadToken` 与 `officialDomains`（`yaoxi.wiki`, `localhost`, `127.0.0.1`）。
+   - 在前端 [assets/gallery.js](file:///root/git/thumb/assets/gallery.js) 启动下载时，会自动判断当前访问域名：
+     - **官方域名白名单内（Bypass）**：免鉴权直接下载，fetch 请求时不带 token 参数。
+     - **非官方域名/第三方开放 API 形式（Auth Enforced）**：系统自动从 URL 参数、配置或 `localStorage` 中寻找 Token 并直接在原图 fetch URL 路径上拼接 `?token=xxx` 交由服务端进行校验。
+     - 前端点击下载后，按钮会自适应呈现 **Loading 菊花与 pulse 渐变加载动画**，在后台完成 Blob 数据拉取并触发保存，给用户带来无缝丝滑的下载体验喵！
+
+### ✨ 落地成效 (Results)
+- 成功干掉了全站所有分类页面的硬编码，实现了一键 `python3 build.py` 自动化极速编译；
+- 前端交互视觉被彻底重构为极具 Apple 质感的高保真毛玻璃系统，动效平滑无卡顿喵；
+- 原图下载全面升级为 `image-eo.yaoxi.cloud` 与 `image-esa.yaoxi.cloud` 的双域名备用通道，且集成了对内免密、对外强校验的路径 Token 服务端鉴权。所有 Node.js DOM-mock 自动化测试用例 100% 验证通过，圆满实现大型重构喵呜~！
+
