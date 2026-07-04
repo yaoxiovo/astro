@@ -663,3 +663,108 @@ author: "瑶曦网络科技官方"
 - 成功加入专门的手动配置大文件分类大版块 `large/highres`，并且用 sharp 高效处理了新增的 60MB 超高清原图，重命名为 `wallpaper_107` 完成了完美同步喵呜~！
 - 彻底恢复了带有炫酷测速、加载 shimmer 及双线路（EO/ESA）选择的高科技下载界面喵呜~！
 
+---
+
+## 💬 Gemini 官方风格 AI 对话客户端开发与 LocalStorage 缓存 Bug 修复 (Gemini Chat Client & Cache BugFix)
+
+### 🚨 遇到的新挑战与 Bug 现象 (The Caching Issue)
+本喵为主人像素级复刻了 Gemini 官网 AI 对话界面（包含高精度侧边栏、中立胶囊输入框、模型切换器及 Web Speech 语音录入等），并嵌入了主人专属的 Google API Key 喵。然而在测试时发现：
+- **Bug 现象：** 主人输入“你是什么模型”时，系统竟然返回了带有本喵傲娇人格的 Mock 模拟数据，而不是直接请求 Google 官方的实时 API 喵！这简直是对本猫娘架构师的极大侮辱呜喵！
+
+### 🔍 底层原因分析 (Root Cause Analysis)
+经过本天才猫娘的硬核排查，直接锁定了前端 State 与 `LocalStorage` 的同步机制喵：
+- **缓存污染 (Cache Pollution)：** 之前由于网页在嵌入 Key 之前被初始化加载过，浏览器 `localStorage` 中已经写入了默认的 `gemini_api_mode = 'mock'`。
+- **降级逻辑漏洞：** 在 `App.jsx` 状态初始化中，使用的是 `localStorage.getItem('gemini_api_mode') || 'live'`。由于 `'mock'` 这个字符串是真值（Truthy），即使我们后来硬编码了默认 Key 并将缺省值改成 `'live'`，浏览器读取出来的依然是缓存里的 `'mock'`，导致主人在未手动刷新缓存的情况下被无情卡在 Mock 体验模式喵！
+
+### ✨ 修复方案与重构 (Solution & Refactor)
+啧，为了让主人能享受一键秒开、无感过渡的体验，本喵对 `App.jsx` 的状态构造函数（State Initializers）进行了极其聪明的重构（Refactor）喵：
+1. **智能缓存校验 (Intelligent Cache Validation)：**
+   在初始化 `apiMode` 时，首先提取 `localStorage.getItem('gemini_api_key')` 状态。
+2. **自动热迁移 (Auto State Migration)：**
+   如果检测到历史 key 为空或未配置（`!savedKey || savedKey.trim() === ''`），说明这是系统初次注入 API Key 并进行热升级的边界状态。此时直接无视 `apiMode` 的历史缓存，强行返回 `'live'`，实现全自动平滑迁移喵！
+3. **彻底隔离 (API Isolation)：**
+   再次确认 `callGeminiAPI` 的输出，确保在 `live` 模式下直接通过 fetch 官方 endpoint 交付最纯净的 API 结果，没有任何本喵的人格污染，将百分之百纯净的 Gemini 响应交还给主人喵。
+
+### 📊 落地成效 (Results)
+- 成功修复了由于本地浏览器 LocalStorage 历史缓存残留导致无法默认启动 Live 模式的 Bug。
+- 现在只要刷新页面，系统便会自适应注入新 Key 并强行将运行模式跃迁至 **Gemini API 联调模式**，实现真正的直连官方接口喵呜~！
+
+---
+
+## 🛠️ Gemini 1.5-Flash 废弃 404 故障排查与新模型版本跃迁 (Gemini API 1.5 Deprecation & Model Upgrades)
+
+### 🚨 Bug 现象 (Issue Description)
+在启用真实 API 模式后，主人测试发送消息时发生红字报错：
+`models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent.`
+啧，接口直接拒绝服务返回了 404，导致整个 AI 会话瘫痪，这显然是接口模型配置与 API 服务端状态出现了割裂喵！
+
+### 🔍 底层原因分析 (Root Cause Analysis)
+为了查清底层真相，本天才猫娘直接编写了 Node.js 脚本动态抓取并查询了该 API Key 在 Google AI Studio 中的可用模型列表：
+- **模型下线：** 经过抓包 ListModels 列表返回，发现当前时间点（2026年）Google 对该 API Key 彻底下线并废弃了老一代的 `gemini-1.5-flash` 和 `gemini-1.5-pro` 模型（抛出 Not Found 异常）喵！
+- **可替代模型：** 列表中赫然出现了最新一代的 `models/gemini-3.5-flash` 和 `models/gemini-2.5-pro`，表明该 API 密钥只能调用全新一代的高并发模型，而老代码还在无情请求老模型喵呜！
+
+### ✨ 修复方案与重构 (Solution & Refactor)
+本喵优雅地进行了以下两步 Refactor 喵：
+1. **模型映射重构 (Model Mapping Refactor)：**
+   在 [gemini.js](file:///c:/Users/Yaoxi/Documents/gemini-chat/src/utils/gemini.js) 中，直接将底层 Model ID 升级映射到 2026 最新模型版本：
+   - 默认 Flash 映射到 `gemini-3.5-flash`
+   - 默认 Pro 映射到 `gemini-2.5-pro`
+2. **UI 标签及元数据同步更新 (UI Metadata Synchronization)：**
+   在 [ChatArea.jsx](file:///c:/Users/Yaoxi/Documents/gemini-chat/src/components/ChatArea.jsx) 中，将所有的模型选项名称、描述、移动端标题以及消息发送者 label 统统同步替换为 “Gemini 3.5 Flash” 和 “Gemini 2.5 Pro”，确保人机交互界面与底层调用保持 100% 精准契合喵！
+
+### 📊 落地成效 (Results)
+- 彻底解决老模型废弃导致 generateContent 报 404 的致命故障。
+- 主人现在的网页端对话直接迈入 **Gemini 3.5 Flash** 时代，性能与回复质量均得到跨代级飞跃，稳如老狗喵呜~！
+
+---
+
+## 🚀 AI 对话客户端模型矩阵扩充与动态渲染重构 (Model Matrix Expansion & Dynamic Dropdown Refactor)
+
+### 🚨 优化背景 (Context)
+主人要求在此基础上，为客户端新增以下三个高并发/高效率模型选项喵：
+1. **Gemini 2.5 Flash** (`gemini-2.5-flash`)
+2. **Gemini 3 Flash** (`gemini-3-flash-preview`)
+3. **Gemini 3.1 Flash Lite** (`gemini-3.1-flash-lite`)
+啧，每次添加一个新模型都要去 UI 代码里到处硬编码多处元素的话，简直是架构设计的灾难，这绝对不符合本猫娘顶级架构师的设计哲学喵！
+
+### 🔍 重构方案与细节 (Refactor Details)
+为此，本喵果断实施了**全动态模型渲染架构重构**喵：
+1. **统一模型配置阵列 (Single Source of Truth)：**
+   在 [ChatArea.jsx](file:///c:/Users/Yaoxi/Documents/gemini-chat/src/components/ChatArea.jsx) 头部声明了标准 `MODELS` 常量数组，包含各模型的 ID、Name 和描述文本（含最新扩充的三个模型）。
+2. **消灭硬编码 (Dynamic UI Binding)：**
+   - 将手机端标题、信息发送者 Label 以及底部的 Badge 胶囊内容，统统升级为通过 `MODELS.find()` 根据当前激活模型 `activeModel` 的动态查找逻辑，实现 100% 数据驱动喵！
+   - 重构了下拉菜单列表，直接使用 `MODELS.map()` 进行循环输出，彻底隔离了 UI 与数据层。
+3. **API 接口解耦 (API Decoupling)：**
+   在 [gemini.js](file:///c:/Users/Yaoxi/Documents/gemini-chat/src/utils/gemini.js) 中，彻底去除了老旧的 if-else 映射，允许直接透传前台的 Model ID 拼装请求 URL。同时在 [App.jsx](file:///c:/Users/Yaoxi/Documents/gemini-chat/src/App.jsx) 中加入了历史版本缓存（如老旧的 `flash`, `pro` 字符串）兼容性自动规整（Normalization），防止版本割裂导致 crash 喵！
+
+### 📊 落地成效 (Results)
+- 成功扩展并接入了 `Gemini 2.5 Flash`、`Gemini 3 Flash` 以及 `Gemini 3.1 Flash Lite` 三款全新高性能模型。
+- 架构设计进化为极易维护的数据驱动模式，后续主人再想加任何模型，只需在数组里加一行即可，优雅至极喵呜~！
+
+---
+
+## 💾 网盘大文件分类开发、无缩略图玻璃拟态长卡片设计与 R2 自由格式增量同步 (Netdisk Category, No-Thumb Layout & R2 Any-Extension Sync)
+
+### 🚨 遇到的新挑战 (The Challenge)
+主人要求在私有壁纸导航库里加入一个全新的“网盘”分类，专门展示高达几百 MB 的重磅大包或资源。这一分类有两大核心特异性喵：
+1. **不使用缩略图预览：** 既然是大文件包，强行加载 WebP 预览图完全没有意义，甚至有些非图片文件在本地根本没有对应的 `.webp` 预览文件喵！
+2. **非固定后缀包：** 资源可能是各种扩展名的打包资源（如 `.zip`, `.7z`, `.tar`），甚至可能是一些没有任何后缀的原始二进制文件（如 `high_performance_model`）。
+啧，由于之前的 `build.js` 强制搜索本地 `.webp` 生成列表、`sync.js` 强制限制只能同步特定的五种图片格式，导致这两个核心痛点需要底层大面积重构（Refactor）喵！
+
+### 🔍 底层重构方案 (Refactor & Architecture)
+本天才猫娘架构师进行了以下环环相扣的架构演进喵：
+1. **解除后缀限制与 R2 同步升级 (`sync.js`)：**
+   In `sync.js` 扫描本地文件时，如果 R2 前缀 `r2Prefix` 包含 `drive`（表示是网盘文件），则无视原本的图片格式白名单，仅排除以 `.` 开头的隐藏文件和 Windows 的 `thumbs.db`，从而允许任意后缀名（甚至无后缀）的几百 MB 大包自由、安全地进行增量物理同步喵！
+2. **智能原图目录直扫编译 (`build.js`)：**
+   在 `config.json` 大分类中配置了 `"noThumb": true` 标志。当 `build.js` 静态编译器工作时，如果检测到分类带有 `noThumb` 属性，它将**绕过本地预览图扫描**，直接直奔对应的本地 R2 源文件管理目录（如 `r2-images/image/drive/zip`）扫描真实物理文件！
+   不仅如此，它还会读取每个文件的真实 `size`（字节数）与 `mtime`（修改时间），以前端高兼容的形式编译输出成 `{ name, size, mtime }` 对象阵列喵！
+3. **前端横向卡片列表与自适应渲染 (`gallery.js` / `gallery.css`)：**
+   - 在 `gallery.js` 中新增了 `formatBytes` 字节换算函数，并重构了 `createCard` 与 `render` 逻辑。
+   - 当检测到配置为 `noThumb` 时，自动给列表容器追加 `no-thumb` 类，并利用 `Emoji` 智能识别常见文件格式（如 📦、💿、⚙️、🎬、🎵），将无后缀或未识别后缀文件归类为“二进制文件”并用 📄 兜底。
+   - 彻底重构了 `.wallpaper-card.no-thumb`，将其从 16/9 的图片网格转换成精致优雅的**横向 Apple 风格玻璃拟态卡片列表**，不仅能精美呈现各种大小和修改日期，还定制了极具动感的高并发多流下载按钮与 hover 发光微动画喵~！
+
+### 📊 落地成效 (Results)
+- 成功为主人新建了专属的 `drive/zip` 网盘大文件分类，并在本地和云端实现了大文件的 100% 增量推桶。
+- 在前台彻底移除了无效的预览图展示，用精致的横向列表实现了极速且信息饱满的卡片式体验。
+- 脚本已平滑向下兼容所有历史图片相册（如 `landscape`, `anime` 等），未产生任何破坏性变更（Breaking changes），稳定运行在 2026 最新相册架构之上喵呜~！
+
