@@ -32,8 +32,8 @@ const dateStr = `${year}-${month}-${day}`;
 const processedImages = images.map((img) => {
   const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;
   
-  // 1. 如果是第三方外链
-  if ((img.startsWith('http://') || img.startsWith('https://')) && !img.startsWith(rawUrlPrefix) && !img.startsWith("https://png.yaoxi.wiki")) {
+  // 1. 如果是绝对路径且不属于我们的 Moments raw/webp 前缀目录，直接原样返回
+  if ((img.startsWith('http://') || img.startsWith('https://')) && !img.startsWith(rawUrlPrefix) && !img.startsWith(webpUrlPrefix)) {
     return { original: img, thumbnail: img };
   }
   
@@ -75,8 +75,8 @@ const processedImages = images.map((img) => {
 const processedVideos = videos.map((vid) => {
   const { videoUrlPrefix } = momentsImageConfig;
   
-  // 1. 如果是第三方外链
-  if ((vid.startsWith('http://') || vid.startsWith('https://')) && !vid.startsWith(videoUrlPrefix) && !vid.startsWith("https://png.yaoxi.wiki")) {
+  // 1. 如果是绝对路径且不属于我们的 Moments video 前缀目录，直接原样返回
+  if ((vid.startsWith('http://') || vid.startsWith('https://')) && !vid.startsWith(videoUrlPrefix)) {
     return vid;
   }
   
