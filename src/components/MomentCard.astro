@@ -1,3 +1,4 @@
+---
 import { profileConfig, momentsImageConfig } from '../config';
 import { Icon } from 'astro-icon/components';
 import authorsConfig from '../content/moments/authors.json';
@@ -28,7 +29,7 @@ const day = String(dateObj.getDate()).padStart(2, '0');
 const dateStr = `${year}-${month}-${day}`;
 
 // 智能图片 URL 转换器（自动拼接发表日期目录与域名）
-const processedImages = images.map((img: string) => {
+const processedImages = images.map((img) => {
   const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;
   
   // 1. 如果是第三方外链
@@ -71,7 +72,7 @@ const processedImages = images.map((img: string) => {
 });
 
 // 智能视频 URL 转换器（自动拼接发表日期目录与域名）
-const processedVideos = videos.map((vid: string) => {
+const processedVideos = videos.map((vid) => {
   const { videoUrlPrefix } = momentsImageConfig;
   
   // 1. 如果是第三方外链
