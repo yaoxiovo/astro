@@ -136,5 +136,9 @@ function getFriendlyTime(date: Date) {
         );
       })}
     </div>
+    <!-- 强行在首页渲染隐藏播放器，防止 Astro 编译时将播放器 JS 脚本 Tree-shaking 过滤，确保全局 Swup 事件在首屏即注册成功喵 -->
+    <div class="hidden">
+      <MusicCard src="" title="" artist="" />
+    </div>
   </div>
 </MainGridLayout>
