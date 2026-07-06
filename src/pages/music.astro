@@ -72,178 +72,69 @@ function getFriendlyTime(date: Date) {
     <!-- 占位高度补全 -->
     <div class="h-4"></div>
 
-    <!-- 朋友圈 Timeline 流 -->
-    <div class="w-full flex flex-col gap-6 relative">
-      {musicMoments.map((moment) => (
-        <div class="music-moment-card card-base p-6 backdrop-blur-xl bg-white/80 dark:bg-white/85 border border-white/80 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 relative overflow-hidden flex flex-col gap-4">
-          <!-- 晶莹渐变反光 -->
-          <div class="absolute inset-0 bg-gradient-to-tr from-white/10 via-white/30 to-white/50 pointer-events-none"></div>
+    <!-- 音乐馆歌曲列表 (两列网格布局) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+      {musicMoments.map((moment) => {
+        // 提取说说第一行作为摘要
+        const firstLine = moment.body.trim().split('\n')[0] || "暂无随笔内容...";
+        const displaySummary = firstLine.length > 35 ? firstLine.substring(0, 35) + "..." : firstLine;
+        
+        return (
+          <a 
+            href={`/music/${moment.slug}/`}
+            class="group relative flex items-center gap-5 p-4 rounded-2xl backdrop-blur-xl bg-white/70 dark:bg-zinc-900/60 border border-white/80 dark:border-white/5 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-[var(--primary)] dark:hover:border-[var(--primary)] transition-all duration-300 overflow-hidden"
+          >
+            <!-- 晶莹发光渐变背景 -->
+            <div class="absolute inset-0 bg-gradient-to-tr from-white/10 via-white/20 to-white/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
 
-          <!-- 头部用户信息 -->
-          <div class="flex items-center gap-3 relative z-10">
-            <div class="relative flex-shrink-0">
+            <!-- 歌曲封面缩略图 -->
+            <div class="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 shadow-md ring-2 ring-white/50 dark:ring-white/10 group-hover:scale-105 transition-transform duration-500">
               <img 
-                src={moment.data.avatar || profileConfig.avatar} 
-                alt={moment.data.author} 
-                class="w-10 h-10 rounded-xl object-cover ring-2 ring-white"
+                src={moment.data.cover || "/favicon.svg"} 
+                alt={moment.data.title} 
+                class="w-full h-full object-cover"
               />
-              {moment.data.verifyType && moment.data.verifyType !== 'none' && (
-                <div class={`absolute -bottom-1 -right-1 rounded-full p-0.5 border border-white shadow-sm ${moment.data.verifyType === 'blue' ? 'bg-blue-500' : 'bg-yellow-500'}`}>
-                  <svg viewBox="0 0 24 24" class="w-2.5 h-2.5 text-white" aria-label="Verified" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                </div>
-              )}
-            </div>
-            
-            <div class="flex flex-col">
-              <div class="flex items-center gap-1.5">
-                <span class="font-bold text-sm text-[var(--primary)]">{moment.data.author}</span>
-                {moment.data.verifySubject && (
-                  <span class="hidden sm:inline text-[9px] px-1.5 py-0.5 rounded border border-yellow-500/30 bg-yellow-500/10 text-yellow-600 dark:text-yellow-600 font-medium">
-                    {moment.data.verifySubject}
-                  </span>
-                )}
+              <!-- 悬浮播放图标遮罩 -->
+              <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Icon name="material-symbols:play-arrow-rounded" class="text-white text-3xl" />
               </div>
-              <span class="text-[10px] text-neutral-500 dark:text-neutral-500 font-mono mt-0.5">
-                {getFriendlyTime(moment.data.published)}
-              </span>
             </div>
-          </div>
 
-          <!-- 说说文字内容 (强制亮白色背景下使用深灰色文字) -->
-          <div class="text-sm text-neutral-800 dark:text-neutral-800 leading-relaxed px-1 relative z-10 whitespace-pre-line font-normal">
-            {moment.body}
-          </div>
+            <!-- 歌曲基本信息 -->
+            <div class="flex flex-col justify-between flex-grow h-24 py-1">
+              <div>
+                <h3 class="font-bold text-base text-neutral-800 dark:text-neutral-200 tracking-wide line-clamp-1 group-hover:text-[var(--primary)] transition-colors duration-300">
+                  {moment.data.title}
+                </h3>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
+                  {moment.data.artist}
+                </p>
+              </div>
 
-          <!-- 嵌入拟玻璃音乐播放卡片 -->
-          <div class="w-full relative z-10">
-            <MusicCard 
-              src={moment.data.src} 
-              title={moment.data.title} 
-              artist={moment.data.artist} 
-              cover={moment.data.cover}
-              lrc={moment.data.lrc}
-            />
-          </div>
-
-          <!-- 底部发布来源与交互按键 (同样强制深色文字) -->
-          <div class="flex items-center justify-between border-t border-neutral-200/80 pt-3.5 mt-1 text-xs text-neutral-500 dark:text-neutral-500 relative z-10">
-            <span class="font-mono">来自 {moment.data.source}</span>
-
-            <div class="flex items-center gap-4">
-              <!-- 点赞按钮 -->
-              <button 
-                class="music-moment-like-btn flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-neutral-100 active:scale-90 group text-neutral-500 dark:text-neutral-500"
-                data-id={moment.id}
-              >
-                <Icon name="fa6-regular:heart" class="like-icon w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110" />
-                <span class="like-count font-semibold font-mono text-neutral-600 dark:text-neutral-600">{moment.data.likes}</span>
-              </button>
-
-              <!-- 分享按钮 -->
-              <button 
-                class="music-moment-share-btn flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-neutral-100 active:scale-90 text-neutral-500 dark:text-neutral-500 hover:text-[var(--primary)]"
-                data-id={moment.id}
-                data-content={`【瑶曦的听歌日志】今天推荐一首《${moment.data.title}》- ${moment.data.artist}。来自网页端听歌链接：${moment.data.src}`}
-              >
-                <Icon name="fa6-solid:share-nodes" class="w-3.5 h-3.5" />
-                <span>分享</span>
-              </button>
-
-              <!-- 进入详情/听歌随笔 -->
-              <a 
-                href={`/music/${moment.slug}/`}
-                class="flex items-center gap-1 py-1 px-2.5 rounded-lg text-neutral-500 dark:text-neutral-500 hover:text-[var(--primary)] backdrop-blur-md bg-white/30 dark:bg-black/10 border border-black/5 dark:border-white/10 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 font-medium"
-              >
-                <Icon name="material-symbols:menu-book-outline-rounded" class="w-3.5 h-3.5" />
-                <span>听歌随笔</span>
-              </a>
+              <!-- 底部随笔摘要与发布信息 -->
+              <div class="flex flex-col gap-1">
+                <!-- 随笔一句话摘要 -->
+                <p class="text-[11px] text-neutral-400 dark:text-neutral-500 line-clamp-1 italic font-light">
+                  "{displaySummary}"
+                </p>
+                
+                <!-- 底部作者/时间/点赞 -->
+                <div class="flex items-center justify-between text-[10px] text-neutral-400 dark:text-neutral-500 mt-1">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-semibold text-[var(--primary)]">@{moment.data.author}</span>
+                    <span>•</span>
+                    <span>{getFriendlyTime(moment.data.published)}</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <Icon name="fa6-regular:heart" class="w-2.5 h-2.5" />
+                    <span>{moment.data.likes}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      ))}
+          </a>
+        );
+      })}
     </div>
   </div>
 </MainGridLayout>
-
-<script>
-  function initMusicMoments() {
-    const likeBtns = document.querySelectorAll(".music-moment-like-btn");
-    
-    likeBtns.forEach((btn: any) => {
-      const id = btn.dataset.id;
-      const countSpan = btn.querySelector(".like-count");
-      const icon = btn.querySelector(".like-icon");
-      if (!id || !countSpan || !icon) return;
-
-      const storageKey = `music-moment-liked-${id}`;
-      let isLiked = localStorage.getItem(storageKey) === "true";
-      let baseLikes = parseInt(countSpan.textContent || "0", 10);
-
-      if (isLiked) {
-        icon.classList.remove("text-neutral-400", "dark:text-neutral-500");
-        icon.classList.add("text-red-500", "fill-red-500");
-        icon.setAttribute("style", "color: rgb(239, 68, 68);");
-      }
-
-      btn.addEventListener("click", () => {
-        isLiked = !isLiked;
-        localStorage.setItem(storageKey, isLiked ? "true" : "false");
-        
-        let newCount = isLiked ? baseLikes + 1 : baseLikes;
-        countSpan.textContent = newCount.toString();
-
-        if (isLiked) {
-          icon.classList.remove("text-neutral-400", "dark:text-neutral-500");
-          icon.classList.add("text-red-500", "fill-red-500");
-          icon.setAttribute("style", "color: rgb(239, 68, 68); transform: scale(1.2); transition: transform 0.2s;");
-          showToast("点赞成功了喵~ ❤️");
-        } else {
-          icon.classList.remove("text-red-500", "fill-red-500");
-          icon.classList.add("text-neutral-400", "dark:text-neutral-500");
-          icon.setAttribute("style", "color: ''; transform: scale(1.0); transition: transform 0.2s;");
-        }
-      });
-    });
-
-    const shareBtns = document.querySelectorAll(".music-moment-share-btn");
-    shareBtns.forEach((btn: any) => {
-      const content = btn.dataset.content;
-      btn.addEventListener("click", () => {
-        if (!content) return;
-        navigator.clipboard.writeText(content)
-          .then(() => {
-            showToast("推荐语与音频直链已复制到剪贴板喵~ 📋");
-          })
-          .catch((err) => {
-            console.error("Copy failed:", err);
-            showToast("复制失败了喵，请手动复制吧...");
-          });
-      });
-    });
-
-    function showToast(message: string) {
-      let oldToast = document.querySelector(".glass-toast");
-      if (oldToast) oldToast.remove();
-
-      const toast = document.createElement("div");
-      toast.className = "glass-toast fixed bottom-12 left-1/2 -translate-x-1/2 px-5 py-3 rounded-2xl backdrop-blur-xl bg-white/90 border border-white/60 text-neutral-800 text-xs md:text-sm font-semibold shadow-lg z-[9999] transition-all duration-300 opacity-0 translate-y-3 pointer-events-none";
-      toast.textContent = message;
-      document.body.appendChild(toast);
-
-      setTimeout(() => {
-        toast.classList.remove("opacity-0", "translate-y-3");
-        toast.classList.add("opacity-100", "translate-y-0");
-      }, 50);
-
-      setTimeout(() => {
-        toast.classList.remove("opacity-100", "translate-y-0");
-        toast.classList.add("opacity-0", "translate-y-3");
-        setTimeout(() => toast.remove(), 300);
-      }, 2200);
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", initMusicMoments);
-  document.addEventListener("swup:contentReplaced", initMusicMoments);
-  document.addEventListener("swup:page:view", initMusicMoments);
-</script>

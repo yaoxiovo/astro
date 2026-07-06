@@ -13,7 +13,7 @@ const { src, title, artist, cover = "/favicon.svg", lrc } = Astro.props;
 ---
 
 <div 
-  class="music-card-container card-base w-full max-w-2xl mx-auto p-6 backdrop-blur-xl bg-white/85 dark:bg-white/90 border border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 flex flex-col md:flex-row gap-6 relative overflow-hidden group/card my-6"
+  class="music-card-container card-base w-full max-w-2xl mx-auto p-6 backdrop-blur-xl bg-white/85 dark:bg-white/90 border border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 flex flex-col md:flex-row gap-6 relative overflow-hidden group/card my-6 md:h-[380px]"
   data-src={src}
   data-lrc={lrc}
 >

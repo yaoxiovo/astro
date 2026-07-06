@@ -36,6 +36,7 @@ const momentsCollection = defineCollection({
 		author: z.string().optional(),
 		avatar: z.string().optional(),
 		images: z.array(z.string()).optional().default([]),
+		videos: z.array(z.string()).optional().default([]),
 		verifyType: z.enum(['blue', 'yellow', 'none']).optional().default('none'),
 		verifySubject: z.string().optional().default(''),
 		source: z.string().optional(),

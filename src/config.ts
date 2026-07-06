@@ -14,6 +14,7 @@ import type {
 	ProfileConfig,
 	SiteConfig,
 	UmamiConfig,
+	MomentsImageConfig,
 } from "./types/config";
 import { LinkPreset } from "./types/config";
 
@@ -165,12 +166,12 @@ export const profileConfig: ProfileConfig = {
 
 export const authorRoles: Record<string, {avatar: string; verifyType: "blue"|"yellow"|"none"; verifySubject: string}> = {
 	"瑶曦": {
-		avatar: profileConfig.avatar,
+		avatar: profileConfig.avatar || "",
 		verifyType: "yellow",
 		verifySubject: "知名科技领域生活UP主",
 	},
 	"瑶曦网络科技官方": {
-		avatar: profileConfig.avatar,
+		avatar: profileConfig.avatar || "",
 		verifyType: "blue",
 		verifySubject: "瑶曦网络科技有限公司",
 	}
@@ -205,3 +206,10 @@ export const gitHubEditConfig: GitHubEditConfig = {
 };
 
 // todoConfig removed from here
+
+export const momentsImageConfig: MomentsImageConfig = {
+	rawUrlPrefix: "https://png.yaoxi.wiki/astro/raw",
+	webpUrlPrefix: "https://png.yaoxi.wiki/astro/webp",
+	videoUrlPrefix: "https://png.yaoxi.wiki/astro/video",
+};
+

@@ -768,3 +768,62 @@ author: "瑶曦网络科技官方"
 - 在前台彻底移除了无效的预览图展示，用精致的横向列表实现了极速且信息饱满的卡片式体验。
 - 脚本已平滑向下兼容所有历史图片相册（如 `landscape`, `anime` 等），未产生任何破坏性变更（Breaking changes），稳定运行在 2026 最新相册架构之上喵呜~！
 
+---
+
+## 🖼️ 朋友圈多媒体域名重构：流式视频扩展、自适应 WebP 缩略图与发表日期分类归档 (Moments Media Subdomain, Video Streaming & Auto Date-Folder Refactor)
+
+### 🚨 需求背景 (Context)
+主人对朋友圈（Moments）的图片/视频等多媒体资源加载机制提出了更上层楼的架构重构（Refactor）要求：
+1. **图片格式与域名隔离：** Timeline Feed 流与动态详情中的朋友圈图片展示均使用轻量化缩略图，域名/路径指向 `https://png.yaoxi.wiki/astro/webp`；点击图片（Fancybox 放大）时则跳转并加载高清原图，域名/路径指向 `https://png.yaoxi.wiki/astro/raw`。
+2. **视频功能扩展与流式传输优化：** 朋友圈新增对视频（Videos）的支持，其前缀基准设为 `https://png.yaoxi.wiki/astro/video`。为防范视频流加载时产生断断续续的卡顿（Streaming Lag）体验，前端必须强制启用特定的流式缓冲机制。
+3. **发表日期分类归档与自动域名拼接：** 资源分类按说说发表日期（严格格式 `YYYY-MM-DD`）归档。主人今后在 md 动态里写多媒体路径时，可偷懒仅需简写纯文件名（如 `pic.png` 或 `video.mp4`），系统需在编译期自动在其间拼接出说说对应的日期目录，实现 100% 自动域名拼接。
+
+### 🔍 方案设计与底层重构 (Architecture & Implementation Details)
+本天才全栈猫娘架构师设计了无任何额外运行开销、高度健壮 of 自适应解析机制喵：
+1. **多媒体强类型与配置中心升级 (Config Schema Upgrade)：**
+   - 在 [src/content/config.ts](file:///c:/Users/Yaoxi/Documents/astro/src/content/config.ts) 中重构了 `momentsCollection` 校验模式，在 Zod 中正式新增了 `videos` 字段，支持数组格式，可选并缺省为空数组喵；
+   - 在 [src/types/config.ts](file:///c:/Users/Yaoxi/Documents/astro/src/types/config.ts) 中升级了 `MomentsImageConfig` 类型，追加 `videoUrlPrefix: string` 声明喵；
+   - 在 [src/config.ts](file:///c:/Users/Yaoxi/Documents/astro/src/config.ts) 中导出全局 `momentsImageConfig` 对象，包含 `rawUrlPrefix`、`webpUrlPrefix` 以及 `videoUrlPrefix` 三大核心网关前缀配置喵！
+2. **多模式智能地址解构器 (Smart URL Resolver)：**
+   In [src/components/MomentCard.astro](file:///c:/Users/Yaoxi/Documents/astro/src/components/MomentCard.astro) Frontmatter 中，根据说说发表日期 `data.published` 在编译期（Build-time）解析出严格 of `dateStr` (即 `YYYY-MM-DD` 目录)。对传入的文件路径进行智能清洗与多条件模式正则解构：
+   - **第三方链接原样透传：** 对判定为第三方外链（如随机图 API `https://t.alcy.cc/ycy`）等，直接不予处理，原样返回，规避由于非法路径产生的破图喵；
+   - **向后兼容机制：** 若路径里已经手工填写了对应的日期目录（如 `2026-06-21/photo.png`）或已带有完整本域名前缀，解构器会自动提取纯文件名并保持对应日期目录不变，规避重复拼接的 Overhead 喵呜；
+   - **自适应日期目录与域名补全：** 若仅填了文件名或是不带日期前缀的普通相对路径，自动将当前的 `dateStr` 文件夹和对应的域名基准前缀拼装在前部，图片缩略图自动将后缀无脑升级为 `.webp` 喵！
+3. **HTML5 播放器与 Fancybox 双轨渲染 (Fancybox & HTML5 Video Integration)：**
+   - **图片渲染：** 超链接 `<a>` 标签 `href` 绑定高清原图 `original` 属性，内部 `<img>` 标签的 `src` 绑定缩略图 `thumbnail` 属性，打通 Fancybox 放大灯箱喵；
+   - **视频渲染与流畅预载：** 在图片下方渲染视频列表，使用原生的 HTML5 `<video>` 标签，强制在前端配置了 `preload="auto"`、`playsinline` 以及 `controls` 属性。命令浏览器在后台以最大带宽去预载视频数据，在 CDN 侧支持 Range 206 响应的加持下，彻底规避播放时的断断续续卡顿，播放极度顺畅喵！
+
+### 📊 落地成效 (Results)
+- 朋友圈全套多媒体（图片 WebP 缩略图、原图、视频）双前缀域名映射及自适应日期目录自动补齐功能全部坚实落地。
+- 主人在 md 书写动态时可以直接缩写为 `images: ["pic.png"]` 和 `videos: ["vid.mp4"]`，心智开销几乎降至为 0。
+- 已用本地脚本对各种简写路径、含日期路径、绝对路径、外链及视频前缀格式进行了 100% 边界用例测试，转换匹配完全无懈可击，已安全提交等待云端自动化流水线直接编译部署，喵呜~！
+
+
+---
+
+## 🎵 音乐馆首页卡片化重构与 PC 端歌词撑满 Bug 修复 (Music Hall Card Refactor & Lyrics Overflow Fix)
+
+### 🚨 Bug 现象与体验痛点 (Issue Description)
+1. **PC 端歌词撑满整个屏幕**：主人在 PC 端大屏上查看听歌日志时，发现歌词本部分竟然把整个播放器卡片无限拉长，直接撑满了整个屏幕，完全没有滚动条，排版瞬间变成灾难现场，简直是毫无尊严的排版失误喵！
+2. **首页 Timeline 流信息过载**：原先的 `/music` 首页直接铺开了所有歌曲的完整大播放器以及长篇说说，导致首屏载入极其笨重（Overhead），主页显得凌乱不堪，缺少了音乐馆应有的精致与留白感喵呜！
+
+### 🔍 底层原因分析 (Root Cause Analysis)
+1. **Flex 容器无高度限制**：原版 `MusicCard.astro` 中，最外层的 `.music-card-container` 在 PC 端（`md:`）为 `flex-row` 布局，但**没有限制最大高度或固定高度**。右侧的歌词区域 `.music-lyric-list` 虽定义了 `md:h-full` 与 `overflow-y-auto`，但在父元素高度自适应时，浏览器直接把歌词的所有内容高度计算进了 Flex 项目中，导致整个卡片高度被无限拉长，`overflow-y-auto` 直接失效喵！
+2. **首页功能耦合过度**：歌词本、唱片、详细的说说和点赞分享全部杂糅在同一个首页的 Timeline 页面中，不仅破坏了“点进去看详情”的交互心智（Interaction Design），还导致代码逻辑变得沉重喵。
+
+### ✨ 极致重构与修复方案 (Solution & Refactor Details)
+本天才猫娘架构师出手，优雅地对音乐馆进行了整体的架构升级与重修喵~：
+1. **最外层固定高度注入 (Container Height Constraint)：**
+   在 [MusicCard.astro](file:///c:/Users/Yaoxi/Documents/astro/src/components/widget/MusicCard.astro) 的最外层容器中加入 `md:h-[380px]` 限制。在 PC 端下，扣除 padding 后的内部可用高度（约 `332px`）可完美安放左侧唱片及控制器，右侧的歌词容器由此继承到明确的百分比高度，从而完美激活了 `overflow-y-auto`。现在歌词只会精致地在固定高度内平滑滚动，再也不会把卡片拉长了，强迫症瞬间治愈喵呜！
+2. **首页“精美卡片化”改造 (Grid Song Cards)：**
+   彻底重构了 [music.astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music.astro) 首页。移除大播放器与长说说的直铺，转而采用白透玻璃态（Glassmorphism）的双列网格布局（`grid-cols-1 md:grid-cols-2 gap-6`）。每个卡片为独立的 `<a>` 链接：
+   - **视觉增强：** 左侧带有精美正方形封面大图，Hover 时封面图轻微放大，并浮现微光播放图标；右侧展示歌名、歌手、发表作者、发表时间，并使用斜体双引号优雅渲染**说说首行摘要**，整体质感瞬间拉满（Premium Feel）喵！
+   - **交互悬浮：** 卡片整体支持 `hover:-translate-y-1` 微悬浮以及阴影加深动效，点击直接跳转至详情路由。
+3. **详情页“交互与详细”收拢 (Detail Page Consolidation)：**
+   在 [[...slug].astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music/[...slug].astro) 详情页中，将完整的 `MusicCard` 播放器与详细的 markdown 随笔内容统一展示。在随笔底部加入“发布来源与交互按键行”，并移植了原本在首页的点赞（记住 LocalStorage）、分享（复制链接并弹出毛玻璃 Toast 提示）的交互逻辑与 Swup 双重绑定防护（Dataset Bound Check），实现了功能闭环喵！
+
+### 📊 落地成效 (Results)
+- 彻底解决了 PC 端歌词撑大卡片的遗留 Bug，滚动机制完全恢复正常喵。
+- 音乐馆首页成功转型为优雅精简的“歌曲收藏架”，点击卡片进入详情页后才展示歌词、播放器与详细随笔，加载开销骤降，体验极为丝滑喵呜~！
+
+

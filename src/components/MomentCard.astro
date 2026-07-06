@@ -1,5 +1,4 @@
----
-import { profileConfig } from '../config';
+import { profileConfig, momentsImageConfig } from '../config';
 import { Icon } from 'astro-icon/components';
 import authorsConfig from '../content/moments/authors.json';
 
@@ -19,9 +18,94 @@ const avatar = data.avatar || roleDefaults.avatar || profileConfig.avatar;
 const verifyType = (data.verifyType && data.verifyType !== 'none') ? data.verifyType : (roleDefaults.verifyType || 'none');
 const verifySubject = data.verifySubject || roleDefaults.verifySubject || '';
 const images = data.images || [];
+const videos = data.videos || [];
+
+// 格式化发表日期为 YYYY-MM-DD
+const dateObj = new Date(data.published);
+const year = dateObj.getFullYear();
+const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+const day = String(dateObj.getDate()).padStart(2, '0');
+const dateStr = `${year}-${month}-${day}`;
+
+// 智能图片 URL 转换器（自动拼接发表日期目录与域名）
+const processedImages = images.map((img: string) => {
+  const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;
+  
+  // 1. 如果是第三方外链
+  if ((img.startsWith('http://') || img.startsWith('https://')) && !img.startsWith(rawUrlPrefix) && !img.startsWith("https://png.yaoxi.wiki")) {
+    return { original: img, thumbnail: img };
+  }
+  
+  let cleanPath = img;
+  if (img.startsWith(rawUrlPrefix)) {
+    cleanPath = img.substring(rawUrlPrefix.length);
+  } else if (img.startsWith(webpUrlPrefix)) {
+    cleanPath = img.substring(webpUrlPrefix.length);
+  } else if (img.startsWith('/astro/raw/')) {
+    cleanPath = img.substring('/astro/raw/'.length);
+  } else if (img.startsWith('/astro/webp/')) {
+    cleanPath = img.substring('/astro/webp/'.length);
+  }
+  
+  if (cleanPath.startsWith('/')) {
+    cleanPath = cleanPath.substring(1);
+  }
+  
+  // 匹配是否已指定日期目录
+  const dateFolderRegex = /^(\d{4}-\d{2}-\d{2})\/(.+)$/;
+  const match = cleanPath.match(dateFolderRegex);
+  
+  let folder = dateStr;
+  let filename = cleanPath;
+  
+  if (match) {
+    folder = match[1];
+    filename = match[2];
+  }
+  
+  const original = `${rawUrlPrefix}/${folder}/${filename}`;
+  const webpFilename = filename.replace(/\.[^.]+$/, '.webp');
+  const thumbnail = `${webpUrlPrefix}/${folder}/${webpFilename}`;
+  
+  return { original, thumbnail };
+});
+
+// 智能视频 URL 转换器（自动拼接发表日期目录与域名）
+const processedVideos = videos.map((vid: string) => {
+  const { videoUrlPrefix } = momentsImageConfig;
+  
+  // 1. 如果是第三方外链
+  if ((vid.startsWith('http://') || vid.startsWith('https://')) && !vid.startsWith(videoUrlPrefix) && !vid.startsWith("https://png.yaoxi.wiki")) {
+    return vid;
+  }
+  
+  let cleanPath = vid;
+  if (vid.startsWith(videoUrlPrefix)) {
+    cleanPath = vid.substring(videoUrlPrefix.length);
+  } else if (vid.startsWith('/astro/video/')) {
+    cleanPath = vid.substring('/astro/video/'.length);
+  }
+  
+  if (cleanPath.startsWith('/')) {
+    cleanPath = cleanPath.substring(1);
+  }
+  
+  const dateFolderRegex = /^(\d{4}-\d{2}-\d{2})\/(.+)$/;
+  const match = cleanPath.match(dateFolderRegex);
+  
+  let folder = dateStr;
+  let filename = cleanPath;
+  
+  if (match) {
+    folder = match[1];
+    filename = match[2];
+  }
+  
+  return `${videoUrlPrefix}/${folder}/${filename}`;
+});
 
 // Calculate image grid columns
-const gridCols = images.length === 1 ? 'grid-cols-1' : images.length === 2 || images.length === 4 ? 'grid-cols-2' : 'grid-cols-3';
+const gridCols = processedImages.length === 1 ? 'grid-cols-1' : processedImages.length === 2 || processedImages.length === 4 ? 'grid-cols-2' : 'grid-cols-3';
 
 const { Content } = await moment.render();
 ---
@@ -65,12 +149,22 @@ const { Content } = await moment.render();
         {!isDetail && <button class="moment-read-more text-[var(--primary)] text-sm font-bold mt-1 hidden hover:underline">展开全文</button>}
       </div>
 
-      {images.length > 0 && (
+      {processedImages.length > 0 && (
         <div class={`grid gap-2 mb-3 max-w-[400px] ${gridCols}`}>
-          {images.map((img: string, idx: number) => (
-            <a href={img} data-fancybox={`moment-${momentId}`} data-caption={`Photo ${idx + 1}`} class="aspect-square w-full rounded-md overflow-hidden cursor-zoom-in">
-              <img src={img} alt="Moment photo" class="w-full h-full object-cover transition-transform hover:scale-105" loading="lazy" />
+          {processedImages.map((imgObj: any, idx: number) => (
+            <a href={imgObj.original} data-fancybox={`moment-${momentId}`} data-caption={`Photo ${idx + 1}`} class="aspect-square w-full rounded-md overflow-hidden cursor-zoom-in">
+              <img src={imgObj.thumbnail} alt="Moment photo" class="w-full h-full object-cover transition-transform hover:scale-105" loading="lazy" />
             </a>
+          ))}
+        </div>
+      )}
+
+      {processedVideos.length > 0 && (
+        <div class="flex flex-col gap-3 mb-3 max-w-[400px] w-full">
+          {processedVideos.map((vid: string) => (
+            <div class="relative w-full rounded-md overflow-hidden bg-black/5 dark:bg-white/5 aspect-video border border-black/5 dark:border-white/5 shadow-sm">
+              <video src={vid} controls playsinline preload="auto" class="w-full h-full object-contain rounded-md" />
+            </div>
           ))}
         </div>
       )}

@@ -130,3 +130,10 @@ export type GitHubEditConfig = {
 	enable: boolean;
 	baseUrl: string;
 };
+
+export type MomentsImageConfig = {
+	rawUrlPrefix: string;
+	webpUrlPrefix: string;
+	videoUrlPrefix: string;
+};
+
