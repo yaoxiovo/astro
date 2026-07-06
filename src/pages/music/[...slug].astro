@@ -180,6 +180,9 @@ const { Content } = await entry.render();
     }
   }
 
+  // 立即执行一次以兼容 Swup 单页应用路由异步加载
+  initMusicDetails();
+
   document.addEventListener("DOMContentLoaded", initMusicDetails);
   document.addEventListener("swup:contentReplaced", initMusicDetails);
   document.addEventListener("swup:page:view", initMusicDetails);

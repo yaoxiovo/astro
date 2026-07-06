@@ -339,6 +339,9 @@ const { src, title, artist, cover = "/favicon.svg", lrc } = Astro.props;
     });
   }
 
+  // 立即执行一次以兼容 Swup 单页应用路由异步加载
+  initMusicCards();
+
   document.addEventListener('DOMContentLoaded', initMusicCards);
   document.addEventListener('swup:contentReplaced', initMusicCards);
   document.addEventListener('swup:page:view', initMusicCards);

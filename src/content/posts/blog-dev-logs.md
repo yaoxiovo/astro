@@ -806,24 +806,29 @@ author: "瑶曦网络科技官方"
 ### 🚨 Bug 现象与体验痛点 (Issue Description)
 1. **PC 端歌词撑满整个屏幕**：主人在 PC 端大屏上查看听歌日志时，发现歌词本部分竟然把整个播放器卡片无限拉长，直接撑满了整个屏幕，完全没有滚动条，排版瞬间变成灾难现场，简直是毫无尊严的排版失误喵！
 2. **首页 Timeline 流信息过载**：原先的 `/music` 首页直接铺开了所有歌曲的完整大播放器以及长篇说说，导致首屏载入极其笨重（Overhead），主页显得凌乱不堪，缺少了音乐馆应有的精致与留白感喵呜！
+3. **Swup 异步跳转播放与交互失效**：主人反馈，当直接从首页点击卡片跳转到歌曲详情页时，播放器完全没反应（点击播放无动作），点赞和分享也失效，必须强制刷新一次页面（Reload）才能正常运行喵！
 
 ### 🔍 底层原因分析 (Root Cause Analysis)
 1. **Flex 容器无高度限制**：原版 `MusicCard.astro` 中，最外层的 `.music-card-container` 在 PC 端（`md:`）为 `flex-row` 布局，但**没有限制最大高度或固定高度**。右侧的歌词区域 `.music-lyric-list` 虽定义了 `md:h-full` 与 `overflow-y-auto`，但在父元素高度自适应时，浏览器直接把歌词的所有内容高度计算进了 Flex 项目中，导致整个卡片高度被无限拉长，`overflow-y-auto` 直接失效喵！
 2. **首页功能耦合过度**：歌词本、唱片、详细的说说和点赞分享全部杂糅在同一个首页的 Timeline 页面中，不仅破坏了“点进去看详情”的交互心智（Interaction Design），还导致代码逻辑变得沉重喵。
+3. **Swup 异步脚本生命周期错过 (Script Lifecycle Miss)**：由于首页没有引入 `MusicCard`，首屏加载时 Astro 不会加载其脚本。当 Swup 单页跳转到详情页时，虽然能通过动态加载把 `MusicCard.astro` 和详情页的 script 拉取下来并执行，但由于此时 `DOMContentLoaded` 事件早已在几分钟前派发过，而 `swup:page:view` 等跳转事件在新脚本加载并执行时已经错过，导致所有的事件监听回调（Callbacks）都没有被执行，播放器和点赞分享就变成了木雕喵！
 
 ### ✨ 极致重构与修复方案 (Solution & Refactor Details)
 本天才猫娘架构师出手，优雅地对音乐馆进行了整体的架构升级与重修喵~：
 1. **最外层固定高度注入 (Container Height Constraint)：**
-   在 [MusicCard.astro](file:///c:/Users/Yaoxi/Documents/astro/src/components/widget/MusicCard.astro) 的最外层容器中加入 `md:h-[380px]` 限制。在 PC 端下，扣除 padding 后的内部可用高度（约 `332px`）可完美安放左侧唱片及控制器，右侧的歌词容器由此继承到明确的百分比高度，从而完美激活了 `overflow-y-auto`。现在歌词只会精致地在固定高度内平滑滚动，再也不会把卡片拉长了，强迫症瞬间治愈喵呜！
+   In [MusicCard.astro](file:///c:/Users/Yaoxi/Documents/astro/src/components/widget/MusicCard.astro) 的最外层容器中加入 `md:h-[380px]` 限制。在 PC 端下，扣除 padding 后的内部可用高度（约 `332px`）可完美安放左侧唱片及控制器，右侧的歌词容器由此继承到明确的百分比高度，从而完美激活了 `overflow-y-auto`。现在歌词只会精致地在固定高度内平滑滚动，再也不会把卡片拉长了，强迫症瞬间治愈喵呜！
 2. **首页“精美卡片化”改造 (Grid Song Cards)：**
    彻底重构了 [music.astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music.astro) 首页。移除大播放器与长说说的直铺，转而采用白透玻璃态（Glassmorphism）的双列网格布局（`grid-cols-1 md:grid-cols-2 gap-6`）。每个卡片为独立的 `<a>` 链接：
    - **视觉增强：** 左侧带有精美正方形封面大图，Hover 时封面图轻微放大，并浮现微光播放图标；右侧展示歌名、歌手、发表作者、发表时间，并使用斜体双引号优雅渲染**说说首行摘要**，整体质感瞬间拉满（Premium Feel）喵！
    - **交互悬浮：** 卡片整体支持 `hover:-translate-y-1` 微悬浮以及阴影加深动效，点击直接跳转至详情路由。
 3. **详情页“交互与详细”收拢 (Detail Page Consolidation)：**
-   在 [[...slug].astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music/[...slug].astro) 详情页中，将完整的 `MusicCard` 播放器与详细的 markdown 随笔内容统一展示。在随笔底部加入“发布来源与交互按键行”，并移植了原本在首页的点赞（记住 LocalStorage）、分享（复制链接并弹出毛玻璃 Toast 提示）的交互逻辑与 Swup 双重绑定防护（Dataset Bound Check），实现了功能闭环喵！
+   In [[...slug].astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music/[...slug].astro) 详情页中，将完整的 `MusicCard` 播放器与详细的 markdown 随笔内容统一展示。在随笔底部加入“发布来源与交互按键行”，并移植了原本在首页的点赞（记住 LocalStorage）、分享（复制链接并弹出毛玻璃 Toast 提示）的交互逻辑与 Swup 双重绑定防护（Dataset Bound Check），实现了功能闭环喵！
+4. **异步初始化立即激活 (Immediate Initialization Fallback)：**
+   在 [MusicCard.astro](file:///c:/Users/Yaoxi/Documents/astro/src/components/widget/MusicCard.astro) 和 [[...slug].astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music/[...slug].astro) 对应的客户端脚本的最底端，在注册事件监听之前，加入了一行**立即执行调用**（即直接调用 `initMusicCards()` 和 `initMusicDetails()`）。配合已有的 `dataset.initialized` / `dataset.bound` 单例防御保护，这样无论页面是首次刷新还是单页跳转后按需动态载入，都能确保在脚本被执行的第一时刻自动把所有的 DOM 节点事件绑定就绪，完美解决单页异步加载的顽疾喵呜~！
 
 ### 📊 落地成效 (Results)
 - 彻底解决了 PC 端歌词撑大卡片的遗留 Bug，滚动机制完全恢复正常喵。
-- 音乐馆首页成功转型为优雅精简的“歌曲收藏架”，点击卡片进入详情页后才展示歌词、播放器与详细随笔，加载开销骤降，体验极为丝滑喵呜~！
+- 成功修复了单页路由（Swup）跳转后的 JS 加载时序滞后问题，播放器和点赞分享跳转即用，无需再次刷新，体验极为丝滑喵呜~！
+- 音乐馆首页成功转型为优雅精简的“歌曲收藏架”，点击卡片进入详情页后才展示歌词、播放器与详细随笔，加载开销骤降喵呜~！
 
 
