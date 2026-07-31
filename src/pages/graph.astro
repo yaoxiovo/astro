@@ -79,102 +79,148 @@ const graphData = JSON.stringify({ nodes, links });
 <script is:inline src="https://unpkg.com/force-graph"></script>
 
 <script is:inline>
+  function loadForceGraphScript(callback) {
+    if (typeof window.ForceGraph !== 'undefined') {
+      callback();
+      return;
+    }
+    let script = document.querySelector('script[src*="force-graph"]');
+    if (!script) {
+      script = document.createElement('script');
+      script.src = 'https://unpkg.com/force-graph';
+      document.head.appendChild(script);
+    }
+    script.addEventListener('load', callback, { once: true });
+    // 双重检查防卡死
+    setTimeout(() => {
+      if (typeof window.ForceGraph !== 'undefined') {
+        callback();
+      }
+    }, 500);
+  }
+
   function initGraph() {
     const container = document.getElementById('graph-container');
     const dataEl = document.getElementById('graph-data');
     if (!container || !dataEl) return;
     
-    // 如果已经渲染过，清除旧的（适配 Swup）
+    // 如果已经渲染过，清除旧节点 (适配 Swup 页面重建)
     container.innerHTML = '';
     
-    const gData = JSON.parse(dataEl.textContent);
-    
-    const Graph = ForceGraph()(container)
-      .graphData(gData)
-      .nodeId('id')
-      .nodeLabel('name')
-      .nodeVal('val')
-      .nodeAutoColorBy('group')
-      // 宇宙感深色配色
-      .backgroundColor('transparent')
-      // 粒子动画连线
-      .linkDirectionalParticles(2)
-      .linkDirectionalParticleSpeed(d => 0.005 + Math.random() * 0.005)
-      .linkDirectionalParticleWidth(1.5)
-      .linkColor(() => 'rgba(255,255,255,0.15)')
-      .onNodeClick(node => {
-        if (node.url) {
-          if (window.swup) {
-            window.swup.navigate(node.url);
+    loadForceGraphScript(() => {
+      const container = document.getElementById('graph-container');
+      const dataEl = document.getElementById('graph-data');
+      if (!container || !dataEl || typeof window.ForceGraph === 'undefined') return;
+      
+      const gData = JSON.parse(dataEl.textContent || '{}');
+      
+      const Graph = window.ForceGraph()(container)
+        .graphData(gData)
+        .nodeId('id')
+        .nodeLabel('name')
+        .nodeVal('val')
+        .nodeAutoColorBy('group')
+        // 宇宙感深色配色
+        .backgroundColor('transparent')
+        // 粒子动画连线
+        .linkDirectionalParticles(2)
+        .linkDirectionalParticleSpeed(d => 0.005 + Math.random() * 0.005)
+        .linkDirectionalParticleWidth(1.5)
+        .linkColor(() => 'rgba(255,255,255,0.15)')
+        .onNodeClick(node => {
+          if (node.url) {
+            if (window.swup) {
+              window.swup.navigate(node.url);
+            } else {
+              window.location.href = node.url;
+            }
           } else {
-            window.location.href = node.url;
+            // 点击标签节点时将视图聚焦到该节点
+            Graph.centerAt(node.x, node.y, 1000);
+            Graph.zoom(3, 1000);
           }
+        });
+        
+      // 自定义节点绘制，让文字和节点发光
+      Graph.nodeCanvasObject((node, ctx, globalScale) => {
+        const isArticle = node.group === 1;
+        const label = node.name;
+        const fontSize = (isArticle ? 14 : 10) / globalScale;
+        ctx.font = `${isArticle ? 'bold' : 'normal'} ${fontSize}px Inter, Sans-Serif`;
+        
+        const textWidth = ctx.measureText(label).width;
+        const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.4); 
+
+        // 绘制背景药丸形
+        ctx.fillStyle = isArticle ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.4)';
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(
+            node.x - bckgDimensions[0] / 2, 
+            node.y - bckgDimensions[1] / 2, 
+            bckgDimensions[0], 
+            bckgDimensions[1], 
+            bckgDimensions[1] / 2
+          );
         } else {
-          // 点击标签节点时将视图聚焦到该节点
-          Graph.centerAt(node.x, node.y, 1000);
-          Graph.zoom(3, 1000);
+          ctx.rect(
+            node.x - bckgDimensions[0] / 2, 
+            node.y - bckgDimensions[1] / 2, 
+            bckgDimensions[0], 
+            bckgDimensions[1]
+          );
+        }
+        ctx.fill();
+        
+        // 节点外框颜色 (按组分配的默认颜色)
+        ctx.strokeStyle = node.color || '#fff';
+        ctx.lineWidth = 0.5 / globalScale;
+        ctx.stroke();
+
+        // 文字绘制
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = isArticle ? 'rgba(255, 255, 255, 0.9)' : (node.color || '#fff');
+        ctx.fillText(label, node.x, node.y);
+        
+        node.__bckgDimensions = bckgDimensions; 
+      })
+      .nodePointerAreaPaint((node, color, ctx) => {
+        ctx.fillStyle = color;
+        const bckgDimensions = node.__bckgDimensions;
+        if (bckgDimensions) {
+          ctx.beginPath();
+          if (ctx.roundRect) {
+            ctx.roundRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1], bckgDimensions[1]/2);
+          } else {
+            ctx.rect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1]);
+          }
+          ctx.fill();
         }
       });
-      
-    // 自定义节点绘制，让文字和节点发光
-    Graph.nodeCanvasObject((node, ctx, globalScale) => {
-      const isArticle = node.group === 1;
-      const label = node.name;
-      const fontSize = (isArticle ? 14 : 10) / globalScale;
-      ctx.font = `${isArticle ? 'bold' : 'normal'} ${fontSize}px Inter, Sans-Serif`;
-      
-      const textWidth = ctx.measureText(label).width;
-      const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.4); 
 
-      // 绘制背景药丸形
-      ctx.fillStyle = isArticle ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.4)';
-      ctx.beginPath();
-      ctx.roundRect(
-        node.x - bckgDimensions[0] / 2, 
-        node.y - bckgDimensions[1] / 2, 
-        bckgDimensions[0], 
-        bckgDimensions[1], 
-        bckgDimensions[1] / 2
-      );
-      ctx.fill();
-      
-      // 节点外框颜色 (按组分配的默认颜色)
-      ctx.strokeStyle = node.color;
-      ctx.lineWidth = 0.5 / globalScale;
-      ctx.stroke();
-
-      // 文字绘制
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = isArticle ? 'rgba(255, 255, 255, 0.9)' : node.color;
-      ctx.fillText(label, node.x, node.y);
-      
-      node.__bckgDimensions = bckgDimensions; 
-    })
-    .nodePointerAreaPaint((node, color, ctx) => {
-      ctx.fillStyle = color;
-      const bckgDimensions = node.__bckgDimensions;
-      bckgDimensions && ctx.beginPath();
-      bckgDimensions && ctx.roundRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2, bckgDimensions[0], bckgDimensions[1], bckgDimensions[1]/2);
-      bckgDimensions && ctx.fill();
-    });
-
-    // 让图谱自适应容器大小
-    const resizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        if (entry.target === container) {
-          Graph.width(entry.contentRect.width);
-          Graph.height(entry.contentRect.height);
+      // 让图谱自适应容器大小
+      const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+          if (entry.target === container) {
+            Graph.width(entry.contentRect.width);
+            Graph.height(entry.contentRect.height);
+          }
         }
-      }
+      });
+      resizeObserver.observe(container);
+      
+      // 初始化展开动画
+      Graph.d3Force('charge').strength(-150);
     });
-    resizeObserver.observe(container);
-    
-    // 初始化展开动画
-    Graph.d3Force('charge').strength(-150);
   }
   
-  // 初始化与 Swup 生命周期绑定
+  // 1. 脚本执行时立即尝试初始化 (适配 Swup 跳转场景)
+  initGraph();
+
+  // 2. 绑定全套页面生命周期事件
   document.addEventListener('DOMContentLoaded', initGraph);
   document.addEventListener('swup:contentReplaced', initGraph);
+  document.addEventListener('swup:page:view', initGraph);
+  document.addEventListener('astro:page-load', initGraph);
 </script>
