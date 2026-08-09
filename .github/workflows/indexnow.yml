@@ -1,0 +1,78 @@
+name: IndexNow 主动推送
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "要推送的 URL，多个 URL 用逗号或换行分隔。留空则推送首页和最新文章。"
+        required: false
+        type: string
+
+jobs:
+  submit-indexnow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 计算需要推送的 URL
+        id: urls
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SITE="https://blog.yaoxi.wiki"
+          INPUT_URLS='${{ github.event.inputs.urls }}'
+
+          if [ -n "$INPUT_URLS" ]; then
+            {
+              echo "urls<<EOF"
+              echo "$INPUT_URLS"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          URLS="$SITE/"
+
+          if git rev-parse HEAD^ >/dev/null 2>&1; then
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          else
+            CHANGED_FILES=$(git ls-files)
+          fi
+
+          while IFS= read -r file; do
+            case "$file" in
+              src/content/posts/*.md)
+                slug=$(basename "$file" .md)
+                URLS="$URLS
+$SITE/posts/$slug/"
+                ;;
+              src/pages/robots.txt.ts|astro.config.mjs|src/layouts/Layout.astro|src/pages/posts/'[...slug]'.astro)
+                URLS="$URLS
+$SITE/posts/cf-worker-reverse-proxy/"
+                ;;
+            esac
+          done <<< "$CHANGED_FILES"
+
+          {
+            echo "urls<<EOF"
+            echo "$URLS" | awk 'NF && !seen[$0]++'
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: 推送到 IndexNow
+        env:
+          SITE_URL: https://blog.yaoxi.wiki
+          INDEXNOW_URLS: ${{ steps.urls.outputs.urls }}
+        run: node ./scripts/indexnow.js
