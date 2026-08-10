@@ -1,0 +1,66 @@
+name: Deploy Telegram Bot
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "telegram-bot/**"
+      - ".github/workflows/deploy-bot.yml"
+  workflow_dispatch: # 手动触发：Actions 页面点 Run workflow
+
+jobs:
+  deploy:
+    name: Deploy Bot Worker
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: telegram-bot
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: telegram-bot/package-lock.json
+
+      - name: Install wrangler
+        run: npm i -D wrangler --no-audit --no-fund
+
+      - name: Create KV namespace (if placeholder)
+        id: kv
+        run: |
+          if grep -q "REPLACE_WITH_KV_ID" wrangler.jsonc; then
+            echo "Creating KV namespace..."
+            ID=$(npx wrangler kv namespace create BOT_KV --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).result.id))")
+            echo "KV ID: $ID"
+            sed -i "s/REPLACE_WITH_KV_ID/$ID/" wrangler.jsonc
+          else
+            echo "KV already configured."
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set BOT_TOKEN secret
+        if: secrets.BOT_TOKEN != ''
+        run: echo "${{ secrets.BOT_TOKEN }}" | npx wrangler secret put BOT_TOKEN
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set CHAT_ID secret
+        if: secrets.CHAT_ID != ''
+        run: echo "${{ secrets.CHAT_ID }}" | npx wrangler secret put CHAT_ID
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy Worker
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
