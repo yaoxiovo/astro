@@ -6,255 +6,166 @@ import authorsConfig from "../content/moments/authors.json";
 interface Props {
   title: string;
   excerpt: string;
+  coverImage?: string;
   author: string;
-  images?: string[];   // 完整图片 URL 列表（朋友圈动态传入）
-  coverImage?: string; // 兼容文章页：封面图优先
-  date?: string;       // ISO date string，如 "2026-07-06T12:00:00.000Z"
-  tags?: string[];     // 标签列表
 }
 
-const { title, excerpt, author, images = [], coverImage, date, tags } = Astro.props;
+const { title, excerpt, coverImage, author } = Astro.props;
 
-// 背景图候选：封面优先 + 动态图片，去重
-const bgCandidates = Array.from(new Set(
-  [coverImage, ...images].filter((u): u is string => !!u)
-));
+// 动态判断V认证主体和颜色
+let verifiedIconColor = "";
+let verifiedEntity = "";
 
-// 格式化日期（"2026年7月6日"）
-let dateDisplay = "";
-if (date) {
-  const d = new Date(date);
-  if (!isNaN(d.getTime())) {
-    dateDisplay = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+const role = (authorsConfig as any)[author];
+if (role) {
+  if (role.verifyType === "blue") {
+    verifiedIconColor = "text-blue-500";
+    verifiedEntity = role.verifySubject || "企业官方认证";
+  } else if (role.verifyType === "yellow") {
+    verifiedIconColor = "text-yellow-500";
+    verifiedEntity = role.verifySubject || "个人博主认证";
   }
 }
-
-// V 认证
-const role = (authorsConfig as any)[author];
-const verifiedIconColor = role?.verifyType === "blue" ? "#3b82f6" : role?.verifyType === "yellow" ? "#eab308" : "";
-const verifiedEntity = role?.verifySubject || "";
 ---
 
-<button id="generate-poster-btn" data-poster-btn
-  class="group flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] active:bg-[var(--btn-regular-bg-active)] text-[var(--btn-content)] text-xs font-medium transition-all active:scale-95">
-  <Icon name="material-symbols:image-outline" class="text-[0.875rem] group-hover:scale-110 transition-transform" />
+<button id="generate-poster-btn" class="group flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] active:bg-[var(--btn-regular-bg-active)] text-[var(--btn-content)] text-xs font-medium transition-all active:scale-95">
+  <Icon name="material-symbols:image-outline" class="text-[0.875rem] group-hover:scale-110 transition-transform"></Icon>
   分享海报
 </button>
 
-<!--
-  隐藏海报 DOM（深色质感设计）
-  关键：
-  1. display:none 彻底不占位、不爆版
-  2. 全部内联样式（不依赖 Tailwind / stylesheet — html-to-image 跨浏览器兼容）
-  3. 渲染时 JS 临时 display:block 移入视口，渲染完 finally 隐藏
--->
-<div id="poster-hidden-container"
-  style="display:none;position:fixed;top:0;left:0;width:400px;z-index:9999;overflow:hidden;border-radius:16px;box-shadow:0 25px 60px rgba(0,0,0,0.55);background:linear-gradient(145deg,#0f172a 0%,#1e293b 60%,#0f172a 100%);">
-  <!-- 背景遮罩 -->
-  <div id="poster-bg-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.55);z-index:1;"></div>
-
-  <!-- 内容区 -->
-  <div style="position:relative;z-index:10;display:flex;flex-direction:column;min-height:440px;padding:28px 24px 24px;color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-
-    <!-- 顶部装饰条（品牌色 accent bar） -->
-    <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#f59e0b,#ef4444,#8b5cf6);border-radius:16px 16px 0 0;"></div>
-
-    <!-- 日期徽章 -->
-    {dateDisplay && (
-      <div style="margin-bottom:20px;display:flex;align-items:center;gap:8px;">
-        <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.1);backdrop-filter:blur(4px);padding:5px 12px;border-radius:20px;font-size:12px;color:#e2e8f0;letter-spacing:0.3px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-          {dateDisplay}
-        </div>
+<!-- 隐藏的海报 DOM 结构 -->
+<div id="poster-hidden-container" class="fixed top-[-9999px] left-[-9999px] w-[400px] bg-white text-black p-6 rounded-2xl shadow-2xl overflow-hidden" style="z-index: -99;">
+  <div class="relative z-10">
+    <!-- 封面图 -->
+    {coverImage && (
+      <div class="w-full h-[200px] mb-4 rounded-xl overflow-hidden">
+        <img src={coverImage} class="w-full h-full object-cover" crossorigin="anonymous" id="poster-cover-img" />
       </div>
     )}
-
+    
     <!-- 标题 -->
-    <h1 style="font-size:22px;font-weight:800;margin:0 0 16px;line-height:1.35;letter-spacing:-0.3px;color:#ffffff;">
-      {title}
-    </h1>
-
-    <!-- 摘要正文 -->
-    <p style="flex:1;font-size:14px;color:#cbd5e1;line-height:1.85;margin:0 0 20px;white-space:pre-wrap;word-break:break-word;">
+    <h1 class="text-2xl font-bold mb-2 leading-snug text-gray-900" style="font-family: sans-serif;">{title}</h1>
+    
+    <!-- 摘要 -->
+    <p class="text-gray-600 text-sm leading-relaxed mb-6 whitespace-pre-wrap" style="word-break: break-word;">
       {excerpt}
     </p>
-
-    <!-- 标签 -->
-    {tags && tags.length > 0 && (
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;">
-        {tags.map(tag => (
-          <span style="display:inline-block;background:rgba(139,92,246,0.2);color:#c4b5fd;font-size:11px;padding:3px 10px;border-radius:12px;letter-spacing:0.2px;font-weight:500;">
-            #{tag}
-          </span>
-        ))}
-      </div>
-    )}
-
-    <!-- 底部分隔线 -->
-    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:16px;display:flex;align-items:center;justify-content:space-between;">
-
-      <!-- 左侧：作者 + 认证 -->
-      <div style="display:flex;flex-direction:column;">
-        <span style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Author</span>
-        <div style="display:flex;align-items:center;gap:4px;">
-          <span style="font-size:15px;font-weight:700;color:#f8fafc;">{author}</span>
+    
+    <!-- 底部信息 -->
+    <div class="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">
+      <div class="flex flex-col">
+        <span class="text-xs text-gray-400 mb-1">Author</span>
+        <div class="flex items-center gap-1">
+          <span class="text-sm font-bold text-[var(--primary)]">{author}</span>
           {verifiedEntity && (
-            <span style="display:inline-flex;align-items:center;gap:2px;font-size:11px;font-weight:600;color:{verifiedIconColor};margin-left:2px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;"><path d="M23 12l-2.44-2.78.34-3.68-3.61-.82-1.89-3.18L12 3 8.6 1.54 6.71 4.72l-3.61.81.34 3.68L1 12l2.44 2.78-.34 3.69 3.61.82 1.89 3.18L12 21l3.4 1.46 1.89-3.18 3.61-.82-.34-3.68L23 12zm-10 5h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg>
-              {verifiedEntity}
-            </span>
+            <div class="flex items-center gap-0.5 mt-0.5">
+              <Icon name="material-symbols:verified" class={`text-[0.9rem] ${verifiedIconColor}`} />
+              <span class={`text-[0.65rem] ${verifiedIconColor} font-medium`}>{verifiedEntity}</span>
+            </div>
           )}
         </div>
       </div>
-
-      <!-- 右侧：博客名 -->
-      <div style="display:flex;flex-direction:column;align-items:flex-end;">
-        <span style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">来自博客</span>
-        <span style="font-size:14px;font-weight:700;color:#e2e8f0;">Yaoxi Blog</span>
+      
+      <div class="flex flex-col items-end">
+        <span class="text-xs text-gray-400 mb-1">来自博客</span>
+        <span class="text-sm font-bold text-gray-800">Yaoxi Blog</span>
       </div>
     </div>
   </div>
 </div>
 
-<script define:vars={{ images: bgCandidates }}>
-  (function () {
-    const SELECTOR = "#generate-poster-btn, [data-poster-btn]";
-    const CONTAINER_ID = "poster-hidden-container";
-    const OVERLAY_ID = "poster-bg-overlay";
-    let busy = false;
-
-    // 事件委托 + 全局标记：脚本只注册一次，Swup 导航后也有效
-    if (window.__posterDelegate) return;
-    window.__posterDelegate = true;
-
-    // CORS 安全的图片代理（R2/EdgeOne 没有 Access-Control-Allow-Origin 头时兜底）
-    const WESERV_PROXY = "https://wsrv.nl/?url=";
-
-    /** 对单张图片生成探测候选：[直连, weserv代理] */
-    function candidateUrls(rawUrl) {
-      const urls = [rawUrl];
-      try {
-        // wsrv.nl 需要去掉协议前缀
-        const stripped = rawUrl.replace(/^https?:\/\//, "");
-        urls.push(WESERV_PROXY + encodeURIComponent(stripped));
-      } catch (_) { /* 构造失败跳过 */ }
-      return urls;
-    }
-
-    document.addEventListener("click", async (e) => {
-      const target = e.target;
-      if (!target || !target.closest || busy) return;
-      const btn = target.closest(SELECTOR);
-      if (!btn) return;
-
-      const container = document.getElementById(CONTAINER_ID);
+<script>
+  function initPoster() {
+    const btn = document.getElementById('generate-poster-btn');
+    if (!btn || btn.dataset.initialized) return;
+    btn.dataset.initialized = 'true';
+    
+    btn.addEventListener('click', async () => {
+      const container = document.getElementById('poster-hidden-container');
       if (!container) return;
-      const overlay = document.getElementById(OVERLAY_ID);
-
-      busy = true;
-      const originalHTML = btn.innerHTML;
-      btn.innerHTML = '<span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 0.6s linear infinite;margin-right:4px;vertical-align:middle;"></span> 生成中...';
-      // 注入旋转动画（内联 keyframes）
-      if (!document.getElementById("__poster-spin-style")) {
-        const sty = document.createElement("style");
-        sty.id = "__poster-spin-style";
-        sty.textContent = "@keyframes spin{to{transform:rotate(360deg)}}";
-        document.head.appendChild(sty);
-      }
-      btn.style.pointerEvents = "none";
-
+      
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<span class="animate-spin inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full mr-1"></span> 生成中...`;
+      btn.style.pointerEvents = 'none';
+      
       try {
-        // 1) 探测 CORS 可用图片作为背景（直连优先 → weserv 代理兜底）
-        if (images && images.length > 0) {
-          // 打乱 + 限 5 张，每张生成直连/代理两个候选
-          const shuffled = images.slice().sort(() => Math.random() - 0.5).slice(0, 5);
-          const allCandidates = shuffled.flatMap(candidateUrls);
-
-          const probe = async (url) => {
-            const ctrl = new AbortController();
-            const timer = setTimeout(() => ctrl.abort(), 4000);
-            try {
-              const res = await fetch(url, { method: "GET", mode: "cors", signal: ctrl.signal });
-              if (!res.ok) throw new Error("status " + res.status);
-              return url;
-            } finally {
-              clearTimeout(timer);
-            }
-          };
-
-          // 并行探测（一旦有成功就够用）
-          const results = await Promise.allSettled(allCandidates.map(probe));
-          const hit = results.find((r) => r.status === "fulfilled");
-          if (hit && hit.value) {
-            const url = String(hit.value).replace(/'/g, "\\'");
-            container.style.backgroundImage = "url('" + url + "')";
-            container.style.backgroundSize = "cover";
-            container.style.backgroundPosition = "center";
-            if (overlay) overlay.style.display = "block";
-          }
+        if (!(window as any).htmlToImage) {
+           await new Promise((resolve, reject) => {
+             const s = document.createElement('script');
+             s.src = "https://cdn.staticfile.net/html-to-image/1.11.11/html-to-image.min.js";
+             s.onload = resolve;
+             s.onerror = () => {
+                 const s2 = document.createElement('script');
+                 s2.src = "https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js";
+                 s2.onload = resolve;
+                 s2.onerror = () => reject(new Error("Failed to load html-to-image from all CDNs."));
+                 document.head.appendChild(s2);
+             };
+             document.head.appendChild(s);
+           });
         }
-
-        // 2) 确保 html-to-image 已加载（双 CDN）
-        if (!window.htmlToImage) {
-          await new Promise((resolve, reject) => {
-            const load = (src, onFail) => {
-              const s = document.createElement("script");
-              s.src = src;
-              s.onload = () => resolve(undefined);
-              s.onerror = onFail;
-              document.head.appendChild(s);
-            };
-            load("https://cdn.staticfile.net/html-to-image/1.11.11/html-to-image.min.js", () => {
-              load("https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js", () => {
-                reject(new Error("无法加载 html-to-image 库"));
-              });
-            });
+        
+        // 等待图片加载完成 (以防跨域缓存)
+        const img = document.getElementById('poster-cover-img') as HTMLImageElement;
+        if (img && !img.complete) {
+          await new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
           });
         }
-
-        // 3) 临时显示容器，等背景图 + 字体就绪
-        container.style.display = "block";
-        await new Promise((r) => setTimeout(r, 300));
-
-        // 4) 预热渲染（规避 Safari 首次空白）
-        try { await window.htmlToImage.toPng(container, { pixelRatio: 1 }); } catch (_) {}
-
-        // 5) 正式渲染 2x 高清
-        const dataUrl = await window.htmlToImage.toPng(container, {
-          pixelRatio: 2,
-          backgroundColor: "#0f172a",
+        
+        // 临时将容器移入可视区域，避免因元素在屏幕外而渲染为空白
+        const originalClasses = container.className;
+        const originalCssText = container.style.cssText;
+        container.classList.remove('top-[-9999px]', 'left-[-9999px]');
+        container.style.cssText = 'position: fixed; top: 0px; left: 0px; z-index: -9999; pointer-events: none; opacity: 1;';
+        
+        // 稍微等待，确保浏览器完成重排
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // 预热渲染（应对 Safari 首次渲染空白的 Bug）
+        try { await (window as any).htmlToImage.toPng(container, { pixelRatio: 1 }); } catch(e) {}
+        
+        // 正式渲染高清海报
+        const url = await (window as any).htmlToImage.toPng(container, {
+          pixelRatio: 2, // 高清
+          backgroundColor: '#ffffff'
         });
-
-        // 6) 下载 PNG
-        const a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = "share-poster-" + Date.now() + ".png";
+        
+        // 恢复隐藏状态
+        container.className = originalClasses;
+        container.style.cssText = originalCssText;
+        
+        // 下载图片
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `share-poster-${Date.now()}.png`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-
-        // 7) 复制链接
+        
+        // 将链接写入剪贴板
         try {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(window.location.href);
-          }
-        } catch (_) {}
-
-        // 8) 成功提示
-        btn.innerHTML = '<span style="color:#10b981;margin-right:4px;font-weight:700;">✔</span> 链接已复制';
-        setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+          await navigator.clipboard.writeText(window.location.href);
+        } catch(e) {
+          console.warn("Failed to copy url to clipboard", e);
+        }
+        
+        // 临时修改按钮文本提示成功
+        btn.innerHTML = `<span style="color: #10b981; margin-right: 0.25rem;">✔</span> 链接已复制`;
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.pointerEvents = 'auto';
+        }, 2000);
       } catch (err) {
-        console.error("Failed to generate poster", err);
-        alert("海报生成失败：" + ((err && err.message) || err));
-        btn.innerHTML = originalHTML;
-      } finally {
-        // 9) 恢复隐藏，绝不占位
-        container.style.display = "none";
-        container.style.backgroundImage = "";
-        if (overlay) overlay.style.display = "none";
-        btn.style.pointerEvents = "auto";
-        busy = false;
+        console.error('Failed to generate poster', err);
+        alert(`海报生成失败: ${err.message || err}`);
+        btn.innerHTML = originalText;
+        btn.style.pointerEvents = 'auto';
       }
     });
-  })();
+  }
+
+  initPoster();
+  document.addEventListener('swup:page:view', initPoster);
 </script>
