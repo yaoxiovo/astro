@@ -1,7 +1,7 @@
 ---
 // 朋友圈图片墙：聚合所有顶层动态的图片，CSS 多列瀑布流 + fancybox 画廊
-import MainGridLayout from '../../../layouts/MainGridLayout.astro';
-import { momentsImageConfig } from '../../../config';
+import MainGridLayout from '../../layouts/MainGridLayout.astro';
+import { momentsImageConfig } from '../../config';
 import { getCollection } from 'astro:content';
 
 const allMoments = await getCollection('moments');

@@ -1,8 +1,8 @@
 ---
 // 朋友圈热榜：客户端拉取 Umami 全量事件，按「点赞×3 + 浏览×0.1」热度排序
 // 无统计数据时自动降级为按发布时间倒序
-import MainGridLayout from '../../../layouts/MainGridLayout.astro';
-import { momentsImageConfig, umamiConfig } from '../../../config';
+import MainGridLayout from '../../layouts/MainGridLayout.astro';
+import { momentsImageConfig, umamiConfig } from '../../config';
 import { getCollection } from 'astro:content';
 
 const allMoments = await getCollection('moments');
