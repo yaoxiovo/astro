@@ -94,6 +94,8 @@ const ogImage = posterImages[0];
                     excerpt={excerptText || "查看详情"}
                     author={authorName}
                     images={posterImages}
+                    date={moment.data.published.toISOString()}
+                    tags={moment.data.tags || []}
                 />
             </div>
         </div>
