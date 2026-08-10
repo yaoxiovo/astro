@@ -538,16 +538,54 @@ const { trackViews = true } = Astro.props;
     });
   }
 
-  // 更多菜单：点击外部区域自动关闭
+  // 更多菜单：按钮 + fixed 菜单（移到 body 避免被 card-base overflow-hidden 裁剪）
   function initMoreMenu() {
-    if (window.__moreMenuBound) return;
-    window.__moreMenuBound = true;
-    document.addEventListener('click', (e) => {
-      const details = document.getElementById('moments-nav-more');
-      if (details && details.open && !details.contains(e.target)) {
-        details.open = false;
-      }
+    const btn = document.getElementById('moments-more-btn');
+    const menu = document.getElementById('moments-more-menu');
+    if (!btn || !menu || btn.dataset.moreBound === '1') return;
+    btn.dataset.moreBound = '1';
+
+    // 移除 body 里残留的旧菜单（Swup 页面切换后）
+    document.querySelectorAll('#moments-more-menu').forEach((el) => {
+      if (el !== menu) el.remove();
     });
+    document.body.appendChild(menu);
+    menu.style.display = 'none';
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (menu.style.display === 'flex') {
+        menu.style.display = 'none';
+        return;
+      }
+      const r = btn.getBoundingClientRect();
+      menu.style.display = 'flex';
+      const mw = menu.offsetWidth;
+      let left = r.right - mw;
+      left = Math.max(8, Math.min(left, window.innerWidth - mw - 8));
+      menu.style.left = left + 'px';
+      menu.style.top = r.bottom + 6 + 'px';
+    });
+
+    // 全局关闭监听只挂一次（菜单被移到 body，查 id 即可）
+    if (!window.__moreMenuBound) {
+      window.__moreMenuBound = true;
+      document.addEventListener('click', (e) => {
+        const m = document.getElementById('moments-more-menu');
+        const b = document.getElementById('moments-more-btn');
+        if (m && m.style.display === 'flex' && !m.contains(e.target) && e.target !== b) {
+          m.style.display = 'none';
+        }
+      });
+      window.addEventListener('scroll', () => {
+        const m = document.getElementById('moments-more-menu');
+        if (m) m.style.display = 'none';
+      }, { passive: true });
+      window.addEventListener('resize', () => {
+        const m = document.getElementById('moments-more-menu');
+        if (m) m.style.display = 'none';
+      });
+    }
   }
 
   function initAll() {

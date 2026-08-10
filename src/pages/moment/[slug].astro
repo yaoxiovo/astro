@@ -3,6 +3,7 @@ import MainGridLayout from '../../layouts/MainGridLayout.astro';
 import MomentCard from '../../components/MomentCard.astro';
 import MomentsClient from '../../components/MomentsClient.astro';
 import PosterGenerator from '../../components/PosterGenerator.astro';
+import { getImage } from 'astro:assets';
 import { profileConfig, momentsImageConfig } from '../../config';
 import { getSortedMoments, momentToText, extractMomentTags, stripMomentId } from '../../utils/content-utils';
 
@@ -90,8 +91,16 @@ const resolveImageUrl = (img) => {
 };
 // 海报/OG 共用的完整图片列表
 const posterImages = (moment.data.images || []).map(resolveImageUrl).filter(Boolean);
-// OG 分享图：取第一张（Layout 自动补全域名；无图时回退站点默认图）
-const ogImage = posterImages[0];
+// OG 分享图：取第一张，构建时压缩为 1200px jpg（微信要求小体积；失败则降级原图）
+let ogImage = posterImages[0];
+if (ogImage) {
+    try {
+        const optimized = await getImage({ src: ogImage, width: 1200, format: 'jpg', quality: 72 });
+        if (optimized && optimized.src) ogImage = optimized.src;
+    } catch (e) {
+        console.warn(`[og] getImage 失败，降级原图: ${ogImage}`, e);
+    }
+}
 ---
 
 <MainGridLayout
