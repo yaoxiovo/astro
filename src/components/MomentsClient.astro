@@ -411,6 +411,72 @@ const { trackViews = true } = Astro.props;
     }
   }
 
+  // ---------- 朋友圈搜索 ----------
+  function initSearch() {
+    const box = document.getElementById('moment-search');
+    const input = document.getElementById('moment-search-input');
+    const results = document.getElementById('moment-search-results');
+    if (!box || !input || !results) return;
+    if (window.__momentSearchInit) return;
+    window.__momentSearchInit = true;
+
+    const esc = (s) =>
+      String(s ?? '').replace(/[&<>"']/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]),
+      );
+
+    let index = null;
+    const loadIndex = async () => {
+      if (index) return index;
+      const res = await fetch('/api/moments/search.json', {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`search index HTTP ${res.status}`);
+      index = await res.json();
+      return index;
+    };
+
+    let timer = null;
+    input.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        const q = input.value.trim().toLowerCase();
+        if (!q) {
+          results.classList.add('hidden');
+          results.innerHTML = '';
+          return;
+        }
+        try {
+          const data = await loadIndex();
+          const terms = q.split(/\s+/).filter(Boolean);
+          const hits = data
+            .filter((item) => {
+              const hay =
+                `${item.text} ${(item.tags || []).join(' ')} ${item.date} ${item.author}`.toLowerCase();
+              return terms.every((t) => hay.includes(t));
+            })
+            .slice(0, 20);
+
+          results.classList.remove('hidden');
+          if (hits.length === 0) {
+            results.innerHTML = `<div class="text-sm text-[var(--text-color-light)] py-2">没有找到与「${esc(q)}」相关的动态喵~</div>`;
+          } else {
+            results.innerHTML = hits
+              .map(
+                (h) => `<a href="/moment/${encodeURIComponent(h.slug)}/" class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--primary)]/10 transition">
+                  <span class="shrink-0 text-xs text-[var(--text-color-light)] tabular-nums">${esc(h.date)}</span>
+                  <span class="flex-1 truncate text-sm text-[var(--text-color)] group-hover:text-[var(--primary)] transition">${esc(h.text) || '（无文字内容）'}</span>
+                </a>`,
+              )
+              .join('');
+          }
+        } catch (error) {
+          console.warn('朋友圈搜索索引加载失败:', error);
+        }
+      }, 200);
+    });
+  }
+
   // ---------- 统一入口 ----------
   function processMomentDOM(root) {
     updateRelativeTimes();
@@ -428,6 +494,7 @@ const { trackViews = true } = Astro.props;
     initInfiniteScroll();
     initRandomButton();
     initMemory();
+    initSearch();
     loadMomentStats();
 
     // 每 60s 刷新相对时间，避免停留页面时时间显示过期

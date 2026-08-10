@@ -2,9 +2,9 @@
 // 朋友圈图片墙：聚合所有顶层动态的图片，CSS 多列瀑布流 + fancybox 画廊
 import MainGridLayout from '../../layouts/MainGridLayout.astro';
 import { momentsImageConfig } from '../../config';
-import { getCollection } from 'astro:content';
+import { getSortedMoments } from '../../utils/content-utils';
 
-const allMoments = await getCollection('moments');
+const allMoments = await getSortedMoments();
 
 // 与 MomentCard 保持一致的智能图片 URL 转换（内联自包含，避免跨文件依赖）
 const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;

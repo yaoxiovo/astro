@@ -1,0 +1,48 @@
+---
+import { getSortedMoments, momentToText, extractMomentTags, stripMomentId } from "@/utils/content-utils";
+import { Icon } from "astro-icon/components";
+
+// 最新 3 条顶层动态（胶囊未到期自动被 getSortedMoments 过滤）
+const moments = (await getSortedMoments()).filter((m) => !m.data.replyTo).slice(0, 3);
+---
+
+<div class="card-base p-5 relative w-full mt-6">
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2 font-bold text-[var(--primary)]">
+            <Icon name="material-symbols:forum-rounded" class="text-xl" />
+            <span>最新动态</span>
+        </div>
+        <a href="/moments/" class="text-xs text-[var(--text-color-light)] hover:text-[var(--primary)] transition">
+            查看全部 →
+        </a>
+    </div>
+
+    {moments.length === 0 ? (
+        <div class="text-sm text-[var(--text-color-light)] py-4 text-center">还没有任何动态喵~</div>
+    ) : (
+        <div class="flex flex-col divide-y divide-black/5 dark:divide-white/5">
+            {moments.map((m) => {
+                const text = momentToText(m.body, 60);
+                const tags = extractMomentTags(m.body);
+                return (
+                    <a
+                        href={`/moment/${stripMomentId(m.id)}/`}
+                        class="py-3 first:pt-0 last:pb-0 block group"
+                    >
+                        <div class="flex items-center gap-2 text-xs text-[var(--text-color-light)] mb-1">
+                            <span>{new Date(m.data.published).toLocaleDateString("zh-CN")}</span>
+                            {tags.slice(0, 2).map((t) => (
+                                <span class="px-1.5 py-0.5 rounded bg-[var(--primary)]/10 text-[var(--primary)] text-[11px]">
+                                    #{t}
+                                </span>
+                            ))}
+                        </div>
+                        <div class="text-sm text-[var(--text-color)] line-clamp-2 group-hover:text-[var(--primary)] transition">
+                            {text || "（无文字内容）"}
+                        </div>
+                    </a>
+                );
+            })}
+        </div>
+    )}
+</div>

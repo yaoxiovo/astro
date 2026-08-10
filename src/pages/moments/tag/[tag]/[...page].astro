@@ -3,7 +3,7 @@ import MainGridLayout from '../../../../layouts/MainGridLayout.astro';
 import MomentCard from '../../../../components/MomentCard.astro';
 import MomentsClient from '../../../../components/MomentsClient.astro';
 import Pagination from '../../../../components/control/Pagination.astro';
-import { getCollection } from 'astro:content';
+import { getSortedMoments } from '../../../../utils/content-utils';
 
 export async function getStaticPaths({ paginate }) {
     // 注意：getStaticPaths 会被 Astro 独立提取执行，不能引用模块顶层变量，必须自包含
@@ -14,7 +14,7 @@ export async function getStaticPaths({ paginate }) {
         return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
-    const allMoments = await getCollection('moments');
+    const allMoments = await getSortedMoments();
     
     // Filter out replies, only show top-level moments on homepage
     const topLevelMoments = allMoments.filter((moment) => !moment.data.replyTo);

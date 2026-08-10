@@ -3,9 +3,9 @@
 // 无统计数据时自动降级为按发布时间倒序
 import MainGridLayout from '../../layouts/MainGridLayout.astro';
 import { momentsImageConfig, umamiConfig } from '../../config';
-import { getCollection } from 'astro:content';
+import { getSortedMoments } from '../../utils/content-utils';
 
-const allMoments = await getCollection('moments');
+const allMoments = await getSortedMoments();
 
 const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;
 

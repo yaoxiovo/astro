@@ -4,44 +4,63 @@ import MomentCard from '../../components/MomentCard.astro';
 import MomentsClient from '../../components/MomentsClient.astro';
 import PosterGenerator from '../../components/PosterGenerator.astro';
 import { profileConfig, momentsImageConfig } from '../../config';
-import { getCollection } from 'astro:content';
-
-// 统一 id 解析：只剥掉内容扩展名，文件名内其他点号原样保留
-const stripExt = (id) => id.replace(/\.(md|mdx)$/, "");
+import { getSortedMoments, momentToText, extractMomentTags, stripMomentId } from '../../utils/content-utils';
 
 export async function getStaticPaths() {
-    const allMoments = await getCollection('moments');
-    // 注意：getStaticPaths 会被 Astro 独立提取执行，不能引用模块顶层变量，必须自包含
+    const allMoments = await getSortedMoments();
+    // 注意：getStaticPaths 会被 Astro 独立提取执行，不能引用模块顶层变量，
+    // 但 import 的 utils 函数会被打包器带入 chunk，可以安全使用
     return allMoments.map((moment) => ({
-        params: { slug: moment.id.replace(/\.(md|mdx)$/, "") },
+        params: { slug: stripMomentId(moment.id) },
         props: { moment },
     }));
 }
 
 const { moment } = Astro.props;
-const allMoments = await getCollection('moments');
+const allMoments = await getSortedMoments();
 
 // Find thread: Parent -> Current -> Children
 let parent = null;
 if (moment.data.replyTo) {
-    parent = allMoments.find(m => stripExt(m.id) === moment.data.replyTo);
+    parent = allMoments.find(m => stripMomentId(m.id) === moment.data.replyTo);
 }
 
 const children = allMoments
-    .filter(m => m.data.replyTo === stripExt(moment.id))
+    .filter(m => m.data.replyTo === stripMomentId(moment.id))
     .sort((a, b) => new Date(a.data.published).getTime() - new Date(b.data.published).getTime());
 
-// Other related moments (same author, not in thread)
+// Other related moments (tag overlap first, then same author)
 const threadSlugs = new Set([moment.id]);
 if (parent) threadSlugs.add(parent.id);
 children.forEach(c => threadSlugs.add(c.id));
 
 const authorName = moment.data.author || profileConfig.name;
+const currentTags = extractMomentTags(moment.body);
 
-const relatedMoments = allMoments
-    .filter(m => (m.data.author || profileConfig.name) === authorName && !threadSlugs.has(m.id))
-    .sort((a, b) => new Date(b.data.published).getTime() - new Date(a.data.published).getTime())
-    .slice(0, 3);
+const tagOverlap = (tagsA: string[], tagsB: string[]) =>
+    tagsA.filter((t) => tagsB.includes(t)).length;
+
+// 相关推荐：标签重合度优先（×3），同作者加分（+1），无重合时退回同作者最近动态
+let relatedMoments = allMoments
+    .filter(m => !threadSlugs.has(m.id) && !m.data.replyTo)
+    .map(m => ({
+        m,
+        score: tagOverlap(extractMomentTags(m.body), currentTags) * 3 +
+               ((m.data.author || profileConfig.name) === authorName ? 1 : 0),
+    }))
+    .sort((a, b) =>
+        b.score - a.score ||
+        new Date(b.m.data.published).getTime() - new Date(a.m.data.published).getTime()
+    );
+
+if (relatedMoments[0]?.score === 0) {
+    relatedMoments = relatedMoments
+        .filter(x => (x.m.data.author || profileConfig.name) === authorName)
+        .slice(0, 3)
+        .map(x => x.m);
+} else {
+    relatedMoments = relatedMoments.slice(0, 3).map(x => x.m);
+}
 
 // 从 Markdown 提取纯文本摘要（分享海报用，避免渲染出 #、** 等源码符号）
 const excerptText = (moment.body || '')
@@ -132,7 +151,7 @@ const ogImage = posterImages[0];
             <!-- Other Related -->
             {relatedMoments.length > 0 && (
                 <div class="mt-12 pt-8 border-t border-black/5 dark:border-white/5 w-full flex flex-col items-stretch">
-                    <div class="text-xl font-bold mb-6 text-[var(--text-color)] px-4">该作者的其他动态</div>
+                    <div class="text-xl font-bold mb-6 text-[var(--text-color)] px-4">相关动态</div>
                     <div class="flex flex-col gap-6 w-full items-stretch">
                         {relatedMoments.map(rm => (
                             <MomentCard moment={rm} />

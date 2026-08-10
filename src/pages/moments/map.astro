@@ -2,9 +2,9 @@
 // 朋友圈足迹地图：展示所有带 location 字段的动态
 // 使用 Leaflet + OpenStreetMap 免费瓦片（无需 API Key），懒加载 CDN
 import MainGridLayout from '../../layouts/MainGridLayout.astro';
-import { getCollection } from 'astro:content';
+import { getSortedMoments } from '../../utils/content-utils';
 
-const allMoments = await getCollection('moments');
+const allMoments = await getSortedMoments();
 
 const toText = (body: string, max = 50) =>
   (body || '')

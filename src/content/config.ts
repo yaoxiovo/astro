@@ -42,6 +42,7 @@ const momentsCollection = defineCollection({
 		source: z.string().optional(),
 		pinned: z.boolean().optional().default(false),
 		replyTo: z.string().optional(),
+		capsule: z.date().optional(),
 		location: z.object({
 			name: z.string(),
 			lat: z.number(),

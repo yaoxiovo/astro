@@ -2,18 +2,18 @@
 import MainGridLayout from '../../../layouts/MainGridLayout.astro';
 import MomentCard from '../../../components/MomentCard.astro';
 import MomentsClient from '../../../components/MomentsClient.astro';
-import { getCollection } from 'astro:content';
+import { getSortedMoments } from '../../../utils/content-utils';
 
 // 注意：getStaticPaths 必须完全自包含（Astro 5.7 构建时独立提取执行，
 // 模块顶层 const/函数不可见），这里只用 import 依赖 + 内联逻辑
 export async function getStaticPaths() {
-    const all = await getCollection('moments');
+    const all = await getSortedMoments();
     const years = [...new Set(all.map((m) => new Date(m.data.published).getFullYear()))].sort((a, b) => b - a);
     return years.map((year) => ({ params: { year: String(year) }, props: { year } }));
 }
 
 const { year } = Astro.props;
-const allMoments = await getCollection('moments');
+const allMoments = await getSortedMoments();
 
 // 年份导航（倒序）
 const years = [...new Set(allMoments.map((m) => new Date(m.data.published).getFullYear()))].sort((a, b) => b - a);
