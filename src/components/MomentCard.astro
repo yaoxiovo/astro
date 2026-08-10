@@ -164,7 +164,7 @@ const { Content } = await moment.render();
         <div class="flex flex-col gap-3 mb-3 max-w-[400px] w-full">
           {processedVideos.map((vid) => (
             <div class="relative w-full rounded-md overflow-hidden bg-black/5 dark:bg-white/5 aspect-video border border-black/5 dark:border-white/5 shadow-sm">
-              <video src={vid} controls playsinline preload="none" class="w-full h-full object-contain rounded-md" />
+              <video src={vid} controls playsinline preload="auto" class="w-full h-full object-contain rounded-md" />
             </div>
           ))}
         </div>
