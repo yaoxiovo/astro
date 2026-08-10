@@ -50,26 +50,28 @@ const excerptText = (moment.body || '')
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // 链接 -> 文字
     .replace(/[#>*_`~|-]/g, ' ')             // Markdown 符号 -> 空格
     .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 200);
+    .trim();
 
-// OG 分享图：取该动态第一张图片的原始 URL（Layout 会自动补全域名；无图时回退站点默认图）
-const ogImage = (() => {
-    const imgs = moment.data.images || [];
-    if (!imgs.length) return undefined;
+// 图片 URL 解析：把动态图片统一补全为完整 raw URL（日期目录自动推导）
+const resolveImageUrl = (img) => {
+    if (!img) return undefined;
     const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;
-    let img = imgs[0];
-    if (img.startsWith(rawUrlPrefix)) img = img.substring(rawUrlPrefix.length);
-    else if (img.startsWith(webpUrlPrefix)) img = img.substring(webpUrlPrefix.length);
-    else if (img.startsWith('/astro/raw/')) img = img.substring('/astro/raw/'.length);
-    else if (img.startsWith('/astro/webp/')) img = img.substring('/astro/webp/'.length);
-    if (img.startsWith('/')) img = img.substring(1);
+    let name = img;
+    if (name.startsWith(rawUrlPrefix)) name = name.substring(rawUrlPrefix.length);
+    else if (name.startsWith(webpUrlPrefix)) name = name.substring(webpUrlPrefix.length);
+    else if (name.startsWith('/astro/raw/')) name = name.substring('/astro/raw/'.length);
+    else if (name.startsWith('/astro/webp/')) name = name.substring('/astro/webp/'.length);
+    if (name.startsWith('/')) name = name.substring(1);
     const dateStr = new Date(moment.data.published).toISOString().slice(0, 10);
-    const match = img.match(/^(\d{4}-\d{2}-\d{2})\/(.+)$/);
+    const match = name.match(/^(\d{4}-\d{2}-\d{2})\/(.+)$/);
     const folder = match ? match[1] : dateStr;
-    const filename = match ? match[2] : img;
+    const filename = match ? match[2] : name;
     return `${rawUrlPrefix}/${folder}/${filename}`;
-})();
+};
+// 海报/OG 共用的完整图片列表
+const posterImages = (moment.data.images || []).map(resolveImageUrl).filter(Boolean);
+// OG 分享图：取第一张（Layout 自动补全域名；无图时回退站点默认图）
+const ogImage = posterImages[0];
 ---
 
 <MainGridLayout
@@ -91,6 +93,7 @@ const ogImage = (() => {
                     title={`${authorName} 的动态`}
                     excerpt={excerptText || "查看详情"}
                     author={authorName}
+                    images={posterImages}
                 />
             </div>
         </div>
