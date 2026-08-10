@@ -46,6 +46,92 @@ export function extractMomentTags(body = "") {
 	return [...new Set(matches.map((t) => t.slice(1)))];
 }
 
+/**
+ * 朋友圈统计（统计页与 /api/moments/stats.json 共用，保证数据口径一致）
+ * 输入：getSortedMoments() 的结果（已过滤时间胶囊、已排序）
+ */
+export function computeMomentStats(moments: any[]) {
+	const top = moments.filter((m) => !m.data.replyTo);
+	const replies = moments.length - top.length;
+
+	const texts = top.map((m) => momentToText(m.body));
+	const totalWords = texts.reduce((sum, t) => sum + t.length, 0);
+	const totalImages = top.reduce((sum, m) => sum + (m.data.images || []).length, 0);
+	const totalVideos = top.reduce((sum, m) => sum + (m.data.videos || []).length, 0);
+
+	// 年月分布
+	const monthMap = new Map<string, number>();
+	// 星期分布（0=周日）
+	const weekdayCount = [0, 0, 0, 0, 0, 0, 0];
+	// 年份分布
+	const yearMap = new Map<number, number>();
+	// 标签频率
+	const tagMap = new Map<string, number>();
+	// 最长动态
+	let longest: { slug: string; words: number } | null = null;
+
+	let firstDate: string | null = null;
+	let lastDate: string | null = null;
+
+	for (const m of top) {
+		const d = new Date(m.data.published);
+		if (Number.isNaN(d.getTime())) continue;
+
+		const iso = d.toISOString();
+		if (!firstDate || iso < firstDate) firstDate = iso;
+		if (!lastDate || iso > lastDate) lastDate = iso;
+
+		const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+		monthMap.set(monthKey, (monthMap.get(monthKey) || 0) + 1);
+		weekdayCount[d.getDay()] += 1;
+		yearMap.set(d.getFullYear(), (yearMap.get(d.getFullYear()) || 0) + 1);
+
+		extractMomentTags(m.body).forEach((t) => tagMap.set(t, (tagMap.get(t) || 0) + 1));
+
+		const words = momentToText(m.body).length;
+		if (!longest || words > longest.words) {
+			longest = { slug: stripMomentId(m.id), words };
+		}
+	}
+
+	const months = [...monthMap.entries()]
+		.map(([month, count]) => ({ month, count }))
+		.sort((a, b) => (a.month < b.month ? 1 : -1));
+
+	const years = [...yearMap.entries()]
+		.map(([year, count]) => ({ year, count }))
+		.sort((a, b) => b.year - a.year);
+
+	const tags = [...tagMap.entries()]
+		.map(([tag, count]) => ({ tag, count }))
+		.sort((a, b) => b.count - a.count)
+		.slice(0, 20);
+
+	return {
+		total: top.length,
+		replies,
+		totalWords,
+		avgWords: top.length ? Math.round(totalWords / top.length) : 0,
+		totalImages,
+		totalVideos,
+		firstDate,
+		lastDate,
+		years,
+		months,
+		weekdays: [
+			{ day: 0, label: "周日", count: weekdayCount[0] },
+			{ day: 1, label: "周一", count: weekdayCount[1] },
+			{ day: 2, label: "周二", count: weekdayCount[2] },
+			{ day: 3, label: "周三", count: weekdayCount[3] },
+			{ day: 4, label: "周四", count: weekdayCount[4] },
+			{ day: 5, label: "周五", count: weekdayCount[5] },
+			{ day: 6, label: "周六", count: weekdayCount[6] },
+		],
+		tags,
+		longest,
+	};
+}
+
 export async function getSortedPosts() {
 	const allBlogPosts = await getCollection("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;

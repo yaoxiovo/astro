@@ -2,11 +2,13 @@
 import { getSortedMoments, momentToText, extractMomentTags, stripMomentId } from "@/utils/content-utils";
 import { Icon } from "astro-icon/components";
 
-// 最新 3 条顶层动态（胶囊未到期自动被 getSortedMoments 过滤）
-const moments = (await getSortedMoments()).filter((m) => !m.data.replyTo).slice(0, 3);
+// 最新 3 条顶层动态（跳过置顶与回复，胶囊未到期自动被 getSortedMoments 过滤）
+const moments = (await getSortedMoments())
+	.filter((m) => !m.data.replyTo && !m.data.pinned)
+	.slice(0, 3);
 ---
 
-<div class="card-base p-5 relative w-full mt-6">
+<div class="card-base p-5 relative w-full mt-6 mb-6">
     <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2 font-bold text-[var(--primary)]">
             <Icon name="material-symbols:forum-rounded" class="text-xl" />

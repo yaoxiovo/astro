@@ -124,20 +124,13 @@ const { trackViews = true } = Astro.props;
     });
   }
 
-  // ---------- 1. 分享按钮（复制链接） ----------
+  // ---------- 1. 分享按钮（Web Share API 优先，降级复制链接） ----------
   function initShareButtons(root) {
     root.querySelectorAll('.moment-share-btn').forEach((btn) => {
       if (btn.dataset.shareInitialized) return;
       btn.dataset.shareInitialized = 'true';
 
-      btn.addEventListener('click', async () => {
-        const url = window.location.origin + '/moment/' + btn.dataset.momentId + '/';
-        try {
-          await navigator.clipboard.writeText(url);
-        } catch (e) {
-          console.warn('复制链接失败', e);
-          return;
-        }
+      const flash = () => {
         const icon = btn.querySelector('svg');
         if (icon) icon.style.transform = 'scale(1.2)';
         btn.classList.add('text-green-500');
@@ -145,6 +138,30 @@ const { trackViews = true } = Astro.props;
           if (icon) icon.style.transform = 'scale(1)';
           btn.classList.remove('text-green-500');
         }, 1000);
+      };
+
+      btn.addEventListener('click', async () => {
+        const url = window.location.origin + '/moment/' + btn.dataset.momentId + '/';
+        const text = document.querySelector('meta[name="description"]')?.content || document.title || '朋友圈动态';
+
+        // 移动端优先调起系统分享面板（微信/QQ/系统分享）
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: document.title || '朋友圈', text, url });
+            flash();
+            return;
+          } catch (e) {
+            if (e && e.name === 'AbortError') return; // 用户取消分享，静默退出
+            // 其他错误降级到复制链接
+          }
+        }
+
+        try {
+          await navigator.clipboard.writeText(url);
+          flash();
+        } catch (e) {
+          console.warn('复制链接失败', e);
+        }
       });
     });
   }
@@ -486,6 +503,41 @@ const { trackViews = true } = Astro.props;
     initReadMore(root);
   }
 
+  // ---------- 新动态小红点（localStorage 标记已读） ----------
+  function initNewBadge() {
+    const badge = document.getElementById('moment-new-badge');
+    if (!badge || badge.dataset.badgeInitialized) return;
+    badge.dataset.badgeInitialized = 'true';
+
+    const KEY = 'moments_last_visit';
+    const latest = Date.parse(badge.dataset.latest || '');
+    if (Number.isNaN(latest)) return;
+
+    let lastVisit = 0;
+    try {
+      lastVisit = parseInt(localStorage.getItem(KEY) || '0', 10);
+    } catch (e) {
+      return; // 隐私模式等 localStorage 不可用
+    }
+
+    if (!lastVisit) {
+      // 首次访问：记录基线，不打扰
+      try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+      return;
+    }
+
+    if (latest > lastVisit) {
+      badge.classList.remove('hidden');
+      badge.style.display = 'flex';
+    }
+
+    badge.addEventListener('click', () => {
+      try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+      badge.classList.add('hidden');
+      badge.style.display = 'none';
+    });
+  }
+
   function initAll() {
     processMomentDOM(document);
     initLikeButtons(document);
@@ -495,6 +547,7 @@ const { trackViews = true } = Astro.props;
     initRandomButton();
     initMemory();
     initSearch();
+    initNewBadge();
     loadMomentStats();
 
     // 每 60s 刷新相对时间，避免停留页面时时间显示过期

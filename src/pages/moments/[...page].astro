@@ -19,6 +19,11 @@ export async function getStaticPaths({ paginate }) {
     // 收集年份供「年度回顾」入口使用（倒序，第一个为最新年份）
     const allYears = [...new Set(topLevelMoments.map((m) => new Date(m.data.published).getFullYear()))].sort((a, b) => b - a);
 
+    // 最新一条动态的发布时间（供「新动态小红点」判断）
+    const latestPublished = topLevelMoments.length > 0
+        ? new Date(topLevelMoments[0].data.published).toISOString()
+        : "";
+
     // getSortedMoments 已按「置顶优先 + 时间倒序」排序
     const sortedMoments = topLevelMoments;
 
@@ -39,11 +44,11 @@ export async function getStaticPaths({ paginate }) {
     // Return a paginated collection，注入额外 props 供模板消费
     return paginate(sortedMoments, { pageSize: 10 }).map((entry) => ({
         ...entry,
-        props: { ...entry.props, allSlugs, allYears, memoryMap },
+        props: { ...entry.props, allSlugs, allYears, memoryMap, latestPublished },
     }));
 }
 
-const { page, allSlugs, allYears, memoryMap } = Astro.props as any;
+const { page, allSlugs, allYears, memoryMap, latestPublished } = Astro.props as any;
 ---
 
 <MainGridLayout title="朋友圈" description="我的生活瞬间与絮语" noindex>
@@ -75,6 +80,22 @@ const { page, allSlugs, allYears, memoryMap } = Astro.props as any;
                 >
                     🗺️
                 </a>
+                <a
+                    href={`/moments/archive/`}
+                    title="朋友圈归档"
+                    class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
+                    style="line-height: 1"
+                >
+                    🗓️
+                </a>
+                <a
+                    href={`/moments/stats/`}
+                    title="朋友圈统计"
+                    class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
+                    style="line-height: 1"
+                >
+                    📈
+                </a>
                 {allYears[0] && (
                     <a
                         href={`/moments/yearly/${allYears[0]}/`}
@@ -97,6 +118,18 @@ const { page, allSlugs, allYears, memoryMap } = Astro.props as any;
             </div>
         </div>
     </div>
+
+    <!-- 新动态小红点（仅第一页） -->
+    {page.currentPage === 1 && (
+        <button
+            id="moment-new-badge"
+            data-latest={latestPublished}
+            class="hidden card-base px-6 py-3 relative w-full mt-4 text-sm text-[var(--primary)] items-center gap-2"
+            style="display: none"
+        >
+            <span>🔴</span> 有新动态，点此标记已读
+        </button>
+    )}
 
     <!-- 那年今日 -->
     <div

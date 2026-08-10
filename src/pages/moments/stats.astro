@@ -1,0 +1,146 @@
+---
+import MainGridLayout from '../../layouts/MainGridLayout.astro';
+import MomentsClient from '../../components/MomentsClient.astro';
+import { getSortedMoments, computeMomentStats } from '../../utils/content-utils';
+
+const allMoments = await getSortedMoments();
+const stats = computeMomentStats(allMoments);
+
+const maxMonthCount = Math.max(1, ...stats.months.map((m) => m.count));
+const maxTagCount = Math.max(1, ...stats.tags.map((t) => t.count));
+const maxWeekdayCount = Math.max(1, ...stats.weekdays.map((w) => w.count));
+
+const fmtDate = (iso: string | null) =>
+    iso ? new Date(iso).toISOString().slice(0, 10) : '—';
+---
+
+<MainGridLayout title="朋友圈统计" description="朋友圈数据统计" noindex>
+    <div class="card-base z-10 px-9 py-6 relative w-full">
+        <div class="flex items-center justify-between">
+            <div class="text-3xl font-bold text-[var(--primary)]">朋友圈统计 (Stats)</div>
+            <div class="text-sm text-[var(--text-color-light)]">
+                {fmtDate(stats.firstDate)} → {fmtDate(stats.lastDate)}
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="card-base px-6 py-5 relative">
+            <div class="text-xs text-[var(--text-color-light)]">动态总数</div>
+            <div class="text-3xl font-bold text-[var(--primary)] mt-1 tabular-nums">{stats.total}</div>
+        </div>
+        <div class="card-base px-6 py-5 relative">
+            <div class="text-xs text-[var(--text-color-light)]">楼中楼回复</div>
+            <div class="text-3xl font-bold text-[var(--primary)] mt-1 tabular-nums">{stats.replies}</div>
+        </div>
+        <div class="card-base px-6 py-5 relative">
+            <div class="text-xs text-[var(--text-color-light)]">累计字数</div>
+            <div class="text-3xl font-bold text-[var(--primary)] mt-1 tabular-nums">{stats.totalWords}</div>
+        </div>
+        <div class="card-base px-6 py-5 relative">
+            <div class="text-xs text-[var(--text-color-light)]">平均每条约</div>
+            <div class="text-3xl font-bold text-[var(--primary)] mt-1 tabular-nums">{stats.avgWords}</div>
+        </div>
+        <div class="card-base px-6 py-5 relative">
+            <div class="text-xs text-[var(--text-color-light)]">图片数量</div>
+            <div class="text-3xl font-bold text-[var(--primary)] mt-1 tabular-nums">{stats.totalImages}</div>
+        </div>
+        <div class="card-base px-6 py-5 relative">
+            <div class="text-xs text-[var(--text-color-light)]">视频数量</div>
+            <div class="text-3xl font-bold text-[var(--primary)] mt-1 tabular-nums">{stats.totalVideos}</div>
+        </div>
+    </div>
+
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- 月度分布 -->
+        <div class="card-base px-6 py-5 relative">
+            <div class="font-bold text-[var(--primary)] mb-4">📅 月度发布分布</div>
+            {stats.months.length === 0 && <div class="text-sm text-[var(--text-color-light)]">暂无数据</div>}
+            <div class="flex flex-col gap-2.5">
+                {stats.months.map((m) => (
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="w-16 shrink-0 text-[var(--text-color-light)] tabular-nums">{m.month}</span>
+                        <div class="flex-1 h-2.5 rounded-full bg-black/5 dark:bg-white/5 overflow-hidden">
+                            <div
+                                class="h-full rounded-full bg-[var(--primary)]/70"
+                                style={`width: ${Math.round((m.count / maxMonthCount) * 100)}%`}
+                            ></div>
+                        </div>
+                        <span class="w-8 text-right text-[var(--text-color)] tabular-nums">{m.count}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        <!-- 星期分布 -->
+        <div class="card-base px-6 py-5 relative">
+            <div class="font-bold text-[var(--primary)] mb-4">🗓️ 星期发布分布</div>
+            <div class="flex flex-col gap-2.5">
+                {stats.weekdays.map((w) => (
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="w-12 shrink-0 text-[var(--text-color-light)]">{w.label}</span>
+                        <div class="flex-1 h-2.5 rounded-full bg-black/5 dark:bg-white/5 overflow-hidden">
+                            <div
+                                class="h-full rounded-full bg-[var(--primary)]/70"
+                                style={`width: ${Math.round((w.count / maxWeekdayCount) * 100)}%`}
+                            ></div>
+                        </div>
+                        <span class="w-8 text-right text-[var(--text-color)] tabular-nums">{w.count}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- 年度分布 -->
+        <div class="card-base px-6 py-5 relative">
+            <div class="font-bold text-[var(--primary)] mb-4">🏷️ 年度分布</div>
+            <div class="flex flex-wrap gap-2">
+                {stats.years.map((y) => (
+                    <a
+                        href={`/moments/yearly/${y.year}/`}
+                        class="px-3 py-1.5 rounded-full text-sm bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 transition"
+                    >
+                        {y.year} · {y.count} 条
+                    </a>
+                ))}
+            </div>
+        </div>
+
+        <!-- 标签 TOP -->
+        <div class="card-base px-6 py-5 relative">
+            <div class="font-bold text-[var(--primary)] mb-4"># 热门标签 TOP 10</div>
+            {stats.tags.length === 0 && <div class="text-sm text-[var(--text-color-light)]">暂无标签</div>}
+            <div class="flex flex-col gap-2.5">
+                {stats.tags.slice(0, 10).map((t) => (
+                    <div class="flex items-center gap-3 text-sm">
+                        <a href={`/moments/tag/${encodeURIComponent(t.tag)}/`} class="w-28 shrink-0 truncate text-[var(--primary)] hover:underline">
+                            #{t.tag}
+                        </a>
+                        <div class="flex-1 h-2.5 rounded-full bg-black/5 dark:bg-white/5 overflow-hidden">
+                            <div
+                                class="h-full rounded-full bg-[var(--primary)]/70"
+                                style={`width: ${Math.round((t.count / maxTagCount) * 100)}%`}
+                            ></div>
+                        </div>
+                        <span class="w-8 text-right text-[var(--text-color)] tabular-nums">{t.count}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 card-base px-6 py-5 relative">
+        <div class="font-bold text-[var(--primary)] mb-2">✍️ 最长的一篇</div>
+        {stats.longest ? (
+            <a href={`/moment/${stats.longest.slug}/`} class="text-sm text-[var(--text-color)] hover:text-[var(--primary)] transition">
+                {stats.longest.slug}（{stats.longest.words} 字）→
+            </a>
+        ) : (
+            <div class="text-sm text-[var(--text-color-light)]">暂无数据</div>
+        )}
+    </div>
+
+<MomentsClient />
+</MainGridLayout>

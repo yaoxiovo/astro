@@ -17,6 +17,7 @@ export async function getStaticPaths() {
 }
 
 const { moment } = Astro.props;
+const slug = stripMomentId(moment.id);
 const allMoments = await getSortedMoments();
 
 // Find thread: Parent -> Current -> Children
@@ -113,6 +114,12 @@ const ogImage = posterImages[0];
                     excerpt={excerptText || "查看详情"}
                     author={authorName}
                 />
+                <button
+                    class="moment-share-btn p-2 rounded-full hover:bg-[var(--primary)]/10 text-[var(--primary)] transition shrink-0 text-xl"
+                    data-moment-id={slug}
+                    title="分享这条动态"
+                    aria-label="分享"
+                >📤</button>
             </div>
         </div>
 
