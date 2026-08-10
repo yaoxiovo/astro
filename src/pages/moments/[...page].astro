@@ -56,56 +56,6 @@ const { page, allSlugs, allYears, memoryMap, latestPublished } = Astro.props as 
         <div class="flex items-center justify-between">
             <div class="text-3xl font-bold text-[var(--primary)]">朋友圈 (Moments)</div>
             <div class="flex items-center gap-3">
-                <a
-                    href={`/moments/gallery/`}
-                    title="图片墙"
-                    class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
-                    style="line-height: 1"
-                >
-                    🖼️
-                </a>
-                <a
-                    href={`/moments/hot/`}
-                    title="热门动态"
-                    class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
-                    style="line-height: 1"
-                >
-                    ❤️
-                </a>
-                <a
-                    href={`/moments/map/`}
-                    title="足迹地图"
-                    class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
-                    style="line-height: 1"
-                >
-                    🗺️
-                </a>
-                <a
-                    href={`/moments/archive/`}
-                    title="朋友圈归档"
-                    class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
-                    style="line-height: 1"
-                >
-                    🗓️
-                </a>
-                <a
-                    href={`/moments/stats/`}
-                    title="朋友圈统计"
-                    class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
-                    style="line-height: 1"
-                >
-                    📈
-                </a>
-                {allYears[0] && (
-                    <a
-                        href={`/moments/yearly/${allYears[0]}/`}
-                        title="年度回顾"
-                        class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
-                        style="line-height: 1"
-                    >
-                        📊
-                    </a>
-                )}
                 <button
                     id="random-moment-btn"
                     data-slugs={JSON.stringify(allSlugs)}
@@ -115,6 +65,37 @@ const { page, allSlugs, allYears, memoryMap, latestPublished } = Astro.props as 
                 >
                     🎲
                 </button>
+                <details id="moments-nav-more" class="relative">
+                    <summary
+                        title="更多功能"
+                        class="text-2xl cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden"
+                        style="line-height: 1"
+                    >
+                        ⋯
+                    </summary>
+                    <div class="absolute right-0 top-full mt-2 card-base z-50 w-44 px-2 py-2 flex flex-col gap-0.5 shadow-lg">
+                        <a href="/moments/gallery/" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm hover:bg-gray-500/10 transition-colors">
+                            🖼️ 图片墙
+                        </a>
+                        <a href="/moments/hot/" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm hover:bg-gray-500/10 transition-colors">
+                            ❤️ 热门动态
+                        </a>
+                        <a href="/moments/map/" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm hover:bg-gray-500/10 transition-colors">
+                            🗺️ 足迹地图
+                        </a>
+                        <a href="/moments/archive/" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm hover:bg-gray-500/10 transition-colors">
+                            🗓️ 朋友圈归档
+                        </a>
+                        <a href="/moments/stats/" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm hover:bg-gray-500/10 transition-colors">
+                            📈 朋友圈统计
+                        </a>
+                        {allYears[0] && (
+                            <a href={`/moments/yearly/${allYears[0]}/`} class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm hover:bg-gray-500/10 transition-colors">
+                                📊 年度回顾
+                            </a>
+                        )}
+                    </div>
+                </details>
             </div>
         </div>
     </div>

@@ -538,6 +538,18 @@ const { trackViews = true } = Astro.props;
     });
   }
 
+  // 更多菜单：点击外部区域自动关闭
+  function initMoreMenu() {
+    if (window.__moreMenuBound) return;
+    window.__moreMenuBound = true;
+    document.addEventListener('click', (e) => {
+      const details = document.getElementById('moments-nav-more');
+      if (details && details.open && !details.contains(e.target)) {
+        details.open = false;
+      }
+    });
+  }
+
   function initAll() {
     processMomentDOM(document);
     initLikeButtons(document);
@@ -548,6 +560,7 @@ const { trackViews = true } = Astro.props;
     initMemory();
     initSearch();
     initNewBadge();
+    initMoreMenu();
     loadMomentStats();
 
     // 每 60s 刷新相对时间，避免停留页面时时间显示过期
