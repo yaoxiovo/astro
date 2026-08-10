@@ -5,11 +5,47 @@ import MomentsClient from '../../components/MomentsClient.astro';
 import Pagination from '../../components/control/Pagination.astro';
 import { getCollection } from 'astro:content';
 
+// 模块级变量：getStaticPaths 填充，模板层消费（Astro 不允许在 getStaticPaths 页面
+// 的 frontmatter 中再次调用 getCollection，所以用这种方式传递数据）
+let allSlugs: string[] = [];
+let allYears: number[] = [];
+let memoryMap: Record<string, { slug: string; date: string; text: string }[]> = {};
+
+// Markdown -> 纯文本摘要（用于「那年今日」横幅预览）
+const toText = (body: string, max = 40) =>
+    (body || '')
+        .replace(/```[\s\S]*?```/g, ' ')
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+        .replace(/[#>*_`~|-]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, max);
+
 export async function getStaticPaths({ paginate }) {
     const allMoments = await getCollection('moments');
     
     // Filter out replies, only show top-level moments on homepage
     const topLevelMoments = allMoments.filter((moment) => !moment.data.replyTo);
+
+    // 收集所有 slug 供「随机一条」使用
+    allSlugs = topLevelMoments.map((m) => m.id.replace(/\.(md|mdx)$/, ''));
+
+    // 收集年份供「年度回顾」入口使用（倒序，第一个为最新年份）
+    allYears = [...new Set(topLevelMoments.map((m) => new Date(m.data.published).getFullYear()))].sort((a, b) => b - a);
+
+    // 构建「那年今日」索引：MM-DD -> [{ slug, date, text }]（仅顶层动态）
+    for (const m of allMoments) {
+        if (m.data.replyTo) continue;
+        const d = new Date(m.data.published);
+        if (Number.isNaN(d.getTime())) continue;
+        const mmdd = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        (memoryMap[mmdd] ??= []).push({
+            slug: m.id.replace(/\.(md|mdx)$/, ''),
+            date: `${d.getFullYear()}-${mmdd}`,
+            text: toText(m.body),
+        });
+    }
 
     // Sort by pinned (true first), then by date (newest first)
     const sortedMoments = topLevelMoments.sort((a, b) => {
@@ -26,7 +62,67 @@ const { page } = Astro.props;
 
 <MainGridLayout title="朋友圈" description="我的生活瞬间与絮语" noindex>
 <div class="card-base z-10 px-9 py-6 relative w-full">
-        <div class="text-3xl font-bold text-[var(--primary)]">朋友圈 (Moments)</div>
+        <div class="flex items-center justify-between">
+            <div class="text-3xl font-bold text-[var(--primary)]">朋友圈 (Moments)</div>
+            <div class="flex items-center gap-3">
+                <a
+                    href={`/moments/gallery/`}
+                    title="图片墙"
+                    class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
+                    style="line-height: 1"
+                >
+                    🖼️
+                </a>
+                <a
+                    href={`/moments/hot/`}
+                    title="热门动态"
+                    class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
+                    style="line-height: 1"
+                >
+                    ❤️
+                </a>
+                <a
+                    href={`/moments/map/`}
+                    title="足迹地图"
+                    class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
+                    style="line-height: 1"
+                >
+                    🗺️
+                </a>
+                {allYears[0] && (
+                    <a
+                        href={`/moments/yearly/${allYears[0]}/`}
+                        title="年度回顾"
+                        class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
+                        style="line-height: 1"
+                    >
+                        📊
+                    </a>
+                )}
+                <button
+                    id="random-moment-btn"
+                    data-slugs={JSON.stringify(allSlugs)}
+                    title="随机一条动态"
+                    class="text-2xl hover:scale-125 transition-transform cursor-pointer select-none"
+                    style="line-height: 1"
+                >
+                    🎲
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 那年今日 -->
+    <div
+        id="memory-moment"
+        class="card-base px-6 py-4 relative w-full hidden"
+        data-memory-map={JSON.stringify(memoryMap)}
+    >
+        <div class="flex items-center gap-2 font-bold text-[var(--primary)]">
+            <span class="text-xl">📅</span> 那年今日
+            <span class="text-xs font-normal text-[var(--text-color-light)]">翻开尘封的记忆</span>
+        </div>
+        <div id="memory-list" class="mt-3 flex flex-col gap-1.5"></div>
     </div>
     
     <div class="mt-8">

@@ -1,0 +1,110 @@
+---
+// 朋友圈图片墙：聚合所有顶层动态的图片，CSS 多列瀑布流 + fancybox 画廊
+import MainGridLayout from '../../../layouts/MainGridLayout.astro';
+import { momentsImageConfig } from '../../../config';
+import { getCollection } from 'astro:content';
+
+const allMoments = await getCollection('moments');
+
+// 与 MomentCard 保持一致的智能图片 URL 转换（内联自包含，避免跨文件依赖）
+const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;
+const toThumb = (img: string, dateStr: string) => {
+  // 外部绝对路径（非本 Moments 前缀目录）原样返回
+  if ((img.startsWith('http://') || img.startsWith('https://')) && !img.startsWith(rawUrlPrefix) && !img.startsWith(webpUrlPrefix)) {
+    return { original: img, thumbnail: img };
+  }
+  let cleanPath = img;
+  if (img.startsWith(rawUrlPrefix)) cleanPath = img.substring(rawUrlPrefix.length);
+  else if (img.startsWith(webpUrlPrefix)) cleanPath = img.substring(webpUrlPrefix.length);
+  else if (img.startsWith('/astro/raw/')) cleanPath = img.substring('/astro/raw/'.length);
+  else if (img.startsWith('/astro/webp/')) cleanPath = img.substring('/astro/webp/'.length);
+  if (cleanPath.startsWith('/')) cleanPath = cleanPath.substring(1);
+
+  const match = cleanPath.match(/^(\d{4}-\d{2}-\d{2})\/(.+)$/);
+  const folder = match ? match[1] : dateStr;
+  const filename = match ? match[2] : cleanPath;
+  return {
+    original: `${rawUrlPrefix}/${folder}/${filename}`,
+    thumbnail: `${webpUrlPrefix}/${folder}/${filename.replace(/\.[^.]+$/, '.webp')}`,
+  };
+};
+
+// Markdown -> 纯文本摘要
+const toText = (body: string, max = 60) =>
+  (body || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_`~|-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+
+// 聚合所有顶层动态的图片（按发布时间倒序）
+const items = allMoments
+  .filter((m) => !m.data.replyTo)
+  .sort((a, b) => new Date(b.data.published).getTime() - new Date(a.data.published).getTime())
+  .flatMap((m) => {
+    const dateStr = new Date(m.data.published).toISOString().slice(0, 10);
+    const slug = m.id.replace(/\.(md|mdx)$/, '');
+    const text = toText(m.body);
+    return (m.data.images || []).map((img, idx) => ({
+      ...toThumb(img, dateStr),
+      slug,
+      date: dateStr,
+      text,
+      idx,
+    }));
+  });
+
+const totalImages = items.length;
+const momentCount = new Set(items.map((i) => i.slug)).size;
+---
+
+<MainGridLayout title="朋友圈图片墙" description={`${totalImages} 张图片 · ${momentCount} 条动态`} noindex>
+  <!-- 标题卡片 -->
+  <div class="card-base z-10 px-9 py-6 relative w-full">
+    <div class="flex items-center justify-between">
+      <div class="text-3xl font-bold text-[var(--primary)]">图片墙 (Gallery)</div>
+      <div class="text-sm text-[var(--text-color-light)]">
+        {totalImages} 张图片 · {momentCount} 条动态
+      </div>
+    </div>
+  </div>
+
+  <!-- 瀑布流 -->
+  <div class="mt-6">
+    {items.length === 0 ? (
+      <div class="card-base px-9 py-10 text-center text-[var(--text-color-light)]">
+        朋友圈还没有图片呢，快去发一条带照片的动态吧~
+      </div>
+    ) : (
+      <div class="columns-2 md:columns-3 lg:columns-4 gap-3 [column-fill:_balance]">
+        {items.map((item, i) => (
+          <a
+            href={item.original}
+            data-fancybox="moments-gallery"
+            data-caption={`${item.date} · ${item.text || '（无文字内容）'}`}
+            class="group relative block w-full mb-3 rounded-lg overflow-hidden cursor-zoom-in break-inside-avoid"
+          >
+            <img
+              src={item.thumbnail}
+              alt={`${item.date} 动态图片 ${item.idx + 1}`}
+              loading="lazy"
+              class="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <!-- 悬浮角标：日期 + 摘要 -->
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+              <div class="p-3 w-full text-white">
+                <div class="text-xs font-bold mb-0.5">{item.date}</div>
+                <div class="text-[11px] text-white/80 line-clamp-2 leading-snug">
+                  {item.text || '（无文字内容）'}
+                </div>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</MainGridLayout>

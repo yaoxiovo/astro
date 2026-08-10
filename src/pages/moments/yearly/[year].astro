@@ -1,0 +1,143 @@
+---
+import MainGridLayout from '../../../layouts/MainGridLayout.astro';
+import MomentCard from '../../../components/MomentCard.astro';
+import MomentsClient from '../../../components/MomentsClient.astro';
+import { getCollection } from 'astro:content';
+
+// 注意：getStaticPaths 必须完全自包含（Astro 5.7 构建时独立提取执行，
+// 模块顶层 const/函数不可见），这里只用 import 依赖 + 内联逻辑
+export async function getStaticPaths() {
+    const all = await getCollection('moments');
+    const years = [...new Set(all.map((m) => new Date(m.data.published).getFullYear()))].sort((a, b) => b - a);
+    return years.map((year) => ({ params: { year: String(year) }, props: { year } }));
+}
+
+const { year } = Astro.props;
+const allMoments = await getCollection('moments');
+
+// 年份导航（倒序）
+const years = [...new Set(allMoments.map((m) => new Date(m.data.published).getFullYear()))].sort((a, b) => b - a);
+
+// 该年顶层动态（排除楼中楼回复），按时间倒序
+const moments = allMoments
+    .filter((m) => !m.data.replyTo && new Date(m.data.published).getFullYear() === year)
+    .sort((a, b) => new Date(b.data.published).getTime() - new Date(a.data.published).getTime());
+
+// ---------- 统计 ----------
+const total = moments.length;
+const imageCount = moments.reduce((s, m) => s + (m.data.images?.length ?? 0), 0);
+const videoCount = moments.reduce((s, m) => s + (m.data.videos?.length ?? 0), 0);
+
+// 月度分布 + 标签统计（正则与 MomentsClient 保持一致，跳过代码块）
+const monthCounts: Record<number, number> = {};
+const tagCounts: Record<string, number> = {};
+const TAG_RE = /(?:^|\s)#([\p{L}\p{N}_-]+)/gu;
+for (const m of moments) {
+    const month = new Date(m.data.published).getMonth() + 1;
+    monthCounts[month] = (monthCounts[month] ?? 0) + 1;
+    const bodyText = m.body.replace(/```[\s\S]*?```/g, ' ');
+    for (const match of bodyText.matchAll(TAG_RE)) {
+        const tag = match[1];
+        tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+    }
+}
+const topTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+const activeMonth = Object.entries(monthCounts).sort((a, b) => b[1] - a[1])[0];
+
+// 按月分组（1-12 月，只保留有动态的月份）
+const monthGroups: { month: number; items: typeof moments }[] = [];
+for (let i = 0; i < 12; i++) {
+    const items = moments.filter((m) => new Date(m.data.published).getMonth() === i);
+    if (items.length) monthGroups.push({ month: i + 1, items });
+}
+---
+
+<MainGridLayout title={`${year} 年度回顾`} description={`${year} 年朋友圈年度回顾`} noindex>
+    <!-- 标题卡片 -->
+    <div class="card-base z-10 px-9 py-6 relative w-full">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <div class="text-3xl font-bold text-[var(--primary)]">📊 {year} 年度回顾</div>
+            {years.length > 1 && (
+                <div class="flex gap-1.5 flex-wrap">
+                    {years.map((y) => (
+                        <a
+                            href={`/moments/yearly/${y}/`}
+                            class:list={[
+                                'px-2.5 py-1 rounded-md text-sm transition-opacity',
+                                y === year
+                                    ? 'bg-[var(--primary)] text-white font-bold'
+                                    : 'bg-[var(--card-bg)] hover:opacity-70',
+                            ]}
+                        >
+                            {y}
+                        </a>
+                    ))}
+                </div>
+            )}
+        </div>
+    </div>
+
+    <!-- 统计面板 -->
+    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="card-base px-5 py-4 relative flex flex-col items-center gap-1">
+            <div class="text-2xl font-bold text-[var(--primary)]">{total}</div>
+            <div class="text-xs text-[var(--text-color-light)]">动态总数</div>
+        </div>
+        <div class="card-base px-5 py-4 relative flex flex-col items-center gap-1">
+            <div class="text-2xl font-bold text-[var(--primary)]">{imageCount}</div>
+            <div class="text-xs text-[var(--text-color-light)]">图片总数</div>
+        </div>
+        <div class="card-base px-5 py-4 relative flex flex-col items-center gap-1">
+            <div class="text-2xl font-bold text-[var(--primary)]">{videoCount}</div>
+            <div class="text-xs text-[var(--text-color-light)]">视频总数</div>
+        </div>
+        <div class="card-base px-5 py-4 relative flex flex-col items-center gap-1">
+            <div class="text-2xl font-bold text-[var(--primary)]">
+                {activeMonth ? `${activeMonth[0]} 月` : '-'}
+            </div>
+            <div class="text-xs text-[var(--text-color-light)]">
+                {activeMonth ? `最活跃 · ${activeMonth[1]} 条` : '最活跃月份'}
+            </div>
+        </div>
+    </div>
+
+    <!-- 年度标签 -->
+    {topTags.length > 0 && (
+        <div class="card-base px-6 py-4 mt-3 relative">
+            <div class="font-bold text-[var(--primary)] mb-2">🏷️ 年度标签</div>
+            <div class="flex flex-wrap gap-2">
+                {topTags.map(([tag, count]) => (
+                    <a
+                        href={`/moments/tag/${encodeURIComponent(tag)}/`}
+                        class="px-2.5 py-1 rounded-full text-sm bg-[var(--card-bg)] hover:opacity-70 transition-opacity"
+                    >
+                        #{tag} <span class="text-xs opacity-60">{count}</span>
+                    </a>
+                ))}
+            </div>
+        </div>
+    )}
+
+    <!-- 时间线 -->
+    <div class="mt-8">
+        {monthGroups.map((g) => (
+            <section class="mb-8">
+                <div class="flex items-center gap-3 mb-3">
+                    <span class="text-2xl font-bold text-[var(--primary)]">{g.month} 月</span>
+                    <span class="text-xs text-[var(--text-color-light)]">{g.items.length} 条动态</span>
+                    <div class="flex-1 h-px bg-[var(--text-color-light)] opacity-30"></div>
+                </div>
+                <div class="flex flex-col gap-6">
+                    {g.items.map((m) => <MomentCard moment={m} />)}
+                </div>
+            </section>
+        ))}
+        {moments.length === 0 && (
+            <div class="text-center text-[var(--text-color-light)] py-10">
+                这一年还没有发布过任何动态喵~
+            </div>
+        )}
+    </div>
+
+    <MomentsClient />
+</MainGridLayout>

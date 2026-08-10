@@ -3,7 +3,7 @@ import MainGridLayout from '../../layouts/MainGridLayout.astro';
 import MomentCard from '../../components/MomentCard.astro';
 import MomentsClient from '../../components/MomentsClient.astro';
 import PosterGenerator from '../../components/PosterGenerator.astro';
-import { profileConfig } from '../../config';
+import { profileConfig, momentsImageConfig } from '../../config';
 import { getCollection } from 'astro:content';
 
 // 统一 id 解析：只剥掉内容扩展名，文件名内其他点号原样保留
@@ -52,9 +52,32 @@ const excerptText = (moment.body || '')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 200);
+
+// OG 分享图：取该动态第一张图片的原始 URL（Layout 会自动补全域名；无图时回退站点默认图）
+const ogImage = (() => {
+    const imgs = moment.data.images || [];
+    if (!imgs.length) return undefined;
+    const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;
+    let img = imgs[0];
+    if (img.startsWith(rawUrlPrefix)) img = img.substring(rawUrlPrefix.length);
+    else if (img.startsWith(webpUrlPrefix)) img = img.substring(webpUrlPrefix.length);
+    else if (img.startsWith('/astro/raw/')) img = img.substring('/astro/raw/'.length);
+    else if (img.startsWith('/astro/webp/')) img = img.substring('/astro/webp/'.length);
+    if (img.startsWith('/')) img = img.substring(1);
+    const dateStr = new Date(moment.data.published).toISOString().slice(0, 10);
+    const match = img.match(/^(\d{4}-\d{2}-\d{2})\/(.+)$/);
+    const folder = match ? match[1] : dateStr;
+    const filename = match ? match[2] : img;
+    return `${rawUrlPrefix}/${folder}/${filename}`;
+})();
 ---
 
-<MainGridLayout title="动态详情" description="动态详情" noindex>
+<MainGridLayout
+    title={`${authorName} 的朋友圈`}
+    description={excerptText || `${authorName} 发布于 ${new Date(moment.data.published).toLocaleDateString('zh-CN')} 的动态`}
+    image={ogImage}
+    noindex
+>
 <div class="card-base z-10 px-6 md:px-9 py-6 relative w-full min-h-32">
             <!-- Back button -->
             <div class="flex flex-wrap items-center justify-between gap-4">

@@ -42,6 +42,11 @@ const momentsCollection = defineCollection({
 		source: z.string().optional(),
 		pinned: z.boolean().optional().default(false),
 		replyTo: z.string().optional(),
+		location: z.object({
+			name: z.string(),
+			lat: z.number(),
+			lng: z.number(),
+		}).optional(),
 	}),
 });
 
@@ -69,4 +74,3 @@ export const collections = {
 	moments: momentsCollection,
 	music: musicCollection,
 };
-

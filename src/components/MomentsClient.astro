@@ -317,7 +317,72 @@ const { trackViews = true } = Astro.props;
     infiniteObserver.observe(trigger);
   }
 
-  // ---------- 7. Umami 统计（走全局带缓存 helper，全量数据不滚动归零） ----------
+  // ---------- 7. 随机一条朋友圈 ----------
+  function initRandomButton() {
+    const btn = document.getElementById('random-moment-btn');
+    if (!btn) return;
+    if (btn.dataset.randomInit) return;
+    btn.dataset.randomInit = 'true';
+
+    btn.addEventListener('click', () => {
+      let slugs = [];
+      try {
+        slugs = JSON.parse(btn.dataset.slugs || '[]');
+      } catch (e) {
+        console.warn('随机一条：无法解析 slugs', e);
+        return;
+      }
+      if (!slugs.length) return;
+
+      const slug = slugs[Math.floor(Math.random() * slugs.length)];
+      const url = `/moment/${slug}/`;
+      if (window.swup) window.swup.navigate(url);
+      else window.location.href = url;
+    });
+  }
+
+  // ---------- 8. 那年今日 ----------
+  function initMemory() {
+    const el = document.getElementById('memory-moment');
+    if (!el || el.dataset.memoryInit) return;
+    el.dataset.memoryInit = 'true';
+
+    let map = {};
+    try {
+      map = JSON.parse(el.dataset.memoryMap || '{}');
+    } catch (e) {
+      console.warn('那年今日：无法解析记忆索引', e);
+      return;
+    }
+
+    const now = new Date();
+    const key = `${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const today = `${now.getFullYear()}-${key}`;
+
+    // 命中今天、且排除今天刚发的动态（已经在列表里了）
+    const entries = (map[key] || []).filter((e) => e.date !== today);
+    if (!entries.length) return;
+
+    // 年份越久越靠前？不——最新年份的优先展示，最多 2 条
+    entries.sort((a, b) => b.date.localeCompare(a.date));
+    const items = entries.slice(0, 2).map((e) => {
+      const yearDiff = now.getFullYear() - new Date(e.date).getFullYear();
+      const label = yearDiff <= 1 ? '去年今日' : `${yearDiff} 年前`;
+      const esc = (s) =>
+        String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      return `<a href="/moment/${esc(e.slug)}/" class="group flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--primary)]/10 transition">
+        <span class="shrink-0 text-xs font-bold text-[var(--primary)]">${label}</span>
+        <span class="shrink-0 text-xs text-[var(--text-color-light)] tabular-nums">${esc(e.date)}</span>
+        <span class="flex-1 truncate text-sm text-[var(--text-color)] group-hover:text-[var(--primary)] transition">${esc(e.text) || '（无文字内容）'}</span>
+        <span class="shrink-0 text-[var(--text-color-light)] group-hover:translate-x-0.5 transition">→</span>
+      </a>`;
+    }).join('');
+
+    el.querySelector('#memory-list').innerHTML = items;
+    el.classList.remove('hidden');
+  }
+
+  // ---------- 9. Umami 统计（走全局带缓存 helper，全量数据不滚动归零） ----------
   async function loadMomentStats() {
     if (!umamiConfig.enable) return;
     if (!window.fetchUmamiEvents) return;
@@ -361,6 +426,8 @@ const { trackViews = true } = Astro.props;
     initViewTracking(document);
     initCardClick();
     initInfiniteScroll();
+    initRandomButton();
+    initMemory();
     loadMomentStats();
 
     // 每 60s 刷新相对时间，避免停留页面时时间显示过期

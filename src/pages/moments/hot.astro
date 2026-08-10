@@ -1,0 +1,172 @@
+---
+// 朋友圈热榜：客户端拉取 Umami 全量事件，按「点赞×3 + 浏览×0.1」热度排序
+// 无统计数据时自动降级为按发布时间倒序
+import MainGridLayout from '../../../layouts/MainGridLayout.astro';
+import { momentsImageConfig, umamiConfig } from '../../../config';
+import { getCollection } from 'astro:content';
+
+const allMoments = await getCollection('moments');
+
+const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;
+
+// 智能图片 URL 转换（与 MomentCard 一致）
+const toThumb = (img: string, dateStr: string) => {
+  if ((img.startsWith('http://') || img.startsWith('https://')) && !img.startsWith(rawUrlPrefix) && !img.startsWith(webpUrlPrefix)) {
+    return { original: img, thumbnail: img };
+  }
+  let cleanPath = img;
+  if (img.startsWith(rawUrlPrefix)) cleanPath = img.substring(rawUrlPrefix.length);
+  else if (img.startsWith(webpUrlPrefix)) cleanPath = img.substring(webpUrlPrefix.length);
+  else if (img.startsWith('/astro/raw/')) cleanPath = img.substring('/astro/raw/'.length);
+  else if (img.startsWith('/astro/webp/')) cleanPath = img.substring('/astro/webp/'.length);
+  if (cleanPath.startsWith('/')) cleanPath = cleanPath.substring(1);
+
+  const match = cleanPath.match(/^(\d{4}-\d{2}-\d{2})\/(.+)$/);
+  const folder = match ? match[1] : dateStr;
+  const filename = match ? match[2] : cleanPath;
+  return {
+    original: `${rawUrlPrefix}/${folder}/${filename}`,
+    thumbnail: `${webpUrlPrefix}/${folder}/${filename.replace(/\.[^.]+$/, '.webp')}`,
+  };
+};
+
+const toText = (body: string, max = 80) =>
+  (body || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_`~|-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+
+// 所有顶层动态（按发布时间倒序作为降级顺序）
+const moments = allMoments
+  .filter((m) => !m.data.replyTo)
+  .sort((a, b) => new Date(b.data.published).getTime() - new Date(a.data.published).getTime())
+  .map((m) => {
+    const dateStr = new Date(m.data.published).toISOString().slice(0, 10);
+    const slug = m.id.replace(/\.(md|mdx)$/, '');
+    const images = m.data.images || [];
+    return {
+      slug,
+      date: dateStr,
+      text: toText(m.body),
+      author: m.data.author || '',
+      cover: images.length > 0 ? toThumb(images[0], dateStr).thumbnail : '',
+      videoCount: (m.data.videos || []).length,
+    };
+  });
+
+const hasData = moments.length > 0;
+---
+
+<MainGridLayout title="朋友圈热榜" description="最受欢迎的朋友圈动态" noindex>
+  <script define:vars={{ moments, umamiConfig }} is:inline>
+    (() => {
+      'use strict';
+
+      const container = document.getElementById('hot-list');
+      if (!container) return;
+
+      const TOP_N = 10;
+      const esc = (s) =>
+        String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+      // 默认降级排序：按发布时间倒序（构建时已排好）
+      let ranked = moments.slice(0, TOP_N);
+
+      function render() {
+        if (!ranked.length) {
+          container.innerHTML = '<div class="text-center text-[var(--text-color-light)] py-10">朋友圈还没有动态呢~</div>';
+          return;
+        }
+        container.innerHTML = ranked.map((m, i) => `
+          <a href="/moment/${esc(m.slug)}/" class="group card-base flex items-center gap-4 px-5 py-4 rounded-xl hover:shadow-lg transition-all duration-300">
+            <span class="shrink-0 w-8 text-center text-xl font-black ${i === 0 ? 'text-red-500' : i === 1 ? 'text-orange-400' : i === 2 ? 'text-yellow-500' : 'text-[var(--text-color-light)]'}">${i + 1}</span>
+            ${m.cover ? `<img src="${esc(m.cover)}" alt="" loading="lazy" class="shrink-0 w-14 h-14 rounded-lg object-cover" />` : '<span class="shrink-0 w-14 h-14 rounded-lg bg-black/5 dark:bg-white/5 flex items-center justify-center text-xl">📄</span>'}
+            <span class="flex-1 min-w-0">
+              <span class="block text-sm font-medium text-[var(--text-color)] truncate group-hover:text-[var(--primary)] transition">${esc(m.text) || '（无文字内容）'}</span>
+              <span class="block text-xs text-[var(--text-color-light)] mt-0.5">
+                ${esc(m.date)}${m.videoCount ? ' · 🎬' : ''}${m.author ? ' · ' + esc(m.author) : ''}
+              </span>
+            </span>
+            <span class="shrink-0 flex items-center gap-3 text-xs text-[var(--text-color-light)]">
+              <span class="flex items-center gap-1"><span class="text-red-500">♥</span><span class="hot-likes tabular-nums">-</span></span>
+              <span class="flex items-center gap-1"><span class="text-blue-500">👁</span><span class="hot-views tabular-nums">-</span></span>
+            </span>
+            <span class="shrink-0 text-[var(--text-color-light)] group-hover:translate-x-0.5 transition">→</span>
+          </a>
+        `).join('');
+      }
+
+      async function loadStats() {
+        // 等待全局 helper 就绪（Layout head 中 defer 加载，可能晚于本脚本）
+        for (let i = 0; i < 20 && !window.fetchUmamiEvents; i++) {
+          await new Promise((r) => setTimeout(r, 250));
+        }
+        if (!window.fetchUmamiEvents) return;
+
+        try {
+          const statsData = await window.fetchUmamiEvents(umamiConfig.baseUrl, umamiConfig.shareId, {});
+          const items = Array.isArray(statsData) ? statsData : [];
+
+          const likes = new Map();
+          const views = new Map();
+          items.forEach((item) => {
+            if (!item || typeof item.x !== 'string') return;
+            if (item.x.startsWith('Like_')) likes.set(item.x.slice(5), item.y);
+            else if (item.x.startsWith('View_')) views.set(item.x.slice(5), item.y);
+          });
+
+          // 热度排序：点赞×3 + 浏览×0.1，无任何数据的动态沉底（仍保留在榜尾）
+          ranked = moments
+            .map((m) => ({
+              ...m,
+              likes: likes.get(m.slug) || 0,
+              views: views.get(m.slug) || 0,
+              score: (likes.get(m.slug) || 0) * 3 + (views.get(m.slug) || 0) * 0.1,
+            }))
+            .sort((a, b) => b.score - a.score || b.date.localeCompare(a.date))
+            .slice(0, TOP_N);
+
+          render();
+
+          // 回填计数
+          ranked.forEach((m, i) => {
+            const row = container.children[i];
+            if (!row) return;
+            const likeEl = row.querySelector('.hot-likes');
+            const viewEl = row.querySelector('.hot-views');
+            if (likeEl) likeEl.textContent = m.likes || '';
+            if (viewEl) viewEl.textContent = m.views || '';
+          });
+        } catch (e) {
+          console.error('热榜：获取 Umami 数据失败，降级为时间排序', e);
+        }
+      }
+
+      render();
+      if (umamiConfig.enable) loadStats();
+    })();
+  </script>
+
+  <!-- 标题卡片 -->
+  <div class="card-base z-10 px-9 py-6 relative w-full">
+    <div class="flex items-center justify-between">
+      <div class="text-3xl font-bold text-[var(--primary)]">热门动态 (Hot)</div>
+      <div class="text-sm text-[var(--text-color-light)]">♥ 点赞×3 + 👁 浏览×0.1</div>
+    </div>
+  </div>
+
+  <!-- 榜单 -->
+  <div class="mt-6 flex flex-col gap-3">
+    {hasData ? (
+      <div id="hot-list" class="flex flex-col gap-3"></div>
+    ) : (
+      <div class="card-base px-9 py-10 text-center text-[var(--text-color-light)]">
+        朋友圈还没有动态呢~
+      </div>
+    )}
+  </div>
+</MainGridLayout>

@@ -1,0 +1,127 @@
+---
+// 朋友圈足迹地图：展示所有带 location 字段的动态
+// 使用 Leaflet + OpenStreetMap 免费瓦片（无需 API Key），懒加载 CDN
+import MainGridLayout from '../../../layouts/MainGridLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allMoments = await getCollection('moments');
+
+const toText = (body: string, max = 50) =>
+  (body || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_`~|-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+
+// 收集带位置的动态（按时间倒序）
+const spots = allMoments
+  .filter((m) => !m.data.replyTo && m.data.location)
+  .sort((a, b) => new Date(a.data.published).getTime() - new Date(b.data.published).getTime())
+  .map((m) => ({
+    slug: m.id.replace(/\.(md|mdx)$/, ''),
+    date: new Date(m.data.published).toISOString().slice(0, 10),
+    text: toText(m.body),
+    name: m.data.location!.name,
+    lat: m.data.location!.lat,
+    lng: m.data.location!.lng,
+  }));
+
+const hasSpots = spots.length > 0;
+---
+
+<MainGridLayout title="朋友圈足迹地图" description="走过的城市与风景" noindex>
+  <!-- 标题卡片 -->
+  <div class="card-base z-10 px-9 py-6 relative w-full">
+    <div class="flex items-center justify-between">
+      <div class="text-3xl font-bold text-[var(--primary)]">足迹地图 (Map)</div>
+      <div class="text-sm text-[var(--text-color-light)]">
+        {hasSpots ? `${spots.length} 个地点 · 点击标记查看动态` : '还没有足迹呢'}
+      </div>
+    </div>
+  </div>
+
+  <!-- 地图 -->
+  <div class="mt-6">
+    {hasSpots ? (
+      <>
+        <div id="moments-map" class="w-full h-[520px] rounded-2xl overflow-hidden shadow-md border border-black/5 dark:border-white/5 z-10"></div>
+
+        <!-- Leaflet（按需加载，不拖慢首屏） -->
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script is:inline>
+          (() => {
+            'use strict';
+            const spots = JSON.parse(document.getElementById('moments-map-data')?.textContent || '[]');
+            if (!spots.length) return;
+
+            // 等待 Leaflet 加载（懒加载 CDN）
+            const loadLeaflet = () =>
+              new Promise((resolve, reject) => {
+                if (window.L) return resolve(window.L);
+                const s = document.createElement('script');
+                s.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                s.onload = () => resolve(window.L);
+                s.onerror = reject;
+                document.head.appendChild(s);
+              });
+
+            loadLeaflet()
+              .then((L) => {
+                const mapEl = document.getElementById('moments-map');
+                if (!mapEl) return;
+
+                // 计算边界以自动缩放
+                const bounds = spots.map((s) => [s.lat, s.lng]);
+                const map = L.map(mapEl, { scrollWheelZoom: false });
+                map.fitBounds(bounds, { padding: [40, 40] });
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                  maxZoom: 19,
+                  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                }).addTo(map);
+
+                const esc = (s) =>
+                  String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+                spots.forEach((s) => {
+                  const icon = L.divIcon({
+                    className: 'moment-map-pin',
+                    html: '<svg viewBox="0 0 24 24" class="w-7 h-7 drop-shadow" fill="#ef4444" style="filter: drop-shadow(0 1px 2px rgba(0,0,0,.4))"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>',
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 28],
+                    popupAnchor: [0, -26],
+                  });
+
+                  const marker = L.marker([s.lat, s.lng], { icon }).addTo(map);
+                  marker.bindPopup(`
+                    <div style="min-width: 160px">
+                      <div style="font-weight: 700; margin-bottom: 4px">📍 ${esc(s.name)}</div>
+                      <div style="font-size: 12px; color: #666; margin-bottom: 6px">${esc(s.date)}</div>
+                      <div style="font-size: 13px; line-height: 1.5; margin-bottom: 8px">${esc(s.text) || '（无文字内容）'}</div>
+                      <a href="/moment/${esc(s.slug)}/" style="font-size: 12px; color: #3b82f6; text-decoration: none">查看动态 →</a>
+                    </div>
+                  `);
+                });
+
+                // 点击地图开启滚轮缩放
+                mapEl.addEventListener('click', () => map.scrollWheelZoom.enable());
+                mapEl.addEventListener('mouseleave', () => map.scrollWheelZoom.disable());
+              })
+              .catch((e) => console.error('足迹地图：Leaflet 加载失败', e));
+          })();
+        </script>
+
+        <!-- 数据注入（JSON） -->
+        <script id="moments-map-data" type="application/json" is:inline>{JSON.stringify(spots)}</script>
+      </>
+    ) : (
+      <div class="card-base px-9 py-10 text-center text-[var(--text-color-light)]">
+        还没有带位置的动态喵~<br />
+        <span class="text-xs">在动态 frontmatter 里加 <code>location: &#123; name, lat, lng &#125;</code> 即可点亮地图</span>
+      </div>
+    )}
+  </div>
+</MainGridLayout>
