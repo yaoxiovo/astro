@@ -1,9 +1,10 @@
 /**
  * Yaoxi Blog Telegram Bot
+ * - Webhook 模式：Telegram 消息即时推送到 /webhook → 毫秒级响应命令
  * - Cron 每 10 分钟：检查朋友圈 API + 博客 RSS，有新内容推送给订阅者
- * - 命令：/start /subscribe /unsubscribe /latest /random /stats
+ * - 命令：/start /help /subscribe /unsubscribe /latest /random /stats
  * - 指纹去重：KV 存储上次指纹，首次运行只建基线不推送
- * - 敏感配置（BOT_TOKEN）走 wrangler secret，绝不入库
+ * - 敏感配置（BOT_TOKEN / WEBHOOK_SECRET）走 wrangler secret，绝不入库
  */
 const BLOG_ORIGIN = "https://blog.yaoxi.wiki";
 const TG_API = "https://api.telegram.org/bot";
@@ -14,67 +15,67 @@ export default {
 	},
 	async fetch(request, env) {
 		const url = new URL(request.url);
-		if (url.pathname === "/tick") {
-			await tick(env);
-			return new Response("ticked");
+
+		// GET：健康检查 / 手动触发
+		if (request.method === "GET") {
+			if (url.pathname === "/tick") {
+				await tick(env);
+				return new Response("ticked");
+			}
+			return new Response("Yaoxi Blog Telegram Bot (webhook mode).");
 		}
-		return new Response("Yaoxi Blog Telegram Bot. GET /tick to trigger.", {
-			headers: { "content-type": "text/plain" },
-		});
+
+		// POST /webhook：Telegram 更新入口（即时响应）
+		if (url.pathname === "/webhook" && request.method === "POST") {
+			const secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
+			if (!env.WEBHOOK_SECRET || secret !== env.WEBHOOK_SECRET) {
+				return new Response("unauthorized", { status: 401 });
+			}
+			const update = await request.json().catch(() => null);
+			if (update) ctx.waitUntil(handleUpdate(env, update));
+			return new Response("ok");
+		}
+
+		return new Response("not found", { status: 404 });
 	},
 };
 
 async function tick(env) {
-	await handleUpdates(env).catch((e) => console.error("[updates]", e));
 	await checkMoments(env).catch((e) => console.error("[moments]", e));
 	await checkPosts(env).catch((e) => console.error("[posts]", e));
 }
 
-/* ---------------- 命令处理（getUpdates 轮询） ---------------- */
-async function handleUpdates(env) {
-	const offset = (await env.BOT_KV.get("tg_offset")) || "0";
-	const res = await fetch(`${TG_API}${env.BOT_TOKEN}/getUpdates?offset=${offset}&timeout=0`, {
-		signal: AbortSignal.timeout(8000),
-	});
-	const data = await res.json();
-	if (!data?.ok || !data.result?.length) return;
-
-	let maxId = Number(offset);
-	for (const u of data.result) {
-		if (u.update_id > maxId) maxId = u.update_id;
-		const msg = u.message;
-		if (!msg?.text || !msg.chat?.id) continue;
-		const chatId = msg.chat.id;
-		const text = msg.text.trim();
-		try {
-			if (text.startsWith("/start")) {
-				await setSub(env, chatId, true);
-				await send(
-					env,
-					chatId,
-					"👋 欢迎订阅瑶曦的博客动态喵~\n\n📷 新朋友圈 / 📝 新文章会第一时间推送给你。\n\n命令：\n/latest — 最近 3 条动态\n/random — 随机一条朋友圈\n/stats — 朋友圈统计\n/subscribe — 订阅推送\n/unsubscribe — 退订"
-				);
-			} else if (text.startsWith("/subscribe")) {
-				await setSub(env, chatId, true);
-				await send(env, chatId, "✅ 已订阅推送，有新动态会第一时间通知你喵~");
-			} else if (text.startsWith("/unsubscribe")) {
-				await setSub(env, chatId, false);
-				await send(env, chatId, "🚫 已退订。想重新订阅发 /subscribe 即可喵~");
-			} else if (text.startsWith("/latest")) {
-				await cmdLatest(env, chatId);
-			} else if (text.startsWith("/random")) {
-				await cmdRandom(env, chatId);
-			} else if (text.startsWith("/stats")) {
-				await cmdStats(env, chatId);
-			}
-		} catch (e) {
-			console.error("[cmd]", chatId, text, e);
+/* ---------------- 命令处理（webhook 即时） ---------------- */
+async function handleUpdate(env, u) {
+	const msg = u.message || u.edited_message;
+	if (!msg?.text || !msg.chat?.id) return;
+	const chatId = msg.chat.id;
+	const text = msg.text.trim();
+	try {
+		if (text.startsWith("/start")) {
+			await setSub(env, chatId, true);
+			await send(env, chatId, "👋 欢迎订阅瑶曦的博客动态喵~\n\n📷 新朋友圈 / 📝 新文章会第一时间推送给你。\n\n命令：\n/latest — 最近 5 条动态\n/random — 随机一条朋友圈\n/stats — 朋友圈统计\n/subscribe — 订阅推送\n/unsubscribe — 退订\n/help — 帮助");
+		} else if (text.startsWith("/help")) {
+			await send(env, chatId, "🤖 <b>瑶曦博客 Bot 帮助</b>\n\n/latest — 最近 5 条朋友圈动态\n/random — 随机一条动态\n/stats — 朋友圈统计摘要\n/subscribe — 订阅新动态推送\n/unsubscribe — 退订推送\n\n新朋友圈 / 新文章会自动推送给你喵~");
+		} else if (text.startsWith("/subscribe")) {
+			await setSub(env, chatId, true);
+			await send(env, chatId, "✅ 已订阅推送，有新动态会第一时间通知你喵~");
+		} else if (text.startsWith("/unsubscribe")) {
+			await setSub(env, chatId, false);
+			await send(env, chatId, "🚫 已退订。想重新订阅发 /subscribe 即可喵~");
+		} else if (text.startsWith("/latest")) {
+			await cmdLatest(env, chatId);
+		} else if (text.startsWith("/random")) {
+			await cmdRandom(env, chatId);
+		} else if (text.startsWith("/stats")) {
+			await cmdStats(env, chatId);
 		}
+	} catch (e) {
+		console.error("[cmd]", chatId, text, e);
 	}
-	await env.BOT_KV.put("tg_offset", String(maxId + 1));
 }
 
-/* ---------------- 新内容检查 ---------------- */
+/* ---------------- 新内容检查（Cron） ---------------- */
 async function checkMoments(env) {
 	const res = await fetch(`${BLOG_ORIGIN}/api/moments.json`, { signal: AbortSignal.timeout(10000) });
 	const data = await res.json();
@@ -95,7 +96,7 @@ async function checkMoments(env) {
 	const who = latest.author ? `👤 ${esc(latest.author)}\n` : "";
 	const tags = tagsLine(latest.tags);
 	if (latest.slug !== prevSlug) {
-		const text = `📷 <b>新朋友圈动态</b>\n\n📅 ${fmtDate(latest.published)}\n${who}\n${esc(clip(latest.text, 220))}\n${tags}`;
+		const text = `📷 <b>新朋友圈动态</b>\n\n📅 ${fmtDate(latest.published)}\n${who}${esc(clip(latest.text, 220))}\n${tags}`;
 		for (const cid of await recipients(env)) {
 			await sendWithButton(env, cid, text, "🔗 查看详情", `${BLOG_ORIGIN}/moment/${latest.slug}/`);
 		}
@@ -137,7 +138,7 @@ async function checkPosts(env) {
 async function cmdLatest(env, chatId) {
 	const res = await fetch(`${BLOG_ORIGIN}/api/moments.json`, { signal: AbortSignal.timeout(10000) });
 	const data = await res.json();
-	const items = (data?.moments || []).slice(0, 3);
+	const items = (data?.moments || []).slice(0, 5);
 	if (!items.length) return send(env, chatId, "还没有动态喵~");
 	const lines = items.map((x) => `• <a href="${BLOG_ORIGIN}/moment/${x.slug}/">${fmtDate(x.published)}</a> ${esc(clip(x.text, 50))}`);
 	await send(env, chatId, `🕐 <b>最近动态</b>\n\n${lines.join("\n")}`);

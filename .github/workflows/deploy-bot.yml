@@ -72,3 +72,25 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Setup webhook & commands
+        run: |
+          # 生成 webhook 校验密钥并写入 Worker secret
+          WHS="whs_$(openssl rand -hex 16)"
+          echo "$WHS" | npx wrangler secret put WEBHOOK_SECRET
+          # 设置 webhook（消息即时推送，替代旧 getUpdates 轮询）
+          curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/setWebhook" \
+            -H "Content-Type: application/json" \
+            -d "{\"url\":\"https://yaoxi-blog-bot.yaoxiovo.workers.dev/webhook\",\"secret_token\":\"$WHS\",\"allowed_updates\":[\"message\"]}"
+          # 清空旧命令菜单
+          curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/setMyCommands" \
+            -H "Content-Type: application/json" \
+            -d '{"commands":[]}'
+          # 写入新命令快捷菜单
+          curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/setMyCommands" \
+            -H "Content-Type: application/json" \
+            -d '{"commands":[{"command":"latest","description":"最近5条动态"},{"command":"random","description":"随机一条朋友圈"},{"command":"stats","description":"朋友圈统计"},{"command":"subscribe","description":"订阅推送"},{"command":"unsubscribe","description":"退订推送"},{"command":"help","description":"帮助"}]}'
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
