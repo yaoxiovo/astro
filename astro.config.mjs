@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 import tailwind from "@astrojs/tailwind";
@@ -38,6 +40,33 @@ const backlinkWhitelist = new Set([
 	"yaoxi.xyz"
 ]);
 
+// ---- SEO: sitemap 白名单与 lastmod ----
+// 只让高价值页面进 sitemap：首页、归档页、文章页
+// 排除：分页页(/2/ /3/)、gallery/graph/music/moments/moment/sponsors 等低价值或 JS 功能页
+function isIndexablePage(pageUrl) {
+	const { pathname } = new URL(pageUrl);
+	if (pathname === "/") return true;
+	if (pathname === "/archive/") return true;
+	return pathname.startsWith("/posts/");
+}
+
+// 从文章 frontmatter 读取 published/updated 作为 sitemap lastmod
+const postDates = new Map();
+try {
+	const postsDir = path.join(process.cwd(), "src/content/posts");
+	for (const file of fs.readdirSync(postsDir)) {
+		if (!file.endsWith(".md")) continue;
+		const content = fs.readFileSync(path.join(postsDir, file), "utf-8");
+		const published = content.match(/^published:\s*(.+)$/m)?.[1]?.trim();
+		const updated = content.match(/^updated:\s*(.+)$/m)?.[1]?.trim();
+		if (published) {
+			postDates.set(`/posts/${file.replace(/\.md$/, "")}/`, (updated || published).slice(0, 10));
+		}
+	}
+} catch (e) {
+	console.warn("[sitemap] 读取文章日期失败:", e);
+}
+
 // https://astro.build/config
 export default defineConfig({
 	image: {
@@ -49,9 +78,6 @@ export default defineConfig({
 	base: "/",
 	trailingSlash: "always",
 	output: "static",
-	redirects: {
-		"/donate": "/sponsors"
-	},
 	integrations: [
 		tailwind({
 			nesting: true,
@@ -81,7 +107,14 @@ export default defineConfig({
 			},
 		}),
 		svelte(),
-		sitemap(),
+		sitemap({
+			filter: isIndexablePage,
+			serialize: (item) => {
+				const { pathname } = new URL(item.url);
+				const lastmod = postDates.get(pathname);
+				return lastmod ? { ...item, lastmod } : item;
+			},
+		}),
 		expressiveCode({
 			themes: [expressiveCodeConfig.theme, expressiveCodeConfig.theme],
 			plugins: [

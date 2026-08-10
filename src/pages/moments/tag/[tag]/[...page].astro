@@ -39,7 +39,7 @@ const { page } = Astro.props;
 const { tag } = Astro.params;
 ---
 
-<MainGridLayout title={`#${tag} - 朋友圈`} description={`含有 #${tag} 标签的动态`}>
+<MainGridLayout title={`#${tag} - 朋友圈`} description={`含有 #${tag} 标签的动态`} noindex>
 <div class="card-base z-10 px-9 py-6 relative w-full">
             <!-- Back button and Title -->
             <div class="flex items-center gap-4">

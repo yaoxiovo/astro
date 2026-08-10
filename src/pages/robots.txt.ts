@@ -7,12 +7,8 @@ export const GET: APIRoute = ({ site }) => {
 	const robotsTxt = `
 User-agent: *
 Allow: /
-
-User-agent: bingbot
-Allow: /
-
-User-agent: msnbot
-Allow: /
+Disallow: /cdn/
+Disallow: /draft/
 
 Sitemap: ${sitemapUrl}
 `.trim();

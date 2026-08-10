@@ -1,5 +1,5 @@
 /**
- * 搜索引擎 URL 实时提交脚本 (Google Indexing API & IndexNow / Bing)
+ * 搜索引擎 URL 实时提交脚本 (Google Indexing API & IndexNow / Bing & 百度推送)
  * 
  * 运行方式:
  * 1. 自动检测改动提交: node scripts/submit-urls.js
@@ -8,6 +8,9 @@
  * 
  * 环境变量配置 (Google Indexing API 必需):
  * export GOOGLE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": ...}'
+ * export BAIDU_TOKEN='百度站长平台 token'   (可选，未配置则跳过百度推送)
+ * 
+ * 详细配置步骤见 scripts/SEO-SUBMIT.md
  */
 
 import { execSync } from 'child_process';
@@ -290,6 +293,39 @@ async function submitToIndexNow(urls) {
     }
 }
 
+// 提交至百度站长平台 (主动推送 API)
+async function submitToBaidu(urls) {
+    const token = process.env.BAIDU_TOKEN;
+    if (!token) {
+        console.log(`\n[百度] 提示: 未配置 BAIDU_TOKEN，跳过百度推送。`);
+        console.log(`如需百度收录，请在百度搜索资源平台 (ziyuan.baidu.com) 获取 token 并配置环境变量/GitHub Secret 喵~`);
+        return;
+    }
+    if (urls.length === 0) return;
+
+    console.log(`\n[百度] 正在向百度站长平台推送 ${urls.length} 个 URL...`);
+    try {
+        const response = await fetch(
+            `https://data.zz.baidu.com/urls?site=${HOST}&token=${token}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain; charset=utf-8'
+                },
+                body: urls.join('\n')
+            }
+        );
+        const data = await response.json();
+        if (response.ok && data.success) {
+            console.log(`[百度] 推送成功喵！成功 ${data.success} 条，剩余配额 ${data.remain} 条`);
+        } else {
+            console.error(`[百度] 推送失败:`, JSON.stringify(data));
+        }
+    } catch (e) {
+        console.error(`[百度] 请求出错:`, e.message);
+    }
+}
+
 // 主程序入口
 async function main() {
     const urls = await getUrls();
@@ -300,6 +336,9 @@ async function main() {
 
     // 1. 提交至 IndexNow
     await submitToIndexNow(urls);
+
+    // 1.5 提交至百度站长平台 (可选)
+    await submitToBaidu(urls);
 
     // 2. 提交至 Google Indexing API (如有服务账号配置)
     const serviceAccountEnv = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;

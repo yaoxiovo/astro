@@ -23,7 +23,7 @@ export async function getStaticPaths({ paginate }) {
 const { page } = Astro.props;
 ---
 
-<MainGridLayout title="朋友圈" description="我的生活瞬间与絮语">
+<MainGridLayout title="朋友圈" description="我的生活瞬间与絮语" noindex>
 <div class="card-base z-10 px-9 py-6 relative w-full">
         <div class="text-3xl font-bold text-[var(--primary)]">朋友圈 (Moments)</div>
     </div>

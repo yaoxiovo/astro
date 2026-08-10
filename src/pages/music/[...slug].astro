@@ -17,7 +17,7 @@ const { entry } = Astro.props;
 const { Content } = await entry.render();
 ---
 
-<MainGridLayout title={`${entry.data.title} - 听歌随笔`} description={`关于 ${entry.data.title} 的沉浸式听歌随笔喵`}>
+<MainGridLayout title={`${entry.data.title} - 听歌随笔`} description={`关于 ${entry.data.title} 的沉浸式听歌随笔喵`} noindex>
   <div class="w-full flex flex-col gap-6">
     <!-- 返回音乐馆按钮 (磨砂玻璃微悬浮) -->
     <div class="flex justify-start">

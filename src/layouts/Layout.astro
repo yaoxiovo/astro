@@ -22,7 +22,6 @@ import {
 import { defaultFavicons } from "../constants/icon";
 import type { Favicon } from "../types/config";
 import { url, pathsEqual } from "../utils/url-utils";
-import "katex/dist/katex.css";
 
 interface Props {
 	title?: string;
@@ -31,9 +30,10 @@ interface Props {
 	lang?: string;
 	setOGTypeArticle?: boolean;
 	image?: string;
+	noindex?: boolean;
 }
 
-let { title, banner, description, lang, setOGTypeArticle, image } = Astro.props;
+let { title, banner, description, lang, setOGTypeArticle, image, noindex = false } = Astro.props;
 
 // apply a class to the body element to decide the height of the banner, only used for initial page load
 // Swup can update the body for each page visit, but it's after the page transition, causing a delay for banner height change
@@ -73,7 +73,9 @@ const canonicalPath = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `$
 const canonicalURL = new URL(canonicalPath, Astro.site).href;
 
 // ogImage selection with absolute path check
-let ogImage = image || banner || profileConfig.avatar;
+// NOTE: banner 是装饰性壁纸（banner.enable=false 时 src 可能指向不存在的图），
+// 只有 banner 功能启用时才参与 og:image，否则回退到 avatar，避免 og:image 404
+let ogImage = image || (siteConfig.banner.enable ? banner : null) || profileConfig.avatar;
 if (ogImage && ogImage.startsWith("/")) {
 	ogImage = new URL(ogImage, Astro.site).href;
 }
@@ -87,7 +89,10 @@ const defaultJsonLd = {
 	"author": {
 		"@type": "Person",
 		"name": profileConfig.name
-	}
+	},
+	"sameAs": profileConfig.links
+		?.map((link) => link.url)
+		.filter((url) => typeof url === "string" && url.startsWith("http")),
 };
 
 const favicons: Favicon[] =
@@ -141,16 +146,18 @@ const bannerOffset =
 		<meta name="twitter:description" content={description}>
 		<meta name="twitter:image" content={ogImage}>
 
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="generator" content={Astro.generator} />
+		{noindex && <meta name="robots" content="noindex, follow" />}
 		<script src="/js/umami-share.js?v=1.0.3" defer></script>
 
 		<meta name="referrer" content="no-referrer">
 		
-		<!-- APlayer & MetingJS -->
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css">
-		<script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js" is:inline></script>
-		<script src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js" is:inline></script>
+		<!-- APlayer & MetingJS (deferred, non-blocking) -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'">
+		<script defer src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js" is:inline></script>
+		<script defer src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js" is:inline></script>
+		<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css"></noscript>
 		
 		{/* <!-- Content Security Policy -->
 		<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://giscus.app https://hpic.072103.xyz https://umami.yaoxi.cloud https://hm.baidu.com https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://static.cloudflareinsights.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://giscus.app https://fonts.googleapis.com https://api.iconify.design; font-src 'self' https://fonts.gstatic.com https://api.iconify.design; img-src 'self' data: https: http:; connect-src 'self' https://umami.yaoxi.cloud https://hm.baidu.com https://www.google-analytics.com https://analytics.google.com https://api.iconify.design https://static.cloudflareinsights.com https://pic.2x.nz https://q2.qlogo.cn https://ep1.adtrafficquality.google https://googleads.g.doubleclick.net; frame-src 'self' https://giscus.app *.bilibili.com https://www.google.com https://googleads.g.doubleclick.net https://support.nodeget.com https://*.adtrafficquality.google; object-src 'none'; base-uri 'self'; form-action 'self';"> */}

@@ -1,0 +1,40 @@
+name: Submit URLs to Search Engines
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # 手动触发：Actions 页面点 Run workflow
+
+jobs:
+  submit-urls:
+    name: IndexNow + Google + Baidu
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # 需要 HEAD~1 做 git diff 检测
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Submit URLs
+        env:
+          # Google Indexing API 服务账号 JSON（GSC 验证邮箱 + Indexing API 启用）
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          # 百度站长平台主动推送 token（可选）
+          BAIDU_TOKEN: ${{ secrets.BAIDU_TOKEN }}
+        run: node scripts/submit-urls.js
+
+      - name: Ping sitemaps (Bing / Baidu fallback)
+        env:
+          BAIDU_TOKEN: ${{ secrets.BAIDU_TOKEN }}
+        run: |
+          curl -s "https://www.bing.com/ping?sitemap=https%3A%2F%2Fblog.yaoxi.wiki%2Fsitemap-index.xml" -o /dev/null || true
+          if [ -n "$BAIDU_TOKEN" ]; then
+            curl -s "https://ziyuan.baidu.com/ping?sitemap=https%3A%2F%2Fblog.yaoxi.wiki%2Fsitemap-index.xml" -o /dev/null || true
+          fi
+          echo "sitemap ping done"
