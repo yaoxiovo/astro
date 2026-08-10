@@ -62,7 +62,7 @@ globalThis.Buffer = Buffer;
 
 // 4. 注入代码并执行
 const module = { exports: {} };
-const fn = new Function("module", "exports", "env", "Buffer", code + "\n;return { worker: __worker, cmdAddImage, publishDraft, getDraft, clearDraft };");
+const fn = new Function("module", "exports", "env", "Buffer", code + "\n;return { worker: __worker, cmdAddImage, publishDraft, getDraft, clearDraft, syncCommands };");
 const api = fn(module, module.exports, env, Buffer);
 
 let passed = 0;
@@ -144,4 +144,21 @@ console.log("\n🧪 T5 cancel 清空");
 	assert(!(await api.getDraft(env, "7950928200")), "草稿已清空");
 }
 
-console.log(`\n📋 结果：${passed}/13 通过`);
+
+// 测试 6：setMyCommands 菜单同步（懒触发 + KV 节流）
+console.log("\n🧪 T6 命令菜单同步");
+{
+	kvStore.clear();
+	calls.length = 0;
+	await api.syncCommands(env);
+	let syncCalls = calls.filter((c) => c[0].includes("/setMyCommands"));
+	assert(syncCalls.length === 1, "首次触发调用 setMyCommands 一次");
+	// 节流：12h 内不再调用
+	await api.syncCommands(env);
+	syncCalls = calls.filter((c) => c[0].includes("/setMyCommands"));
+	assert(syncCalls.length === 1, "12h 节流内不重复调用");
+	const saved = kvStore.get("cmd_menu_synced");
+	assert(saved, "同步成功后写入 KV 标记");
+}
+
+console.log(`\n📋 结果：${passed} 通过`);

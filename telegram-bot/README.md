@@ -3,7 +3,8 @@
 推送博客新动态 / 新文章到 Telegram 的 Cloudflare Worker。
 
 - **Cron 每 10 分钟** 检查 `blog.yaoxi.wiki/api/moments.json`（新朋友圈）和 `/rss.xml`（新文章），有变化即推送
-- **命令**：`/latest` 最近动态 · `/random` 随机一条 · `/stats` 朋友圈统计 · `/search` 搜索 · `/subscribe` / `/unsubscribe` 订阅管理
+- **命令**：`/latest` 最近动态 · `/random` 随机一条 · `/stats` 朋友圈统计 · `/search` 搜索 · `/publish` 发布草稿 · `/cancel` 取消草稿 · `/subscribe` / `/unsubscribe` 订阅管理 · `/help` 帮助
+- **命令菜单**：Worker 自动调用 `setMyCommands` 同步 10 个命令到 Telegram 输入框的 `/` 菜单（KV 节流 12h，任意消息懒触发），无需 BotFather 手动设置
 - **文字创作**：主人直接发文字 → 自动提交 GitHub → 生成朋友圈动态
 - **图片创作（v3）**：主人发照片 / 图片文档（最多 9 张）→ 自动上传图床（`yaoxiovo/jpg` → `png.yaoxi.wiki` CDN）→ 发布带图朋友圈
   - 单图 + 配文 → 一步直达发布
@@ -43,7 +44,7 @@ GitHub 仓库 → Settings → Secrets and variables → Actions → New reposit
 
 ### 4️⃣ 验证
 
-1. 给 bot 发 `/start` → 收到欢迎语
+1. 给 bot 发 `/start` → 收到欢迎语（同时自动同步命令菜单，输入框输入 `/` 可见全部命令）
 2. `/latest` → 最近 3 条动态
 3. `/random` → 随机一条（带「查看详情」按钮）
 4. `/stats` → 朋友圈统计

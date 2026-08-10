@@ -1,8 +1,9 @@
 /**
- * Yaoxi Blog Telegram Bot v3
+ * Yaoxi Blog Telegram Bot v3.1
  * - Webhook 模式：Telegram 消息即时推送到 /webhook → 毫秒级响应命令
  * - Cron 每 10 分钟：新动态/新文章推送 + 时间胶囊到期提醒 + 每周日周报
  * - 命令：/start /help /subscribe /unsubscribe /latest /random /stats /search /publish /cancel
+ * - 菜单：setMyCommands 自动同步 Telegram 命令菜单（输入框 / 弹出，KV 节流 12h）
  * - 创作（文字）：主人直接发文字 → 自动生成 markdown 提交 GitHub → 自动部署上线
  * - 创作（图片）：主人发照片/图片文档 → 下载 → 上传图床（yaoxiovo/jpg）→ 发布带图朋友圈
  *   单图+caption 直达发布；多图进入草稿，发文字配文或 /publish 发布，/cancel 取消
@@ -19,6 +20,20 @@ const IMG_RAW_PREFIX = "astro/raw";
 const MAX_IMAGES = 9; // 朋友圈 9 宫格上限
 const MAX_IMG_BYTES = 8 * 1024 * 1024; // GitHub contents API 安全上限（Worker 内存约束）
 const DRAFT_TTL = 10 * 60 * 1000; // 草稿 10 分钟过期
+
+/** Telegram 命令菜单（/ 弹出），setMyCommands 同步 */
+const COMMANDS = [
+	{ command: "start", description: "开始使用 / 订阅推送" },
+	{ command: "latest", description: "最近 5 条朋友圈动态" },
+	{ command: "random", description: "随机一条朋友圈" },
+	{ command: "stats", description: "朋友圈统计摘要" },
+	{ command: "search", description: "搜索朋友圈：/search 关键词" },
+	{ command: "publish", description: "发布图片草稿" },
+	{ command: "cancel", description: "取消图片草稿" },
+	{ command: "subscribe", description: "订阅新动态推送" },
+	{ command: "unsubscribe", description: "退订推送" },
+	{ command: "help", description: "帮助与全部命令" },
+];
 
 export default {
 	async scheduled(event, env, ctx) {
@@ -71,6 +86,7 @@ async function tick(env) {
 
 /* ---------------- 命令处理（webhook 即时） ---------------- */
 async function handleUpdate(env, u) {
+	await syncCommands(env).catch(() => {}); // 懒触发：任意消息时同步命令菜单（KV 节流）
 	const msg = u.message || u.edited_message;
 	if (!msg?.chat?.id) return;
 	const chatId = msg.chat.id;
@@ -614,4 +630,27 @@ function fmtDate(iso) {
 function tagsLine(tags) {
 	const arr = (tags || []).filter(Boolean).map((t) => `#${t}`);
 	return arr.length ? `🏷️ ${arr.join(" ")}` : "";
+}
+
+/** 同步 Telegram 命令菜单（setMyCommands），KV 节流 12 小时，避免每次请求都调 API */
+async function syncCommands(env) {
+	try {
+		const last = await env.BOT_KV.get("cmd_menu_synced");
+		if (last && Date.now() - Number(last) < 12 * 3600 * 1000) return;
+		const res = await fetch(`${TG_API}${env.BOT_TOKEN}/setMyCommands`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ commands: COMMANDS }),
+			signal: AbortSignal.timeout(8000),
+		});
+		const j = await res.json().catch(() => null);
+		if (j && j.ok) {
+			await env.BOT_KV.put("cmd_menu_synced", String(Date.now()));
+			console.log("[menu] synced", COMMANDS.length, "commands");
+		} else {
+			console.log("[menu] sync fail", JSON.stringify(j));
+		}
+	} catch (e) {
+		console.error("[menu] sync err", e);
+	}
 }
