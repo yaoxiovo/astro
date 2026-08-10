@@ -32,8 +32,22 @@ export default {
 				return new Response("unauthorized", { status: 401 });
 			}
 			const update = await request.json().catch(() => null);
-			if (update) ctx.waitUntil(handleUpdate(env, update));
+			if (update) {
+				// 任何异常都不能让 waitUntil 的 rejection 污染响应（Telegram 会 500）
+				ctx.waitUntil(
+					handleUpdate(env, update).catch(async (e) => {
+						console.error("[webhook-handler]", e);
+						await env.BOT_KV.put("webhook_err", String((e && e.stack) || e)).catch(() => {});
+					})
+				);
+			}
 			return new Response("ok");
+		}
+
+		// GET /err：诊断端点（输出最近一次 webhook 处理异常）
+		if (url.pathname === "/err") {
+			const err = (await env.BOT_KV.get("webhook_err")) || "(no error recorded)";
+			return new Response(err, { headers: { "content-type": "text/plain" } });
 		}
 
 		return new Response("not found", { status: 404 });
@@ -187,31 +201,39 @@ async function setSub(env, chatId, on) {
 }
 
 async function send(env, chatId, text) {
-	const res = await fetch(`${TG_API}${env.BOT_TOKEN}/sendMessage`, {
-		method: "POST",
-		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: false }),
-		signal: AbortSignal.timeout(8000),
-	});
-	const j = await res.json().catch(() => null);
-	if (!j?.ok) console.log("[send] fail", chatId, JSON.stringify(j));
+	try {
+		const res = await fetch(`${TG_API}${env.BOT_TOKEN}/sendMessage`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: false }),
+			signal: AbortSignal.timeout(8000),
+		});
+		const j = await res.json().catch(() => null);
+		if (!j?.ok) console.log("[send] fail", chatId, JSON.stringify(j));
+	} catch (e) {
+		console.error("[send] err", chatId, e);
+	}
 }
 
 async function sendWithButton(env, chatId, text, buttonText, url) {
-	const res = await fetch(`${TG_API}${env.BOT_TOKEN}/sendMessage`, {
-		method: "POST",
-		headers: { "content-type": "application/json" },
-		body: JSON.stringify({
-			chat_id: chatId,
-			text,
-			parse_mode: "HTML",
-			disable_web_page_preview: false,
-			reply_markup: { inline_keyboard: [[{ text: buttonText, url }]] },
-		}),
-		signal: AbortSignal.timeout(8000),
-	});
-	const j = await res.json().catch(() => null);
-	if (!j?.ok) console.log("[sendbtn] fail", chatId, JSON.stringify(j));
+	try {
+		const res = await fetch(`${TG_API}${env.BOT_TOKEN}/sendMessage`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				chat_id: chatId,
+				text,
+				parse_mode: "HTML",
+				disable_web_page_preview: false,
+				reply_markup: { inline_keyboard: [[{ text: buttonText, url }]] },
+			}),
+			signal: AbortSignal.timeout(8000),
+		});
+		const j = await res.json().catch(() => null);
+		if (!j?.ok) console.log("[sendbtn] fail", chatId, JSON.stringify(j));
+	} catch (e) {
+		console.error("[sendbtn] err", chatId, e);
+	}
 }
 
 function clip(s, n) {
