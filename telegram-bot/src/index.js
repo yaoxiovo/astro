@@ -13,7 +13,7 @@ export default {
 	async scheduled(event, env, ctx) {
 		ctx.waitUntil(tick(env));
 	},
-	async fetch(request, env) {
+	async fetch(request, env, ctx) {
 		const url = new URL(request.url);
 
 		// GET：健康检查 / 手动触发 / 诊断
