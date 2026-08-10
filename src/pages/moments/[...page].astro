@@ -5,23 +5,8 @@ import MomentsClient from '../../components/MomentsClient.astro';
 import Pagination from '../../components/control/Pagination.astro';
 import { getCollection } from 'astro:content';
 
-// 模块级变量：getStaticPaths 填充，模板层消费（Astro 不允许在 getStaticPaths 页面
-// 的 frontmatter 中再次调用 getCollection，所以用这种方式传递数据）
-let allSlugs: string[] = [];
-let allYears: number[] = [];
-let memoryMap: Record<string, { slug: string; date: string; text: string }[]> = {};
-
-// Markdown -> 纯文本摘要（用于「那年今日」横幅预览）
-const toText = (body: string, max = 40) =>
-    (body || '')
-        .replace(/```[\s\S]*?```/g, ' ')
-        .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-        .replace(/[#>*_`~|-]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, max);
-
+// 注意：getStaticPaths 必须完全自包含（Astro 5.7 构建时独立提取执行，
+// 模块顶层 const/let 不可见），所有辅助数据在函数内生成并通过 props 传递
 export async function getStaticPaths({ paginate }) {
     const allMoments = await getCollection('moments');
     
@@ -29,12 +14,24 @@ export async function getStaticPaths({ paginate }) {
     const topLevelMoments = allMoments.filter((moment) => !moment.data.replyTo);
 
     // 收集所有 slug 供「随机一条」使用
-    allSlugs = topLevelMoments.map((m) => m.id.replace(/\.(md|mdx)$/, ''));
+    const allSlugs = topLevelMoments.map((m) => m.id.replace(/\.(md|mdx)$/, ''));
 
     // 收集年份供「年度回顾」入口使用（倒序，第一个为最新年份）
-    allYears = [...new Set(topLevelMoments.map((m) => new Date(m.data.published).getFullYear()))].sort((a, b) => b - a);
+    const allYears = [...new Set(topLevelMoments.map((m) => new Date(m.data.published).getFullYear()))].sort((a, b) => b - a);
+
+    // Markdown -> 纯文本摘要（用于「那年今日」横幅预览）
+    const toText = (body: string, max = 40) =>
+        (body || '')
+            .replace(/```[\s\S]*?```/g, ' ')
+            .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+            .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+            .replace(/[#>*_`~|-]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, max);
 
     // 构建「那年今日」索引：MM-DD -> [{ slug, date, text }]（仅顶层动态）
+    const memoryMap: Record<string, { slug: string; date: string; text: string }[]> = {};
     for (const m of allMoments) {
         if (m.data.replyTo) continue;
         const d = new Date(m.data.published);
@@ -53,11 +50,14 @@ export async function getStaticPaths({ paginate }) {
         if (!a.data.pinned && b.data.pinned) return 1;
         return new Date(b.data.published).getTime() - new Date(a.data.published).getTime();
     });
-    // Return a paginated collection, e.g., 10 moments per page
-    return paginate(sortedMoments, { pageSize: 10 });
+    // Return a paginated collection，注入额外 props 供模板消费
+    return paginate(sortedMoments, { pageSize: 10 }).map((entry) => ({
+        ...entry,
+        props: { ...entry.props, allSlugs, allYears, memoryMap },
+    }));
 }
 
-const { page } = Astro.props;
+const { page, allSlugs, allYears, memoryMap } = Astro.props as any;
 ---
 
 <MainGridLayout title="朋友圈" description="我的生活瞬间与絮语" noindex>
