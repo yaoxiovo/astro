@@ -11,8 +11,9 @@ const stripExt = (id) => id.replace(/\.(md|mdx)$/, "");
 
 export async function getStaticPaths() {
     const allMoments = await getCollection('moments');
+    // 注意：getStaticPaths 会被 Astro 独立提取执行，不能引用模块顶层变量，必须自包含
     return allMoments.map((moment) => ({
-        params: { slug: stripExt(moment.id) },
+        params: { slug: moment.id.replace(/\.(md|mdx)$/, "") },
         props: { moment },
     }));
 }

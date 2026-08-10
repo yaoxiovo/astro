@@ -5,14 +5,15 @@ import MomentsClient from '../../../../components/MomentsClient.astro';
 import Pagination from '../../../../components/control/Pagination.astro';
 import { getCollection } from 'astro:content';
 
-// 与服务端/客户端统一的 hashtag 规则：字母/数字/下划线/连字符（含 CJK），不吞中文标点
-const TAG_RE = /#[\p{L}\p{N}_-]+/gu;
-
-function escapeRegExp(s) {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 export async function getStaticPaths({ paginate }) {
+    // 注意：getStaticPaths 会被 Astro 独立提取执行，不能引用模块顶层变量，必须自包含
+    // 与服务端/客户端统一的 hashtag 规则：字母/数字/下划线/连字符（含 CJK），不吞中文标点
+    const TAG_RE = /#[\p{L}\p{N}_-]+/gu;
+
+    function escapeRegExp(s) {
+        return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
     const allMoments = await getCollection('moments');
     
     // Filter out replies, only show top-level moments on homepage
