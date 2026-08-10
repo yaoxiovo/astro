@@ -16,11 +16,15 @@ export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
 
-		// GET：健康检查 / 手动触发
+		// GET：健康检查 / 手动触发 / 诊断
 		if (request.method === "GET") {
 			if (url.pathname === "/tick") {
 				await tick(env);
 				return new Response("ticked");
+			}
+			if (url.pathname === "/err") {
+				const err = (await env.BOT_KV.get("webhook_err")) || "(no error recorded)";
+				return new Response(err, { headers: { "content-type": "text/plain" } });
 			}
 			return new Response("Yaoxi Blog Telegram Bot (webhook mode).");
 		}
@@ -44,11 +48,7 @@ export default {
 			return new Response("ok");
 		}
 
-		// GET /err：诊断端点（输出最近一次 webhook 处理异常）
-		if (url.pathname === "/err") {
-			const err = (await env.BOT_KV.get("webhook_err")) || "(no error recorded)";
-			return new Response(err, { headers: { "content-type": "text/plain" } });
-		}
+		// GET /err 见上方 GET 分支
 
 		return new Response("not found", { status: 404 });
 	},
