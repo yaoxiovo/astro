@@ -152,7 +152,8 @@
 		
 		if (global.__umamiDataCache.has(cacheKey)) {
             const data = global.__umamiDataCache.get(cacheKey);
-            return { ...data, _fromCache: true };
+            // events 接口返回数组：直接返回原引用，避免展开成对象导致 Array.isArray 失效
+            return Array.isArray(data) ? data : { ...data, _fromCache: true };
 		}
 
 		async function doFetch(isRetry = false) {

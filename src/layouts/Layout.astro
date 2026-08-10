@@ -641,39 +641,30 @@ window.onresize = () => {
 import { Fancybox } from "@fancyapps/ui"
 import "@fancyapps/ui/dist/fancybox/fancybox.css"
 
+// 朋友圈图片也要走灯箱（P0 修复）；moments:cards-appended 由无限滚动加载完成后派发
+const MOMENT_FANCYBOX_SELECTOR = ".moment-card a[data-fancybox]"
+const FANCYBOX_SELECTOR = `.custom-md img, #post-cover img, ${MOMENT_FANCYBOX_SELECTOR}`
+const FANCYBOX_OPTIONS = {
+	wheel: 'zoom',
+	clickContent: 'close',
+	dblclickContent: 'zoom',
+	click: 'close',
+	dblclick: 'zoom',
+	Panels: {
+		display: ['counter', 'zoom']
+	},
+	Images: {
+		panning: true,
+		zoom: true,
+		protect: false
+	}
+}
+
 const setup = () => {
-	Fancybox.bind(".custom-md img, #post-cover img", {
-		wheel: 'zoom',
-		clickContent: 'close',
-		dblclickContent: 'zoom',
-		click: 'close',
-		dblclick: 'zoom',
-		Panels: {
-			display: ['counter', 'zoom']
-		},
-		Images: {
-			panning: true,
-			zoom: true,
-			protect: false
-		}
-	})
+	Fancybox.bind(FANCYBOX_SELECTOR, FANCYBOX_OPTIONS)
 
 	window.swup.hooks.on("page:view", () => {
-		Fancybox.bind(".custom-md img, #post-cover img", {
-			wheel: 'zoom',
-			clickContent: 'close',
-			dblclickContent: 'zoom',
-			click: 'close',
-			dblclick: 'zoom',
-			Panels: {
-				display: ['counter', 'zoom']
-			},
-			Images: {
-				panning: true,
-				zoom: true,
-				protect: false
-			}
-		});
+		Fancybox.bind(FANCYBOX_SELECTOR, FANCYBOX_OPTIONS);
 		// Dispatch global DOM event for all legacy listeners that were upgraded from swup:contentReplaced
 		document.dispatchEvent(new CustomEvent("swup:page:view"));
 	})
@@ -681,10 +672,15 @@ const setup = () => {
 	window.swup.hooks.on(
 		"content:replace",
 		() => {
-			Fancybox.unbind(".custom-md img, #post-cover img")
+			Fancybox.unbind(FANCYBOX_SELECTOR)
 		},
 		{ before: true },
 	)
+
+	// 无限滚动追加的卡片：仅绑定朋友圈图片选择器，避免重复绑定既有元素
+	document.addEventListener("moments:cards-appended", () => {
+		Fancybox.bind(MOMENT_FANCYBOX_SELECTOR, FANCYBOX_OPTIONS)
+	})
 }
 
 if (window.swup) {

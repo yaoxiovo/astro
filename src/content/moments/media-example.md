@@ -3,7 +3,10 @@ author: 瑶曦网络科技官方
 published: 2026-07-06T20:25:00+08:00
 source: "Astro for Windows"
 images:
-  - "10.jpg"
+  - "cat.png"
+  - "my-avatar.jpg"
+videos:
+  - "my-video.mp4"
 ---
 
 今天顺利完成了朋友圈多媒体（图片 WebP 缩略图、原图、流畅视频）大重构！ #开发日志 #Astro
@@ -20,4 +23,4 @@ images:
 - 缩略图 2：`https://png.yaoxi.wiki/astro/webp/2026-07-06/my-avatar.webp`
 - 流式视频：`https://png.yaoxi.wiki/astro/video/2026-07-06/my-video.mp4`
 
-不仅如此，视频播放器已经默认开启了 `preload="auto"`，流式缓冲直接拉满，彻底告别播放卡顿，非常 Premium 喵呜~！
+视频播放器采用 `preload="none"` 按需加载，只有用户点击播放时才拉取视频流，移动端流量友好喵呜~！

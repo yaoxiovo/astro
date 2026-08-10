@@ -4,7 +4,6 @@ source: "Astro for Mac"
 pinned: true
 images: 
   - "https://t.alcy.cc/ycy"
-  - "https://t.alcy.cc/ycy"
 ---
 
 今天的天气真不错，写代码的心情都变好了呢！ #日常 #心情

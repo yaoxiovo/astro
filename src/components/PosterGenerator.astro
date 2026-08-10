@@ -12,8 +12,6 @@ interface Props {
 
 const { title, excerpt, coverImage, author } = Astro.props;
 
-const isExternal = coverImage && (coverImage.startsWith('http://') || coverImage.startsWith('https://'));
-
 // 动态判断V认证主体和颜色
 let verifiedIconColor = "";
 let verifiedEntity = "";
