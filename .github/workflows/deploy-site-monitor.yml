@@ -1,0 +1,98 @@
+name: Deploy Site Monitor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site-monitor/**"
+      - ".github/workflows/deploy-site-monitor.yml"
+  workflow_dispatch: # 手动触发：Actions 页面点 Run workflow
+
+jobs:
+  deploy:
+    name: Deploy Monitor Worker
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site-monitor
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install wrangler
+        run: npm i -D wrangler --no-audit --no-fund
+
+      - name: Create KV namespace (if placeholder)
+        id: kv
+        run: |
+          if grep -q "REPLACE_WITH_KV_ID" wrangler.jsonc; then
+            echo "Creating KV namespace..."
+            ID=$(npx wrangler kv namespace create MONITOR_KV --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).result.id))")
+            echo "KV ID: $ID"
+            sed -i "s/REPLACE_WITH_KV_ID/$ID/" wrangler.jsonc
+          else
+            echo "KV already configured."
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set BOT_TOKEN secret (reuse yaoxi-blog-bot token)
+        run: |
+          if [ -n "$BOT_TOKEN" ]; then
+            echo "$BOT_TOKEN" | npx wrangler secret put BOT_TOKEN
+          else
+            echo "BOT_TOKEN secret not set, skipping"
+          fi
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set CHAT_ID secret
+        run: |
+          if [ -n "$CHAT_ID" ]; then
+            echo "$CHAT_ID" | npx wrangler secret put CHAT_ID
+          else
+            echo "CHAT_ID secret not set, skipping (using wrangler.jsonc var)"
+          fi
+        env:
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set MONITOR_SECRET (protect manual trigger)
+        run: |
+          if [ -n "$MONITOR_SECRET" ]; then
+            echo "$MONITOR_SECRET" | npx wrangler secret put MONITOR_SECRET
+          else
+            echo "MONITOR_SECRET not set, skipping"
+          fi
+        env:
+          MONITOR_SECRET: ${{ secrets.MONITOR_SECRET }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set FLASHCAT_INTEGRATION_KEY (Flashduty standard alert)
+        run: |
+          if [ -n "$FLASHCAT_INTEGRATION_KEY" ]; then
+            echo "$FLASHCAT_INTEGRATION_KEY" | npx wrangler secret put FLASHCAT_INTEGRATION_KEY
+          else
+            echo "FLASHCAT_INTEGRATION_KEY not set, skipping"
+          fi
+        env:
+          FLASHCAT_INTEGRATION_KEY: ${{ secrets.FLASHCAT_INTEGRATION_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy Worker
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
