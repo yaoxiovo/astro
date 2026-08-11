@@ -28,22 +28,29 @@ jobs:
       - name: Install wrangler
         run: npm i -D wrangler --no-audit --no-fund
 
-      - name: Create KV namespace (if placeholder)
+      - name: Resolve or create KV namespace
         id: kv
         run: |
           if grep -q "REPLACE_WITH_KV_ID" wrangler.jsonc; then
-            echo "Creating KV namespace..."
-            npx wrangler kv namespace create MONITOR_KV --json > /tmp/kv_out.json 2>/tmp/kv_err.txt
-            if [ $? -ne 0 ]; then
-              echo "### ❌ KV namespace 创建失败" >> $GITHUB_STEP_SUMMARY
-              echo "请检查 CLOUDFLARE_API_TOKEN 是否包含 **Workers KV Storage: Edit** 权限（Account 级）" >> $GITHUB_STEP_SUMMARY
-              echo "或手动在 Cloudflare Dashboard 创建 KV 后把 ID 填入 wrangler.jsonc" >> $GITHUB_STEP_SUMMARY
-              echo '```' >> $GITHUB_STEP_SUMMARY
-              cat /tmp/kv_err.txt >> $GITHUB_STEP_SUMMARY
-              echo '```' >> $GITHUB_STEP_SUMMARY
-              exit 1
+            # 1) 优先复用已存在的 namespace（手动创建 or 之前创建）
+            LIST_OUT=$(npx wrangler kv namespace list --json 2>/dev/null || true)
+            ID=$(echo "$LIST_OUT" | node -e "let s=require('fs').readFileSync(0,'utf8');try{const j=JSON.parse(s);const n=(j||[]).find(x=>x.title==='site-monitor-kv'||x.title==='MONITOR_KV');if(n){console.log(n.id)}else{process.exit(1)}}catch(e){process.exit(1)}" 2>/dev/null || true)
+            if [ -z "$ID" ]; then
+              echo "Existing KV not found, creating a new one..."
+              npx wrangler kv namespace create MONITOR_KV --json > /tmp/kv_out.json 2>/tmp/kv_err.txt
+              if [ $? -ne 0 ]; then
+                echo "### ❌ KV namespace 创建失败" >> $GITHUB_STEP_SUMMARY
+                echo "请检查 CLOUDFLARE_API_TOKEN 是否包含 **Workers KV Storage: Edit** 权限（Account 级）" >> $GITHUB_STEP_SUMMARY
+                echo "或手动在 Cloudflare Dashboard 创建 KV 后重跑本 workflow（会自动复用 site-monitor-kv）" >> $GITHUB_STEP_SUMMARY
+                echo '```' >> $GITHUB_STEP_SUMMARY
+                cat /tmp/kv_err.txt >> $GITHUB_STEP_SUMMARY
+                echo '```' >> $GITHUB_STEP_SUMMARY
+                exit 1
+              fi
+              ID=$(node -e "let s=require('fs').readFileSync('/tmp/kv_out.json','utf8');const j=JSON.parse(s);if(j.success===false){console.error(s);process.exit(1)}console.log((j.result||j).id)")
+            else
+              echo "Reusing existing KV: $ID"
             fi
-            ID=$(node -e "let s=require('fs').readFileSync('/tmp/kv_out.json','utf8');const j=JSON.parse(s);if(j.success===false){console.error(s);process.exit(1)}console.log((j.result||j).id)")
             echo "KV ID: $ID"
             sed -i "s/REPLACE_WITH_KV_ID/$ID/" wrangler.jsonc
           else
