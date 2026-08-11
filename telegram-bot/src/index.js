@@ -3,7 +3,7 @@
  * - Webhook 模式：Telegram 消息即时推送到 /webhook → 毫秒级响应命令
  * - Cron 每 10 分钟：新动态/新文章推送 + 时间胶囊到期提醒 + 每周日周报
  * - 命令：/start /help /subscribe /unsubscribe /latest /random /stats /search /capsules /weekly /daily /broadcast
- * - 菜单：setMyCommands 自动同步 Telegram 命令菜单（输入框 / 弹出，KV 节流 12h）
+ * - 菜单：setMyCommands 自动同步 Telegram 命令菜单（输入框 / 弹出，hash 感知节流：命令变化立即同步）
  * - 纯订阅/查询/推送 Bot：v3.2 起移除在 Bot 内直接发布动态（文字/图片创作）的能力
  * - 敏感配置（BOT_TOKEN / WEBHOOK_SECRET）走 wrangler secret，绝不入库
  */
@@ -595,11 +595,21 @@ function tagsLine(tags) {
 	return arr.length ? `🏷️ ${arr.join(" ")}` : "";
 }
 
-/** 同步 Telegram 命令菜单（setMyCommands），KV 节流 12 小时，避免每次请求都调 API */
+/**
+ * 同步 Telegram 命令菜单（setMyCommands）
+ * hash 感知节流：命令列表内容变化时立即重新同步；内容不变时 12h 内跳过（省 API）
+ * 修复：v3.1 的纯时间戳节流导致部署新命令后菜单不更新（KV 内旧时间戳拦截）
+ */
 async function syncCommands(env) {
 	try {
-		const last = await env.BOT_KV.get("cmd_menu_synced");
-		if (last && Date.now() - Number(last) < 12 * 3600 * 1000) return;
+		const hash = JSON.stringify(COMMANDS);
+		const raw = await env.BOT_KV.get("cmd_menu_meta");
+		let meta = null;
+		try {
+			meta = raw ? JSON.parse(raw) : null;
+		} catch {}
+		const now = Date.now();
+		if (meta && meta.hash === hash && now - Number(meta.t || 0) < 12 * 3600 * 1000) return;
 		const res = await fetch(`${TG_API}${env.BOT_TOKEN}/setMyCommands`, {
 			method: "POST",
 			headers: { "content-type": "application/json" },
@@ -608,7 +618,7 @@ async function syncCommands(env) {
 		});
 		const j = await res.json().catch(() => null);
 		if (j && j.ok) {
-			await env.BOT_KV.put("cmd_menu_synced", String(Date.now()));
+			await env.BOT_KV.put("cmd_menu_meta", JSON.stringify({ hash, t: now }));
 			console.log("[menu] synced", COMMANDS.length, "commands");
 		} else {
 			console.log("[menu] sync fail", JSON.stringify(j));

@@ -148,7 +148,7 @@ console.log("\n🧪 T3 新动态推送");
 	assert(sent.length === 0, "指纹相同不重复推送");
 }
 
-// 测试 4：setMyCommands 菜单同步
+// 测试 4：setMyCommands 菜单同步（hash 感知节流）
 console.log("\n🧪 T4 命令菜单同步");
 {
 	reset();
@@ -157,9 +157,14 @@ console.log("\n🧪 T4 命令菜单同步");
 	assert(syncCalls.length === 1, "首次触发调用 setMyCommands 一次");
 	await api.syncCommands(env);
 	syncCalls = calls.filter((c) => c[0].includes("/setMyCommands"));
-	assert(syncCalls.length === 1, "12h 节流内不重复调用");
-	const saved = kvStore.get("cmd_menu_synced");
-	assert(saved, "同步成功后写入 KV 标记");
+	assert(syncCalls.length === 1, "命令未变时 12h 节流内不重复调用");
+	const meta = JSON.parse(kvStore.get("cmd_menu_meta"));
+	assert(meta && meta.hash && meta.t, "KV 保存菜单 hash + 时间戳");
+	// 回归测试：命令列表变化（如新部署增加命令）→ 必须立即重新同步
+	kvStore.set("cmd_menu_meta", JSON.stringify({ hash: "OLD-HASH", t: Date.now() }));
+	await api.syncCommands(env);
+	syncCalls = calls.filter((c) => c[0].includes("/setMyCommands"));
+	assert(syncCalls.length === 2, "命令列表变化时立即重新同步（修复菜单不更新的 Bug）");
 }
 
 // 测试 5：handleUpdate 基础分支
