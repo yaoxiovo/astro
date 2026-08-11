@@ -7,9 +7,11 @@
 | 站点 | URL | 期望 |
 |---|---|---|
 | 博客主站 | https://blog.yaoxi.wiki/ | 200 |
-| 博客 API | https://api.blog.yaoxi.cloud/ | 200 |
+| 博客 API | https://blog.yaoxi.wiki/api/moments.json | 200 |
 | Umami 统计 | https://umami.yaoxi.cloud/ | 200 |
 | 个人主页 | https://yaoxi.wiki/ | 200 |
+| 图床 | https://png.yaoxi.wiki/ | 200 |
+| 状态页 | https://status.yaoxi.wiki/ | 200 |
 
 > 拨测周期：每 5 分钟（cron `*/5 * * * *`）；也可访问 `https://site-monitor.yaoxi.workers.dev/api/run?secret=MONITOR_SECRET` 手动触发一轮检测。
 
@@ -44,8 +46,16 @@
 
 | 路由 | 说明 |
 |---|---|
-| `GET /` 或 `/api/status` | 公开状态 JSON（各站点 state/since/lastCheck/lastMs） |
+| `GET /` | **自写状态页**（复刻快猫星云 UI：整体徽章 + 组件列表 + uptime% + 响应曲线 + 故障时间线，60s 轮询，自动明暗模式） |
+| `GET /api/status` | 公开状态 JSON（各站点 state/since/lastCheck/lastMs，widget 兼容） |
+| `GET /api/history?days=30&site=xxx` | 历史数据：uptime% / 采样点 / 故障事件（自动从快照推导） |
 | `GET /api/run?secret=xxx` | 手动触发一轮检测 |
+
+## 自写状态页（全自动，替代手动发布事件）
+
+- 每轮检测自动写入 **hourly 历史快照**（KV 合并写入，避开免费额度 1000 写/天限制；30 天自动过期）
+- 状态页数据完全来自监控器自身：故障 → 页面自动变红，恢复 → 自动变绿，**零手动**
+- 历史数据积累满 1 小时后出现响应时间曲线，30 天后 uptime% 趋于准确
 
 ## 调度
 

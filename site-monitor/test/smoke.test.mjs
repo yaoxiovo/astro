@@ -224,3 +224,68 @@ test("T10 告警消息 HTML 转义安全", async () => {
 	assert.ok(flashcatCalls[0].title_rule.includes("A&B <站>"), "Flashduty 标题应为原文");
 	assert.equal(flashcatCalls[0].labels.site, "A&B <站>");
 });
+
+test("T11 状态页 HTML：/ 返回自写状态页", async () => {
+	reset();
+	const env = makeEnv();
+	const resp = await worker.fetch(new Request("https://site-monitor.workers.dev/"), env);
+	assert.equal(resp.status, 200);
+	const text = await resp.text();
+	assert.match(text, /<!DOCTYPE html>/);
+	assert.match(text, /Yaoxi Status/);
+	assert.match(text, /All Systems Operational/);
+	assert.match(text, /Incident History/);
+	assert.match(text, /\/api\/status/);
+});
+
+test("T12 历史 API：uptime% + 采样曲线 + 故障事件推导", async () => {
+	reset();
+	const env = makeEnv();
+	// 预置历史快照：当前小时 key，含 up/up/down/down/up 采样
+	const now = Date.now();
+	const d = new Date(now);
+	const pad = (n) => String(n).padStart(2, "0");
+	const hourKey = `hist:${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}-${pad(d.getUTCHours())}`;
+	await env.MONITOR_KV.put(
+		hourKey,
+		JSON.stringify({
+			samples: {
+				博客主站: [
+					{ ts: now - 20000, state: "up", ms: 100 },
+					{ ts: now - 15000, state: "up", ms: 120 },
+					{ ts: now - 10000, state: "down", ms: 0 },
+					{ ts: now - 5000, state: "down", ms: 0 },
+					{ ts: now, state: "up", ms: 90 },
+				],
+			},
+		}),
+		{ expirationTtl: 2592000 },
+	);
+	const resp = await worker.fetch(new Request("https://site-monitor.workers.dev/api/history?days=1"), env);
+	assert.equal(resp.status, 200);
+	const data = await resp.json();
+	const blog = data.sites["博客主站"];
+	assert.equal(blog.count, 5, "应读取到 5 个采样点");
+	assert.equal(blog.downCount, 2);
+	assert.equal(blog.uptime, 60, "uptime = 3/5 = 60%");
+	assert.equal(blog.events.length, 1, "应推导出 1 次故障事件");
+	assert.ok(blog.events[0].duration >= 5000 && blog.events[0].duration <= 15000, "故障时长应在 5-15s 之间");
+});
+
+test("T13 历史快照：scheduled 后写入 hourly KV", async () => {
+	reset();
+	siteResponses.set("https://blog.yaoxi.wiki/", () => okResp());
+	siteResponses.set("https://example.com/", () => okResp(200, "welcome to yaoxi wiki"));
+	const env = makeEnv();
+	await scheduledRun(env);
+	const now = Date.now();
+	const d = new Date(now);
+	const pad = (n) => String(n).padStart(2, "0");
+	const hourKey = `hist:${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}-${pad(d.getUTCHours())}`;
+	const raw = await env.MONITOR_KV.get(hourKey);
+	assert.ok(raw, "应写入 hourly 快照");
+	const parsed = JSON.parse(raw);
+	assert.ok(parsed.samples["博客主站"].length >= 1, "快照应包含博客主站采样");
+	assert.equal(parsed.samples["博客主站"][0].state, "up");
+	assert.ok(typeof parsed.samples["博客主站"][0].ms === "number");
+});
