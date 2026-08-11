@@ -33,9 +33,10 @@ jobs:
         run: |
           if grep -q "REPLACE_WITH_KV_ID" wrangler.jsonc; then
             # 1) 优先复用已存在的 namespace（手动创建 or 之前创建）
-            LIST_OUT=$(npx wrangler kv namespace list --json 2>/dev/null || true)
+            LIST_OUT=$(npx wrangler kv namespace list --json 2>/tmp/kv_list_err.txt || true)
             ID=$(echo "$LIST_OUT" | node -e "let s=require('fs').readFileSync(0,'utf8');try{const j=JSON.parse(s);const n=(j||[]).find(x=>x.title==='site-monitor-kv'||x.title==='MONITOR_KV');if(n){console.log(n.id)}else{process.exit(1)}}catch(e){process.exit(1)}" 2>/dev/null || true)
             if [ -z "$ID" ]; then
+              echo "::error::KV_LIST_RESULT: LIST_OUT=[$LIST_OUT] ERR=$(head -c 1000 /tmp/kv_list_err.txt 2>/dev/null)"
               echo "Existing KV not found, creating a new one..."
               npx wrangler kv namespace create MONITOR_KV --json > /tmp/kv_out.json 2>/tmp/kv_err.txt
               if [ $? -ne 0 ]; then
@@ -45,6 +46,7 @@ jobs:
                 echo '```' >> $GITHUB_STEP_SUMMARY
                 cat /tmp/kv_err.txt >> $GITHUB_STEP_SUMMARY
                 echo '```' >> $GITHUB_STEP_SUMMARY
+                echo "::error::KV_CREATE_FAIL: $(head -c 2000 /tmp/kv_err.txt)"
                 exit 1
               fi
               ID=$(node -e "let s=require('fs').readFileSync('/tmp/kv_out.json','utf8');const j=JSON.parse(s);if(j.success===false){console.error(s);process.exit(1)}console.log((j.result||j).id)")
