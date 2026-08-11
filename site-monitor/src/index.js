@@ -371,13 +371,19 @@ async function diagStatusPage(env) {
 		let data = null;
 		try { data = raw ? JSON.parse(raw) : null; } catch { out.listRaw = raw.slice(0, 400); }
 		out.listKeys = data ? Object.keys(data) : [];
-		const items = data?.items || data?.data || [];
+		const dataObj = data?.data;
+		out.dataKeys = dataObj && typeof dataObj === "object" && !Array.isArray(dataObj) ? Object.keys(dataObj) : [];
+		out.dataType = Array.isArray(dataObj) ? "array" : typeof dataObj;
+		const items = Array.isArray(dataObj) ? dataObj : dataObj?.items || [];
 		out.pageCount = Array.isArray(items) ? items.length : 0;
 		if (Array.isArray(items) && items.length) {
 			const p = items[0];
 			out.pageKeys = Object.keys(p);
 			out.pageIdShort = String(p?.page_id ?? p?.id ?? "").slice(0, 12);
-			const comps = p?.components || p?.component_items || [];
+			const comps = p?.components || p?.component_items || p?.component || [];
+			if (!Array.isArray(comps) && comps && typeof comps === "object") {
+				out.componentShape = Object.keys(comps).slice(0, 10);
+			}
 			out.componentCount = Array.isArray(comps) ? comps.length : 0;
 			if (Array.isArray(comps)) {
 				out.components = comps.map((c) => ({ name: c?.name ?? c?.component_name ?? "?", idShort: String(c?.component_id ?? c?.id ?? "").slice(0, 12), keys: Object.keys(c).slice(0, 8) }));
