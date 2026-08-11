@@ -66,3 +66,9 @@ Cron `*/5 * * * *`（每 5 分钟），4 站点 × 288 次/天 ≈ 1.2k 请求�
 ```bash
 node --test test/smoke.test.mjs
 ```
+## 状态页自动发布（Flashduty Status Page API）
+
+- 故障时自动创建 incident（受影响组件 → major_outage，状态页变红）
+- 恢复时自动 resolved（组件 → operational，状态页变绿）
+- 需要 GitHub secret：`FLASHDUTY_APP_KEY`（Flashduty 个人中心 APP Key）
+- 未配置时自动跳过，不影响告警主链路
