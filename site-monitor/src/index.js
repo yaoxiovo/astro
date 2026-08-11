@@ -13,10 +13,11 @@
 
 const DEFAULT_SITES = [
 	{ name: "博客主站", url: "https://blog.yaoxi.wiki/", expect: 200 },
-	{ name: "博客 API", url: "https://drill-演练-不存在.invalid/", expect: 200 },
+	{ name: "博客 API", url: "https://blog.yaoxi.wiki/api/moments.json", expect: 200 },
 	{ name: "Umami 统计", url: "https://umami.yaoxi.cloud/", expect: 200 },
 	{ name: "个人主页", url: "https://yaoxi.wiki/", expect: 200 },
 	{ name: "图床", url: "https://png.yaoxi.wiki/", expect: 200 },
+	{ name: "状态页", url: "https://status.yaoxi.wiki/", expect: 200 },
 ];
 
 const TIMEOUT_MS = 10_000;
