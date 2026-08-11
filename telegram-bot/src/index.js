@@ -1,25 +1,15 @@
 /**
- * Yaoxi Blog Telegram Bot v3.1
+ * Yaoxi Blog Telegram Bot v3.2
  * - Webhook 模式：Telegram 消息即时推送到 /webhook → 毫秒级响应命令
  * - Cron 每 10 分钟：新动态/新文章推送 + 时间胶囊到期提醒 + 每周日周报
- * - 命令：/start /help /subscribe /unsubscribe /latest /random /stats /search /publish /cancel
+ * - 命令：/start /help /subscribe /unsubscribe /latest /random /stats /search
  * - 菜单：setMyCommands 自动同步 Telegram 命令菜单（输入框 / 弹出，KV 节流 12h）
- * - 创作（文字）：主人直接发文字 → 自动生成 markdown 提交 GitHub → 自动部署上线
- * - 创作（图片）：主人发照片/图片文档 → 下载 → 上传图床（yaoxiovo/jpg）→ 发布带图朋友圈
- *   单图+caption 直达发布；多图进入草稿，发文字配文或 /publish 发布，/cancel 取消
- * - 敏感配置（BOT_TOKEN / WEBHOOK_SECRET / GITHUB_PAT）走 wrangler secret，绝不入库
+ * - 纯订阅/查询/推送 Bot：v3.2 起移除在 Bot 内直接发布动态（文字/图片创作）的能力
+ * - 敏感配置（BOT_TOKEN / WEBHOOK_SECRET）走 wrangler secret，绝不入库
  */
 const BLOG_ORIGIN = "https://blog.yaoxi.wiki";
 const TG_API = "https://api.telegram.org/bot";
 const GITHUB_API = "https://api.github.com";
-const GITHUB_REPO = "yaoxiovo/astro";
-const MOMENTS_DIR = "src/content/moments";
-/** 图床仓库：图片存到 jpg 仓库 astro/raw/YYYY-MM-DD/ 下，博客端自动拼 png.yaoxi.wiki CDN */
-const IMG_REPO = "yaoxiovo/jpg";
-const IMG_RAW_PREFIX = "astro/raw";
-const MAX_IMAGES = 9; // 朋友圈 9 宫格上限
-const MAX_IMG_BYTES = 8 * 1024 * 1024; // GitHub contents API 安全上限（Worker 内存约束）
-const DRAFT_TTL = 10 * 60 * 1000; // 草稿 10 分钟过期
 
 /** Telegram 命令菜单（/ 弹出），setMyCommands 同步 */
 const COMMANDS = [
@@ -28,8 +18,6 @@ const COMMANDS = [
 	{ command: "random", description: "随机一条朋友圈" },
 	{ command: "stats", description: "朋友圈统计摘要" },
 	{ command: "search", description: "搜索朋友圈：/search 关键词" },
-	{ command: "publish", description: "发布图片草稿" },
-	{ command: "cancel", description: "取消图片草稿" },
 	{ command: "subscribe", description: "订阅新动态推送" },
 	{ command: "unsubscribe", description: "退订推送" },
 	{ command: "help", description: "帮助与全部命令" },
@@ -93,18 +81,16 @@ async function handleUpdate(env, u) {
 	const text = (msg.text || "").trim();
 	const isOwner = String(chatId) === String(env.CHAT_ID || "");
 
-	// 媒体消息（无 text）：图片收集 / 视频暂不支持
+	// 媒体消息（无 text）：发布功能已下线，礼貌提示；sticker / voice 等忽略
 	if (!text) {
-		if (!isOwner) return send(env, chatId, "😿 只有主人可以发动态喵~ 想订阅推送请发 /subscribe");
-		if (msg.photo?.length) {
-			const photo = msg.photo[msg.photo.length - 1]; // 最大尺寸
-			return cmdAddImage(env, chatId, photo.file_id, msg.caption || "", msg.media_group_id);
-		}
-		if (msg.document && (msg.document.mime_type || "").startsWith("image/")) {
-			return cmdAddImage(env, chatId, msg.document.file_id, msg.caption || "", msg.media_group_id);
-		}
-		if (msg.video || msg.video_note || msg.animation) {
-			return send(env, chatId, "🎬 视频朋友圈暂不支持喵~ 图片直接发给我就行（支持最多 9 张）");
+		if (msg.photo?.length || msg.document || msg.video || msg.video_note || msg.animation) {
+			return send(
+				env,
+				chatId,
+				isOwner
+					? "📭 在 Bot 内发布动态的功能已下线喵~ 本 Bot 现在专注订阅推送与查询（/latest /random /stats /search）"
+					: "😸 想订阅瑶曦的博客动态请发 /subscribe 喵~"
+			);
 		}
 		return; // sticker / voice 等忽略
 	}
@@ -112,9 +98,9 @@ async function handleUpdate(env, u) {
 	try {
 		if (text.startsWith("/start")) {
 			await setSub(env, chatId, true);
-			await send(env, chatId, "👋 欢迎订阅瑶曦的博客动态喵~\n\n📷 新朋友圈 / 📝 新文章会第一时间推送给你。\n\n命令：\n/latest — 最近 5 条动态\n/random — 随机一条朋友圈\n/stats — 朋友圈统计\n/search — 搜索朋友圈\n/publish — 发布图片草稿\n/cancel — 取消图片草稿\n/subscribe — 订阅推送\n/unsubscribe — 退订\n/help — 帮助");
+			await send(env, chatId, "👋 欢迎订阅瑶曦的博客动态喵~\n\n📷 新朋友圈 / 📝 新文章会第一时间推送给你。\n\n命令：\n/latest — 最近 5 条动态\n/random — 随机一条朋友圈\n/stats — 朋友圈统计\n/search — 搜索朋友圈\n/subscribe — 订阅推送\n/unsubscribe — 退订\n/help — 帮助");
 		} else if (text.startsWith("/help")) {
-			await send(env, chatId, "🤖 <b>瑶曦博客 Bot 帮助</b>\n\n/latest — 最近 5 条朋友圈动态\n/random — 随机一条动态\n/stats — 朋友圈统计摘要\n/search 关键词 — 搜索朋友圈\n/publish — 发布图片草稿\n/cancel — 取消图片草稿\n/subscribe — 订阅新动态推送\n/unsubscribe — 退订推送\n\n📸 主人直接发照片（最多 9 张）即可发布带图朋友圈喵~");
+			await send(env, chatId, "🤖 <b>瑶曦博客 Bot 帮助</b>\n\n/latest — 最近 5 条朋友圈动态\n/random — 随机一条动态\n/stats — 朋友圈统计摘要\n/search 关键词 — 搜索朋友圈\n/subscribe — 订阅新动态推送\n/unsubscribe — 退订推送\n\n📭 在 Bot 内发布动态已下线，本 Bot 专注订阅推送与查询喵~");
 		} else if (text.startsWith("/subscribe")) {
 			await setSub(env, chatId, true);
 			await send(env, chatId, "✅ 已订阅推送，有新动态会第一时间通知你喵~");
@@ -129,26 +115,12 @@ async function handleUpdate(env, u) {
 			await cmdStats(env, chatId);
 		} else if (text.startsWith("/search")) {
 			await cmdSearch(env, chatId, text.replace(/^\/search\s*/, "").trim());
-		} else if (text.startsWith("/publish")) {
-			await publishDraft(env, chatId);
-		} else if (text.startsWith("/cancel")) {
-			await clearDraft(env, chatId);
-			await send(env, chatId, "🗑️ 草稿已取消喵~");
 		} else if (text.startsWith("/")) {
 			await send(env, chatId, "🤔 未知命令，发 /help 查看可用命令喵~");
 		} else if (isOwner) {
-			// 主人发普通文字：有图片草稿 → 作为配文发布；否则 → 纯文字创建动态
-			const draft = await getDraft(env, chatId);
-			if (draft?.images?.length) {
-				draft.captions = [text];
-				draft.updated = Date.now();
-				await saveDraft(env, chatId, draft);
-				await publishDraft(env, chatId);
-			} else {
-				await cmdCreate(env, chatId, text);
-			}
+			await send(env, chatId, "📭 在 Bot 内发布动态的功能已下线喵~ 发 /help 查看全部可用命令（订阅 / 查询 / 推送）");
 		} else {
-			await send(env, chatId, "😿 只有主人可以在这里发动态喵~ 想订阅推送请发 /subscribe");
+			await send(env, chatId, "😸 想订阅瑶曦的博客动态请发 /subscribe 喵~");
 		}
 	} catch (e) {
 		console.error("[cmd]", chatId, text, e);
@@ -335,202 +307,7 @@ async function cmdSearch(env, chatId, q) {
 	await send(env, chatId, `🔍 <b>搜索结果</b>（${hits.length} 条）\n\n${lines.join("\n")}`);
 }
 
-/** 主人发文字 → 自动创建朋友圈动态（提交 GitHub → 触发部署上线） */
-async function cmdCreate(env, chatId, text) {
-	const tags = extractTags(text);
-	const body = text.replace(/#[\p{L}\p{N}_-]+/gu, "").replace(/\n{3,}/g, "\n\n").trim();
-	if (!body) return send(env, chatId, "😿 动态内容不能为空喵~（纯标签不算内容）");
-
-	const slug = `m-${beijingStamp()}`;
-	const published = new Date(Date.now() + 8 * 3600 * 1000).toISOString().replace("Z", "+08:00");
-	const tagYaml = tags.length ? tags.map((t) => `  - ${t}`).join("\n") : "";
-	const content = `---\npublished: ${published}\ntags:\n${tagYaml}\n---\n${body}\n`;
-
-	try {
-		await githubPutFile(env, `${MOMENTS_DIR}/${slug}.md`, content, `feat(moments): 新增动态 ${slug} [via Bot]`);
-		await sendWithButton(env, chatId, `📝 <b>动态已创建！</b>\n\n📅 ${fmtDate(published)}\n${esc(clip(body, 80))}\n${tagsLine(tags)}\n\n⏳ 部署中，约 1-2 分钟上线喵~`, "🔗 查看详情", `${BLOG_ORIGIN}/moment/${slug}/`);
-		console.log("[create] pushed", slug);
-	} catch (e) {
-		console.error("[create] fail", e);
-		await send(env, chatId, `😿 动态创建失败：${esc(e.message || String(e))}\n\n请检查 GITHUB_PAT 配置喵~`);
-	}
-}
-
-/* ---------------- 图片朋友圈（v3：草稿状态机） ---------------- */
-
-/** 收到图片 → 进入草稿；单图+caption 直达发布；多图收集后 /publish 或文字配文发布 */
-async function cmdAddImage(env, chatId, fileId, caption, groupId) {
-	// 相册（media_group）并发到达，等 2.5s 让同组消息到齐再合并，避免 KV 竞态丢图
-	if (groupId) await sleep(2500);
-
-	const draft = (await getDraft(env, chatId)) || { images: [], captions: [], updated: 0 };
-	const now = Date.now();
-	if (now - (draft.updated || 0) > DRAFT_TTL || !draft.images.length) {
-		// 过期或空 → 新草稿
-		Object.assign(draft, { images: [], captions: [], updated: now });
-	}
-	if (draft.images.some((i) => i.fileId === fileId)) return; // 相册重复处理防护
-
-	if (draft.images.length >= MAX_IMAGES) {
-		return send(env, chatId, `😿 最多 ${MAX_IMAGES} 张图喵~ 发 /publish 发布或 /cancel 取消`);
-	}
-	draft.images.push({ fileId });
-	if (caption) draft.captions.push(caption);
-	draft.updated = now;
-	await saveDraft(env, chatId, draft);
-
-	// 单图 + 配文 → 一步直达发布
-	if (draft.images.length === 1 && caption) {
-		return publishDraft(env, chatId);
-	}
-	const n = draft.images.length;
-	await send(env, chatId, `📸 已收集 ${n} 张图片喵~ ${n < MAX_IMAGES ? "继续发图，或" : ""}发文字配文后自动发布，/publish 直接发布，/cancel 取消`);
-}
-
-/** 发布草稿：下载 TG 图片 → 上传图床(jpg 仓库) → 生成 frontmatter → 提交博客仓库 */
-async function publishDraft(env, chatId) {
-	const draft = await getDraft(env, chatId);
-	if (!draft?.images?.length) return send(env, chatId, "😿 没有待发布的图片喵~ 直接发照片给我即可");
-	await send(env, chatId, "⏳ 正在上传图片并发布，约 1 分钟喵~");
-
-	try {
-		const date = beijingDate();
-		const stamp = beijingStamp();
-		const names = [];
-
-		for (let i = 0; i < draft.images.length; i++) {
-			const { fileId } = draft.images[i];
-			const { buf, ext } = (await tgDownload(env, fileId)) || {};
-			if (!buf) throw new Error(`第 ${i + 1} 张图片下载失败（Telegram 文件可能已过期），请重发`);
-			if (buf.byteLength > MAX_IMG_BYTES) {
-				throw new Error(`第 ${i + 1} 张图片超过 ${MAX_IMG_BYTES / 1024 / 1024}MB，请压缩后重发`);
-			}
-			const name = `${stamp}-${i + 1}.${ext || "jpg"}`;
-			await githubPutBinary(env, IMG_REPO, `${IMG_RAW_PREFIX}/${date}/${name}`, buf, `Upload moment image ${name} [via Bot]`);
-			names.push(name);
-		}
-
-		const body = (draft.captions || []).filter(Boolean).join("\n").trim();
-		const tags = extractTags(body);
-		const slug = `m-${stamp}`;
-		const published = new Date(Date.now() + 8 * 3600 * 1000).toISOString().replace("Z", "+08:00");
-		const imagesYaml = names.map((n) => `  - "${n}"`).join("\n");
-		// 博客端根据 published 日期自动拼 CDN：png.yaoxi.wiki/astro/raw/YYYY-MM-DD/xxx.jpg
-		const content = `---\npublished: ${published}\nimages:\n${imagesYaml}\n---\n${body}\n`;
-
-		await githubPutFile(env, `${MOMENTS_DIR}/${slug}.md`, content, `feat(moments): 新增图片动态 ${slug} [via Bot]`);
-		await clearDraft(env, chatId);
-
-		let text = `📝 <b>图片动态已发布！</b>\n\n🖼️ 图片 ${names.length} 张`;
-		if (body) text += `\n\n${esc(clip(body, 80))}\n${tagsLine(tags)}`;
-		text += `\n\n⏳ 部署中，约 1-2 分钟上线喵~`;
-		await sendWithButton(env, chatId, text, "🔗 查看详情", `${BLOG_ORIGIN}/moment/${slug}/`);
-		console.log("[publish] pushed", slug, names.length);
-	} catch (e) {
-		console.error("[publish] fail", e);
-		await send(env, chatId, `😿 发布失败：${esc(e.message || String(e))}\n\n图片草稿已保留，可 /publish 重试或 /cancel 取消喵~`);
-	}
-}
-
-async function getDraft(env, chatId) {
-	const raw = await env.BOT_KV.get(`draft_${chatId}`);
-	if (!raw) return null;
-	try {
-		const d = JSON.parse(raw);
-		if (Date.now() - (d.updated || 0) > DRAFT_TTL) return null; // 过期草稿视为无
-		return d;
-	} catch {
-		return null;
-	}
-}
-
-async function saveDraft(env, chatId, draft) {
-	await env.BOT_KV.put(`draft_${chatId}`, JSON.stringify(draft), { expirationTtl: Math.ceil(DRAFT_TTL / 1000) + 60 });
-}
-
-async function clearDraft(env, chatId) {
-	await env.BOT_KV.delete(`draft_${chatId}`);
-}
-
-/** 下载 TG 文件（getFile → file_path → 二进制），返回 { buf: ArrayBuffer, ext: string } */
-async function tgDownload(env, fileId) {
-	const res = await fetch(`${TG_API}${env.BOT_TOKEN}/getFile`, {
-		method: "POST",
-		headers: { "content-type": "application/json" },
-		body: JSON.stringify({ file_id: fileId }),
-		signal: AbortSignal.timeout(10000),
-	});
-	const j = await res.json().catch(() => null);
-	if (!j?.ok || !j.result?.file_path) return null;
-	const filePath = j.result.file_path;
-	const ext = (filePath.match(/\.([a-z0-9]+)$/i) || [])[1] || "jpg";
-	const dl = await fetch(`https://api.telegram.org/file/bot${env.BOT_TOKEN}/${filePath}`, {
-		signal: AbortSignal.timeout(25000),
-	});
-	if (!dl.ok) return null;
-	return { buf: await dl.arrayBuffer(), ext };
-}
-
-/** 上传二进制到 GitHub 仓库（contents API） */
-async function githubPutBinary(env, repo, path, buf, message) {
-	if (!env.GITHUB_PAT) throw new Error("GITHUB_PAT 未配置");
-	const res = await fetch(`${GITHUB_API}/repos/${repo}/contents/${path}`, {
-		method: "PUT",
-		headers: {
-			Authorization: `Bearer ${env.GITHUB_PAT}`,
-			Accept: "application/vnd.github+json",
-			"content-type": "application/json",
-			"User-Agent": "yaoxi-blog-bot",
-		},
-		body: JSON.stringify({
-			message,
-			content: Buffer.from(buf).toString("base64"),
-			branch: "main",
-		}),
-		signal: AbortSignal.timeout(25000),
-	});
-	const j = await res.json().catch(() => null);
-	if (!res.ok) throw new Error((j && (j.message || JSON.stringify(j))) || `HTTP ${res.status}`);
-	return j;
-}
-
-function sleep(ms) {
-	return new Promise((r) => setTimeout(r, ms));
-}
-
 /* ---------------- 工具 ---------------- */
-async function githubPutFile(env, path, content, message) {
-	if (!env.GITHUB_PAT) throw new Error("GITHUB_PAT 未配置");
-	const res = await fetch(`${GITHUB_API}/repos/${GITHUB_REPO}/contents/${path}`, {
-		method: "PUT",
-		headers: {
-			Authorization: `Bearer ${env.GITHUB_PAT}`,
-			Accept: "application/vnd.github+json",
-			"content-type": "application/json",
-			"User-Agent": "yaoxi-blog-bot",
-		},
-		body: JSON.stringify({
-			message,
-			content: Buffer.from(content, "utf-8").toString("base64"),
-			branch: "main",
-		}),
-		signal: AbortSignal.timeout(15000),
-	});
-	const j = await res.json().catch(() => null);
-	if (!res.ok) throw new Error((j && (j.message || JSON.stringify(j))) || `HTTP ${res.status}`);
-	return j;
-}
-
-/** 提取 #标签（与博客端正则一致） */
-function extractTags(text) {
-	const re = /#[\p{L}\p{N}_-]+/gu;
-	const out = [];
-	for (const m of String(text || "").matchAll(re)) {
-		const t = m[0].slice(1);
-		if (t && !out.includes(t)) out.push(t);
-	}
-	return out;
-}
 
 /** 北京时间 YYYY-MM-DD */
 function beijingDate() {
@@ -544,13 +321,6 @@ function beijingMonday() {
 	const day = (now.getUTCDay() + 6) % 7; // 周一=0
 	const monday = new Date(now.getTime() - day * 86400000);
 	return `${monday.getUTCFullYear()}-${String(monday.getUTCMonth() + 1).padStart(2, "0")}-${String(monday.getUTCDate()).padStart(2, "0")}`;
-}
-
-/** 北京时间时间戳 m-YYYYMMDD-HHmmss */
-function beijingStamp() {
-	const d = new Date(Date.now() + 8 * 3600 * 1000);
-	const p = (n) => String(n).padStart(2, "0");
-	return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}-${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}`;
 }
 
 async function recipients(env) {

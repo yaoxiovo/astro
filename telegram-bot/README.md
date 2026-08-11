@@ -1,15 +1,13 @@
 # 🤖 Yaoxi Blog Telegram Bot
 
-推送博客新动态 / 新文章到 Telegram 的 Cloudflare Worker。
+推送博客新动态 / 新文章到 Telegram 的 Cloudflare Worker（纯订阅 / 查询 / 推送，不在 Bot 内发布动态）。
 
 - **Cron 每 10 分钟** 检查 `blog.yaoxi.wiki/api/moments.json`（新朋友圈）和 `/rss.xml`（新文章），有变化即推送
-- **命令**：`/latest` 最近动态 · `/random` 随机一条 · `/stats` 朋友圈统计 · `/search` 搜索 · `/publish` 发布草稿 · `/cancel` 取消草稿 · `/subscribe` / `/unsubscribe` 订阅管理 · `/help` 帮助
-- **命令菜单**：Worker 自动调用 `setMyCommands` 同步 10 个命令到 Telegram 输入框的 `/` 菜单（KV 节流 12h，任意消息懒触发），无需 BotFather 手动设置
-- **文字创作**：主人直接发文字 → 自动提交 GitHub → 生成朋友圈动态
-- **图片创作（v3）**：主人发照片 / 图片文档（最多 9 张）→ 自动上传图床（`yaoxiovo/jpg` → `png.yaoxi.wiki` CDN）→ 发布带图朋友圈
-  - 单图 + 配文 → 一步直达发布
-  - 多图 / 相册 → 进入草稿，可继续发图或发文字配文，`/publish` 发布、`/cancel` 取消
-  - 草稿 10 分钟未操作自动过期
+- **命令**：`/latest` 最近动态 · `/random` 随机一条 · `/stats` 朋友圈统计 · `/search` 搜索 · `/subscribe` / `/unsubscribe` 订阅管理 · `/help` 帮助
+- **命令菜单**：Worker 自动调用 `setMyCommands` 同步 8 个命令到 Telegram 输入框的 `/` 菜单（KV 节流 12h，任意消息懒触发），无需 BotFather 手动设置
+- **时间胶囊**：到期胶囊自动推送提醒（每天首次 tick 检查）
+- **每周日周报**：本周朋友圈数据汇总推送
+- **v3.2 变更**：移除在 Bot 内发布动态的能力（文字/图片创作、`/publish` `/cancel`、图床上传），GITHUB_PAT 不再需要
 - **指纹去重**：KV 存上次指纹，首次部署只建基线不推送历史
 
 ## 部署（GitHub Actions 全自动）
@@ -33,7 +31,7 @@ GitHub 仓库 → Settings → Secrets and variables → Actions → New reposit
 | `CLOUDFLARE_ACCOUNT_ID` | 上面拿的 CF Account ID |
 | `BOT_TOKEN` | Telegram Bot Token |
 | `CHAT_ID` | 你的 chat id（默认推送目标） |
-| `GH_PAT` | GitHub Personal Access Token，需对 `yaoxiovo/astro`（博客仓库）和 `yaoxiovo/jpg`（图床仓库）都有 **contents 写权限**（发朋友圈功能依赖） |
+| `GH_PAT` | （可选，已不再需要）旧版发朋友圈功能已下线，可删除 |
 
 > ⚠️ **安全**：`.dev.vars` / token 已被 `.gitignore` 排除，绝不入库；代码里只从 `env.BOT_TOKEN` 读取。
 
@@ -45,11 +43,11 @@ GitHub 仓库 → Settings → Secrets and variables → Actions → New reposit
 ### 4️⃣ 验证
 
 1. 给 bot 发 `/start` → 收到欢迎语（同时自动同步命令菜单，输入框输入 `/` 可见全部命令）
-2. `/latest` → 最近 3 条动态
+2. `/latest` → 最近 5 条动态
 3. `/random` → 随机一条（带「查看详情」按钮）
 4. `/stats` → 朋友圈统计
 5. 博客发布新动态/新文章 → 10 分钟内收到推送
-6. 主人发一张照片 + 配文 → 自动发布带图朋友圈；发多张（相册）→ 收集草稿，发文字或 /publish 发布
+6. 发照片/普通文字 → 提示「发布功能已下线」（v3.2 起 Bot 不再发布动态）
 
 ## 本地调试（电脑）
 

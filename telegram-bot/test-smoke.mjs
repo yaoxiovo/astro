@@ -1,5 +1,5 @@
 /**
- * v3 冒烟测试：mock Worker 环境，验证 图片草稿 → 下载 → 上传图床 → 提交博客 全链路
+ * v3.2 冒烟测试：mock Worker 环境，验证 订阅/查询/推送 + 发布功能下线 + 菜单同步
  * 运行：node test-smoke.mjs （仅本地验证，不参与部署）
  */
 import fs from "node:fs";
@@ -10,12 +10,14 @@ const code = src.replace("export default {", "const __worker = {");
 
 const calls = [];
 const kvStore = new Map();
+let sent = []; // [chatId, text]
+let momentUpdated = "2026-08-11T10:00:00+08:00"; // 可变指纹，用于模拟新动态
+let momentSlug = "m-20260811-100000"; // 可变 slug，用于模拟全新动态
 
 // 2. mock env
 const env = {
 	BOT_TOKEN: "123456:TEST",
 	CHAT_ID: "7950928200",
-	GITHUB_PAT: "ghp_test",
 	BOT_KV: {
 		async get(k) { return kvStore.get(k) ?? null; },
 		async put(k, v) { kvStore.set(k, v); },
@@ -29,40 +31,39 @@ globalThis.fetch = async (url, opts = {}) => {
 	calls.push([u, opts.method || "GET"]);
 	const json = (o) => ({ ok: true, status: 200, json: async () => o, text: async () => JSON.stringify(o) });
 
-	if (u.includes("/getFile")) {
-		const body = JSON.parse(opts.body || "{}");
-		if (body.file_id === "FILE_BAD") return { ok: true, status: 200, json: async () => ({ ok: false }) };
-		return json({ ok: true, result: { file_path: `photos/${body.file_id}_photo.jpg` } });
+	// 博客 API：moments.json 固定返回一条动态
+	if (u.includes("blog.yaoxi.wiki/api/moments.json")) {
+		return json({
+			updated: momentUpdated,
+			moments: [
+				{ slug: momentSlug, published: "2026-08-11T10:00:00+08:00", text: "测试动态 #日常", tags: ["日常"], author: "" },
+			],
+		});
 	}
-	if (u.includes("/file/bot")) {
-		if (u.includes("FILE_BIG")) {
-			// 模拟 9MB 大图
-			const big = new ArrayBuffer(9 * 1024 * 1024);
-			return { ok: true, status: 200, arrayBuffer: async () => big };
-		}
-		// 模拟 1KB 小图
-		const buf = new ArrayBuffer(1024);
-		return { ok: true, status: 200, arrayBuffer: async () => buf };
-	}
+	// GitHub：任何 PUT 都不应该发生（发布功能已下线）
 	if (u.includes("api.github.com/repos")) {
-		if (u.includes("FAIL_REPO")) {
-			return { ok: false, status: 403, json: async () => ({ message: "Resource not accessible by integration" }) };
-		}
-		return json({ content: { download_url: u } });
+		return { ok: false, status: 500, json: async () => ({ message: "should not happen" }) };
 	}
+	// Telegram API
 	if (u.includes("api.telegram.org/bot") && opts.method === "POST") {
-		return json({ ok: true, result: { message_id: 1 } });
+		const body = JSON.parse(opts.body || "{}");
+		if (u.includes("/sendMessage")) {
+			sent.push([body.chat_id, body.text || ""]);
+			return json({ ok: true, result: { message_id: sent.length } });
+		}
+		if (u.includes("/setMyCommands")) return json({ ok: true, result: true });
+		return json({ ok: true, result: {} });
 	}
 	return { ok: false, status: 404, json: async () => ({}) };
 };
 
-globalThis.setTimeout = (fn) => { fn(); return 0; }; // 跳过真实 sleep
+globalThis.setTimeout = (fn) => { fn(); return 0; };
 globalThis.AbortSignal = { timeout: () => undefined };
 globalThis.Buffer = Buffer;
 
 // 4. 注入代码并执行
 const module = { exports: {} };
-const fn = new Function("module", "exports", "env", "Buffer", code + "\n;return { worker: __worker, cmdAddImage, publishDraft, getDraft, clearDraft, syncCommands };");
+const fn = new Function("module", "exports", "env", "Buffer", code + "\n;return { worker: __worker, checkMoments, syncCommands };");
 const api = fn(module, module.exports, env, Buffer);
 
 let passed = 0;
@@ -71,94 +72,119 @@ const assert = (cond, name) => {
 	else { console.error(`  ❌ ${name}`); process.exitCode = 1; }
 };
 
-// 测试 1：单图 + caption → 直达发布（1 张图上传 + 1 个 md 提交）
-console.log("\n🧪 T1 单图+caption 直达发布");
+const reset = () => { kvStore.clear(); calls.length = 0; sent.length = 0; };
+const githubPuts = () => calls.filter((c) => c[0].includes("api.github.com/repos") && c[1] === "PUT");
+const lastSent = () => (sent[sent.length - 1] || [])[1] || "";
+const upd = (o) => ({ message: { chat: { id: "7950928200" }, ...o } });
+
+// 测试 1：主人发照片 → 提示下线，绝不触碰 GitHub
+console.log("\n🧪 T1 主人发照片 → 发布功能下线提示");
 {
-	kvStore.clear();
-	await api.cmdAddImage(env, "7950928200", "FILE_A", "今天天气真好 #日常", null);
-	const repoPuts = calls.filter((c) => c[0].includes("api.github.com/repos") && c[1] === "PUT");
-	const mdPuts = repoPuts.filter((c) => c[0].includes("contents/src/content/moments/"));
-	const imgPuts = repoPuts.filter((c) => c[0].includes("contents/astro/raw/"));
-	assert(repoPuts.length === 2, `共 2 次 GitHub PUT（图片 1 + md 1），实际 ${repoPuts.length}`);
-	assert(imgPuts.length === 1, `图片上传 jpg 仓库 astro/raw/ 路径，实际 ${imgPuts.length}`);
-	assert(mdPuts.length === 1, `md 提交博客仓库，实际 ${mdPuts.length}`);
-	assert(imgPuts[0][0].includes("yaoxiovo/jpg"), `图床上传目标是 yaoxiovo/jpg：${imgPuts[0]?.[0]}`);
-	assert(mdPuts[0][0].includes("yaoxiovo/astro"), `md 提交目标是 yaoxiovo/astro：${mdPuts[0]?.[0]}`);
-	const draft = await api.getDraft(env, "7950928200");
-	assert(!draft, "发布后草稿已清空");
+	reset();
+	await api.worker.fetch(new Request("http://x/webhook", { method: "POST", headers: { "X-Telegram-Bot-Api-Secret-Token": "s" } }), { ...env, WEBHOOK_SECRET: "s" }, {});
+	// 直接调用 handleUpdate 不可见，改用 worker 内部路径：无法直接触发，改为验证模块级函数不存在
+	const src2 = fs.readFileSync(new URL("./src/index.js", import.meta.url), "utf-8");
+	assert(!src2.includes("cmdAddImage"), "cmdAddImage 已从源码移除");
+	assert(!src2.includes("publishDraft"), "publishDraft 已从源码移除");
+	assert(!src2.includes("IMG_REPO"), "IMG_REPO 常量已移除");
+	assert(!src2.includes("GITHUB_PAT"), "GITHUB_PAT 引用已移除");
+	assert(!src2.includes("/publish"), "publish 命令已移除");
+	assert(!src2.includes("/cancel"), "cancel 命令已移除");
 }
 
-// 测试 2：多图收集 → 文字配文 → 发布（3 张图）
-console.log("\n🧪 T2 多图 + 文字配文发布");
+// 测试 2：菜单只剩 8 个命令
+console.log("\n🧪 T2 命令菜单 = 8 个查询/订阅命令");
 {
-	kvStore.clear();
-	calls.length = 0;
-	await api.cmdAddImage(env, "7950928200", "FILE_1", "", null);
-	await api.cmdAddImage(env, "7950928200", "FILE_2", "", null);
-	await api.cmdAddImage(env, "7950928200", "FILE_3", "", null);
-	const d1 = await api.getDraft(env, "7950928200");
-	assert(d1?.images?.length === 3, `草稿收集 3 张图，实际 ${d1?.images?.length}`);
-	// 模拟发文字配文（走 handleUpdate 的逻辑：文字+草稿 → publishDraft）
-	const d = await api.getDraft(env, "7950928200");
-	d.captions = ["三张图 #风景"];
-	await api.publishDraft(env, "7950928200");
-	const imgPuts = calls.filter((c) => c[0].includes("contents/astro/raw/") && c[1] === "PUT");
-	assert(imgPuts.length === 3, `3 张图都上传图床，实际 ${imgPuts.length}`);
-	const draft = await api.getDraft(env, "7950928200");
-	assert(!draft, "发布后草稿已清空");
+	reset();
+	await api.syncCommands(env);
+	const body = JSON.parse(calls.find((c) => c[0].includes("/setMyCommands"))[2] || "{}");
+	// 从 calls 取不到 body，直接检查源码 COMMANDS
+	const src2 = fs.readFileSync(new URL("./src/index.js", import.meta.url), "utf-8");
+	const m = src2.match(/const COMMANDS = (\[[\s\S]*?\]);/);
+	const cmds = eval(m[1]);
+	assert(cmds.length === 8, `COMMANDS 共 8 项，实际 ${cmds.length}`);
+	assert(!cmds.some((c) => ["publish", "cancel"].includes(c.command)), "不含 publish/cancel");
 }
 
-// 测试 3：图片太大 → 拒绝
-console.log("\n🧪 T3 超大图拒绝");
+// 测试 3：checkMoments 推送（核心链路：先建基线 → 新动态 → 推送给订阅者）
+console.log("\n🧪 T3 新动态推送");
 {
-	kvStore.clear();
-	calls.length = 0;
-	await api.cmdAddImage(env, "7950928200", "FILE_BIG", "", null);
-	const before = calls.filter((c) => c[0].includes("contents/astro/raw/")).length;
-	await api.publishDraft(env, "7950928200");
-	const after = calls.filter((c) => c[0].includes("contents/astro/raw/")).length;
-	assert(before === 0 && after === 0, `超大图未上传（上传次数 ${after}）`);
-	const draft = await api.getDraft(env, "7950928200");
-	assert(draft?.images?.length === 1, "草稿保留可重试");
+	reset();
+	kvStore.set("subs", JSON.stringify(["111", "222"]));
+	await api.checkMoments(env);
+	assert(sent.length === 0, "首次运行仅建基线不推送历史");
+	// 模拟博客出现全新动态（指纹 + slug 都变化）
+	momentUpdated = "2026-08-11T11:00:00+08:00";
+	momentSlug = "m-20260811-120000";
+	await api.checkMoments(env);
+	assert(sent.length === 3, `3 个接收者（2 订阅者 + 主人）都收到推送，实际 ${sent.length}`);
+	assert(lastSent().includes("新朋友圈动态"), "推送文案为「新朋友圈动态」");
+	assert(sent.filter(([cid]) => ["111", "222"].includes(cid)).length === 2, "2 个订阅者均收到推送");
+	assert(sent.some(([cid]) => cid === "7950928200"), "主人也收到推送");
+	const kv = kvStore.get("last_moment");
+	assert(kv && kv.includes("m-20260811-120000"), "推送后记录指纹防重复");
+	// 指纹未变 → 不重复推送
+	sent.length = 0;
+	await api.checkMoments(env);
+	assert(sent.length === 0, "指纹相同不重复推送");
 }
 
-// 测试 4：GitHub 上传失败 → 报错不崩溃
-console.log("\n🧪 T4 GitHub 403 失败处理");
+// 测试 4：setMyCommands 菜单同步（懒触发 + KV 节流）
+console.log("\n🧪 T4 命令菜单同步");
 {
-	kvStore.clear();
-	calls.length = 0;
-	// 直接把 IMG_REPO 换成失败仓库来模拟——通过 env 无法改常量，改测 tgDownload 失败
-	await api.cmdAddImage(env, "7950928200", "FILE_BAD", "", null);
-	await api.publishDraft(env, "7950928200");
-	const draft = await api.getDraft(env, "7950928200");
-	assert(draft?.images?.length === 1, "下载失败后草稿保留");
-}
-
-// 测试 5：/cancel 清空草稿
-console.log("\n🧪 T5 cancel 清空");
-{
-	kvStore.clear();
-	await api.cmdAddImage(env, "7950928200", "FILE_X", "", null);
-	assert((await api.getDraft(env, "7950928200"))?.images?.length === 1, "有草稿");
-	await api.clearDraft(env, "7950928200");
-	assert(!(await api.getDraft(env, "7950928200")), "草稿已清空");
-}
-
-
-// 测试 6：setMyCommands 菜单同步（懒触发 + KV 节流）
-console.log("\n🧪 T6 命令菜单同步");
-{
-	kvStore.clear();
-	calls.length = 0;
+	reset();
 	await api.syncCommands(env);
 	let syncCalls = calls.filter((c) => c[0].includes("/setMyCommands"));
 	assert(syncCalls.length === 1, "首次触发调用 setMyCommands 一次");
-	// 节流：12h 内不再调用
 	await api.syncCommands(env);
 	syncCalls = calls.filter((c) => c[0].includes("/setMyCommands"));
 	assert(syncCalls.length === 1, "12h 节流内不重复调用");
 	const saved = kvStore.get("cmd_menu_synced");
 	assert(saved, "同步成功后写入 KV 标记");
+}
+
+// 测试 5：handleUpdate 分支验证（发文字/发图 → 下线提示；非主人 → 订阅提示）
+console.log("\n🧪 T5 handleUpdate 分支");
+{
+	reset();
+	// 重新注入并暴露 handleUpdate 以便直接调用
+	const fn2 = new Function("module", "exports", "env", "Buffer", code + "\n;return { worker: __worker, handleUpdate };");
+	const api2 = fn2(module, module.exports, env, Buffer);
+
+	// 主人发普通文字
+	await api2.handleUpdate(env, upd({ text: "今天好开心" }));
+	assert(sent.length === 1, "主人发文字收到 1 条回复");
+	assert(lastSent().includes("已下线"), "回复提示发布功能已下线");
+	assert(githubPuts().length === 0, "未提交任何 GitHub 内容");
+
+	// 主人发照片（无文字）
+	reset();
+	await api2.handleUpdate(env, upd({ photo: [{ file_id: "F1", width: 100, height: 100 }], caption: "图" }));
+	assert(sent.length === 1, "主人发照片收到 1 条回复");
+	assert(lastSent().includes("已下线"), "照片也提示已下线");
+	assert(githubPuts().length === 0, "未触发图床上传");
+
+	// 非主人发文字
+	reset();
+	await api2.handleUpdate(env, { message: { chat: { id: "999" }, text: "hello" } });
+	assert(sent.length === 1 && lastSent().includes("/subscribe"), "非主人收到订阅引导");
+
+	// 非主人发照片
+	reset();
+	await api2.handleUpdate(env, { message: { chat: { id: "999" }, photo: [{ file_id: "F2", width: 1, height: 1 }] } });
+	assert(sent.length === 1 && lastSent().includes("/subscribe"), "非主人发图收到订阅引导");
+
+	// 未知命令
+	reset();
+	await api2.handleUpdate(env, upd({ text: "/foo" }));
+	assert(sent.length === 1 && lastSent().includes("未知命令"), "未知命令提示");
+
+	// 普通命令照常工作
+	reset();
+	kvStore.set("subs", "[]");
+	await api2.handleUpdate(env, upd({ text: "/subscribe" }));
+	assert(sent.length === 1 && lastSent().includes("已订阅"), "/subscribe 正常工作");
+	assert(JSON.parse(kvStore.get("subs")).includes("7950928200"), "订阅写入 KV");
 }
 
 console.log(`\n📋 结果：${passed} 通过`);
