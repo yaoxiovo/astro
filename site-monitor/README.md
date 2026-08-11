@@ -11,6 +11,8 @@
 | Umami 统计 | https://umami.yaoxi.cloud/ | 200 |
 | 个人主页 | https://yaoxi.wiki/ | 200 |
 
+> 拨测周期：每 5 分钟（cron `*/5 * * * *`）；也可访问 `https://site-monitor.yaoxi.workers.dev/api/run?secret=MONITOR_SECRET` 手动触发一轮检测。
+
 ## 告警通道
 
 - **主通道：快猫星云 Flashduty 标准告警**
