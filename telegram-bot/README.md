@@ -3,10 +3,14 @@
 推送博客新动态 / 新文章到 Telegram 的 Cloudflare Worker（纯订阅 / 查询 / 推送，不在 Bot 内发布动态）。
 
 - **Cron 每 10 分钟** 检查 `blog.yaoxi.wiki/api/moments.json`（新朋友圈）和 `/rss.xml`（新文章），有变化即推送
-- **命令**：`/latest` 最近动态 · `/random` 随机一条 · `/stats` 朋友圈统计 · `/search` 搜索 · `/subscribe` / `/unsubscribe` 订阅管理 · `/help` 帮助
-- **命令菜单**：Worker 自动调用 `setMyCommands` 同步 8 个命令到 Telegram 输入框的 `/` 菜单（KV 节流 12h，任意消息懒触发），无需 BotFather 手动设置
-- **时间胶囊**：到期胶囊自动推送提醒（每天首次 tick 检查）
-- **每周日周报**：本周朋友圈数据汇总推送
+- **命令（12 个）**：`/latest 5` 最近动态 · `/random 3` 随机动态 · `/stats` 统计+订阅人数 · `/search` 搜索 · `/capsules` 时间胶囊列表 · `/weekly` 本周周报 · `/daily 城市` 每日一言+天气 · `/broadcast` 主人广播 · `/subscribe` / `/unsubscribe` 订阅管理 · `/help` 帮助
+- **命令菜单**：Worker 自动调用 `setMyCommands` 同步 12 个命令到 Telegram 输入框的 `/` 菜单（KV 节流 12h，任意消息懒触发），无需 BotFather 手动设置
+- **媒体推送**：新动态带图/视频时直接推送图片/视频到 Telegram（自动把文件名拼成 `png.yaoxi.wiki` CDN 地址，规则与博客端一致）
+- **回复提醒**：朋友圈动态有回复（`replyTo`）时推送标记为「新回复」并附被回复内容
+- **时间胶囊**：到期胶囊自动推送提醒（每天首次 tick 检查）；`/capsules` 随时查看未解封/已解封列表
+- **每周日周报**：本周朋友圈数据汇总推送；`/weekly` 随时手动查看
+- **每日一言**：每天北京时间首个 tick 给主人推送一言+北京天气（hitokoto + wttr.in 免费 API）；`/daily 城市` 手动获取
+- **广播**：`/broadcast 内容` 主人专属，给所有订阅者群发公告
 - **v3.2 变更**：移除在 Bot 内发布动态的能力（文字/图片创作、`/publish` `/cancel`、图床上传），GITHUB_PAT 不再需要
 - **指纹去重**：KV 存上次指纹，首次部署只建基线不推送历史
 
@@ -43,11 +47,12 @@ GitHub 仓库 → Settings → Secrets and variables → Actions → New reposit
 ### 4️⃣ 验证
 
 1. 给 bot 发 `/start` → 收到欢迎语（同时自动同步命令菜单，输入框输入 `/` 可见全部命令）
-2. `/latest` → 最近 5 条动态
-3. `/random` → 随机一条（带「查看详情」按钮）
-4. `/stats` → 朋友圈统计
-5. 博客发布新动态/新文章 → 10 分钟内收到推送
-6. 发照片/普通文字 → 提示「发布功能已下线」（v3.2 起 Bot 不再发布动态）
+2. `/latest 5` → 最近 5 条动态（可改数量）
+3. `/random 3` → 随机 3 条（单条带「查看详情」按钮）
+4. `/stats` → 朋友圈统计 + 订阅人数
+5. `/capsules` → 时间胶囊列表 · `/weekly` → 本周周报 · `/daily 上海` → 一言+天气
+6. 博客发布新动态（带图/视频会直接推媒体）/新文章 → 10 分钟内收到推送
+7. 发照片/普通文字 → 提示「发布功能已下线」（v3.2 起 Bot 不再发布动态）
 
 ## 本地调试（电脑）
 
