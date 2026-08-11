@@ -33,7 +33,17 @@ jobs:
         run: |
           if grep -q "REPLACE_WITH_KV_ID" wrangler.jsonc; then
             echo "Creating KV namespace..."
-            ID=$(npx wrangler kv namespace create MONITOR_KV --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).result.id))")
+            npx wrangler kv namespace create MONITOR_KV --json > /tmp/kv_out.json 2>/tmp/kv_err.txt
+            if [ $? -ne 0 ]; then
+              echo "### ❌ KV namespace 创建失败" >> $GITHUB_STEP_SUMMARY
+              echo "请检查 CLOUDFLARE_API_TOKEN 是否包含 **Workers KV Storage: Edit** 权限（Account 级）" >> $GITHUB_STEP_SUMMARY
+              echo "或手动在 Cloudflare Dashboard 创建 KV 后把 ID 填入 wrangler.jsonc" >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              cat /tmp/kv_err.txt >> $GITHUB_STEP_SUMMARY
+              echo '```' >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+            ID=$(node -e "let s=require('fs').readFileSync('/tmp/kv_out.json','utf8');const j=JSON.parse(s);if(j.success===false){console.error(s);process.exit(1)}console.log((j.result||j).id)")
             echo "KV ID: $ID"
             sed -i "s/REPLACE_WITH_KV_ID/$ID/" wrangler.jsonc
           else
