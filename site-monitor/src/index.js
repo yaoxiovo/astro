@@ -25,6 +25,7 @@ const DEFAULT_SITES = [
 const TIMEOUT_MS = 10_000;
 const MAX_BODY_SCAN = 200_000; // 关键字匹配只扫描响应体前 200KB
 const STATE_PREFIX = "site:state:";
+const SP_INCIDENT_PREFIX = "sp:incident:";
 const FLASHCAT_API_HOST = "https://api.flashcat.cloud";
 
 export default {
@@ -79,6 +80,7 @@ async function runChecks(env) {
 			const alerts = await updateState(env, site, result);
 			for (const alert of alerts) {
 				await notify(env, alert);
+				await syncStatusPage(env, alert);
 			}
 			return { name: site.name, url: site.url, ok: result.ok, status: result.status, ms: result.ms, error: result.error, alert: alerts.length > 0 };
 		}),
@@ -278,6 +280,90 @@ async function tgAlert(env, text) {
 	} catch (err) {
 		return { ok: false, error: err?.message ?? String(err) };
 	}
+}
+
+/* ---------- Flashduty 状态页自动发布（故障→组件变红，恢复→resolved） ---------- */
+
+async function syncStatusPage(env, alert) {
+	if (!env.FLASHDUTY_APP_KEY) return { skipped: true };
+	try {
+		const info = await getStatusPageInfo(env);
+		if (!info) return { skipped: true, reason: "no-page" };
+		const comp = (info.components || []).find((c) => c.name === alert.site.name);
+		if (!comp) return { skipped: true, reason: "no-component", site: alert.site.name };
+		const nowSec = Math.floor(Date.now() / 1000);
+		if (alert.kind === "down") {
+			const desc = `${alert.site.url} 检测失败：${alert.result.error}（${alert.result.ms}ms）`;
+			const res = await flashdutyApi(env, "/status-page/change/create", {
+				page_id: info.page_id,
+				title: `[site-monitor] ${alert.site.name} DOWN`,
+				type: "incident",
+				status: "investigating",
+				description: desc,
+				updates: [{
+					at_seconds: nowSec,
+					status: "investigating",
+					description: desc,
+					component_changes: [{ component_id: comp.component_id, status: "major_outage" }],
+				}],
+				notify_subscribers: false,
+			});
+			if (res?.change_id) {
+				await env.MONITOR_KV.put(SP_INCIDENT_PREFIX + alert.site.name, String(res.change_id));
+			}
+			return { published: true, change_id: res?.change_id ?? null };
+		}
+		let changeId = await env.MONITOR_KV.get(SP_INCIDENT_PREFIX + alert.site.name);
+		if (!changeId) {
+			const found = await findActiveIncident(env, info.page_id, alert.site.name);
+			changeId = found?.change_id ? String(found.change_id) : null;
+		}
+		if (!changeId) return { skipped: true, reason: "no-incident" };
+		await flashdutyApi(env, "/status-page/change/timeline/create", {
+			page_id: info.page_id,
+			change_id: Number(changeId),
+			description: `已恢复：${alert.site.url} 响应正常（${alert.result.ms}ms），故障持续 ${formatDuration(alert.duration)}`,
+			status: "resolved",
+			component_changes: [{ component_id: comp.component_id, status: "operational" }],
+		});
+		await env.MONITOR_KV.delete(SP_INCIDENT_PREFIX + alert.site.name);
+		return { resolved: true, change_id: Number(changeId) };
+	} catch (err) {
+		return { error: err?.message ?? String(err) };
+	}
+}
+
+async function getStatusPageInfo(env) {
+	const resp = await fetch(`https://api.flashcat.cloud/status-page/list?app_key=${encodeURIComponent(env.FLASHDUTY_APP_KEY)}`, {
+		headers: { accept: "application/json" },
+	});
+	if (!resp.ok) return null;
+	const data = await resp.json().catch(() => null);
+	const items = data?.items || [];
+	if (!items.length) return null;
+	return { page_id: items[0].page_id, components: items[0].components || [] };
+}
+
+async function flashdutyApi(env, path, body) {
+	const resp = await fetch(`https://api.flashcat.cloud${path}?app_key=${encodeURIComponent(env.FLASHDUTY_APP_KEY)}`, {
+		method: "POST",
+		headers: { "content-type": "application/json", accept: "application/json" },
+		body: JSON.stringify(body),
+	});
+	return resp.json().catch(() => null);
+}
+
+async function findActiveIncident(env, pageId, siteName) {
+	const resp = await fetch(`https://api.flashcat.cloud/status-page/change/active/list?app_key=${encodeURIComponent(env.FLASHDUTY_APP_KEY)}&page_id=${pageId}&type=incident`, {
+		headers: { accept: "application/json" },
+	});
+	if (!resp.ok) return null;
+	const data = await resp.json().catch(() => null);
+	for (const it of data?.items || []) {
+		const t = it.title || it.change_name || it.name || "";
+		if (t.includes(siteName) && t.includes("DOWN")) return { change_id: it.change_id ?? it.id };
+	}
+	return null;
 }
 
 /* ---------- 工具 ---------- */

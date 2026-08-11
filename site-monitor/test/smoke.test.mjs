@@ -19,6 +19,7 @@ function memoryKV() {
 
 const tgCalls = [];
 const flashcatCalls = [];
+const statusPageCalls = [];
 const siteResponses = new Map(); // url -> () => Response | throw
 
 globalThis.fetch = async (url, opts = {}) => {
@@ -30,6 +31,19 @@ globalThis.fetch = async (url, opts = {}) => {
 	if (u.includes("/event/push/alert/standard")) {
 		flashcatCalls.push(JSON.parse(opts.body ?? "{}"));
 		return new Response(JSON.stringify({ request_id: "r1", data: { alert_key: "k1" } }), { status: 200, headers: { "content-type": "application/json" } });
+	}
+	if (u.includes("/status-page/")) {
+		statusPageCalls.push({ url: u, body: opts.body ? JSON.parse(opts.body) : null });
+		if (u.includes("/status-page/list")) {
+			return new Response(JSON.stringify({ items: [{ page_id: 1001, name: "Yaoxi Status", url_name: "yaoxi-status", components: [{ component_id: "comp-blog", name: "博客主站" }, { component_id: "comp-keyword", name: "关键字站" }] }] }), { status: 200, headers: { "content-type": "application/json" } });
+		}
+		if (u.includes("/status-page/change/active/list")) {
+			return new Response(JSON.stringify({ items: [{ change_id: 555, title: "[site-monitor] 博客主站 DOWN" }], total: 1 }), { status: 200, headers: { "content-type": "application/json" } });
+		}
+		if (u.includes("/status-page/change/create")) {
+			return new Response(JSON.stringify({ change_id: 777, change_name: "t" }), { status: 200, headers: { "content-type": "application/json" } });
+		}
+		return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } });
 	}
 	const handler = siteResponses.get(u);
 	if (!handler) throw new Error(`Unexpected fetch: ${u}`);
@@ -43,6 +57,7 @@ function makeEnv(kv = memoryKV()) {
 		CHAT_ID: "7950928200",
 		FLASHCAT_API_HOST: "https://api.flashcat.cloud",
 		FLASHCAT_INTEGRATION_KEY: "test-int-key",
+		FLASHDUTY_APP_KEY: "test-app-key",
 		SITES: JSON.stringify([
 			{ name: "博客主站", url: "https://blog.yaoxi.wiki/", expect: 200 },
 			{ name: "关键字站", url: "https://example.com/", expect: 200, keyword: "yaoxi" },
@@ -57,6 +72,7 @@ function okResp(status = 200, body = "hello yaoxi") {
 function reset() {
 	tgCalls.length = 0;
 	flashcatCalls.length = 0;
+	statusPageCalls.length = 0;
 	siteResponses.clear();
 }
 
@@ -323,3 +339,50 @@ test("T15 widget 故障态：有 down 站点时 overall=partial_outage + ongoing
 	assert.equal(j.ongoing_incidents.length, 1);
 	assert.ok(j.ongoing_incidents[0].name.includes("关键字站"));
 });
+
+/* ---------- Flashduty 状态页自动发布 ---------- */
+
+test("T16 故障时自动发布状态页 incident（组件变 major_outage）", async () => {
+	reset();
+	siteResponses.set("https://blog.yaoxi.wiki/", () => { throw new Error("connect refused"); });
+	siteResponses.set("https://example.com/", () => okResp(200, "welcome to yaoxi wiki"));
+	const env = makeEnv();
+	await scheduledRun(env);
+	const create = statusPageCalls.find((c) => c.url.includes("/status-page/change/create"));
+	assert.ok(create, "应调用状态页事件创建 API");
+	assert.equal(create.body.page_id, 1001, "page_id 应为状态页 ID");
+	assert.equal(create.body.type, "incident");
+	assert.equal(create.body.status, "investigating");
+	assert.ok(create.body.title.includes("博客主站"), "标题应含站点名");
+	assert.equal(create.body.updates[0].component_changes[0].component_id, "comp-blog");
+	assert.equal(create.body.updates[0].component_changes[0].status, "major_outage");
+	assert.equal(create.body.notify_subscribers, false, "默认不打扰订阅者");
+	assert.equal(await env.MONITOR_KV.get("sp:incident:博客主站"), "777", "change_id 应写入 KV 供恢复复用");
+});
+
+test("T17 恢复时自动 resolved（组件恢复 operational）", async () => {
+	reset();
+	siteResponses.set("https://blog.yaoxi.wiki/", () => okResp());
+	siteResponses.set("https://example.com/", () => okResp(200, "welcome to yaoxi wiki"));
+	const env = makeEnv();
+	await env.MONITOR_KV.put("site:state:博客主站", JSON.stringify({ state: "down", since: Date.now() - 5 * 60000 }));
+	await env.MONITOR_KV.put("sp:incident:博客主站", "777");
+	await scheduledRun(env);
+	const timeline = statusPageCalls.find((c) => c.url.includes("/status-page/change/timeline/create"));
+	assert.ok(timeline, "应调用时间线更新 API");
+	assert.equal(timeline.body.change_id, 777, "应复用故障时记录的 change_id");
+	assert.equal(timeline.body.status, "resolved");
+	assert.equal(timeline.body.component_changes[0].status, "operational");
+	assert.equal(await env.MONITOR_KV.get("sp:incident:博客主站"), null, "恢复后应清除 incident 记录");
+});
+
+test("T18 未配置 FLASHDUTY_APP_KEY 时跳过状态页发布", async () => {
+	reset();
+	siteResponses.set("https://blog.yaoxi.wiki/", () => { throw new Error("boom"); });
+	siteResponses.set("https://example.com/", () => okResp(200, "welcome to yaoxi wiki"));
+	const env = makeEnv();
+	delete env.FLASHDUTY_APP_KEY;
+	await scheduledRun(env);
+	assert.equal(statusPageCalls.length, 0, "未配置 APP_KEY 不应调用状态页 API");
+});
+
