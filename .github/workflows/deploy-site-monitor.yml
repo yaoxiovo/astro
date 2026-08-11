@@ -32,24 +32,23 @@ jobs:
         id: kv
         run: |
           if grep -q "REPLACE_WITH_KV_ID" wrangler.jsonc; then
+            API="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces"
             # 1) 优先复用已存在的 namespace（手动创建 or 之前创建）
-            LIST_OUT=$(npx wrangler kv namespace list --json 2>/tmp/kv_list_err.txt || true)
-            ID=$(echo "$LIST_OUT" | node -e "let s=require('fs').readFileSync(0,'utf8');try{const j=JSON.parse(s);const n=(j||[]).find(x=>x.title==='site-monitor-kv'||x.title==='MONITOR_KV');if(n){console.log(n.id)}else{process.exit(1)}}catch(e){process.exit(1)}" 2>/dev/null || true)
+            NS_LIST=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$API")
+            ID=$(echo "$NS_LIST" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);const n=(j.result||[]).find(x=>x.title==='site-monitor-kv'||x.title==='MONITOR_KV');if(n)console.log(n.id);else process.exit(1)}catch(e){process.exit(1)}})" 2>/dev/null || true)
             if [ -z "$ID" ]; then
-              echo "::error::KV_LIST=$(echo "$LIST_OUT" | tr '\n' ' ' | head -c 1500) LIST_ERR=$(head -c 500 /tmp/kv_list_err.txt 2>/dev/null | tr '\n' ' ')"
+              echo "::error::KV_LIST_RESP=$(echo "$NS_LIST" | head -c 800 | tr '\n' ' ')"
               echo "Existing KV not found, creating a new one..."
-              npx wrangler kv namespace create MONITOR_KV --json > /tmp/kv_out.json 2>/tmp/kv_err.txt
-              if [ $? -ne 0 ]; then
+              CREATE_OUT=$(curl -s -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" "$API" -d '{"title":"MONITOR_KV"}')
+              ID=$(echo "$CREATE_OUT" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);if(j.success!==true){console.error(JSON.stringify(j.errors));process.exit(1)}console.log(j.result.id)}catch(e){process.exit(1)}})" 2>/dev/null || true)
+              if [ -z "$ID" ]; then
+                echo "::error::KV_CREATE_RESP=$(echo "$CREATE_OUT" | head -c 1200 | tr '\n' ' ')"
                 echo "### ❌ KV namespace 创建失败" >> $GITHUB_STEP_SUMMARY
-                echo "请检查 CLOUDFLARE_API_TOKEN 是否包含 **Workers KV Storage: Edit** 权限（Account 级）" >> $GITHUB_STEP_SUMMARY
-                echo "或手动在 Cloudflare Dashboard 创建 KV 后重跑本 workflow（会自动复用 site-monitor-kv）" >> $GITHUB_STEP_SUMMARY
                 echo '```' >> $GITHUB_STEP_SUMMARY
-                cat /tmp/kv_err.txt >> $GITHUB_STEP_SUMMARY
+                echo "$CREATE_OUT" >> $GITHUB_STEP_SUMMARY
                 echo '```' >> $GITHUB_STEP_SUMMARY
-                echo "::error::KV_CREATE=$(head -c 2000 /tmp/kv_err.txt | tr '\n' ' ')"
                 exit 1
               fi
-              ID=$(node -e "let s=require('fs').readFileSync('/tmp/kv_out.json','utf8');const j=JSON.parse(s);if(j.success===false){console.error(s);process.exit(1)}console.log((j.result||j).id)")
             else
               echo "Reusing existing KV: $ID"
             fi
