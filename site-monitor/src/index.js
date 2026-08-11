@@ -8,7 +8,7 @@
  *  - 可选旁路：Telegram 通知（配置 BOT_TOKEN/CHAT_ID 即启用）
  *  - GET / 公开状态 JSON，GET /api/run?secret=xxx 手动触发一轮检测
  *
- * 免费额度：Workers Free 10 万请求/天，本监控 4 站点 × 288 次/天 ≈ 1.2k，完全够用
+ * 免费额度：Workers Free 10 万请求/天，本监控 5 站点 × 288 次/天 ≈ 1.4k，完全够用
  */
 
 const DEFAULT_SITES = [
@@ -16,6 +16,7 @@ const DEFAULT_SITES = [
 	{ name: "博客 API", url: "https://api.blog.yaoxi.cloud/", expect: 200 },
 	{ name: "Umami 统计", url: "https://umami.yaoxi.cloud/", expect: 200 },
 	{ name: "个人主页", url: "https://yaoxi.wiki/", expect: 200 },
+	{ name: "图床", url: "https://png.yaoxi.wiki/", expect: 200 },
 ];
 
 const TIMEOUT_MS = 10_000;
