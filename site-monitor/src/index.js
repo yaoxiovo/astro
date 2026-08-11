@@ -52,6 +52,11 @@ export default {
 			return jsonResponse(await collectHistory(env, site, days));
 		}
 
+		// 快猫星云 widget 兼容 API（博客首页嵌入用）
+		if (url.pathname === "/api/widget/v1/summary.json") {
+			return jsonResponse(await widgetSummary(env));
+		}
+
 		// 手动触发一轮检测（需 secret 保护）
 		if (url.pathname === "/api/run") {
 			if (env.MONITOR_SECRET && url.searchParams.get("secret") !== env.MONITOR_SECRET) {
@@ -156,6 +161,30 @@ async function collectStatus(env) {
 		});
 	}
 	return { updatedAt: Date.now(), sites: list };
+}
+
+async function widgetSummary(env) {
+	const status = await collectStatus(env);
+	const anyDown = status.sites.some((s) => s.state === "down");
+	const allDown = status.sites.length > 0 && status.sites.every((s) => s.state === "down");
+	const overall = allDown ? "major_outage" : anyDown ? "partial_outage" : "operational";
+	return {
+		schema_version: "1.0",
+		generated_at: new Date().toISOString(),
+		poll_after_seconds: 30,
+		max_stale_seconds: 120,
+		page: { name: "Yaoxi", url: "https://status.yaoxi.wiki" },
+		overall: { status: overall },
+		ongoing_incidents: status.sites.filter((s) => s.state === "down").map((s) => ({
+			id: "inc-" + encodeURIComponent(s.name),
+			name: s.name + " 故障",
+			status: "investigating",
+			impact: "minor",
+			started_at: new Date(s.since || Date.now()).toISOString(),
+		})),
+		in_progress_maintenances: [],
+		scheduled_maintenances: [],
+	};
 }
 
 /* ---------- 告警消息 ---------- */
@@ -337,16 +366,18 @@ async function collectHistory(env, siteFilter, days) {
 	for (const s of sites) bySite[s.name] = [];
 
 	const now = Date.now();
+	const keys = [];
 	for (let d = 0; d < daysNum; d++) {
 		const dayStart = now - (now % 86400000) - d * 86400000;
-		for (let h = 0; h < 24; h++) {
-			const raw = await env.MONITOR_KV.get(histKey(dayStart + h * 3600000));
-			if (!raw) continue;
-			const parsed = parseJson(raw);
-			if (!parsed?.samples) continue;
-			for (const [name, arr] of Object.entries(parsed.samples)) {
-				if (bySite[name] && (!siteFilter || name === siteFilter)) bySite[name].push(...arr);
-			}
+		for (let h = 0; h < 24; h++) keys.push(histKey(dayStart + h * 3600000));
+	}
+	const raws = await Promise.all(keys.map((k) => env.MONITOR_KV.get(k)));
+	for (const raw of raws) {
+		if (!raw) continue;
+		const parsed = parseJson(raw);
+		if (!parsed?.samples) continue;
+		for (const [name, arr] of Object.entries(parsed.samples)) {
+			if (bySite[name] && (!siteFilter || name === siteFilter)) bySite[name].push(...arr);
 		}
 	}
 
@@ -435,7 +466,9 @@ function renderBanner(sites){ var arr=Object.keys(sites).map(function(k){return 
 function renderSites(sites){ var el=document.getElementById("sites"); var html=""; Object.keys(sites).forEach(function(name){ var s=sites[name]; var st=s.state||"unknown"; var dot=st==="up"?"up":(st==="down"?"down":"unknown"); var stTxt=st==="up"?"运行正常":(st==="down"?"故障":"未知"); html+='<div class="site"><span class="dot '+dot+'"></span><span class="s-name">'+esc(name)+'</span><span class="s-meta">'+stTxt+' · '+fmt(s.lastCheck)+' · '+s.lastMs+'ms</span><span class="s-uptime">'+((s.uptime!=null)?s.uptime.toFixed(2)+"%":"-")+'</span></div>'; }); el.innerHTML=html; }
 function renderSparks(hist){ var el=document.getElementById("sparks"); var html=""; Object.keys(hist.sites||{}).forEach(function(name){ var d=hist.sites[name]; var pts=d.samples||[]; var W=640,H=36; var max=Math.max.apply(null,pts.map(function(p){return p.ms;}).concat([1])); var step=pts.length>1? W/(pts.length-1):W; var poly=pts.map(function(p,i){ var x=i*step; var y=H-2-Math.min(p.ms/max,1)*(H-4); return x.toFixed(1)+","+y.toFixed(1); }).join(" "); var color=(d.uptime!=null&&d.uptime>=99)? "#26a65b" : "#e74c3c"; html+='<div class="site"><span class="s-name">'+esc(name)+'</span><span class="s-meta">'+pts.length+' 个采样点 · 30 天 uptime '+(d.uptime!=null?d.uptime.toFixed(2)+"%":"-")+'</span><span class="spark"><svg width="'+W+'" height="'+H+'"><polyline points="'+poly+'" fill="none" stroke="'+color+'" stroke-width="1.5"/></svg></span></div>'; }); el.innerHTML=html||'<div class="empty">暂无数据（监控器运行满 1 小时后自动出现曲线）</div>'; }
 function renderEvents(hist){ var el=document.getElementById("events"); var all=[]; Object.keys(hist.sites||{}).forEach(function(name){ (hist.sites[name].events||[]).forEach(function(e){ all.push({name:name,from:e.from,to:e.to,duration:e.duration}); }); }); all.sort(function(a,b){return b.from-a.from;}); if(!all.length){ el.innerHTML='<div class="empty">过去 30 天没有故障记录 🎉</div>'; return; } var html=""; all.forEach(function(e){ html+='<div class="ev"><span class="t">'+esc(e.name)+' 故障</span><div class="d">'+fmt(e.from)+' → '+(e.to?fmt(e.to):"至今")+' · 持续 '+dur(e.duration)+'</div></div>'; }); el.innerHTML=html; }
-function load(){ fetch(STATUS_URL).then(function(r){return r.json();}).then(function(j){ renderBanner(j.sites); }); fetch(HISTORY_URL).then(function(r){return r.json();}).then(function(j){ renderSites(j.sites); renderSparks(j); renderEvents(j); }); }
+function load(){ var banner=document.getElementById("banner");
+ fetch(STATUS_URL).then(function(r){return r.json();}).then(function(j){ renderBanner(j.sites); }).catch(function(){ banner.className="banner bad"; banner.innerHTML="<h2>加载失败<\/h2><p>无法连接状态 API，请稍后刷新<\/p>"; });
+ fetch(HISTORY_URL).then(function(r){return r.json();}).then(function(j){ renderSites(j.sites); renderSparks(j); renderEvents(j); }).catch(function(){ var el=document.getElementById("sites"); if(!el.children.length) el.innerHTML='<div class="empty">加载失败，请刷新重试<\/div>'; }); }
 load(); setInterval(load, 60000);
 </script>
 </body>

@@ -289,3 +289,37 @@ test("T13 历史快照：scheduled 后写入 hourly KV", async () => {
 	assert.equal(parsed.samples["博客主站"][0].state, "up");
 	assert.ok(typeof parsed.samples["博客主站"][0].ms === "number");
 });
+
+test("T14 widget 兼容 API：/api/widget/v1/summary.json 同款格式", async () => {
+	reset();
+	const env = makeEnv();
+	// 先跑一轮让 KV 有 up 状态
+	siteResponses.set("https://blog.yaoxi.wiki/", () => okResp());
+	siteResponses.set("https://example.com/", () => okResp(200, "welcome to yaoxi wiki"));
+	await scheduledRun(env);
+	const resp = await worker.fetch(new Request("https://site-monitor.workers.dev/api/widget/v1/summary.json"), env);
+	assert.equal(resp.status, 200);
+	const j = await resp.json();
+	assert.equal(j.schema_version, "1.0");
+	assert.ok(typeof j.generated_at === "string");
+	assert.equal(j.poll_after_seconds, 30);
+	assert.equal(j.max_stale_seconds, 120);
+	assert.equal(j.page.name, "Yaoxi");
+	assert.equal(j.overall.status, "operational");
+	assert.ok(Array.isArray(j.ongoing_incidents));
+	assert.ok(Array.isArray(j.in_progress_maintenances));
+	assert.ok(Array.isArray(j.scheduled_maintenances));
+});
+
+test("T15 widget 故障态：有 down 站点时 overall=partial_outage + ongoing_incidents 非空", async () => {
+	reset();
+	const env = makeEnv();
+	siteResponses.set("https://blog.yaoxi.wiki/", () => okResp());
+	siteResponses.set("https://example.com/", () => new Response("boom", { status: 500 }));
+	await scheduledRun(env);
+	const resp = await worker.fetch(new Request("https://site-monitor.workers.dev/api/widget/v1/summary.json"), env);
+	const j = await resp.json();
+	assert.equal(j.overall.status, "partial_outage");
+	assert.equal(j.ongoing_incidents.length, 1);
+	assert.ok(j.ongoing_incidents[0].name.includes("关键字站"));
+});
