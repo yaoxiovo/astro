@@ -26,6 +26,7 @@ const TIMEOUT_MS = 10_000;
 const MAX_BODY_SCAN = 200_000; // 关键字匹配只扫描响应体前 200KB
 const STATE_PREFIX = "site:state:";
 const SP_INCIDENT_PREFIX = "sp:incident:";
+const SP_DIAG_KEY = "sp:diag";
 const FLASHCAT_API_HOST = "https://api.flashcat.cloud";
 
 export default {
@@ -56,6 +57,11 @@ export default {
 		// 快猫星云 widget 兼容 API（博客首页嵌入用）
 		if (url.pathname === "/api/widget/v1/summary.json") {
 			return jsonResponse(await widgetSummary(env));
+		}
+
+		// 诊断端点：状态页自动发布排查（脱敏，不暴露 app_key）
+		if (url.pathname === "/api/diag") {
+			return jsonResponse(await diagStatusPage(env));
 		}
 
 		// 手动触发一轮检测（需 secret 保护）
@@ -292,9 +298,10 @@ async function syncStatusPage(env, alert) {
 		const comp = (info.components || []).find((c) => c.name === alert.site.name);
 		if (!comp) return { skipped: true, reason: "no-component", site: alert.site.name };
 		const nowSec = Math.floor(Date.now() / 1000);
+		let res;
 		if (alert.kind === "down") {
 			const desc = `${alert.site.url} 检测失败：${alert.result.error}（${alert.result.ms}ms）`;
-			const res = await flashdutyApi(env, "/status-page/change/create", {
+			res = await flashdutyApi(env, "/status-page/change/create", {
 				page_id: info.page_id,
 				title: `[site-monitor] ${alert.site.name} DOWN`,
 				type: "incident",
@@ -308,10 +315,13 @@ async function syncStatusPage(env, alert) {
 				}],
 				notify_subscribers: false,
 			});
-			if (res?.change_id) {
-				await env.MONITOR_KV.put(SP_INCIDENT_PREFIX + alert.site.name, String(res.change_id));
+			const changeId = res?.body?.change_id ?? res?.body?.id ?? null;
+			const result = { kind: "down", httpStatus: res?.httpStatus, body: res?.body, change_id: changeId, at: new Date().toISOString(), site: alert.site.name };
+			await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify(result), { expirationTtl: 3600 });
+			if (changeId) {
+				await env.MONITOR_KV.put(SP_INCIDENT_PREFIX + alert.site.name, String(changeId));
 			}
-			return { published: true, change_id: res?.change_id ?? null };
+			return { published: true, change_id: changeId };
 		}
 		let changeId = await env.MONITOR_KV.get(SP_INCIDENT_PREFIX + alert.site.name);
 		if (!changeId) {
@@ -319,16 +329,18 @@ async function syncStatusPage(env, alert) {
 			changeId = found?.change_id ? String(found.change_id) : null;
 		}
 		if (!changeId) return { skipped: true, reason: "no-incident" };
-		await flashdutyApi(env, "/status-page/change/timeline/create", {
+		const timelineRes = await flashdutyApi(env, "/status-page/change/timeline/create", {
 			page_id: info.page_id,
 			change_id: Number(changeId),
 			description: `已恢复：${alert.site.url} 响应正常（${alert.result.ms}ms），故障持续 ${formatDuration(alert.duration)}`,
 			status: "resolved",
 			component_changes: [{ component_id: comp.component_id, status: "operational" }],
 		});
+		await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ kind: "up", httpStatus: timelineRes?.httpStatus, body: timelineRes?.body, change_id: Number(changeId), at: new Date().toISOString(), site: alert.site.name }), { expirationTtl: 3600 });
 		await env.MONITOR_KV.delete(SP_INCIDENT_PREFIX + alert.site.name);
 		return { resolved: true, change_id: Number(changeId) };
 	} catch (err) {
+		await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ error: err?.message ?? String(err), at: new Date().toISOString() }), { expirationTtl: 3600 });
 		return { error: err?.message ?? String(err) };
 	}
 }
@@ -344,13 +356,53 @@ async function getStatusPageInfo(env) {
 	return { page_id: items[0].page_id, components: items[0].components || [] };
 }
 
+async function diagStatusPage(env) {
+	const out = { hasAppKey: !!env.FLASHDUTY_APP_KEY };
+	if (!env.FLASHDUTY_APP_KEY) {
+		out.error = "FLASHDUTY_APP_KEY 未配置";
+		return out;
+	}
+	try {
+		const resp = await fetch(`https://api.flashcat.cloud/status-page/list?app_key=${encodeURIComponent(env.FLASHDUTY_APP_KEY)}`, {
+			headers: { accept: "application/json" },
+		});
+		out.listHttpStatus = resp.status;
+		const raw = await resp.text().catch(() => "");
+		let data = null;
+		try { data = raw ? JSON.parse(raw) : null; } catch { out.listRaw = raw.slice(0, 400); }
+		out.listKeys = data ? Object.keys(data) : [];
+		const items = data?.items || data?.data || [];
+		out.pageCount = Array.isArray(items) ? items.length : 0;
+		if (Array.isArray(items) && items.length) {
+			const p = items[0];
+			out.pageKeys = Object.keys(p);
+			out.pageIdShort = String(p?.page_id ?? p?.id ?? "").slice(0, 12);
+			const comps = p?.components || p?.component_items || [];
+			out.componentCount = Array.isArray(comps) ? comps.length : 0;
+			if (Array.isArray(comps)) {
+				out.components = comps.map((c) => ({ name: c?.name ?? c?.component_name ?? "?", idShort: String(c?.component_id ?? c?.id ?? "").slice(0, 12), keys: Object.keys(c).slice(0, 8) }));
+			}
+		}
+	} catch (err) {
+		out.error = err?.message ?? String(err);
+	}
+	const diag = await env.MONITOR_KV.get(SP_DIAG_KEY).catch(() => null);
+	if (diag) {
+		try { out.lastSync = JSON.parse(diag); } catch { out.lastSyncRaw = diag.slice(0, 300); }
+	}
+	return out;
+}
+
 async function flashdutyApi(env, path, body) {
 	const resp = await fetch(`https://api.flashcat.cloud${path}?app_key=${encodeURIComponent(env.FLASHDUTY_APP_KEY)}`, {
 		method: "POST",
 		headers: { "content-type": "application/json", accept: "application/json" },
 		body: JSON.stringify(body),
 	});
-	return resp.json().catch(() => null);
+	const text = await resp.text().catch(() => "");
+	let parsed = null;
+	try { parsed = text ? JSON.parse(text) : null; } catch { parsed = text.slice(0, 300); }
+	return { httpStatus: resp.status, body: parsed };
 }
 
 async function findActiveIncident(env, pageId, siteName) {
