@@ -315,7 +315,7 @@ async function syncStatusPage(env, alert) {
 					at_seconds: nowSec,
 					status: "investigating",
 					description: desc,
-					component_changes: [{ component_id: comp.component_id, status: "major_outage" }],
+					component_changes: [{ component_id: comp.component_id, status: "full_outage" }],
 				}],
 				notify_subscribers: false,
 			});

@@ -355,7 +355,7 @@ test("T16 故障时自动发布状态页 incident（组件变 major_outage）", 
 	assert.equal(create.body.status, "investigating");
 	assert.ok(create.body.title.includes("博客主站"), "标题应含站点名");
 	assert.equal(create.body.updates[0].component_changes[0].component_id, "comp-blog");
-	assert.equal(create.body.updates[0].component_changes[0].status, "major_outage");
+	assert.equal(create.body.updates[0].component_changes[0].status, "full_outage");
 	assert.equal(create.body.notify_subscribers, false, "默认不打扰订阅者");
 	assert.equal(await env.MONITOR_KV.get("sp:incident:博客主站"), "777", "change_id 应写入 KV 供恢复复用");
 });
@@ -385,4 +385,3 @@ test("T18 未配置 FLASHDUTY_APP_KEY 时跳过状态页发布", async () => {
 	await scheduledRun(env);
 	assert.equal(statusPageCalls.length, 0, "未配置 APP_KEY 不应调用状态页 API");
 });
-
