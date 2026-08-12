@@ -319,7 +319,7 @@ async function syncStatusPage(env, alert) {
 				}],
 				notify_subscribers: false,
 			});
-			const changeId = res?.body?.change_id ?? res?.body?.id ?? null;
+			const changeId = res?.body?.data?.change_id ?? res?.body?.data?.id ?? res?.body?.change_id ?? res?.body?.id ?? null;
 			const result = { kind: "down", httpStatus: res?.httpStatus, body: res?.body, change_id: changeId, at: new Date().toISOString(), site: alert.site.name };
 			await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify(result), { expirationTtl: 86400 });
 			if (changeId) {
@@ -355,7 +355,7 @@ async function getStatusPageInfo(env) {
 	});
 	if (!resp.ok) return null;
 	const data = await resp.json().catch(() => null);
-	const items = data?.items || [];
+	const items = data?.data?.items || data?.items || [];
 	if (!items.length) return null;
 	return { page_id: items[0].page_id, components: items[0].components || [] };
 }
@@ -425,7 +425,7 @@ async function spTest(env) {
 		});
 		out.createStatus = res.httpStatus;
 		out.createBody = res.body;
-		const changeId = res?.body?.change_id ?? res?.body?.id ?? null;
+		const changeId = res?.body?.data?.change_id ?? res?.body?.data?.id ?? res?.body?.change_id ?? res?.body?.id ?? null;
 		if (changeId) {
 			const tl = await flashdutyApi(env, "/status-page/change/timeline/create", {
 				page_id: info.page_id,
@@ -461,7 +461,7 @@ async function findActiveIncident(env, pageId, siteName) {
 	});
 	if (!resp.ok) return null;
 	const data = await resp.json().catch(() => null);
-	for (const it of data?.items || []) {
+	for (const it of data?.data?.items || data?.items || []) {
 		const t = it.title || it.change_name || it.name || "";
 		if (t.includes(siteName) && t.includes("DOWN")) return { change_id: it.change_id ?? it.id };
 	}
