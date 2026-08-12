@@ -295,7 +295,7 @@ async function syncStatusPage(env, alert) {
 	try {
 		const info = await getStatusPageInfo(env);
 		if (!info) return { skipped: true, reason: "no-page" };
-		const comp = (info.components || []).find((c) => c.name === alert.site.name);
+		const comp = (info.components || []).find((c) => c.name === alert.site.name || (c.name && (c.name.includes(alert.site.name) || alert.site.name.includes(c.name))));
 		if (!comp) return { skipped: true, reason: "no-component", site: alert.site.name };
 		const nowSec = Math.floor(Date.now() / 1000);
 		let res;
