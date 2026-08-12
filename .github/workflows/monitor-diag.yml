@@ -43,6 +43,9 @@ jobs:
           KEY="${{ inputs.key }}"
           ENC=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1],safe=''))" "$KEY")
           VAL=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces/$NS_ID/values/$ENC")
+          echo "KV_VALUE_START"
+          echo "$VAL" | head -c 6000
+          echo "KV_VALUE_END"
           echo "### 📦 KV value for \`$KEY\`" >> $GITHUB_STEP_SUMMARY
           echo '```json' >> $GITHUB_STEP_SUMMARY
           echo "$VAL" | head -c 6000 >> $GITHUB_STEP_SUMMARY
