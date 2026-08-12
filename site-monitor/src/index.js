@@ -60,7 +60,11 @@ export default {
 		}
 
 		// 诊断端点：状态页自动发布排查（脱敏，不暴露 app_key）
-		if (url.pathname === "/api/diag") {
+		if (url.pathname === "/api/sp-test") {
+			return jsonResponse(await spTest(env));
+		}
+
+if (url.pathname === "/api/diag") {
 			return jsonResponse(await diagStatusPage(env));
 		}
 
@@ -317,7 +321,7 @@ async function syncStatusPage(env, alert) {
 			});
 			const changeId = res?.body?.change_id ?? res?.body?.id ?? null;
 			const result = { kind: "down", httpStatus: res?.httpStatus, body: res?.body, change_id: changeId, at: new Date().toISOString(), site: alert.site.name };
-			await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify(result), { expirationTtl: 3600 });
+			await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify(result), { expirationTtl: 86400 });
 			if (changeId) {
 				await env.MONITOR_KV.put(SP_INCIDENT_PREFIX + alert.site.name, String(changeId));
 			}
@@ -336,11 +340,11 @@ async function syncStatusPage(env, alert) {
 			status: "resolved",
 			component_changes: [{ component_id: comp.component_id, status: "operational" }],
 		});
-		await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ kind: "up", httpStatus: timelineRes?.httpStatus, body: timelineRes?.body, change_id: Number(changeId), at: new Date().toISOString(), site: alert.site.name }), { expirationTtl: 3600 });
+		await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ kind: "up", httpStatus: timelineRes?.httpStatus, body: timelineRes?.body, change_id: Number(changeId), at: new Date().toISOString(), site: alert.site.name }), { expirationTtl: 86400 });
 		await env.MONITOR_KV.delete(SP_INCIDENT_PREFIX + alert.site.name);
 		return { resolved: true, change_id: Number(changeId) };
 	} catch (err) {
-		await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ error: err?.message ?? String(err), at: new Date().toISOString() }), { expirationTtl: 3600 });
+		await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ error: err?.message ?? String(err), at: new Date().toISOString() }), { expirationTtl: 86400 });
 		return { error: err?.message ?? String(err) };
 	}
 }
@@ -395,6 +399,46 @@ async function diagStatusPage(env) {
 	const diag = await env.MONITOR_KV.get(SP_DIAG_KEY).catch(() => null);
 	if (diag) {
 		try { out.lastSync = JSON.parse(diag); } catch { out.lastSyncRaw = diag.slice(0, 300); }
+	}
+	return out;
+}
+
+async function spTest(env) {
+	const out = { at: new Date().toISOString(), hasAppKey: !!env.FLASHDUTY_APP_KEY };
+	if (!env.FLASHDUTY_APP_KEY) return { ...out, error: "FLASHDUTY_APP_KEY 未配置" };
+	try {
+		const info = await getStatusPageInfo(env);
+		if (!info) return { ...out, error: "无法获取状态页信息" };
+		out.pageId = info.page_id;
+		const comp = (info.components || [])[0];
+		out.firstComponent = comp ? { name: comp.name, id: comp.component_id } : null;
+		const nowSec = Math.floor(Date.now() / 1000);
+		const desc = "[site-monitor] API 连通性测试（不改变组件状态，自动恢复）";
+		const res = await flashdutyApi(env, "/status-page/change/create", {
+			page_id: info.page_id,
+			title: "[site-monitor] API 连通性测试",
+			type: "incident",
+			status: "investigating",
+			description: desc,
+			updates: [{ at_seconds: nowSec, status: "investigating", description: desc }],
+			notify_subscribers: false,
+		});
+		out.createStatus = res.httpStatus;
+		out.createBody = res.body;
+		const changeId = res?.body?.change_id ?? res?.body?.id ?? null;
+		if (changeId) {
+			const tl = await flashdutyApi(env, "/status-page/change/timeline/create", {
+				page_id: info.page_id,
+				change_id: Number(changeId),
+				status: "resolved",
+				description: "连通性测试完成，自动恢复",
+			});
+			out.resolveStatus = tl.httpStatus;
+			out.resolveBody = tl.body;
+		}
+		await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ kind: "sp-test", httpStatus: res.httpStatus, body: res.body, at: new Date().toISOString() }), { expirationTtl: 86400 });
+	} catch (err) {
+		out.error = err?.message ?? String(err);
 	}
 	return out;
 }
