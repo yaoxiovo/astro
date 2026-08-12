@@ -420,7 +420,7 @@ async function spTest(env) {
 			type: "incident",
 			status: "investigating",
 			description: desc,
-			updates: [{ at_seconds: nowSec, status: "investigating", description: desc }],
+			updates: [{ at_seconds: nowSec, status: "investigating", description: desc, component_changes: comp ? [{ component_id: comp.component_id, status: "operational" }] : [] }],
 			notify_subscribers: false,
 		});
 		out.createStatus = res.httpStatus;
