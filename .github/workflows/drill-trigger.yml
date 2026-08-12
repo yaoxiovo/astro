@@ -1,0 +1,27 @@
+name: Drill Trigger (Site Monitor Manual Run)
+
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: "演练备注（仅日志）"
+        required: false
+        default: ""
+
+jobs:
+  trigger:
+    name: Trigger /api/run on Site Monitor Worker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger manual check
+        id: trigger
+        run: |
+          echo "::group::Triggering site-monitor /api/run"
+          curl -sS --max-time 60 \
+            "https://site-monitor.yaoxi.workers.dev/api/run?secret=${{ secrets.MONITOR_SECRET }}" \
+            | tee /tmp/run_result.json
+          echo "::endgroup::"
+          echo "### 🚀 手动触发结果" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/run_result.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
