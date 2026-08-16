@@ -1,0 +1,27 @@
+name: Submit URLs to IndexNow
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"
+
+jobs:
+  submit-indexnow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Submit sitemap URLs to IndexNow
+        env:
+          SITE_URL: https://blog.yaoxi.wiki
+          INDEXNOW_KEY: 9c772a4f0f1e4b9082d4bb642f4fd1e7
+        run: node scripts/submit-indexnow.js
