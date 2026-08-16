@@ -359,6 +359,8 @@ test("T16 故障时自动发布状态页 incident（组件变 full_outage）", a
 	assert.equal(create.body.updates[0].component_changes[0].component_id, "comp-blog");
 	assert.equal(create.body.updates[0].component_changes[0].status, "full_outage");
 	assert.equal(create.body.notify_subscribers, false, "默认不打扰订阅者");
+	assert.match(create.body.description, /上次正常检测/);
+	assert.match(create.body.description, /检测时间：/);
 	assert.equal(await env.MONITOR_KV.get("sp:incident:博客主站"), "777", "change_id 应写入 KV 供恢复复用");
 });
 

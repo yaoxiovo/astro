@@ -149,10 +149,10 @@ async function updateState(env, site, result) {
 	const next = !result.ok ? "down" : result.ms > slowMs ? "slow" : "up";
 	const prevState = prev?.state ?? null;
 	const since = prevState === next ? prev.since : now;
-	// KV 写入优化：状态变化立即写；状态不变每 15 分钟才刷新 lastCheck（1 分钟轮询下控制写入量）
+	// KV 写入优化：状态变化立即写；状态不变每 30 分钟才刷新 lastCheck（1 分钟轮询下严格控制写入量）
 	const changed = prevState !== next;
 	const lastWrite = prev?.lastWrite ?? 0;
-	if (changed || now - lastWrite >= 15 * 60000) {
+	if (changed || now - lastWrite >= 30 * 60000) {
 		try {
 			await env.MONITOR_KV.put(key, JSON.stringify({ state: next, since, lastCheck: now, lastMs: result.ms, lastWrite: now }));
 		} catch {
@@ -162,20 +162,20 @@ async function updateState(env, site, result) {
 
 	if (next === "up") {
 		if (prev && prev.state !== "up") {
-			alerts.push({ kind: "up", site, result, since: prev.since, duration: now - prev.since });
+			alerts.push({ kind: "up", site, result, since: prev.since, duration: now - prev.since, prev });
 		}
 	} else if (next === "slow") {
 		if (!prev || prev.state === "up") {
 			// up → slow：性能下降（组件标黄）
-			alerts.push({ kind: "slow", site, result, slowMs });
+			alerts.push({ kind: "slow", site, result, slowMs, prev });
 		} else if (prev.state === "down") {
 			// down → slow：恢复但仍慢（组件红 → 黄）
-			alerts.push({ kind: "up", site, result, since: prev.since, duration: now - prev.since, target: "degraded" });
+			alerts.push({ kind: "up", site, result, since: prev.since, duration: now - prev.since, target: "degraded", prev });
 		}
 		// slow → slow：静默
 	} else {
 		if (!prev || prev.state !== "down") {
-			alerts.push({ kind: "down", site, result });
+			alerts.push({ kind: "down", site, result, prev });
 		}
 	}
 	return alerts;
@@ -353,7 +353,7 @@ async function syncStatusPage(env, alert) {
 				changeId = found?.change_id ? String(found.change_id) : null;
 			}
 			if (!changeId) return { skipped: true, reason: "no-incident" };
-			const desc = `已恢复：${alert.site.url} 响应正常（${alert.result.ms}ms），故障持续 ${formatDuration(alert.duration)}`;
+			const desc = `已恢复：${alert.site.url} 响应正常（${alert.result.ms}ms），故障持续 ${formatDuration(alert.duration)}（${beijingTime(alert.since)} 起）\n恢复时间：${beijingTime(Date.now())}`;
 			return await resolveIncident(env, info, alert.site.name, Number(changeId), comp, desc);
 		}
 
@@ -372,9 +372,10 @@ async function createIncident(env, info, alert, comp) {
 	const down = alert.kind === "down";
 	const compStatus = down ? "full_outage" : "degraded";
 	const title = down ? `[site-monitor] ${alert.site.name} DOWN` : `[site-monitor] ${alert.site.name} 性能下降`;
+	const lastOk = alert.prev?.lastCheck ? `上次正常检测：${beijingTime(alert.prev.lastCheck)}` : "上次正常检测：无记录";
 	const desc = down
-		? `${alert.site.url} 检测失败：${alert.result.error}（${alert.result.ms}ms）`
-		: `${alert.site.url} 响应缓慢：${alert.result.ms}ms（阈值 ${alert.slowMs}ms）`;
+		? `${alert.site.url} 检测失败：${alert.result.error}（${alert.result.ms}ms）\n${lastOk}\n检测时间：${beijingTime(Date.now())}`
+		: `${alert.site.url} 响应缓慢：${alert.result.ms}ms（阈值 ${alert.slowMs}ms）\n${lastOk}\n检测时间：${beijingTime(Date.now())}`;
 	const res = await flashdutyApi(env, "/status-page/change/create", {
 		page_id: info.page_id,
 		title,
@@ -405,7 +406,7 @@ async function tryCloseExisting(env, info, siteName, comp) {
 		changeId = found?.change_id ? String(found.change_id) : null;
 	}
 	if (!changeId) return { skipped: true, reason: "no-incident" };
-	const desc = `状态变更：关闭上一事件（${siteName} 状态更新）`;
+	const desc = `状态变更：关闭上一事件（${siteName}）\n时间：${beijingTime(Date.now())}`;
 	return await resolveIncident(env, info, siteName, Number(changeId), comp, desc);
 }
 
