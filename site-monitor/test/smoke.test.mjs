@@ -404,3 +404,78 @@ test("T19 对账清扫：站点已 up 但存在滞留 incident 时自动 resolve
 	assert.equal(tl.body.component_changes[0].component_id, "comp-keyword");
 	assert.equal(tl.body.component_changes[0].status, "operational");
 });
+
+/* ---------- 性能下降（slow 档位） ---------- */
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+test("T20 响应慢：判定性能下降（slow）+ Warning 告警 + 组件 degraded", async () => {
+	reset();
+	siteResponses.set("https://blog.yaoxi.wiki/", async () => { await sleep(100); return okResp(); });
+	siteResponses.set("https://example.com/", () => okResp(200, "welcome to yaoxi wiki"));
+	const env = makeEnv();
+	env.SLOW_MS = "50"; // 测试阈值：100ms 响应 > 50ms → slow
+	await scheduledRun(env);
+	// TG：🟡 性能下降
+	assert.equal(tgCalls.length, 1);
+	assert.match(tgCalls[0].text, /🟡/);
+	assert.match(tgCalls[0].text, /性能下降/);
+	assert.match(tgCalls[0].text, /阈值 50ms/);
+	// Flashduty：Warning
+	assert.equal(flashcatCalls.length, 1);
+	const fc = flashcatCalls[0];
+	assert.equal(fc.event_status, "Warning");
+	assert.match(fc.title_rule, /性能下降/);
+	assert.equal(fc.alert_key, "site-monitor:博客主站");
+	// 状态页：创建 degraded incident
+	const create = statusPageCalls.find((c) => c.url.includes("/status-page/change/create"));
+	assert.ok(create, "应创建性能下降 incident");
+	assert.ok(create.body.title.includes("性能下降"));
+	assert.equal(create.body.updates[0].component_changes[0].component_id, "comp-blog");
+	assert.equal(create.body.updates[0].component_changes[0].status, "degraded");
+	// KV 状态
+	const st = JSON.parse(await env.MONITOR_KV.get("site:state:博客主站"));
+	assert.equal(st.state, "slow");
+});
+
+test("T21 slow 恢复：resolved 性能下降 incident，组件恢复 operational", async () => {
+	reset();
+	const env = makeEnv();
+	env.SLOW_MS = "50";
+	siteResponses.set("https://blog.yaoxi.wiki/", async () => { await sleep(100); return okResp(); });
+	siteResponses.set("https://example.com/", () => okResp(200, "welcome to yaoxi wiki"));
+	await scheduledRun(env); // slow
+	siteResponses.set("https://blog.yaoxi.wiki/", () => okResp()); // 恢复正常
+	await scheduledRun(env);
+	const timelines = statusPageCalls.filter((c) => c.url.includes("/status-page/change/timeline/create"));
+	assert.ok(timelines.length >= 1, "应调用 timeline/resolved");
+	const last = timelines[timelines.length - 1];
+	assert.equal(last.body.status, "resolved");
+	assert.equal(last.body.component_changes[0].status, "operational");
+	// TG：slow + 恢复 = 2 条
+	assert.equal(tgCalls.length, 2);
+	assert.match(tgCalls[1].text, /🟢/);
+	const st = JSON.parse(await env.MONITOR_KV.get("site:state:博客主站"));
+	assert.equal(st.state, "up");
+});
+
+test("T22 slow 转 down：关闭旧事件并创建故障事件（组件 full_outage）", async () => {
+	reset();
+	const env = makeEnv();
+	env.SLOW_MS = "50";
+	siteResponses.set("https://blog.yaoxi.wiki/", async () => { await sleep(100); return okResp(); });
+	siteResponses.set("https://example.com/", () => okResp(200, "welcome to yaoxi wiki"));
+	await scheduledRun(env); // slow
+	siteResponses.set("https://blog.yaoxi.wiki/", () => { throw new Error("boom"); });
+	await scheduledRun(env); // down
+	const creates = statusPageCalls.filter((c) => c.url.includes("/status-page/change/create"));
+	assert.ok(creates.length >= 2, "应创建 2 个 incident（性能下降 + 故障）");
+	const last = creates[creates.length - 1];
+	assert.ok(last.body.title.includes("DOWN"));
+	assert.equal(last.body.updates[0].component_changes[0].status, "full_outage");
+	// 关闭旧 incident 的 timeline 也应存在
+	const timelines = statusPageCalls.filter((c) => c.url.includes("/status-page/change/timeline/create"));
+	assert.ok(timelines.length >= 1, "切换状态时应先关闭旧 incident");
+	const st = JSON.parse(await env.MONITOR_KV.get("site:state:博客主站"));
+	assert.equal(st.state, "down");
+});

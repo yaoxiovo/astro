@@ -19,6 +19,7 @@
 
 - **主通道：快猫星云 Flashduty 标准告警**
   - 故障触发：`event_status=Critical` + 稳定 `alert_key`（`site-monitor:{站点名}`）
+  - 性能下降：响应超阈值（`SLOW_MS`，默认 2000ms）→ `event_status=Warning` + 状态页组件 **degraded（黄）**
   - 故障恢复：`event_status=Ok` + 同一 `alert_key` → 自动恢复告警
   - 附带 `labels`（site/url/monitor），可用于快猫星云订阅规则、路由与聚合
   - 状态机去重：持续故障只上报一次，恢复才再次上报（不刷屏）
@@ -31,6 +32,8 @@
 | `FLASHCAT_INTEGRATION_KEY` | ✅ | 快猫星云「标准告警信息集成」的 integration_key |
 | `FLASHCAT_API_HOST` | ❌ | 默认 `https://api.flashcat.cloud` |
 | `FLASHCAT_SEVERITY` | ❌ | 故障级别，默认 `Critical` |
+| `FLASHCAT_SLOW_SEVERITY` | ❌ | 性能下降级别，默认 `Warning` |
+| `SLOW_MS` | ❌ | 性能下降阈值（ms），响应超过即组件标黄，默认 `2000`；站点级可用 `slowMs` 字段覆盖 |
 | `BOT_TOKEN` / `CHAT_ID` | ❌ | Telegram 旁路通知 |
 | `MONITOR_SECRET` | ❌ | 保护手动触发 `/api/run` |
 | `SITES` | ❌ | JSON 覆盖默认站点列表 |

@@ -138,25 +138,36 @@ async function checkSite(site) {
 	}
 }
 
-/* ---------- 状态机（去重告警） ---------- */
+/* ---------- 状态机（up / slow / down 三态，去重告警） ---------- */
 
 async function updateState(env, site, result) {
 	const key = STATE_PREFIX + site.name;
 	const prev = parseJson(await env.MONITOR_KV.get(key));
 	const now = Date.now();
 	const alerts = [];
+	const slowMs = site.slowMs ?? (Number(env.SLOW_MS) || 2000);
+	const next = !result.ok ? "down" : result.ms > slowMs ? "slow" : "up";
+	const base = { state: next, since: prev?.state === next ? prev.since : now, lastCheck: now, lastMs: result.ms };
 
-	if (result.ok) {
-		if (prev && prev.state === "down") {
+	if (next === "up") {
+		if (prev && prev.state !== "up") {
 			alerts.push({ kind: "up", site, result, since: prev.since, duration: now - prev.since });
 		}
-		await env.MONITOR_KV.put(key, JSON.stringify({ state: "up", since: prev?.state === "up" ? prev.since : now, lastCheck: now, lastMs: result.ms }));
+	} else if (next === "slow") {
+		if (!prev || prev.state === "up") {
+			// up → slow：性能下降（组件标黄）
+			alerts.push({ kind: "slow", site, result, slowMs });
+		} else if (prev.state === "down") {
+			// down → slow：恢复但仍慢（组件红 → 黄）
+			alerts.push({ kind: "up", site, result, since: prev.since, duration: now - prev.since, target: "degraded" });
+		}
+		// slow → slow：静默
 	} else {
 		if (!prev || prev.state !== "down") {
 			alerts.push({ kind: "down", site, result });
 		}
-		await env.MONITOR_KV.put(key, JSON.stringify({ state: "down", since: prev?.state === "down" ? prev.since : now, lastCheck: now, lastMs: result.ms }));
 	}
+	await env.MONITOR_KV.put(key, JSON.stringify(base));
 	return alerts;
 }
 
@@ -181,7 +192,8 @@ async function widgetSummary(env) {
 	const status = await collectStatus(env);
 	const anyDown = status.sites.some((s) => s.state === "down");
 	const allDown = status.sites.length > 0 && status.sites.every((s) => s.state === "down");
-	const overall = allDown ? "major_outage" : anyDown ? "partial_outage" : "operational";
+	const anySlow = status.sites.some((s) => s.state === "slow");
+	const overall = allDown ? "major_outage" : anyDown ? "partial_outage" : anySlow ? "degraded" : "operational";
 	return {
 		schema_version: "1.0",
 		generated_at: new Date().toISOString(),
@@ -189,11 +201,11 @@ async function widgetSummary(env) {
 		max_stale_seconds: 120,
 		page: { name: "Yaoxi", url: "https://status.yaoxi.wiki" },
 		overall: { status: overall },
-		ongoing_incidents: status.sites.filter((s) => s.state === "down").map((s) => ({
+		ongoing_incidents: status.sites.filter((s) => s.state === "down" || s.state === "slow").map((s) => ({
 			id: "inc-" + encodeURIComponent(s.name),
-			name: s.name + " 故障",
+			name: s.name + (s.state === "slow" ? " 性能下降" : " 故障"),
 			status: "investigating",
-			impact: "minor",
+			impact: s.state === "slow" ? "minor" : "major",
 			started_at: new Date(s.since || Date.now()).toISOString(),
 		})),
 		in_progress_maintenances: [],
@@ -210,6 +222,16 @@ function buildDownMessage(alert) {
 		`<a href="${esc(site.url)}">${esc(site.url)}</a>`,
 		`原因：${esc(result.error)}`,
 		`响应：${result.ms}ms`,
+		`时间：${beijingTime(Date.now())}`,
+	].join("\n");
+}
+
+function buildSlowMessage(alert) {
+	const { site, result, slowMs } = alert;
+	return [
+		"🟡 <b>性能下降</b>：" + esc(site.name),
+		`<a href="${esc(site.url)}">${esc(site.url)}</a>`,
+		`响应：${result.ms}ms（阈值 ${slowMs}ms）`,
 		`时间：${beijingTime(Date.now())}`,
 	].join("\n");
 }
@@ -231,7 +253,8 @@ async function notify(env, alert) {
 		results.push(await flashcatAlert(env, alert));
 	}
 	if (env.BOT_TOKEN && env.CHAT_ID) {
-		results.push(await tgAlert(env, alert.kind === "down" ? buildDownMessage(alert) : buildUpMessage(alert)));
+		const text = alert.kind === "down" ? buildDownMessage(alert) : alert.kind === "slow" ? buildSlowMessage(alert) : buildUpMessage(alert);
+		results.push(await tgAlert(env, text));
 	}
 	return results;
 }
@@ -253,23 +276,31 @@ async function flashcatAlert(env, alert) {
 
 function buildFlashcatPayload(env, alert) {
 	const { site, result } = alert;
-	const down = alert.kind === "down";
-	const lines = down
+	const kind = alert.kind; // down | slow | up
+	const lines = kind === "down"
 		? [
 				`站点: ${site.url}`,
 				`原因: ${result.error}`,
 				`响应: ${result.ms}ms`,
 				`时间: ${beijingTime(Date.now())}`,
 		  ]
-		: [
-				`站点: ${site.url}`,
-				`故障时长: ${formatDuration(alert.duration)}（${beijingTime(alert.since)} 起）`,
-				`恢复响应: ${result.ms}ms`,
-				`时间: ${beijingTime(Date.now())}`,
-		  ];
+		: kind === "slow"
+			? [
+					`站点: ${site.url}`,
+					`响应: ${result.ms}ms（阈值 ${alert.slowMs}ms）`,
+					`时间: ${beijingTime(Date.now())}`,
+			  ]
+			: [
+					`站点: ${site.url}`,
+					`故障时长: ${formatDuration(alert.duration)}（${beijingTime(alert.since)} 起）`,
+					`恢复响应: ${result.ms}ms`,
+					`时间: ${beijingTime(Date.now())}`,
+			  ];
+	const title = kind === "down" ? `【网站监控】${site.name} 故障` : kind === "slow" ? `【网站监控】${site.name} 性能下降` : `【网站监控】${site.name} 已恢复`;
+	const status = kind === "down" ? env.FLASHCAT_SEVERITY || "Critical" : kind === "slow" ? env.FLASHCAT_SLOW_SEVERITY || "Warning" : "Ok";
 	return {
-		title_rule: down ? `【网站监控】${site.name} 故障` : `【网站监控】${site.name} 已恢复`,
-		event_status: down ? env.FLASHCAT_SEVERITY || "Critical" : "Ok",
+		title_rule: title,
+		event_status: status,
 		alert_key: `site-monitor:${site.name}`,
 		description: lines.join("\n"),
 		labels: {
@@ -294,7 +325,7 @@ async function tgAlert(env, text) {
 	}
 }
 
-/* ---------- Flashduty 状态页自动发布（故障→组件变红，恢复→resolved） ---------- */
+/* ---------- Flashduty 状态页自动发布（故障→红，性能下降→黄，恢复→绿） ---------- */
 
 async function syncStatusPage(env, alert) {
 	if (!env.FLASHDUTY_APP_KEY) return { skipped: true };
@@ -303,46 +334,72 @@ async function syncStatusPage(env, alert) {
 		if (!info) return { skipped: true, reason: "no-page" };
 		const comp = findComponent(info, alert.site.name);
 		if (!comp) return { skipped: true, reason: "no-component", site: alert.site.name };
-		const nowSec = Math.floor(Date.now() / 1000);
-		let res;
-		if (alert.kind === "down") {
-			const desc = `${alert.site.url} 检测失败：${alert.result.error}（${alert.result.ms}ms）`;
-			res = await flashdutyApi(env, "/status-page/change/create", {
-				page_id: info.page_id,
-				title: `[site-monitor] ${alert.site.name} DOWN`,
-				type: "incident",
-				status: "investigating",
-				description: desc,
-				updates: [{
-					at_seconds: nowSec,
-					status: "investigating",
-					description: desc,
-					component_changes: [{ component_id: comp.component_id, status: "full_outage" }],
-				}],
-				notify_subscribers: false,
-			});
-			const changeId = res?.body?.data?.change_id ?? res?.body?.data?.id ?? res?.body?.change_id ?? res?.body?.id ?? null;
-			const result = { kind: "down", httpStatus: res?.httpStatus, body: res?.body, change_id: changeId, at: new Date().toISOString(), site: alert.site.name };
-			await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify(result), { expirationTtl: 86400 });
-			if (changeId) {
-				await env.MONITOR_KV.put(SP_INCIDENT_PREFIX + alert.site.name, String(changeId));
+
+		if (alert.kind === "up") {
+			// 恢复：找到现有 incident 并 resolved（组件 → operational）
+			let changeId = await env.MONITOR_KV.get(SP_INCIDENT_PREFIX + alert.site.name);
+			if (!changeId) {
+				const found = await findActiveIncident(env, info.page_id, alert.site.name);
+				changeId = found?.change_id ? String(found.change_id) : null;
 			}
-			return { published: true, change_id: changeId };
+			if (!changeId) return { skipped: true, reason: "no-incident" };
+			const desc = `已恢复：${alert.site.url} 响应正常（${alert.result.ms}ms），故障持续 ${formatDuration(alert.duration)}`;
+			return await resolveIncident(env, info, alert.site.name, Number(changeId), comp, desc);
 		}
-		let changeId = await env.MONITOR_KV.get(SP_INCIDENT_PREFIX + alert.site.name);
-		if (!changeId) {
-			const found = await findActiveIncident(env, info.page_id, alert.site.name);
-			changeId = found?.change_id ? String(found.change_id) : null;
-		}
-		if (!changeId) return { skipped: true, reason: "no-incident" };
-		return await resolveIncident(env, info, alert, Number(changeId), comp);
+
+		// down / slow：先关闭旧 incident（如有），再创建新 incident（组件 → full_outage / degraded）
+		await tryCloseExisting(env, info, alert.site.name, comp);
+		return await createIncident(env, info, alert, comp);
 	} catch (err) {
 		await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ error: err?.message ?? String(err), at: new Date().toISOString() }), { expirationTtl: 86400 });
 		return { error: err?.message ?? String(err) };
 	}
 }
 
-/* 对账：治愈滞留 incident（站点已恢复 up，但状态页 incident 仍 active） */
+/* 创建新 incident（down → 组件 full_outage 红；slow → 组件 degraded 黄） */
+async function createIncident(env, info, alert, comp) {
+	const nowSec = Math.floor(Date.now() / 1000);
+	const down = alert.kind === "down";
+	const compStatus = down ? "full_outage" : "degraded";
+	const title = down ? `[site-monitor] ${alert.site.name} DOWN` : `[site-monitor] ${alert.site.name} 性能下降`;
+	const desc = down
+		? `${alert.site.url} 检测失败：${alert.result.error}（${alert.result.ms}ms）`
+		: `${alert.site.url} 响应缓慢：${alert.result.ms}ms（阈值 ${alert.slowMs}ms）`;
+	const res = await flashdutyApi(env, "/status-page/change/create", {
+		page_id: info.page_id,
+		title,
+		type: "incident",
+		status: "investigating",
+		description: desc,
+		updates: [{
+			at_seconds: nowSec,
+			status: "investigating",
+			description: desc,
+			component_changes: [{ component_id: comp.component_id, status: compStatus }],
+		}],
+		notify_subscribers: false,
+	});
+	const changeId = res?.body?.data?.change_id ?? res?.body?.data?.id ?? res?.body?.change_id ?? res?.body?.id ?? null;
+	await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ kind: down ? "down" : "slow", httpStatus: res?.httpStatus, body: res?.body, change_id: changeId, at: new Date().toISOString(), site: alert.site.name }), { expirationTtl: 86400 });
+	if (changeId) {
+		await env.MONITOR_KV.put(SP_INCIDENT_PREFIX + alert.site.name, String(changeId));
+	}
+	return { published: true, change_id: changeId };
+}
+
+/* 关闭站点现有 incident（状态变更时先归位组件，避免 incident 堆积） */
+async function tryCloseExisting(env, info, siteName, comp) {
+	let changeId = await env.MONITOR_KV.get(SP_INCIDENT_PREFIX + siteName);
+	if (!changeId) {
+		const found = await findActiveIncident(env, info.page_id, siteName);
+		changeId = found?.change_id ? String(found.change_id) : null;
+	}
+	if (!changeId) return { skipped: true, reason: "no-incident" };
+	const desc = `状态变更：关闭上一事件（${siteName} 状态更新）`;
+	return await resolveIncident(env, info, siteName, Number(changeId), comp, desc);
+}
+
+/* 对账：治愈滞留 incident（站点状态非 down，但状态页 incident 仍 active） */
 async function reconcileStatusPage(env, results) {
 	if (!env.FLASHDUTY_APP_KEY) return { skipped: true };
 	const upResults = results.filter((r) => r.ok);
@@ -357,18 +414,13 @@ async function reconcileStatusPage(env, results) {
 			if (!st || st.state !== "up") continue;
 			const inc = active.find((it) => {
 				const t = it.title || it.change_name || it.name || "";
-				return t.includes(r.name) && t.includes("DOWN");
+				return t.includes(r.name) && (t.includes("DOWN") || t.includes("性能下降"));
 			});
 			if (!inc) continue;
 			const comp = findComponent(info, r.name);
 			if (!comp) continue;
-			const res = await resolveIncident(
-				env,
-				info,
-				{ site: { name: r.name, url: r.url }, result: { ms: r.ms }, since: st.since, duration: Date.now() - st.since },
-				Number(inc.change_id ?? inc.id),
-				comp,
-			);
+			const desc = `已恢复：${r.url} 响应正常（${r.ms}ms）`;
+			const res = await resolveIncident(env, info, r.name, Number(inc.change_id ?? inc.id), comp, desc);
 			if (res.resolved) healed.push({ site: r.name, change_id: res.change_id });
 		}
 		return { reconciled: true, healed };
@@ -379,16 +431,16 @@ async function reconcileStatusPage(env, results) {
 }
 
 /* 将 incident 置为 resolved（组件恢复 operational），并清理 KV 记录 */
-async function resolveIncident(env, info, alert, changeId, comp) {
+async function resolveIncident(env, info, siteName, changeId, comp, desc) {
 	const timelineRes = await flashdutyApi(env, "/status-page/change/timeline/create", {
 		page_id: info.page_id,
 		change_id: changeId,
-		description: `已恢复：${alert.site.url} 响应正常（${alert.result.ms}ms），故障持续 ${formatDuration(alert.duration)}`,
+		description: desc,
 		status: "resolved",
 		component_changes: [{ component_id: comp.component_id, status: "operational" }],
 	});
-	await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ kind: "up", httpStatus: timelineRes?.httpStatus, body: timelineRes?.body, change_id: changeId, at: new Date().toISOString(), site: alert.site.name }), { expirationTtl: 86400 });
-	await env.MONITOR_KV.delete(SP_INCIDENT_PREFIX + alert.site.name);
+	await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ kind: "up", httpStatus: timelineRes?.httpStatus, body: timelineRes?.body, change_id: changeId, at: new Date().toISOString(), site: siteName }), { expirationTtl: 86400 });
+	await env.MONITOR_KV.delete(SP_INCIDENT_PREFIX + siteName);
 	return { resolved: true, change_id: changeId };
 }
 
@@ -506,7 +558,7 @@ async function findActiveIncident(env, pageId, siteName) {
 	const items = await listActiveIncidents(env, pageId);
 	for (const it of items) {
 		const t = it.title || it.change_name || it.name || "";
-		if (t.includes(siteName) && t.includes("DOWN")) return { change_id: it.change_id ?? it.id };
+		if (t.includes(siteName) && (t.includes("DOWN") || t.includes("性能下降"))) return { change_id: it.change_id ?? it.id };
 	}
 	return null;
 }
@@ -667,6 +719,7 @@ header .sub { color:var(--muted); font-size:13px; margin-top:4px; }
 .dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
 .dot.up { background:var(--green); }
 .dot.down { background:var(--red); }
+.dot.slow { background:var(--orange); }
 .dot.unknown { background:var(--muted); }
 .s-name { font-weight:600; min-width:110px; }
 .s-meta { color:var(--muted); font-size:12px; flex:1; min-width:140px; }
@@ -699,11 +752,12 @@ var HISTORY_URL = "/api/history?days=30";
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 function fmt(ts){ if(!ts) return "-"; var d=new Date(ts+8*3600*1000); var p=function(n){return String(n).padStart(2,"0");}; return d.getUTCFullYear()+"-"+p(d.getUTCMonth()+1)+"-"+p(d.getUTCDate())+" "+p(d.getUTCHours())+":"+p(d.getUTCMinutes()); }
 function dur(ms){ if(ms==null) return "进行中"; var m=Math.round(ms/60000); if(m<60) return m+" 分钟"; var h=Math.floor(m/60); var mm=m%60; return mm? h+" 小时 "+mm+" 分" : h+" 小时"; }
-function renderBanner(sites){ var arr=Object.keys(sites).map(function(k){return sites[k];}); var anyDown=arr.some(function(s){return s.state==="down";}); var anyUnknown=arr.some(function(s){return s.state==="unknown";}); var el=document.getElementById("banner");
+function renderBanner(sites){ var arr=Object.keys(sites).map(function(k){return sites[k];}); var anyDown=arr.some(function(s){return s.state==="down";}); var anySlow=arr.some(function(s){return s.state==="slow";}); var anyUnknown=arr.some(function(s){return s.state==="unknown";}); var el=document.getElementById("banner");
  if(anyDown){ el.className="banner crit"; el.innerHTML="<h2>部分服务异常</h2><p>部分系统运行不正常，请查看下方详情</p>"; }
+ else if(anySlow){ el.className="banner bad"; el.innerHTML="<h2>部分服务性能下降</h2><p>部分系统响应缓慢，请查看下方详情</p>"; }
  else if(anyUnknown){ el.className="banner bad"; el.innerHTML="<h2>数据收集进行中</h2><p>监控器刚部署，等待首轮检测完成</p>"; }
  else { el.className="banner ok"; el.innerHTML="<h2>一切正常 All Systems Operational</h2><p>所有系统均运行正常</p>"; } }
-function renderSites(sites){ var el=document.getElementById("sites"); var html=""; Object.keys(sites).forEach(function(name){ var s=sites[name]; var st=s.state||"unknown"; var dot=st==="up"?"up":(st==="down"?"down":"unknown"); var stTxt=st==="up"?"运行正常":(st==="down"?"故障":"未知"); html+='<div class="site"><span class="dot '+dot+'"></span><span class="s-name">'+esc(name)+'</span><span class="s-meta">'+stTxt+' · '+fmt(s.lastCheck)+' · '+s.lastMs+'ms</span><span class="s-uptime">'+((s.uptime!=null)?s.uptime.toFixed(2)+"%":"-")+'</span></div>'; }); el.innerHTML=html; }
+function renderSites(sites){ var el=document.getElementById("sites"); var html=""; Object.keys(sites).forEach(function(name){ var s=sites[name]; var st=s.state||"unknown"; var dot=st==="up"?"up":(st==="down"?"down":(st==="slow"?"slow":"unknown")); var stTxt=st==="up"?"运行正常":(st==="down"?"故障":(st==="slow"?"性能下降":"未知")); html+='<div class="site"><span class="dot '+dot+'"></span><span class="s-name">'+esc(name)+'</span><span class="s-meta">'+stTxt+' · '+fmt(s.lastCheck)+' · '+s.lastMs+'ms</span><span class="s-uptime">'+((s.uptime!=null)?s.uptime.toFixed(2)+"%":"-")+'</span></div>'; }); el.innerHTML=html; }
 function renderSparks(hist){ var el=document.getElementById("sparks"); var html=""; Object.keys(hist.sites||{}).forEach(function(name){ var d=hist.sites[name]; var pts=d.samples||[]; var W=640,H=36; var max=Math.max.apply(null,pts.map(function(p){return p.ms;}).concat([1])); var step=pts.length>1? W/(pts.length-1):W; var poly=pts.map(function(p,i){ var x=i*step; var y=H-2-Math.min(p.ms/max,1)*(H-4); return x.toFixed(1)+","+y.toFixed(1); }).join(" "); var color=(d.uptime!=null&&d.uptime>=99)? "#26a65b" : "#e74c3c"; html+='<div class="site"><span class="s-name">'+esc(name)+'</span><span class="s-meta">'+pts.length+' 个采样点 · 30 天 uptime '+(d.uptime!=null?d.uptime.toFixed(2)+"%":"-")+'</span><span class="spark"><svg width="'+W+'" height="'+H+'"><polyline points="'+poly+'" fill="none" stroke="'+color+'" stroke-width="1.5"/></svg></span></div>'; }); el.innerHTML=html||'<div class="empty">暂无数据（监控器运行满 1 小时后自动出现曲线）</div>'; }
 function renderEvents(hist){ var el=document.getElementById("events"); var all=[]; Object.keys(hist.sites||{}).forEach(function(name){ (hist.sites[name].events||[]).forEach(function(e){ all.push({name:name,from:e.from,to:e.to,duration:e.duration}); }); }); all.sort(function(a,b){return b.from-a.from;}); if(!all.length){ el.innerHTML='<div class="empty">过去 30 天没有故障记录 🎉</div>'; return; } var html=""; all.forEach(function(e){ html+='<div class="ev"><span class="t">'+esc(e.name)+' 故障</span><div class="d">'+fmt(e.from)+' → '+(e.to?fmt(e.to):"至今")+' · 持续 '+dur(e.duration)+'</div></div>'; }); el.innerHTML=html; }
 function load(){ var banner=document.getElementById("banner");
