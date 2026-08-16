@@ -153,7 +153,11 @@ async function updateState(env, site, result) {
 	const changed = prevState !== next;
 	const lastWrite = prev?.lastWrite ?? 0;
 	if (changed || now - lastWrite >= 15 * 60000) {
-		await env.MONITOR_KV.put(key, JSON.stringify({ state: next, since, lastCheck: now, lastMs: result.ms, lastWrite: now }));
+		try {
+			await env.MONITOR_KV.put(key, JSON.stringify({ state: next, since, lastCheck: now, lastMs: result.ms, lastWrite: now }));
+		} catch {
+			// KV 写入失败（额度/网络）：不影响本轮检测与告警，下轮重试
+		}
 	}
 
 	if (next === "up") {
