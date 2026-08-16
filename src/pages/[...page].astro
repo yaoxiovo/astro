@@ -22,6 +22,17 @@ const len = page.data.length;
 <MainGridLayout title={page.currentPage === 1 ? undefined : `第 ${page.currentPage} 页`} noindex={page.currentPage > 1}>
     {page.currentPage === 1 && <NoticeCard />}
     {page.currentPage === 1 && <MomentsWidget />}
+    {page.currentPage === 1 && (
+        <div class="flex justify-center mt-6 mb-6">
+            <flashduty-status-widget
+                page="https://status.yaoxi.wiki"
+                type="badge"
+                theme="auto"
+                locale="zh"
+                size="medium"
+            ></flashduty-status-widget>
+        </div>
+    )}
     <PostPage page={page}></PostPage>
     <Pagination class="mx-auto onload-animation" page={page} style=`animation-delay: calc(var(--content-delay) + ${(len)*50}ms)`></Pagination>
 </MainGridLayout>
