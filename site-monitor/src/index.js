@@ -20,6 +20,7 @@ const DEFAULT_SITES = [
 	{ name: "个人主页", url: "https://yaoxi.wiki/", expect: 200 },
 	{ name: "图床", url: "https://png.yaoxi.wiki/", expect: 200 },
 	{ name: "状态页", url: "https://status.yaoxi.wiki/", expect: 200 },
+	{ name: "演练站点", url: "https://drill.invalid/", expect: 200 },
 ];
 
 const TIMEOUT_MS = 10_000;
