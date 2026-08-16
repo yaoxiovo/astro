@@ -86,10 +86,10 @@ jobs:
           curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/setMyCommands" \
             -H "Content-Type: application/json" \
             -d '{"commands":[]}'
-          # 写入新命令快捷菜单（与代码 COMMANDS 一致：8 个）
+          # 写入新命令快捷菜单（与代码 COMMANDS 一致：12 个）
           curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/setMyCommands" \
             -H "Content-Type: application/json" \
-            -d '{"commands":[{"command":"start","description":"开始使用 / 订阅推送"},{"command":"latest","description":"最近5条动态"},{"command":"random","description":"随机一条朋友圈"},{"command":"stats","description":"朋友圈统计"},{"command":"search","description":"搜索朋友圈"},{"command":"subscribe","description":"订阅推送"},{"command":"unsubscribe","description":"退订推送"},{"command":"help","description":"帮助"}]}'
+            -d '{"commands":[{"command":"start","description":"开始使用 / 订阅推送"},{"command":"latest","description":"最近动态：/latest 5"},{"command":"random","description":"随机动态：/random 3"},{"command":"stats","description":"朋友圈统计 + 订阅人数"},{"command":"search","description":"搜索朋友圈：/search 关键词"},{"command":"capsules","description":"时间胶囊列表"},{"command":"weekly","description":"本周朋友圈周报"},{"command":"daily","description":"每日一言：/daily 城市"},{"command":"broadcast","description":"主人广播公告"},{"command":"subscribe","description":"订阅新动态推送"},{"command":"unsubscribe","description":"退订推送"},{"command":"help","description":"帮助与全部命令"}]}'
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
