@@ -149,10 +149,10 @@ async function updateState(env, site, result) {
 	const next = !result.ok ? "down" : result.ms > slowMs ? "slow" : "up";
 	const prevState = prev?.state ?? null;
 	const since = prevState === next ? prev.since : now;
-	// KV 写入优化：状态变化立即写；状态不变每 5 分钟才刷新 lastCheck（1 分钟轮询下控制写入量）
+	// KV 写入优化：状态变化立即写；状态不变每 15 分钟才刷新 lastCheck（1 分钟轮询下控制写入量）
 	const changed = prevState !== next;
 	const lastWrite = prev?.lastWrite ?? 0;
-	if (changed || now - lastWrite >= 5 * 60000) {
+	if (changed || now - lastWrite >= 15 * 60000) {
 		await env.MONITOR_KV.put(key, JSON.stringify({ state: next, since, lastCheck: now, lastMs: result.ms, lastWrite: now }));
 	}
 
@@ -627,16 +627,19 @@ function histKey(ts) {
 
 async function saveSnapshot(env, results) {
 	try {
-		const key = histKey(Date.now());
-		const prev = parseJson(await env.MONITOR_KV.get(key));
-		const samples = prev?.samples || {};
 		const now = Date.now();
+		const key = histKey(now);
+		const prev = parseJson(await env.MONITOR_KV.get(key));
+		// 1 分钟轮询下每 5 分钟才落盘一次（采样粒度 5 分钟 1 点，控制 KV 写入量）
+		const lastWrite = prev?.lastWrite ?? 0;
+		if (now - lastWrite < 5 * 60000) return;
+		const samples = prev?.samples || {};
 		for (const r of results) {
 			const arr = samples[r.name] || (samples[r.name] = []);
 			arr.push({ ts: now, state: r.ok ? "up" : "down", ms: r.ms });
 			if (arr.length > 13) arr.splice(0, arr.length - 13);
 		}
-		await env.MONITOR_KV.put(key, JSON.stringify({ samples }), { expirationTtl: 2592000 });
+		await env.MONITOR_KV.put(key, JSON.stringify({ samples, lastWrite: now }), { expirationTtl: 2592000 });
 	} catch {
 		// 快照失败不影响主流程
 	}
