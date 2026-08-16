@@ -342,7 +342,7 @@ test("T15 widget 故障态：有 down 站点时 overall=partial_outage + ongoing
 
 /* ---------- Flashduty 状态页自动发布 ---------- */
 
-test("T16 故障时自动发布状态页 incident（组件变 major_outage）", async () => {
+test("T16 故障时自动发布状态页 incident（组件变 full_outage）", async () => {
 	reset();
 	siteResponses.set("https://blog.yaoxi.wiki/", () => { throw new Error("connect refused"); });
 	siteResponses.set("https://example.com/", () => okResp(200, "welcome to yaoxi wiki"));

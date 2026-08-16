@@ -68,7 +68,7 @@ node --test test/smoke.test.mjs
 ```
 ## 状态页自动发布（Flashduty Status Page API）
 
-- 故障时自动创建 incident（受影响组件 → major_outage，状态页变红）
+- 故障时自动创建 incident（受影响组件 → full_outage，状态页变红）
 - 恢复时自动 resolved（组件 → operational，状态页变绿）
 - 需要 GitHub secret：`FLASHDUTY_APP_KEY`（Flashduty 个人中心 APP Key）
 - 未配置时自动跳过，不影响告警主链路
