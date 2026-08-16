@@ -147,7 +147,14 @@ async function updateState(env, site, result) {
 	const alerts = [];
 	const slowMs = site.slowMs ?? (Number(env.SLOW_MS) || 2000);
 	const next = !result.ok ? "down" : result.ms > slowMs ? "slow" : "up";
-	const base = { state: next, since: prev?.state === next ? prev.since : now, lastCheck: now, lastMs: result.ms };
+	const prevState = prev?.state ?? null;
+	const since = prevState === next ? prev.since : now;
+	// KV 写入优化：状态变化立即写；状态不变每 5 分钟才刷新 lastCheck（1 分钟轮询下控制写入量）
+	const changed = prevState !== next;
+	const lastWrite = prev?.lastWrite ?? 0;
+	if (changed || now - lastWrite >= 5 * 60000) {
+		await env.MONITOR_KV.put(key, JSON.stringify({ state: next, since, lastCheck: now, lastMs: result.ms, lastWrite: now }));
+	}
 
 	if (next === "up") {
 		if (prev && prev.state !== "up") {
@@ -167,7 +174,6 @@ async function updateState(env, site, result) {
 			alerts.push({ kind: "down", site, result });
 		}
 	}
-	await env.MONITOR_KV.put(key, JSON.stringify(base));
 	return alerts;
 }
 
