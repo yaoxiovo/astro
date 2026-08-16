@@ -96,6 +96,8 @@ async function runChecks(env) {
 		}),
 	);
 	await saveSnapshot(env, results);
+	// 对账：治愈滞留 incident（状态已恢复 up 但状态页 incident 仍 active）
+	await reconcileStatusPage(env, results);
 	return { ts: Date.now(), results };
 }
 
@@ -299,7 +301,7 @@ async function syncStatusPage(env, alert) {
 	try {
 		const info = await getStatusPageInfo(env);
 		if (!info) return { skipped: true, reason: "no-page" };
-		const comp = (info.components || []).find((c) => c.name === alert.site.name || (c.name && (c.name.includes(alert.site.name) || alert.site.name.includes(c.name))));
+		const comp = findComponent(info, alert.site.name);
 		if (!comp) return { skipped: true, reason: "no-component", site: alert.site.name };
 		const nowSec = Math.floor(Date.now() / 1000);
 		let res;
@@ -333,20 +335,65 @@ async function syncStatusPage(env, alert) {
 			changeId = found?.change_id ? String(found.change_id) : null;
 		}
 		if (!changeId) return { skipped: true, reason: "no-incident" };
-		const timelineRes = await flashdutyApi(env, "/status-page/change/timeline/create", {
-			page_id: info.page_id,
-			change_id: Number(changeId),
-			description: `已恢复：${alert.site.url} 响应正常（${alert.result.ms}ms），故障持续 ${formatDuration(alert.duration)}`,
-			status: "resolved",
-			component_changes: [{ component_id: comp.component_id, status: "operational" }],
-		});
-		await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ kind: "up", httpStatus: timelineRes?.httpStatus, body: timelineRes?.body, change_id: Number(changeId), at: new Date().toISOString(), site: alert.site.name }), { expirationTtl: 86400 });
-		await env.MONITOR_KV.delete(SP_INCIDENT_PREFIX + alert.site.name);
-		return { resolved: true, change_id: Number(changeId) };
+		return await resolveIncident(env, info, alert, Number(changeId), comp);
 	} catch (err) {
 		await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ error: err?.message ?? String(err), at: new Date().toISOString() }), { expirationTtl: 86400 });
 		return { error: err?.message ?? String(err) };
 	}
+}
+
+/* 对账：治愈滞留 incident（站点已恢复 up，但状态页 incident 仍 active） */
+async function reconcileStatusPage(env, results) {
+	if (!env.FLASHDUTY_APP_KEY) return { skipped: true };
+	const upResults = results.filter((r) => r.ok);
+	if (!upResults.length) return { skipped: true, reason: "no-up-site" };
+	try {
+		const info = await getStatusPageInfo(env);
+		if (!info) return { skipped: true, reason: "no-page" };
+		const active = await listActiveIncidents(env, info.page_id);
+		const healed = [];
+		for (const r of upResults) {
+			const st = parseJson(await env.MONITOR_KV.get(STATE_PREFIX + r.name));
+			if (!st || st.state !== "up") continue;
+			const inc = active.find((it) => {
+				const t = it.title || it.change_name || it.name || "";
+				return t.includes(r.name) && t.includes("DOWN");
+			});
+			if (!inc) continue;
+			const comp = findComponent(info, r.name);
+			if (!comp) continue;
+			const res = await resolveIncident(
+				env,
+				info,
+				{ site: { name: r.name, url: r.url }, result: { ms: r.ms }, since: st.since, duration: Date.now() - st.since },
+				Number(inc.change_id ?? inc.id),
+				comp,
+			);
+			if (res.resolved) healed.push({ site: r.name, change_id: res.change_id });
+		}
+		return { reconciled: true, healed };
+	} catch (err) {
+		await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ error: err?.message ?? String(err), at: new Date().toISOString() }), { expirationTtl: 86400 });
+		return { error: err?.message ?? String(err) };
+	}
+}
+
+/* 将 incident 置为 resolved（组件恢复 operational），并清理 KV 记录 */
+async function resolveIncident(env, info, alert, changeId, comp) {
+	const timelineRes = await flashdutyApi(env, "/status-page/change/timeline/create", {
+		page_id: info.page_id,
+		change_id: changeId,
+		description: `已恢复：${alert.site.url} 响应正常（${alert.result.ms}ms），故障持续 ${formatDuration(alert.duration)}`,
+		status: "resolved",
+		component_changes: [{ component_id: comp.component_id, status: "operational" }],
+	});
+	await env.MONITOR_KV.put(SP_DIAG_KEY, JSON.stringify({ kind: "up", httpStatus: timelineRes?.httpStatus, body: timelineRes?.body, change_id: changeId, at: new Date().toISOString(), site: alert.site.name }), { expirationTtl: 86400 });
+	await env.MONITOR_KV.delete(SP_INCIDENT_PREFIX + alert.site.name);
+	return { resolved: true, change_id: changeId };
+}
+
+function findComponent(info, siteName) {
+	return (info.components || []).find((c) => c.name === siteName || (c.name && (c.name.includes(siteName) || siteName.includes(c.name))));
 }
 
 async function getStatusPageInfo(env) {
@@ -456,16 +503,21 @@ async function flashdutyApi(env, path, body) {
 }
 
 async function findActiveIncident(env, pageId, siteName) {
-	const resp = await fetch(`https://api.flashcat.cloud/status-page/change/active/list?app_key=${encodeURIComponent(env.FLASHDUTY_APP_KEY)}&page_id=${pageId}&type=incident`, {
-		headers: { accept: "application/json" },
-	});
-	if (!resp.ok) return null;
-	const data = await resp.json().catch(() => null);
-	for (const it of data?.data?.items || data?.items || []) {
+	const items = await listActiveIncidents(env, pageId);
+	for (const it of items) {
 		const t = it.title || it.change_name || it.name || "";
 		if (t.includes(siteName) && t.includes("DOWN")) return { change_id: it.change_id ?? it.id };
 	}
 	return null;
+}
+
+async function listActiveIncidents(env, pageId) {
+	const resp = await fetch(`https://api.flashcat.cloud/status-page/change/active/list?app_key=${encodeURIComponent(env.FLASHDUTY_APP_KEY)}&page_id=${pageId}&type=incident`, {
+		headers: { accept: "application/json" },
+	});
+	if (!resp.ok) return [];
+	const data = await resp.json().catch(() => null);
+	return data?.data?.items || data?.items || [];
 }
 
 /* ---------- 工具 ---------- */

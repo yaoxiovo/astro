@@ -21,6 +21,7 @@ const tgCalls = [];
 const flashcatCalls = [];
 const statusPageCalls = [];
 const siteResponses = new Map(); // url -> () => Response | throw
+let activeIncidents = [{ change_id: 555, title: "[site-monitor] 博客主站 DOWN" }];
 
 globalThis.fetch = async (url, opts = {}) => {
 	const u = String(url);
@@ -38,7 +39,7 @@ globalThis.fetch = async (url, opts = {}) => {
 			return new Response(JSON.stringify({ items: [{ page_id: 1001, name: "Yaoxi Status", url_name: "yaoxi-status", components: [{ component_id: "comp-blog", name: "博客主站" }, { component_id: "comp-keyword", name: "关键字站" }] }] }), { status: 200, headers: { "content-type": "application/json" } });
 		}
 		if (u.includes("/status-page/change/active/list")) {
-			return new Response(JSON.stringify({ items: [{ change_id: 555, title: "[site-monitor] 博客主站 DOWN" }], total: 1 }), { status: 200, headers: { "content-type": "application/json" } });
+			return new Response(JSON.stringify({ items: activeIncidents, total: activeIncidents.length }), { status: 200, headers: { "content-type": "application/json" } });
 		}
 		if (u.includes("/status-page/change/create")) {
 			return new Response(JSON.stringify({ change_id: 777, change_name: "t" }), { status: 200, headers: { "content-type": "application/json" } });
@@ -74,6 +75,7 @@ function reset() {
 	flashcatCalls.length = 0;
 	statusPageCalls.length = 0;
 	siteResponses.clear();
+	activeIncidents = [{ change_id: 555, title: "[site-monitor] 博客主站 DOWN" }];
 }
 
 // waitUntil 收集任务并 await（否则 scheduled 里的 runChecks 不会真正执行）
@@ -384,4 +386,21 @@ test("T18 未配置 FLASHDUTY_APP_KEY 时跳过状态页发布", async () => {
 	delete env.FLASHDUTY_APP_KEY;
 	await scheduledRun(env);
 	assert.equal(statusPageCalls.length, 0, "未配置 APP_KEY 不应调用状态页 API");
+});
+
+test("T19 对账清扫：站点已 up 但存在滞留 incident 时自动 resolved", async () => {
+	reset();
+	siteResponses.set("https://blog.yaoxi.wiki/", () => okResp());
+	siteResponses.set("https://example.com/", () => okResp(200, "welcome to yaoxi wiki"));
+	const env = makeEnv();
+	// 模拟滞留 incident：关键字站状态已 up，但状态页上仍挂着 DOWN incident
+	await env.MONITOR_KV.put("site:state:关键字站", JSON.stringify({ state: "up", since: Date.now() - 60000, lastCheck: Date.now(), lastMs: 90 }));
+	activeIncidents = [{ change_id: 888, title: "[site-monitor] 关键字站 DOWN" }];
+	await scheduledRun(env);
+	const timelines = statusPageCalls.filter((c) => c.url.includes("/status-page/change/timeline/create"));
+	const tl = timelines.find((c) => c.body.change_id === 888);
+	assert.ok(tl, "应对账到滞留 incident 并调用 timeline/resolved");
+	assert.equal(tl.body.status, "resolved");
+	assert.equal(tl.body.component_changes[0].component_id, "comp-keyword");
+	assert.equal(tl.body.component_changes[0].status, "operational");
 });
