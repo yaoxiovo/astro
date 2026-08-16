@@ -19,7 +19,7 @@ lang: "zh_CN"
 | 类型 | 部署位置 | 特点 |
 |---|---|---|
 | **静态 JSON API** | `https://blog.yaoxi.wiki/api/*` | 构建期生成，随博客部署自动更新，零额外成本，可跨域（CORS `*`） |
-| **Worker 动态 API** | `https://blog-api.*.workers.dev/*` | 运行时参数化查询（`?limit=&tag=` 等），数据实时过滤，带缓存 |
+| **Worker 动态 API** | `https://blog-api.yaoxi.cloud/*` | 运行时参数化查询（`?limit=&tag=` 等），数据实时过滤，带缓存 |
 | **RSS / SEO 端点** | `https://blog.yaoxi.wiki/*.xml` | 订阅与爬虫 |
 | **内部 Worker 端点** | 各 Worker 域名 | Telegram Bot / 站点监控的接口，部分需鉴权 |
 
@@ -43,7 +43,7 @@ curl https://blog.yaoxi.wiki/api/moments.json
 curl https://blog.yaoxi.wiki/api/posts/umami.json
 
 # 参数化查询：最近 5 条「日常」标签的顶层动态
-curl "https://blog-api.YOUR_SUBDOMAIN.workers.dev/api/moments?limit=5&tag=日常&replies=0"
+curl "https://blog-api.yaoxi.cloud/api/moments?limit=5&tag=日常&replies=0"
 ```
 
 ### JavaScript（浏览器 / Node）
@@ -239,7 +239,7 @@ curl https://blog.yaoxi.wiki/api/posts/umami.json
 静态站无法在运行时处理查询参数，博客提供了独立 Worker 做**参数化查询**：
 
 ```text
-部署后地址：https://blog-api.YOUR_SUBDOMAIN.workers.dev
+部署后地址：https://blog-api.yaoxi.cloud
 （如绑定了自定义域，用你自己的域名即可）
 ```
 
@@ -247,13 +247,13 @@ curl https://blog.yaoxi.wiki/api/posts/umami.json
 
 ```bash
 # 最近 5 条
-curl "https://blog-api.YOUR_SUBDOMAIN.workers.dev/api/moments?limit=5"
+curl "https://blog-api.yaoxi.cloud/api/moments?limit=5"
 
 # 8 月「技术」标签、排除回复、跳过前 10 条
-curl "https://blog-api.YOUR_SUBDOMAIN.workers.dev/api/moments?tag=技术&replies=0&limit=10&offset=10"
+curl "https://blog-api.yaoxi.cloud/api/moments?tag=技术&replies=0&limit=10&offset=10"
 
 # 指定日期范围 + 关键词
-curl "https://blog-api.YOUR_SUBDOMAIN.workers.dev/api/moments?from=2026-08-01&to=2026-08-31&q=咖啡"
+curl "https://blog-api.yaoxi.cloud/api/moments?from=2026-08-01&to=2026-08-31&q=咖啡"
 ```
 
 **完整参数表：**
@@ -292,7 +292,7 @@ curl "https://blog-api.YOUR_SUBDOMAIN.workers.dev/api/moments?from=2026-08-01&to
 `blog-api` 根路径自带参数文档（JSON），部署后可自发现：
 
 ```bash
-curl https://blog-api.YOUR_SUBDOMAIN.workers.dev/
+curl https://blog-api.yaoxi.cloud/
 ```
 
 ---
@@ -396,7 +396,7 @@ articles.forEach(a => console.log(a.title, a.wordCount, "字"));
 ```python
 import requests
 
-r = requests.get("https://blog-api.YOUR_SUBDOMAIN.workers.dev/api/moments",
+r = requests.get("https://blog-api.yaoxi.cloud/api/moments",
                  params={"from": "2026-08-10", "to": "2026-08-16", "replies": "0"})
 data = r.json()
 print(f"本周 {data['total']} 条动态：")

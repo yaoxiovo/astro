@@ -32,4 +32,8 @@ push 到 `main`（`blog-api/**` 变更）自动触发 **Deploy Blog API** workfl
 
 需要 GitHub Secrets：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`（与 bot/monitor 相同，通常已配置）。
 
-部署后默认域名：`https://blog-api.<account-subdomain>.workers.dev`（如需绑定自定义域，在 Cloudflare 控制台 Worker 配置里添加 custom domain 即可）。
+部署后访问地址：**`https://blog-api.yaoxi.cloud`**（已在 `wrangler.jsonc` 配置 custom domain，部署时自动创建 DNS 记录）。
+
+需要 GitHub Secrets：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`（与 bot/monitor 相同，通常已配置）。
+
+> 若 `yaoxi.cloud` 不在 Cloudflare 账号名下或 DNS 冲突，部署会失败——此时去掉 `wrangler.jsonc` 里的 `routes` 段，改用默认 `workers.dev` 子域。

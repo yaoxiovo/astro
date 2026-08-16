@@ -1,5 +1,11 @@
 {
 	"name": "blog-api",
 	"main": "src/index.js",
-	"compatibility_date": "2025-08-11"
+	"compatibility_date": "2025-08-11",
+	"routes": [
+		{
+			"pattern": "blog-api.yaoxi.cloud",
+			"custom_domain": true
+		}
+	]
 }
