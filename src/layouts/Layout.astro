@@ -289,6 +289,9 @@ const bannerOffset =
 		<slot name="head"></slot>
 
 
+		<!-- Flashduty 快猫星云状态页横幅（SRI 校验，无事件时自动隐藏） -->
+		<script async is:inline src="https://statuspage.flashcat.cloud/status-page-widget/1.0.1/widget.js" integrity="sha384-UPNiiTsMdVbjrBGP/eTAW+OBpaWrL5bFa4L0IJkxrGelurQ+sELET6of/tdLcrOn" crossorigin="anonymous"></script>
+
 		<link rel="alternate" type="application/rss+xml" title={profileConfig.name} href={`${Astro.site}rss.xml`}/>
 		<script defer src="https://umami.yaoxi.cloud/script.js" data-website-id="011bd980-e5d9-44e5-b1f6-4dc30a9b0e83"></script>
 	</head>
@@ -296,6 +299,14 @@ const bannerOffset =
 		  data-overlayscrollbars-initialize
 	>
 		<div id="bg-box"></div>
+		<!-- 快猫星云状态横幅：fixed 顶部，无故障/维护时自动隐藏 -->
+		<flashduty-status-widget
+			page="https://status.yaoxi.wiki"
+			type="banner"
+			theme="auto"
+			locale="zh"
+			position="top"
+		></flashduty-status-widget>
 		<ReadingProgress />
 		<CookieConsent />
 		<ConfigCarrier></ConfigCarrier>

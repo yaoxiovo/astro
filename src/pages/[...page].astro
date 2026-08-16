@@ -3,7 +3,6 @@ import type { GetStaticPaths } from "astro";
 import PostPage from "../components/PostPage.astro";
 import Pagination from "../components/control/Pagination.astro";
 import MomentsWidget from "../components/widget/MomentsWidget.astro";
-import StatusWidget from "../components/widget/StatusWidget.astro";
 import { PAGE_SIZE } from "../constants/constants";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 import { getSortedPosts } from "../utils/content-utils";
@@ -23,7 +22,6 @@ const len = page.data.length;
 <MainGridLayout title={page.currentPage === 1 ? undefined : `第 ${page.currentPage} 页`} noindex={page.currentPage > 1}>
     {page.currentPage === 1 && <NoticeCard />}
     {page.currentPage === 1 && <MomentsWidget />}
-    {page.currentPage === 1 && <StatusWidget />}
     <PostPage page={page}></PostPage>
     <Pagination class="mx-auto onload-animation" page={page} style=`animation-delay: calc(var(--content-delay) + ${(len)*50}ms)`></Pagination>
 </MainGridLayout>
