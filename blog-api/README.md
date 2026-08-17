@@ -22,7 +22,22 @@
 
 响应：`{ updated, params, total, returned, moments }`，字段与博客 `/api/moments.json` 一致。
 
+参数上限：`limit ≤ 100`，`offset ≤ 10000`，超出会被自动截断。
+
 ### `GET /` — API 文档（参数说明）
+
+## 限流（防刷爆账单）
+
+| 维度 | 阈值 | 超限 |
+|---|---|---|
+| 单 IP | 60 次 / 60 秒 | 429 + `Retry-After` |
+| 全局 | 600 次 / 60 秒 | 429 + `Retry-After` |
+
+- 计数走 KV namespace `blog-api-rate-limit`（绑定名 `RATE_LIMIT_KV`），部署 workflow 首次部署时自动创建。
+- 采用近似计数（每 5 次落盘一次），牺牲少量精度换 KV 写入额度。
+- 源站连续失败 5 次后熔断 5 分钟，期间优先返回缓存或返回 502，避免回源风暴。
+- 响应头：`X-RateLimit-Limit`、`X-RateLimit-Remaining`、`Cache-Control: public, max-age=60, s-maxage=120`。
+- 建议额外在 Cloudflare Dashboard 对 `blog-api.yaoxi.cloud/api/moments` 加一条 Rate Limiting 规则（单 IP 60/分钟），作为网关层兜底。
 
 所有响应带 CORS（`Access-Control-Allow-Origin: *`），第三方可直接跨域调用。
 

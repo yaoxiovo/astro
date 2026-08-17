@@ -28,6 +28,37 @@ jobs:
       - name: Install wrangler
         run: npm i -D wrangler --no-audit --no-fund
 
+      - name: Resolve or create rate-limit KV namespace
+        id: kv
+        run: |
+          if grep -q "REPLACE_WITH_KV_ID" wrangler.jsonc; then
+            API="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces"
+            NS_LIST=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$API")
+            ID=$(echo "$NS_LIST" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);const n=(j.result||[]).find(x=>x.title==='blog-api-rate-limit');if(n)console.log(n.id);else process.exit(1)}catch(e){process.exit(1)}})" 2>/dev/null || true)
+            if [ -z "$ID" ]; then
+              echo "Existing KV not found, creating a new one..."
+              CREATE_OUT=$(curl -s -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" "$API" -d '{"title":"blog-api-rate-limit"}')
+              ID=$(echo "$CREATE_OUT" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);if(j.success!==true){console.error(JSON.stringify(j.errors));process.exit(1)}console.log(j.result.id)}catch(e){process.exit(1)}})" 2>/dev/null || true)
+              if [ -z "$ID" ]; then
+                echo "::error::KV_CREATE_RESP=$(echo "$CREATE_OUT" | head -c 1200 | tr '\n' ' ')"
+                echo "### ❌ KV namespace 创建失败" >> $GITHUB_STEP_SUMMARY
+                echo '```' >> $GITHUB_STEP_SUMMARY
+                echo "$CREATE_OUT" >> $GITHUB_STEP_SUMMARY
+                echo '```' >> $GITHUB_STEP_SUMMARY
+                exit 1
+              fi
+            else
+              echo "Reusing existing KV: $ID"
+            fi
+            echo "KV ID: $ID"
+            sed -i "s/REPLACE_WITH_KV_ID/$ID/" wrangler.jsonc
+          else
+            echo "KV already configured."
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Deploy Worker
         run: npx wrangler deploy
         env:

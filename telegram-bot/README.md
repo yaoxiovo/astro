@@ -35,6 +35,7 @@ GitHub 仓库 → Settings → Secrets and variables → Actions → New reposit
 | `CLOUDFLARE_ACCOUNT_ID` | 上面拿的 CF Account ID |
 | `BOT_TOKEN` | Telegram Bot Token |
 | `CHAT_ID` | 你的 chat id（默认推送目标） |
+| `BOT_ADMIN_TOKEN` | ✅ 推荐 · 保护 `/tick` 和 `/err` 管理端点，建议用 `openssl rand -hex 32` 生成 |
 | `GH_PAT` | （可选，已不再需要）旧版发朋友圈功能已下线，可删除 |
 
 > ⚠️ **安全**：`.dev.vars` / token 已被 `.gitignore` 排除，绝不入库；代码里只从 `env.BOT_TOKEN` 读取。

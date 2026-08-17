@@ -27,6 +27,14 @@ const COMMANDS = [
 	{ command: "help", description: "帮助与全部命令" },
 ];
 
+// ---- 管理端点鉴权 ----
+function requireAdmin(request, env) {
+	const token = env.ADMIN_TOKEN;
+	if (!token) return false;
+	const auth = request.headers.get("Authorization") || "";
+	return auth.startsWith("Bearer ") && auth.slice(7) === token;
+}
+
 export default {
 	async scheduled(event, env, ctx) {
 		ctx.waitUntil(tick(env));
@@ -37,10 +45,16 @@ export default {
 		// GET：健康检查 / 手动触发 / 诊断
 		if (request.method === "GET") {
 			if (url.pathname === "/tick") {
+				if (!requireAdmin(request, env)) {
+					return new Response("unauthorized", { status: 401 });
+				}
 				await tick(env);
 				return new Response("ticked");
 			}
 			if (url.pathname === "/err") {
+				if (!requireAdmin(request, env)) {
+					return new Response("unauthorized", { status: 401 });
+				}
 				const err = (await env.BOT_KV.get("webhook_err")) || "(no error recorded)";
 				return new Response(err, { headers: { "content-type": "text/plain" } });
 			}

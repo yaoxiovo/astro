@@ -29,6 +29,21 @@ const SP_INCIDENT_PREFIX = "sp:incident:";
 const SP_DIAG_KEY = "sp:diag";
 const FLASHCAT_API_HOST = "https://api.flashcat.cloud";
 
+// ---- 管理端点鉴权 ----
+function unauthorized() {
+	return jsonResponse({ error: "unauthorized", message: "缺少有效 Authorization: Bearer <ADMIN_TOKEN> 请求头" }, 401);
+}
+
+function requireAdmin(request, env) {
+	const token = env.ADMIN_TOKEN;
+	if (!token) return false;
+	const auth = request.headers.get("Authorization") || "";
+	if (auth.startsWith("Bearer ") && auth.slice(7) === token) return true;
+	const url = new URL(request.url);
+	if (url.searchParams.get("secret") === token) return true;
+	return false;
+}
+
 export default {
 	async scheduled(_event, env, ctx) {
 		ctx.waitUntil(runChecks(env));
@@ -37,42 +52,45 @@ export default {
 	async fetch(request, env) {
 		const url = new URL(request.url);
 
-		// 自写状态页（复刻快猫星云 UI）
+		// 自写状态页（复刻快猫星云 UI）— 公开
 		if (url.pathname === "/") {
 			return htmlResponse(HISTORY_HTML);
 		}
 
-		// 公开状态 JSON（widget 兼容）
+		// 公开状态 JSON（widget 兼容）— 公开
 		if (url.pathname === "/api/status") {
 			return jsonResponse(await collectStatus(env));
 		}
 
+		// 快猫星云 widget 兼容 API（博客首页嵌入用）— 公开
+		if (url.pathname === "/api/widget/v1/summary.json") {
+			return jsonResponse(await widgetSummary(env));
+		}
+
+		// ---- 以下端点需要 ADMIN_TOKEN 鉴权 ----
+
 		// 历史数据：uptime% + 采样曲线 + 故障事件
 		if (url.pathname === "/api/history") {
+			if (!requireAdmin(request, env)) return unauthorized();
 			const days = parseInt(url.searchParams.get("days") || "30", 10);
 			const site = url.searchParams.get("site") || "";
 			return jsonResponse(await collectHistory(env, site, days));
 		}
 
-		// 快猫星云 widget 兼容 API（博客首页嵌入用）
-		if (url.pathname === "/api/widget/v1/summary.json") {
-			return jsonResponse(await widgetSummary(env));
-		}
-
-		// 诊断端点：状态页自动发布排查（脱敏，不暴露 app_key）
+		// 诊断端点：状态页自动发布排查
 		if (url.pathname === "/api/sp-test") {
+			if (!requireAdmin(request, env)) return unauthorized();
 			return jsonResponse(await spTest(env));
 		}
 
 		if (url.pathname === "/api/diag") {
+			if (!requireAdmin(request, env)) return unauthorized();
 			return jsonResponse(await diagStatusPage(env));
 		}
 
-		// 手动触发一轮检测（需 secret 保护）
+		// 手动触发一轮检测
 		if (url.pathname === "/api/run") {
-			if (env.MONITOR_SECRET && url.searchParams.get("secret") !== env.MONITOR_SECRET) {
-				return jsonResponse({ error: "unauthorized" }, 401);
-			}
+			if (!requireAdmin(request, env)) return unauthorized();
 			return jsonResponse(await runChecks(env));
 		}
 

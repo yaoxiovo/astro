@@ -13,7 +13,7 @@
 | 图床 | https://png.yaoxi.wiki/ | 200 |
 | 状态页 | https://status.yaoxi.wiki/ | 200 |
 
-> 拨测周期：每 5 分钟（cron `*/5 * * * *`）；也可访问 `https://site-monitor.yaoxi.workers.dev/api/run?secret=MONITOR_SECRET` 手动触发一轮检测。
+> 拨测周期：每 5 分钟（cron `*/5 * * * *`）；也可用 `Authorization: Bearer <ADMIN_TOKEN>` 头访问 `GET /api/run` 手动触发一轮检测。
 
 ## 告警通道
 
@@ -35,7 +35,7 @@
 | `FLASHCAT_SLOW_SEVERITY` | ❌ | 性能下降级别，默认 `Warning` |
 | `SLOW_MS` | ❌ | 性能下降阈值（ms），响应超过即组件标黄，默认 `2000`；站点级可用 `slowMs` 字段覆盖 |
 | `BOT_TOKEN` / `CHAT_ID` | ❌ | Telegram 旁路通知 |
-| `MONITOR_SECRET` | ❌ | 保护手动触发 `/api/run` |
+| `ADMIN_TOKEN` | ✅ | 保护管理端点（`/api/run`、`/api/sp-test`、`/api/diag`、`/api/history`），推荐使用 `openssl rand -hex 32` 生成 |
 | `SITES` | ❌ | JSON 覆盖默认站点列表 |
 
 ## 快猫星云接入步骤
@@ -43,7 +43,7 @@
 1. 快猫星云 → 集成中心 → 创建「标准告警信息集成」，拿到 `integration_key`
 2. GitHub 仓库 → Settings → Secrets and variables → Actions → 新增 `FLASHCAT_INTEGRATION_KEY`
 3. 推送本目录代码，GitHub Actions 自动把 secret 写入 Cloudflare 并部署
-4. 验证：`GET https://{worker}.workers.dev/api/run?secret={MONITOR_SECRET}` 手动触发一轮检测
+4. 验证：`curl -H "Authorization: Bearer <ADMIN_TOKEN>" https://{worker}/api/run` 手动触发一轮检测
 
 ## API
 
@@ -51,8 +51,10 @@
 |---|---|
 | `GET /` | **自写状态页**（复刻快猫星云 UI：整体徽章 + 组件列表 + uptime% + 响应曲线 + 故障时间线，60s 轮询，自动明暗模式） |
 | `GET /api/status` | 公开状态 JSON（各站点 state/since/lastCheck/lastMs，widget 兼容） |
-| `GET /api/history?days=30&site=xxx` | 历史数据：uptime% / 采样点 / 故障事件（自动从快照推导） |
-| `GET /api/run?secret=xxx` | 手动触发一轮检测 |
+| `GET /api/history?days=30&site=xxx` | 🔒 需 ADMIN_TOKEN · 历史数据：uptime% / 采样点 / 故障事件（自动从快照推导） |
+| `GET /api/sp-test` | 🔒 需 ADMIN_TOKEN · Flashduty 连通性测试 |
+| `GET /api/diag` | 🔒 需 ADMIN_TOKEN · 状态页诊断信息 |
+| `GET /api/run` | 🔒 需 ADMIN_TOKEN · 手动触发一轮检测 |
 
 ## 自写状态页（全自动，替代手动发布事件）
 

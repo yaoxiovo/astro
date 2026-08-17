@@ -54,6 +54,7 @@ globalThis.fetch = async (url, opts = {}) => {
 function makeEnv(kv = memoryKV()) {
 	return {
 		MONITOR_KV: kv,
+		ADMIN_TOKEN: "test-admin-token",
 		BOT_TOKEN: "123456:TESTTOKEN",
 		CHAT_ID: "7950928200",
 		FLASHCAT_API_HOST: "https://api.flashcat.cloud",
@@ -210,18 +211,38 @@ test("T8 状态查询 API：返回各站点状态", async () => {
 	assert.equal(kw.state, "down");
 });
 
-test("T9 手动触发需要 secret", async () => {
+test("T9 管理端点需要 ADMIN_TOKEN", async () => {
 	reset();
 	const env = makeEnv();
-	env.MONITOR_SECRET = "s3cret";
+	// 无 token → 401
 	const denied = await worker.fetch(new Request("https://site-monitor.workers.dev/api/run"), env);
 	assert.equal(denied.status, 401);
+	// 错误 token → 401
+	const denied2 = await worker.fetch(
+		new Request("https://site-monitor.workers.dev/api/run", {
+			headers: { Authorization: "Bearer wrong-token" },
+		}),
+		env,
+	);
+	assert.equal(denied2.status, 401);
+	// 正确 token → 200
 	siteResponses.set("https://blog.yaoxi.wiki/", () => okResp());
 	siteResponses.set("https://example.com/", () => okResp(200, "welcome to yaoxi wiki"));
-	const allowed = await worker.fetch(new Request("https://site-monitor.workers.dev/api/run?secret=s3cret"), env);
+	const allowed = await worker.fetch(
+		new Request("https://site-monitor.workers.dev/api/run", {
+			headers: { Authorization: "Bearer test-admin-token" },
+		}),
+		env,
+	);
 	assert.equal(allowed.status, 200);
 	const data = await allowed.json();
 	assert.ok(data.results.every((r) => r.ok));
+	// 兼容旧 ?secret= 方式
+	const allowed2 = await worker.fetch(
+		new Request("https://site-monitor.workers.dev/api/run?secret=test-admin-token"),
+		env,
+	);
+	assert.equal(allowed2.status, 200);
 });
 
 test("T10 告警消息 HTML 转义安全", async () => {
@@ -279,7 +300,12 @@ test("T12 历史 API：uptime% + 采样曲线 + 故障事件推导", async () =>
 		}),
 		{ expirationTtl: 2592000 },
 	);
-	const resp = await worker.fetch(new Request("https://site-monitor.workers.dev/api/history?days=1"), env);
+	const resp = await worker.fetch(
+		new Request("https://site-monitor.workers.dev/api/history?days=1", {
+			headers: { Authorization: "Bearer test-admin-token" },
+		}),
+		env,
+	);
 	assert.equal(resp.status, 200);
 	const data = await resp.json();
 	const blog = data.sites["博客主站"];
