@@ -107,16 +107,45 @@ const { ssoUrl = import.meta.env.PUBLIC_SSO_GATEWAY || "https://accounts.yaoxi.c
       }
     }
 
+    const SSO_HANDSHAKE_SECRET = 'yaoxi_sso_handshake_secret_key_v1_auth_guard_2026';
+
+    async function createSignedChallengeToken(targetDomain) {
+      const timestamp = Date.now().toString();
+      const nonce = Math.random().toString(36).substring(2, 10);
+      const payload = `v1.${timestamp}.${nonce}.${targetDomain}`;
+      const enc = new TextEncoder();
+      const key = await crypto.subtle.importKey(
+        'raw',
+        enc.encode(SSO_HANDSHAKE_SECRET),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+      const signatureBuffer = await crypto.subtle.sign('HMAC', key, enc.encode(payload));
+      const signatureHex = Array.from(new Uint8Array(signatureBuffer))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('').substring(0, 32);
+
+      return `crt.v1.${timestamp}.${nonce}.${signatureHex}`;
+    }
+
     // 4. Trigger SSO Authorization (Popup or Full Redirect)
-    window.launchPasskeySSO = function(usePopup = true) {
-      const challengeToken = 'crt_' + Math.random().toString(36).substring(2, 14) + Date.now().toString(36);
+    window.launchPasskeySSO = async function(usePopup = true) {
+      const targetDomain = window.location.hostname || 'blog.yaoxi.wiki';
+      let challengeToken;
+      try {
+        challengeToken = await createSignedChallengeToken(targetDomain);
+      } catch (e) {
+        console.warn('Failed to sign challenge with crypto.subtle, using fallback format:', e);
+        challengeToken = 'crt.v1.' + Date.now() + '.' + Math.random().toString(36).substring(2, 10) + '.sigfallback';
+      }
+
       pendingChallenge = challengeToken;
       sessionStorage.setItem('pending_sso_challenge', challengeToken);
       sessionStorage.setItem('pending_sso_challenge_time', Date.now().toString());
 
       const currentOrigin = window.location.origin;
       const redirectUri = window.location.href.split('#')[0];
-      const targetDomain = window.location.hostname || 'blog.yaoxi.wiki';
 
       const ssoUrlObj = new URL(SSO_ENDPOINT);
       ssoUrlObj.searchParams.set('client_request_token', challengeToken);
