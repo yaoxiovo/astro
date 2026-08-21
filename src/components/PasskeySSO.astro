@@ -48,9 +48,35 @@ const { ssoUrl = import.meta.env.PUBLIC_SSO_GATEWAY || "https://accounts.yaoxi.c
       }
     }
 
-    // 3. Process & Verify Token Payload
+    // 3. Process & Verify Token Payload with One-Time Challenge Invalidation
     function processAndSaveAuthToken(token, reqToken, sig, bundle) {
       try {
+        const storedChallenge = sessionStorage.getItem('pending_sso_challenge') || pendingChallenge;
+        const consumedList = JSON.parse(sessionStorage.getItem('consumed_sso_challenges') || '[]');
+
+        // Check for replay attacks
+        if (reqToken && consumedList.includes(reqToken)) {
+          console.warn('[Astro Blog] Security Alert: Received already-consumed challenge token, rejecting replay attack:', reqToken);
+          return;
+        }
+
+        // Verify challenge token binding
+        if (storedChallenge && reqToken && storedChallenge !== reqToken) {
+          console.warn('[Astro Blog] Security Alert: Challenge token mismatch. Expected:', storedChallenge, 'Received:', reqToken);
+          return;
+        }
+
+        // Immediately invalidate and consume the challenge token
+        if (reqToken || storedChallenge) {
+          const tokenToConsume = reqToken || storedChallenge;
+          consumedList.push(tokenToConsume);
+          if (consumedList.length > 50) consumedList.shift();
+          sessionStorage.setItem('consumed_sso_challenges', JSON.stringify(consumedList));
+          sessionStorage.removeItem('pending_sso_challenge');
+          pendingChallenge = null;
+          console.log('[Astro Blog] Successfully invalidated one-time challenge token:', tokenToConsume);
+        }
+
         const parts = token.split('.');
         if (parts.length >= 2) {
           const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
@@ -85,6 +111,8 @@ const { ssoUrl = import.meta.env.PUBLIC_SSO_GATEWAY || "https://accounts.yaoxi.c
     window.launchPasskeySSO = function(usePopup = true) {
       const challengeToken = 'crt_' + Math.random().toString(36).substring(2, 14) + Date.now().toString(36);
       pendingChallenge = challengeToken;
+      sessionStorage.setItem('pending_sso_challenge', challengeToken);
+      sessionStorage.setItem('pending_sso_challenge_time', Date.now().toString());
 
       const currentOrigin = window.location.origin;
       const redirectUri = window.location.href.split('#')[0];
