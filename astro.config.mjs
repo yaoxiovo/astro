@@ -70,9 +70,7 @@ try {
 // https://astro.build/config
 export default defineConfig({
 	image: {
-		service: (process.env.NODE_ENV === "development" || process.env.LOCAL_AARCH64 === "true")
-			? passthroughImageService()
-			: undefined,
+		service: passthroughImageService(),
 		// 允许构建时从 png.yaoxi.wiki 拉取动态图片做 OG 压缩
 		remotePatterns: [{ protocol: "https", hostname: "png.yaoxi.wiki" }],
 	},
