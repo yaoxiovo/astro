@@ -9,6 +9,7 @@ import ConfigCarrier from "@components/ConfigCarrier.astro";
 import ReadingProgress from "@components/control/ReadingProgress.astro";
 import CookieConsent from "@components/CookieConsent.astro";
 import GoogleLogin from "@components/GoogleLogin.astro";
+import PasskeySSO from "@components/PasskeySSO.astro";
 import {
 	AUTO_MODE,
 	BANNER_HEIGHT,
@@ -310,6 +311,7 @@ const bannerOffset =
 		<ReadingProgress />
 		<CookieConsent />
 		<ConfigCarrier></ConfigCarrier>
+		<PasskeySSO />
 		{(isHomePage || isMomentsPage) && <GoogleLogin />}
 		<slot />
 

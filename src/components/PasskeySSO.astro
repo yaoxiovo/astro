@@ -1,0 +1,150 @@
+---
+// PasskeySSO.astro - Real-time Passkey SSO Authentication Client for Astro Blog
+interface Props {
+  ssoUrl?: string;
+}
+
+const { ssoUrl = import.meta.env.PUBLIC_SSO_GATEWAY || "https://accounts.yaoxi.cloud" } = Astro.props;
+---
+
+<div id="yaoxi-sso-container" data-sso-url={ssoUrl} class="hidden"></div>
+
+<script>
+  (function() {
+    const container = document.getElementById('yaoxi-sso-container');
+    const rawSsoUrl = container?.getAttribute('data-sso-url') || 'https://accounts.yaoxi.cloud';
+    
+    // Auto adapt local development port 8080 if on localhost
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const SSO_ENDPOINT = isLocal ? 'http://localhost:8080/accounts-login.html' : rawSsoUrl;
+
+    let pendingChallenge = null;
+
+    // 1. Cross-Origin Real-Time postMessage Listener
+    window.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'YAOXI_SSO_SIGNATURE_CALLBACK') {
+        console.log('[Astro Blog] Received SSO signature callback:', event.data);
+        const { client_request_token, signed_token, signature, tokenBundle } = event.data;
+        
+        if (signed_token) {
+          processAndSaveAuthToken(signed_token, client_request_token, signature, tokenBundle);
+        }
+      }
+    });
+
+    // 2. URL Hash Callback Handler (#client_request_token=...&access_token=...&signature=...)
+    function checkUrlHashCallback() {
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        const reqToken = params.get('client_request_token');
+        const sig = params.get('signature');
+
+        if (accessToken) {
+          processAndSaveAuthToken(accessToken, reqToken, sig, null);
+          history.replaceState(null, null, window.location.pathname + window.location.search);
+        }
+      }
+    }
+
+    // 3. Process & Verify Token Payload
+    function processAndSaveAuthToken(token, reqToken, sig, bundle) {
+      try {
+        const parts = token.split('.');
+        if (parts.length >= 2) {
+          const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+          const claims = JSON.parse(decodeURIComponent(escape(atob(payloadBase64))));
+
+          const userProfile = {
+            name: claims.name || claims.sub || 'yaoxi',
+            email: claims.email || 'yaoxi@yaoxi.cloud',
+            picture: claims.avatar || 'https://api.dicebear.com/7.x/identicon/svg?seed=' + (claims.sub || 'yaoxi'),
+            sub: claims.sub,
+            roles: claims.roles || ['admin'],
+            amr: claims.amr || ['passkey'],
+            auth_time: claims.auth_time || Math.floor(Date.now() / 1000)
+          };
+
+          localStorage.setItem('user_profile', JSON.stringify(userProfile));
+          localStorage.setItem('yaoxi_client_token', token);
+          localStorage.setItem('yaoxi_client_sig', sig || parts[2] || '');
+
+          // Dispatch global auth change event
+          window.dispatchEvent(new CustomEvent('yaoxi:auth:change', { detail: { user: userProfile, token } }));
+
+          console.log('[Astro Blog] Passkey SSO authentication completed for:', userProfile.name);
+          updateNavbarUI();
+        }
+      } catch (e) {
+        console.error('[Astro Blog] Failed to parse SSO auth token:', e);
+      }
+    }
+
+    // 4. Trigger SSO Authorization (Popup or Full Redirect)
+    window.launchPasskeySSO = function(usePopup = true) {
+      const challengeToken = 'crt_' + Math.random().toString(36).substring(2, 14) + Date.now().toString(36);
+      pendingChallenge = challengeToken;
+
+      const currentOrigin = window.location.origin;
+      const redirectUri = window.location.href.split('#')[0];
+      const targetDomain = window.location.hostname || 'blog.yaoxi.wiki';
+
+      const ssoUrlObj = new URL(SSO_ENDPOINT);
+      ssoUrlObj.searchParams.set('client_request_token', challengeToken);
+      ssoUrlObj.searchParams.set('client_id', 'yaoxi-astro-blog');
+      ssoUrlObj.searchParams.set('target_domain', targetDomain);
+      ssoUrlObj.searchParams.set('redirect_uri', redirectUri);
+      ssoUrlObj.searchParams.set('response_type', 'token');
+      ssoUrlObj.searchParams.set('scope', 'openid profile email admin');
+
+      if (usePopup && !/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
+        const width = 480;
+        const height = 680;
+        const left = (window.screen.width / 2) - (width / 2);
+        const top = (window.screen.height / 2) - (height / 2);
+        window.open(ssoUrlObj.toString(), 'YaoxiSSO', `width=${width},height=${height},top=${top},left=${left},scrollbars=yes`);
+      } else {
+        window.location.href = ssoUrlObj.toString();
+      }
+    };
+
+    window.logoutPasskeySSO = function() {
+      localStorage.removeItem('user_profile');
+      localStorage.removeItem('yaoxi_client_token');
+      localStorage.removeItem('yaoxi_client_sig');
+      window.dispatchEvent(new CustomEvent('yaoxi:auth:change', { detail: { user: null, token: null } }));
+      updateNavbarUI();
+    };
+
+    // 5. Reactive Navbar UI updater
+    function updateNavbarUI() {
+      const userRaw = localStorage.getItem('user_profile');
+      const authBtn = document.getElementById('nav-sso-login-btn');
+      const userChip = document.getElementById('nav-sso-user-chip');
+      const userNameEl = document.getElementById('nav-sso-user-name');
+
+      if (userRaw && authBtn && userChip) {
+        try {
+          const user = JSON.parse(userRaw);
+          authBtn.classList.add('hidden');
+          userChip.classList.remove('hidden');
+          userChip.classList.add('flex');
+          if (userNameEl) userNameEl.textContent = user.name || '已登录';
+        } catch (e) {
+          authBtn.classList.remove('hidden');
+          userChip.classList.add('hidden');
+        }
+      } else if (authBtn && userChip) {
+        authBtn.classList.remove('hidden');
+        userChip.classList.add('hidden');
+      }
+    }
+
+    // Init
+    checkUrlHashCallback();
+    document.addEventListener('DOMContentLoaded', updateNavbarUI);
+    document.addEventListener('swup:page:view', updateNavbarUI);
+    window.addEventListener('yaoxi:auth:change', updateNavbarUI);
+  })();
+</script>

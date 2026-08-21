@@ -42,7 +42,7 @@ let links: NavBarLink[] = navBarConfig.links.map(
                 </a>;
             })}
         </div>
-        <div class="flex">
+        <div class="flex items-center gap-1.5">
             <!--<SearchPanel client:load>-->
             <Search client:only="svelte"></Search>
             {!siteConfig.themeColor.fixed && (
@@ -50,6 +50,21 @@ let links: NavBarLink[] = navBarConfig.links.map(
                         <Icon name="material-symbols:palette-outline" class="text-[1.25rem]"></Icon>
                     </button>
             )}
+
+            <!-- Passkey SSO Authentication Button & User Chip -->
+            <button id="nav-sso-login-btn" onclick="window.launchPasskeySSO && window.launchPasskeySSO(true)" class="btn-plain scale-animation rounded-lg h-11 px-3 font-bold text-sm flex items-center gap-1.5 active:scale-95 text-[var(--primary)]" title="通过 Passkey / 通行密钥登录">
+                <Icon name="material-symbols:key-outline" class="text-[1.15rem]" />
+                <span class="hidden sm:inline">登录</span>
+            </button>
+            <div id="nav-sso-user-chip" class="hidden items-center gap-2 pl-2">
+                <div class="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                    Y
+                </div>
+                <span id="nav-sso-user-name" class="font-bold text-xs text-[var(--primary)] max-w-[80px] truncate hidden md:inline">yaoxi</span>
+                <button onclick="window.logoutPasskeySSO && window.logoutPasskeySSO()" class="text-xs opacity-70 hover:opacity-100 hover:text-red-500 font-medium px-1" title="退出登录">
+                    退出
+                </button>
+            </div>
 
             <button aria-label="Menu" name="Nav Menu" class="btn-plain scale-animation rounded-lg w-11 h-11 active:scale-90 md:!hidden" id="nav-menu-switch">
                 <Icon name="material-symbols:menu-rounded" class="text-[1.25rem]"></Icon>
