@@ -1,7 +1,6 @@
 <script lang="ts">
 import Icon from "@iconify/svelte";
 import { url } from "@utils/url-utils.ts";
-import { onMount } from "svelte";
 
 interface SearchResult {
 	url: string;
@@ -16,8 +15,56 @@ let keywordDesktop = "";
 let keywordMobile = "";
 let result: SearchResult[] = [];
 let isSearching = false;
+let isLoadingData = false;
+let isDataLoaded = false;
+let loadPromise: Promise<void> | null = null;
 // biome-ignore lint/suspicious/noExplicitAny: Temporary usage of any for posts array
 let posts: any[] = [];
+
+const ensureDataLoaded = async (): Promise<void> => {
+	if (isDataLoaded) return;
+	if (loadPromise) return loadPromise;
+
+	isLoadingData = true;
+	loadPromise = (async () => {
+		try {
+			const response = await fetch("/rss.xml");
+			const text = await response.text();
+			const parser = new DOMParser();
+			const xml = parser.parseFromString(text, "text/xml");
+			const items = xml.querySelectorAll("item");
+
+			posts = Array.from(items).map((item) => {
+				// 尝试多种方式获取content:encoded内容
+				let content = "";
+				const contentEncoded =
+					item.getElementsByTagNameNS("*", "encoded")[0]?.textContent ||
+					item.querySelector("*|encoded")?.textContent ||
+					"";
+
+				if (contentEncoded) {
+					content = contentEncoded.replace(/<[^>]*>/g, "");
+				}
+
+				return {
+					title: item.querySelector("title")?.textContent || "",
+					description: item.querySelector("description")?.textContent || "",
+					content: content,
+					link:
+						item
+							.querySelector("link")
+							?.textContent?.replace(/.*\/posts\/(.*?)\//, "$1") || "",
+				};
+			});
+			isDataLoaded = true;
+		} catch (error) {
+			console.error("Error fetching RSS for search:", error);
+		} finally {
+			isLoadingData = false;
+		}
+	})();
+	return loadPromise;
+};
 
 const togglePanel = () => {
 	const panel = document.getElementById("search-panel");
@@ -51,6 +98,10 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 	isSearching = true;
 
 	try {
+		if (!isDataLoaded) {
+			await ensureDataLoaded();
+		}
+
 		const searchResults = posts
 			.filter((post) => {
 				const keywordLower = keyword.toLowerCase();
@@ -102,41 +153,6 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 	}
 };
 
-onMount(async () => {
-	try {
-		const response = await fetch("/rss.xml");
-		const text = await response.text();
-		const parser = new DOMParser();
-		const xml = parser.parseFromString(text, "text/xml");
-		const items = xml.querySelectorAll("item");
-
-		posts = Array.from(items).map((item) => {
-			// 尝试多种方式获取content:encoded内容
-			let content = "";
-			const contentEncoded =
-				item.getElementsByTagNameNS("*", "encoded")[0]?.textContent ||
-				item.querySelector("*|encoded")?.textContent ||
-				"";
-
-			if (contentEncoded) {
-				content = contentEncoded.replace(/<[^>]*>/g, "");
-			}
-
-			return {
-				title: item.querySelector("title")?.textContent || "",
-				description: item.querySelector("description")?.textContent || "",
-				content: content,
-				link:
-					item
-						.querySelector("link")
-						?.textContent?.replace(/.*\/posts\/(.*?)\//, "$1") || "",
-			};
-		});
-	} catch (error) {
-		console.error("Error fetching RSS:", error);
-	}
-});
-
 $: search(keywordDesktop, true);
 $: search(keywordMobile, false);
 </script>
@@ -147,14 +163,14 @@ $: search(keywordMobile, false);
       dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
 ">
     <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
-    <input placeholder="搜索" bind:value={keywordDesktop} on:focus={() => search(keywordDesktop, true)}
+    <input placeholder="搜索" bind:value={keywordDesktop} on:focus={() => { ensureDataLoaded(); search(keywordDesktop, true); }} on:mouseenter={ensureDataLoaded}
            class="transition-all pl-10 text-sm bg-transparent outline-0
          h-full w-40 active:w-60 focus:w-60 text-black/50 dark:text-white/50"
     >
 </div>
 
 <!-- toggle btn for phone/tablet view -->
-<button on:click={togglePanel} aria-label="Search Panel" id="search-switch"
+<button on:click={() => { togglePanel(); ensureDataLoaded(); }} aria-label="Search Panel" id="search-switch"
         class="btn-plain scale-animation lg:!hidden rounded-lg w-11 h-11 active:scale-90">
     <Icon icon="material-symbols:search" class="text-[1.25rem]"></Icon>
 </button>
@@ -169,11 +185,17 @@ top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2">
       dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10
   ">
         <Icon icon="material-symbols:search" class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"></Icon>
-        <input placeholder="Search" bind:value={keywordMobile}
+        <input placeholder="Search" bind:value={keywordMobile} on:focus={ensureDataLoaded}
                class="pl-10 absolute inset-0 text-sm bg-transparent outline-0
                focus:w-60 text-black/50 dark:text-white/50"
         >
     </div>
+
+    {#if isLoadingData}
+        <div class="text-xs text-neutral-400 dark:text-neutral-500 py-3 text-center">
+            正在载入文章搜索索引...
+        </div>
+    {/if}
 
     <!-- search results -->
     {#each result as item}

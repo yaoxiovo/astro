@@ -122,8 +122,9 @@ const className = Astro.props.class;
             }
         });
 
-        for (const [url, data] of urlMap.entries()) {
-            if (!data.baseUrl || !data.shareId || typeof window.fetchUmamiStats !== 'function') continue;
+        const entries = Array.from(urlMap.entries());
+        await Promise.allSettled(entries.map(async ([url, data]) => {
+            if (!data.baseUrl || !data.shareId || typeof window.fetchUmamiStats !== 'function') return;
             try {
                 const statsData = await window.fetchUmamiStats(data.baseUrl, data.shareId, {
                     url: url,
@@ -139,7 +140,7 @@ const className = Astro.props.class;
                         el.innerHTML = `${views} 次`;
                     } else {
                         const current = parseInt(el.textContent) || 0;
-                        if (current !== views) animateValue(el, current, views, 1000, '次');
+                        if (current !== views) animateValue(el, current, views, 800, '次');
                     }
                 });
                 
@@ -149,21 +150,29 @@ const className = Astro.props.class;
                         el.innerHTML = `${visitors} 人`;
                     } else {
                         const current = parseInt(el.textContent) || 0;
-                        if (current !== visitors) animateValue(el, current, visitors, 1000, '人');
+                        if (current !== visitors) animateValue(el, current, visitors, 800, '人');
                     }
                 });
             } catch(e) {
-                console.error('Failed to load stats for', url, e);
+                console.warn('Failed to load stats for', url, e);
             }
+        }));
+    }
+
+    function schedulePostStats() {
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(() => loadAllPostStats(), { timeout: 2000 });
+        } else {
+            setTimeout(loadAllPostStats, 100);
         }
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadAllPostStats);
+        document.addEventListener('DOMContentLoaded', schedulePostStats);
     } else {
-        loadAllPostStats();
+        schedulePostStats();
     }
     
     // 兼容 Swup 4
-    document.addEventListener('swup:page:view', loadAllPostStats);
+    document.addEventListener('swup:page:view', schedulePostStats);
 </script>
