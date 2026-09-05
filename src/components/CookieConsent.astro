@@ -1,104 +1,133 @@
 ---
-// CookieConsent.astro - Cookie 同意条款横幅
+// CookieConsent.astro - Cookie 与本地存储详细声明弹窗
 ---
 
 <div
   id="cookie-consent-banner"
   role="dialog"
-  aria-label="Cookie 使用声明"
-  style="
-    position: fixed;
-    bottom: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%) translateY(120%);
-    z-index: 9998;
-    width: min(calc(100vw - 2rem), 560px);
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
-    opacity: 0;
-    pointer-events: none;
-  "
+  aria-label="Cookie 与数据存储声明"
+  class="fixed bottom-4 left-1/2 -translate-x-1/2 translate-y-[130%] z-[9998] transition-all duration-500 ease-out opacity-0 pointer-events-none"
+  style="width: min(calc(100vw - 1.5rem), 560px);"
 >
-  <div style="
-    backdrop-filter: blur(16px) saturate(1.8);
-    -webkit-backdrop-filter: blur(16px) saturate(1.8);
-    background: oklch(0.18 0.01 var(--hue, 250) / 0.85);
-    border: 1px solid oklch(0.40 0.05 var(--hue, 250) / 0.5);
-    border-radius: 1rem;
-    padding: 1rem 1.25rem;
-    box-shadow: 0 8px 32px oklch(0 0 0 / 0.4), 0 0 0 1px oklch(0.70 0.14 var(--hue, 250) / 0.1);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  ">
-    <!-- 图标 -->
-    <div style="
-      width: 2.25rem;
-      height: 2.25rem;
-      border-radius: 0.625rem;
-      background: oklch(0.70 0.14 var(--hue, 250) / 0.15);
-      border: 1px solid oklch(0.70 0.14 var(--hue, 250) / 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      font-size: 1.1rem;
-    ">🍪</div>
-
-    <!-- 文字 -->
-    <div style="flex: 1; min-width: 200px;">
-      <p style="
-        color: oklch(0.92 0.01 var(--hue, 250));
-        font-size: 0.82rem;
-        line-height: 1.55;
-        margin: 0;
-      ">
-        本站使用 <strong style="color: oklch(0.80 0.14 var(--hue, 250))">Umami</strong> 进行匿名访问统计，不追踪个人身份信息。继续浏览即表示您同意我们的
-        <a href="/posts/diejia/" style="color: oklch(0.72 0.14 var(--hue, 250)); text-decoration: underline; text-underline-offset: 2px;">隐私声明</a>。
-      </p>
+  <div class="rounded-2xl p-4 md:p-5 shadow-2xl border backdrop-blur-xl transition-all duration-300"
+       style="
+         background: oklch(0.18 0.02 var(--hue, 250) / 0.88);
+         border-color: oklch(0.42 0.06 var(--hue, 250) / 0.55);
+         box-shadow: 0 12px 36px oklch(0 0 0 / 0.45), 0 0 0 1px oklch(0.70 0.14 var(--hue, 250) / 0.15);
+         color: oklch(0.92 0.01 var(--hue, 250));
+       "
+  >
+    <!-- 头部说明 -->
+    <div class="flex items-start gap-3 mb-3">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-xl shadow-inner"
+           style="background: oklch(0.70 0.14 var(--hue, 250) / 0.18); border: 1px solid oklch(0.70 0.14 var(--hue, 250) / 0.35);">
+        🍪
+      </div>
+      <div class="flex-1 min-w-0">
+        <h3 class="text-sm md:text-base font-bold tracking-wide flex items-center gap-1.5" style="color: oklch(0.96 0.01 var(--hue, 250));">
+          Cookie 与本地数据存储声明
+        </h3>
+        <p class="text-xs mt-1 leading-relaxed text-black/70 dark:text-white/75">
+          本站仅使用本地存储（LocalStorage）保存个性化偏好，并通过自建开源 Umami 服务进行脱敏匿名统计。我们<strong>不使用任何跨站商业追踪 Cookie</strong>。继续浏览即表示您知悉并同意。
+        </p>
+      </div>
     </div>
 
-    <!-- 按钮组 -->
-    <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-      <button
-        id="cookie-reject-btn"
-        style="
-          padding: 0.4rem 0.875rem;
-          border-radius: 0.5rem;
-          border: 1px solid oklch(0.50 0.02 var(--hue, 250) / 0.5);
-          background: transparent;
-          color: oklch(0.70 0.02 var(--hue, 250));
-          font-size: 0.78rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          white-space: nowrap;
-        "
-        onmouseover="this.style.background='oklch(0.30 0.01 var(--hue) / 0.5)'"
-        onmouseout="this.style.background='transparent'"
-      >
-        仅必要
-      </button>
-      <button
-        id="cookie-accept-btn"
-        style="
-          padding: 0.4rem 0.875rem;
-          border-radius: 0.5rem;
-          border: none;
-          background: oklch(0.70 0.14 var(--hue, 250));
-          color: white;
-          font-size: 0.78rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          white-space: nowrap;
-          box-shadow: 0 2px 8px oklch(0.70 0.14 var(--hue, 250) / 0.4);
-        "
-        onmouseover="this.style.background='oklch(0.65 0.16 var(--hue))'"
-        onmouseout="this.style.background='oklch(0.70 0.14 var(--hue))'"
-      >
-        同意全部
-      </button>
+    <!-- 详细存储条目清单 (支持展开/折叠) -->
+    <div id="cookie-details-panel" class="hidden overflow-hidden transition-all duration-300 mb-3 border-t pt-3"
+         style="border-color: oklch(0.35 0.03 var(--hue, 250) / 0.4);">
+      <div class="text-xs font-semibold mb-2 flex items-center gap-1.5" style="color: oklch(0.85 0.12 var(--hue, 250));">
+        <span>📋</span> 本站具体使用的存储项目一览：
+      </div>
+      
+      <div class="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1 text-xs leading-normal scrollbar-thin">
+        <!-- 1. 偏好设置 -->
+        <div class="p-2.5 rounded-lg" style="background: oklch(0.24 0.02 var(--hue, 250) / 0.6); border: 1px solid oklch(0.38 0.04 var(--hue, 250) / 0.3);">
+          <div class="font-bold flex items-center justify-between mb-1" style="color: oklch(0.90 0.08 var(--hue, 250));">
+            <span>⚙️ 核心偏好（必要，LocalStorage）</span>
+            <span class="text-[10px] px-1.5 py-0.2 rounded font-mono" style="background: oklch(0.70 0.14 var(--hue, 250) / 0.25);">永久</span>
+          </div>
+          <ul class="list-disc list-inside space-y-0.5 text-black/60 dark:text-white/70">
+            <li><code class="font-mono text-[11px] text-[var(--primary)]">theme</code>：记录浅色/深色/跟随系统的外观模式</li>
+            <li><code class="font-mono text-[11px] text-[var(--primary)]">hue</code>：记录自定义主题色调参数（0~360 色相）</li>
+            <li><code class="font-mono text-[11px] text-[var(--primary)]">bg-blur / hide-bg</code>：记录背景壁纸模糊与显隐偏好</li>
+            <li><code class="font-mono text-[11px] text-[var(--primary)]">yaoxi-cookie-consent</code>：记录当前授权状态，免去重复弹窗</li>
+          </ul>
+        </div>
+
+        <!-- 2. 匿名统计 -->
+        <div class="p-2.5 rounded-lg" style="background: oklch(0.24 0.02 var(--hue, 250) / 0.6); border: 1px solid oklch(0.38 0.04 var(--hue, 250) / 0.3);">
+          <div class="font-bold flex items-center justify-between mb-1" style="color: oklch(0.90 0.08 var(--hue, 250));">
+            <span>📊 匿名访问统计（Umami Analytics）</span>
+            <span class="text-[10px] px-1.5 py-0.2 rounded font-mono" style="background: oklch(0.70 0.14 var(--hue, 250) / 0.25);">无 Cookie</span>
+          </div>
+          <p class="text-black/60 dark:text-white/70">
+            采用自建开源 Umami 服务进行去标识化汇总统计，不种植跨站跟踪 Cookie，不记录个人身份或精准位置，符合 GDPR 隐私规范。
+          </p>
+        </div>
+
+        <!-- 3. 本地缓存与交互 -->
+        <div class="p-2.5 rounded-lg" style="background: oklch(0.24 0.02 var(--hue, 250) / 0.6); border: 1px solid oklch(0.38 0.04 var(--hue, 250) / 0.3);">
+          <div class="font-bold flex items-center justify-between mb-1" style="color: oklch(0.90 0.08 var(--hue, 250));">
+            <span>⚡ 体验缓存与互动（LocalStorage）</span>
+            <span class="text-[10px] px-1.5 py-0.2 rounded font-mono" style="background: oklch(0.70 0.14 var(--hue, 250) / 0.25);">临时</span>
+          </div>
+          <ul class="list-disc list-inside space-y-0.5 text-black/60 dark:text-white/70">
+            <li><code class="font-mono text-[11px] text-[var(--primary)]">umami-share-cache</code>：缓存全站访问量，防止频繁打 API</li>
+            <li><code class="font-mono text-[11px] text-[var(--primary)]">liked_moment_*</code>：记录朋友圈点赞状态，防止误重复点赞</li>
+            <li><code class="font-mono text-[11px] text-[var(--primary)]">gc-cache-* / uc-cache-*</code>：短时缓存卡片元信息，加速再次访问</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部操作区 -->
+    <div class="flex items-center justify-between gap-2 pt-1">
+      <div class="flex items-center gap-2">
+        <button
+          id="cookie-toggle-details-btn"
+          type="button"
+          class="text-xs underline underline-offset-2 transition hover:opacity-80 flex items-center gap-0.5 font-medium"
+          style="color: oklch(0.75 0.12 var(--hue, 250));"
+        >
+          <span id="cookie-toggle-text">查看存储明细</span>
+          <span id="cookie-toggle-arrow">▾</span>
+        </button>
+        <span class="text-xs text-white/30">|</span>
+        <a
+          href="/posts/diejia/"
+          class="text-xs underline underline-offset-2 transition hover:opacity-80 font-medium"
+          style="color: oklch(0.75 0.12 var(--hue, 250));"
+        >
+          合规协议
+        </a>
+      </div>
+
+      <div class="flex gap-2 flex-shrink-0">
+        <button
+          id="cookie-reject-btn"
+          type="button"
+          class="px-3 py-1.5 rounded-lg border text-xs font-medium transition cursor-pointer active:scale-95"
+          style="
+            border-color: oklch(0.50 0.04 var(--hue, 250) / 0.5);
+            background: transparent;
+            color: oklch(0.80 0.02 var(--hue, 250));
+          "
+        >
+          仅必要
+        </button>
+        <button
+          id="cookie-accept-btn"
+          type="button"
+          class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-white transition cursor-pointer shadow-md active:scale-95"
+          style="
+            background: oklch(0.70 0.14 var(--hue, 250));
+            box-shadow: 0 2px 10px oklch(0.70 0.14 var(--hue, 250) / 0.4);
+          "
+        >
+          同意全部
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -106,19 +135,37 @@
 <script>
   const COOKIE_KEY = 'yaoxi-cookie-consent';
   const banner = document.getElementById('cookie-consent-banner');
+  const detailsPanel = document.getElementById('cookie-details-panel');
+  const toggleBtn = document.getElementById('cookie-toggle-details-btn');
+  const toggleText = document.getElementById('cookie-toggle-text');
+  const toggleArrow = document.getElementById('cookie-toggle-arrow');
+
+  let isDetailsOpen = false;
 
   function showBanner() {
     if (!banner) return;
-    banner.style.pointerEvents = 'auto';
-    banner.style.opacity = '1';
-    banner.style.transform = 'translateX(-50%) translateY(0)';
+    banner.classList.remove('translate-y-[130%]', 'opacity-0', 'pointer-events-none');
+    banner.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
   }
 
   function hideBanner() {
     if (!banner) return;
-    banner.style.pointerEvents = 'none';
-    banner.style.opacity = '0';
-    banner.style.transform = 'translateX(-50%) translateY(120%)';
+    banner.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+    banner.classList.add('translate-y-[130%]', 'opacity-0', 'pointer-events-none');
+  }
+
+  function toggleDetails() {
+    if (!detailsPanel || !toggleText || !toggleArrow) return;
+    isDetailsOpen = !isDetailsOpen;
+    if (isDetailsOpen) {
+      detailsPanel.classList.remove('hidden');
+      toggleText.textContent = '收起明细';
+      toggleArrow.textContent = '▴';
+    } else {
+      detailsPanel.classList.add('hidden');
+      toggleText.textContent = '查看存储明细';
+      toggleArrow.textContent = '▾';
+    }
   }
 
   function init() {
@@ -128,6 +175,8 @@
       setTimeout(showBanner, 1500);
     }
   }
+
+  toggleBtn?.addEventListener('click', toggleDetails);
 
   document.getElementById('cookie-accept-btn')?.addEventListener('click', () => {
     localStorage.setItem(COOKIE_KEY, 'accepted');
