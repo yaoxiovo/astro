@@ -1,13 +1,14 @@
 ---
 title: Draft Example
 published: 2022-07-01
+description: "A draft example demonstration showing how drafts are configured and excluded from production builds in Astro."
 tags:
   - Markdown
   - Blogging
   - Demo
 category: Examples
 draft: true
-lang: ""
+lang: "en"
 ---
 
 # This Article is a Draft

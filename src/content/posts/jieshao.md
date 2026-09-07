@@ -2,7 +2,7 @@
 title: Cloud云服务
 published: 2026-03-21
 author: Cloud云服务介绍
-description: 本站用到的Cloud云服务
+description: "本站用到的主流云服务全面解析：涵盖腾讯云（Tencent Cloud）、阿里云（Alibaba Cloud）与 Cloudflare 的基础设施、边缘计算、安全防护与 AI 生态架构对比。"
 tags:
   - Cloudflare
   - Tencent
@@ -10,10 +10,10 @@ tags:
   - 云服务
 category: 记录
 draft: false
-lang: ""
+lang: "zh_CN"
 ---
 
-![](../assets/images/1.webp)
+![腾讯云 Tencent Cloud 架构概览](../assets/images/1.webp)
 # [(腾讯云（Tencent Cloud）](https://cloud.tencent.com)
 
 腾讯云是腾讯公司倾力打造的云计算品牌，依托腾讯在社交、游戏、音视频等领域二十余年的技术积淀，目前已成为全球领先的数字化转型合作伙伴。
@@ -50,7 +50,7 @@ lang: ""
     
 - **行业应用：** 深入金融、政务、文旅、教育及工业等领域，提供针对性的数字化转型工具包。
 ---
-![](../assets/images/2.webp)
+![阿里云 Alibaba Cloud 架构与生态](../assets/images/2.webp)
 # [(阿里云（Alibaba Cloud）](https://aliyun.com)
 
 阿里云成立于 2009 年，是全球领先的云计算及人工智能科技公司。作为中国云服务的开拓者，其业务规模长期位居亚太第一、全球前三。
@@ -90,7 +90,7 @@ lang: ""
 - 深耕政务、金融、制造、新零售等行业，提供深度定制的数字化转型方案。
 
 ---
-![](../assets/images/3.webp)
+![Cloudflare 全球边缘连接云体系](../assets/images/3.webp)
 # [Cloudflare 科赋锐](https://www.cloudflare-cn.com/)
 
 Cloudflare 是一家全球领先的“连接云（Connectivity Cloud）”公司。与传统的阿里云、腾讯云等中心化云厂商不同，Cloudflare 的核心逻辑是**“边缘优先”**，其网络节点遍布全球 300 多个城市，旨在为互联网应用提供加速、安全和无服务器计算能力。

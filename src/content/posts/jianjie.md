@@ -1,7 +1,7 @@
 ---
 title: 网站简介
 published: 2025-12-04
-description: 我的博客网站简介。
+description: "瑶曦博客的技术架构与网站简介：介绍基于 GitHub 托管、Cloudflare 全球边缘加速与腾讯云 EdgeOne 国内分发的高可用静态博客方案。"
 tags:
   - Cloudflare
   - 域名解析
@@ -9,7 +9,7 @@ tags:
   - 网站加速
 category: 记录
 draft: false
-lang: ""
+lang: "zh_CN"
 ---
 # 搭建：
 1. cdn提供商：Cloudflare（海外） Tencent（大陆） Alibaba cloud （备用）(有时选小众cdn)

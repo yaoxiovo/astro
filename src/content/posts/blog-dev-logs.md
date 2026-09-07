@@ -1,13 +1,14 @@
 ---
 title: "开发日志：海报分享组件的剪贴板修复"
 published: 2026-06-21
-description: "修复朋友圈海报生成后无法自动复制链接到剪贴板的 Bug。"
+description: "瑶曦博客开发日志：深度复盘朋友圈海报生成组件（PosterGenerator）的剪贴板自动写入修复、用户交互反馈优化及前端工程化重构过程。"
 tags:
   - DevLog
   - BugFix
   - Astro
 category: Development
 author: "瑶曦网络科技官方"
+lang: "zh_CN"
 ---
 
 # 🛠️ 朋友圈分享模块的 Refactor 与 Debug 记录 喵~

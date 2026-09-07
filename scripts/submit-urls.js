@@ -156,18 +156,39 @@ async function getUrls() {
             if (cleanLine.startsWith('src/content/posts/') && cleanLine.endsWith('.md')) {
                 const fileBasename = path.basename(cleanLine, '.md');
                 if (fileBasename !== 'blog-dev-logs') { // 忽略日志文章
-                    const relativePath = cleanLine
-                        .substring('src/content/posts/'.length)
-                        .replace(/\.md$/, '');
-                    urls.add(`${SITE_URL}/posts/${relativePath}/`);
-                    hasRealChange = true;
+                    const fullPath = path.resolve(__dirname, '..', cleanLine);
+                    // 检查文件是否存在且是否为草稿 (draft: true)
+                    let isDraft = false;
+                    if (fs.existsSync(fullPath)) {
+                        try {
+                            const postRaw = fs.readFileSync(fullPath, 'utf-8');
+                            const fmMatch = postRaw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+                            if (fmMatch) {
+                                const draftMatch = fmMatch[1].match(/^draft:\s*(true|false)/m);
+                                if (draftMatch && draftMatch[1] === 'true') {
+                                    isDraft = true;
+                                }
+                            }
+                        } catch (err) {
+                            // ignore read error
+                        }
+                    } else {
+                        // 文件已删除，不作为新增/修改提交
+                        continue;
+                    }
+
+                    if (isDraft) {
+                        console.log(`[URL] 跳过草稿文章提交: ${cleanLine}`);
+                    } else {
+                        const relativePath = cleanLine
+                            .substring('src/content/posts/'.length)
+                            .replace(/\.md$/, '');
+                        urls.add(`${SITE_URL}/posts/${relativePath}/`);
+                        hasRealChange = true;
+                    }
                 }
             }
-            // 朋友圈动态变更
-            if (cleanLine.startsWith('src/content/moments/') || cleanLine.includes('moments')) {
-                urls.add(`${SITE_URL}/moments/`);
-                hasRealChange = true;
-            }
+            // 注意：朋友圈动态相关页面已全量配置 noindex，不提交给搜索引擎以避免 GSC noindex 报警
         }
 
         // 仅在存在实质性内容变更时，才附带提交首页

@@ -1,15 +1,15 @@
 ---
 title: 个人主页介绍
 published: 2026-02-22
-description: 自我介绍
+description: "你好，我是瑶佳乐（瑶曦）。欢迎来到我的数字花园，记录关于前端开发、Astro 静态站点构建、开源技术折腾与日常学习生活实践。"
 tags:
   - 个人介绍
 category: 记录
 draft: false
-lang: ""
+lang: "zh_CN"
 ---
 # 开篇自我介绍
-![](../assets/images/5.webp)
+![瑶佳乐个人主页介绍图片](../assets/images/5.webp)
 ## ​🚀 你好，我是 瑶佳乐
 ​欢迎来到我的数字花园。
 ​我是一名正在平衡 “**初三学业**” 与 “**技术探索**” 的终极玩家。在这个被代码和试卷填满的 2026 年，我决定用 Astro 搭建这个空间，记录那些稍纵即逝的思想火花。单推**Neuro-sama**。
