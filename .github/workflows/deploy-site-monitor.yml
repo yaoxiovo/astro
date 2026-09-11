@@ -85,14 +85,52 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-        - name: Set ADMIN_TOKEN (protect /api/run, /api/sp-test, /api/diag, /api/history)
-          run: |
-            if [ -n "$ADMIN_TOKEN" ]; then
-              echo "$ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN
-            else
-              echo "ADMIN_TOKEN not set, skipping — management endpoints will be open!"
-            fi
-          env:
-            ADMIN_TOKEN: ${{ secrets.SITE_MONITOR_ADMIN_TOKEN }}
-            CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-            CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Set ADMIN_TOKEN (protect /api/run, /api/sp-test, /api/diag, /api/history)
+        run: |
+          if [ -n "$ADMIN_TOKEN" ]; then
+            echo "$ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN
+          else
+            echo "ADMIN_TOKEN not set, skipping — management endpoints will be open!"
+          fi
+        env:
+          ADMIN_TOKEN: ${{ secrets.SITE_MONITOR_ADMIN_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set Email Alert secrets
+        run: |
+          if [ -n "$MAIL_GATEWAY_TOKEN" ]; then
+            echo "$MAIL_GATEWAY_TOKEN" | npx wrangler secret put MAIL_GATEWAY_TOKEN || true
+          elif [ -n "$AUTH_SECRET" ]; then
+            echo "$AUTH_SECRET" | npx wrangler secret put MAIL_GATEWAY_TOKEN || true
+          fi
+          if [ -n "$MAIL_GATEWAY_URL" ]; then
+            echo "$MAIL_GATEWAY_URL" | npx wrangler secret put MAIL_GATEWAY_URL || true
+          fi
+          if [ -n "$RESEND_API_KEY" ]; then
+            echo "$RESEND_API_KEY" | npx wrangler secret put RESEND_API_KEY || true
+          fi
+          if [ -n "$ALERT_EMAIL" ]; then
+            echo "$ALERT_EMAIL" | npx wrangler secret put ALERT_EMAIL || true
+          elif [ -n "$OWNER_EMAIL" ]; then
+            echo "$OWNER_EMAIL" | npx wrangler secret put ALERT_EMAIL || true
+          fi
+          if [ -n "$EMAIL_FROM" ]; then
+            echo "$EMAIL_FROM" | npx wrangler secret put EMAIL_FROM || true
+          fi
+        env:
+          MAIL_GATEWAY_TOKEN: ${{ secrets.MAIL_GATEWAY_TOKEN }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          MAIL_GATEWAY_URL: ${{ secrets.MAIL_GATEWAY_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy Worker
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

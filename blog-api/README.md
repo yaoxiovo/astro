@@ -1,54 +1,71 @@
-# 🌐 Yaoxi Blog API
+# 🌐 Yaoxi Blog API & Automation Dispatcher
 
-博客统一查询 API（Cloudflare Worker）——静态站无法在运行时处理查询参数，本 Worker 提供**动态参数化接口**。
+博客统一查询 API 与全自动邮件发信中枢（Cloudflare Worker）：
+1. **统一查询接口**：静态博客构建产物动态参数化查询（朋友圈检索、分页、标签过滤、缓存保护与熔断）。
+2. **自动化邮件体系**：邮件订阅、双重激活验证（Double Opt-in）、新文章批量广播推送、合规一键退订、访客留言自动通报与自动确认回执。
 
-数据源 = 博客构建产物 `https://blog.yaoxi.wiki/api/moments.json`（Cache API 缓存 120s，不占 KV 写入额度）。
+---
 
-## 端点
+## API 端点概览
 
-### `GET /api/moments` — 参数化朋友圈查询
+### 1. 朋友圈参数化查询
+- `GET /api/moments`：参数化朋友圈查询（支持 `limit`、`offset`、`tag`、`author`、`date`、`from`、`to`、`q`、`replies`、`pinned`）。
 
-| 参数 | 说明 | 示例 |
+### 2. 自动化邮件与读者订阅（Newsletter）
+- `POST /api/newsletter/subscribe`
+  - 读者提交邮箱订阅，触发发送一封双重激活确认邮件（防止恶意刷邮箱）。
+  - 请求体：`{ "email": "reader@example.com" }`（支持隐藏蜜罐字段 `honeypot`）。
+  - 响应：`{ "ok": true, "message": "..." }`
+- `GET /api/newsletter/verify?token=...`
+  - 订阅激活链接（读者从邮件中点击）。
+  - 验证成功后将邮箱写入活跃订阅列表，返回精美 HTML 成功页。
+- `GET /api/newsletter/unsubscribe?token=...`
+  - 一键合规退订链接（每封广播邮件底部自动附带，带签名 Token）。
+  - 点击后即时移除订阅，返回 HTML 退订完成提示页。
+- `POST /api/newsletter/broadcast`（🔒 需 `Authorization: Bearer <ADMIN_TOKEN>`）
+  - 批量向所有活跃订阅者广播新文章通知（支持每封邮件自动注入专属退订链接）。
+  - 请求体：
+    ```json
+    {
+      "title": "文章标题",
+      "summary": "文章核心摘要",
+      "url": "https://blog.yaoxi.wiki/posts/xxx/",
+      "pubDate": "2026-09-11",
+      "tags": ["技术", "Astro"],
+      "type": "post",
+      "preview": false
+    }
+    ```
+  - 当 `preview: true` 时，仅向站长邮箱发送一封测试预览信，不打扰订阅者。
+
+### 3. 访客留言与意见反馈（Contact & Auto-Relay）
+- `POST /api/contact`
+  - 访客在博客页面提交留言。
+  - 请求体：`{ "name": "称呼", "email": "访客邮箱", "message": "留言正文", "pageUrl": "来源页面" }`
+  - 自动化双向发信：
+    - ① 即时将留言工单格式化发至站长主邮箱（`OWNER_EMAIL`），包含访客信息与直达回复按钮。
+    - ② 自动向访客发送一封温暖的确认回执信（Auto-Reply）。
+
+---
+
+## 环境变量与 Secrets 配置
+
+在 GitHub 仓库中配置以下 Secrets（通过 Actions 自动同步至 Cloudflare Worker）：
+
+| Secret 变量名 | 必填 | 说明 |
 |---|---|---|
-| `limit` | 返回条数（默认全部） | `?limit=5` |
-| `offset` | 分页偏移 | `?limit=10&offset=10` |
-| `tag` | 标签过滤（单标签） | `?tag=日常` |
-| `author` | 作者过滤 | `?author=瑶曦` |
-| `date` | 精确日期 YYYY-MM-DD | `?date=2026-08-14` |
-| `from` / `to` | 日期范围（含） | `?from=2026-08-01&to=2026-08-31` |
-| `q` | 关键词搜索（正文/标签/作者） | `?q=咖啡` |
-| `replies` | `0`=仅顶层 · `1`=仅回复 · 不传=全部 | `?replies=0` |
-| `pinned` | `1`=仅置顶 | `?pinned=1` |
+| `CLOUDFLARE_API_TOKEN` | ✅ | Cloudflare API Token（需包含 Workers 编辑权限） |
+| `CLOUDFLARE_ACCOUNT_ID` | ✅ | Cloudflare 账号 32 位 ID |
+| `RESEND_API_KEY` | ✅ | Resend 发信服务 API Key（以 `re_` 开头，免费 3000 封/月） |
+| `ADMIN_TOKEN` | ✅ | 保护管理与批量发信接口的令牌（推荐 `openssl rand -hex 32`） |
+| `OWNER_EMAIL` | ❌ | 站长接收访客留言与监控报警的邮箱（默认 `yaoxi@yaoxi.wiki`） |
+| `EMAIL_FROM` | ❌ | 发件人地址（如 `瑶曦 Blog <newsletter@yaoxi.wiki>`） |
 
-响应：`{ updated, params, total, returned, moments }`，字段与博客 `/api/moments.json` 一致。
+> 💡 **本地调试/开发模式**：当未配置 `RESEND_API_KEY` 时，Worker 自动进入 Mock 模式，在控制台打印邮件内容而不真正投递，完全不会报错或中断。
 
-参数上限：`limit ≤ 100`，`offset ≤ 10000`，超出会被自动截断。
-
-### `GET /` — API 文档（参数说明）
-
-## 限流（防刷爆账单）
-
-| 维度 | 阈值 | 超限 |
-|---|---|---|
-| 单 IP | 60 次 / 60 秒 | 429 + `Retry-After` |
-| 全局 | 600 次 / 60 秒 | 429 + `Retry-After` |
-
-- 计数走 KV namespace `blog-api-rate-limit`（绑定名 `RATE_LIMIT_KV`），部署 workflow 首次部署时自动创建。
-- 采用近似计数（每 5 次落盘一次），牺牲少量精度换 KV 写入额度。
-- 源站连续失败 5 次后熔断 5 分钟，期间优先返回缓存或返回 502，避免回源风暴。
-- 响应头：`X-RateLimit-Limit`、`X-RateLimit-Remaining`、`Cache-Control: public, max-age=60, s-maxage=120`。
-- 建议额外在 Cloudflare Dashboard 对 `blog-api.yaoxi.cloud/api/moments` 加一条 Rate Limiting 规则（单 IP 60/分钟），作为网关层兜底。
-
-所有响应带 CORS（`Access-Control-Allow-Origin: *`），第三方可直接跨域调用。
+---
 
 ## 部署
 
-push 到 `main`（`blog-api/**` 变更）自动触发 **Deploy Blog API** workflow；或 Actions 页面手动 Run workflow。
-
-需要 GitHub Secrets：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`（与 bot/monitor 相同，通常已配置）。
-
-部署后访问地址：**`https://blog-api.yaoxi.cloud`**（已在 `wrangler.jsonc` 配置 custom domain，部署时自动创建 DNS 记录）。
-
-需要 GitHub Secrets：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`（与 bot/monitor 相同，通常已配置）。
-
-> 若 `yaoxi.cloud` 不在 Cloudflare 账号名下或 DNS 冲突，部署会失败——此时去掉 `wrangler.jsonc` 里的 `routes` 段，改用默认 `workers.dev` 子域。
+推送代码至 `main` 分支（`blog-api/**` 发生变更）将自动触发 **Deploy Blog API** 工作流，全自动完成 KV 绑定、Secrets 同步和 Worker 部署。
+访问域名：`https://blog-api.yaoxi.cloud`

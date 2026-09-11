@@ -1,0 +1,37 @@
+name: Send Weekly Digest Email
+
+on:
+  schedule:
+    # 每周日北京时间 20:00 (UTC 12:00) 自动触发
+    - cron: '0 12 * * 0'
+  workflow_dispatch:
+    inputs:
+      preview:
+        description: "仅发送测试预览邮件至站长邮箱 (true/false)"
+        type: boolean
+        required: false
+        default: true
+
+jobs:
+  weekly-digest:
+    name: Build & Send Weekly Digest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Send Weekly Digest
+        env:
+          BLOG_API_BASE: "https://blog-api.yaoxi.cloud"
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          ARGS=""
+          if [ "${{ github.event.inputs.preview }}" = "true" ] || [ "${{ github.event_name }}" = "workflow_dispatch" && "${{ github.event.inputs.preview }}" != "false" ]; then
+            ARGS="--preview"
+          fi
+          node scripts/send-weekly-digest.js $ARGS

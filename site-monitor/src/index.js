@@ -284,7 +284,116 @@ async function notify(env, alert) {
 		const text = alert.kind === "down" ? buildDownMessage(alert) : alert.kind === "slow" ? buildSlowMessage(alert) : buildUpMessage(alert);
 		results.push(await tgAlert(env, text));
 	}
+	const hasEmail = (env.MAIL_GATEWAY_TOKEN || env.AUTH_SECRET || env.ADMIN_TOKEN || env.RESEND_API_KEY) && (env.ALERT_EMAIL || env.OWNER_EMAIL);
+	if (hasEmail) {
+		results.push(await emailAlert(env, alert));
+	}
 	return results;
+}
+
+async function emailAlert(env, alert) {
+	const targetEmail = env.ALERT_EMAIL || env.OWNER_EMAIL || "alert@yaoxi.cloud";
+	const gatewayUrl = (env.MAIL_GATEWAY_URL || "https://mail-api.yaoxi.cloud").replace(/\/+$/, "");
+	const token = env.MAIL_GATEWAY_TOKEN || env.AUTH_SECRET || env.ADMIN_TOKEN;
+
+	if (!token && !env.RESEND_API_KEY && env.MOCK_EMAIL !== "true") return { skipped: true };
+
+	const { site, result, kind } = alert;
+	const isDown = kind === "down";
+	const isSlow = kind === "slow";
+
+	const subject = isDown
+		? `🚨【紧急故障】${site.name} 无法访问`
+		: isSlow
+			? `⚠️【性能下降】${site.name} 响应超时`
+			: `✅【故障恢复】${site.name} 已恢复正常`;
+
+	const color = isDown ? "#dc2626" : isSlow ? "#d97706" : "#16a34a";
+	const badgeText = isDown ? "🔴 故障告警" : isSlow ? "🟡 性能下降" : "🟢 已恢复";
+
+	const timeStr = beijingTime(Date.now());
+	const durationStr = alert.duration ? formatDuration(alert.duration) : null;
+
+	const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>${esc(subject)}</title>
+  <style>
+    body { margin: 0; padding: 20px; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1e293b; }
+    .card { max-width: 560px; margin: 20px auto; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .header { background: ${color}; color: #ffffff; padding: 18px 24px; font-size: 18px; font-weight: bold; }
+    .body { padding: 24px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    td { padding: 8px 0; }
+    .label { color: #64748b; width: 85px; }
+    .val { font-weight: 600; color: #0f172a; }
+    .btn { display: inline-block; background: #0f172a; color: #ffffff !important; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">${badgeText}：${esc(site.name)}</div>
+    <div class="body">
+      <table>
+        <tr><td class="label">监控站点：</td><td class="val">${esc(site.name)}</td></tr>
+        <tr><td class="label">站点 URL：</td><td class="val"><a href="${esc(site.url)}" target="_blank" style="color:#2563eb;">${esc(site.url)}</a></td></tr>
+        <tr><td class="label">发生时刻：</td><td class="val">${timeStr}</td></tr>
+        ${result?.ms ? `<tr><td class="label">响应耗时：</td><td class="val">${result.ms} ms</td></tr>` : ""}
+        ${result?.error ? `<tr><td class="label">错误原因：</td><td class="val" style="color:#dc2626;font-family:monospace;">${esc(result.error)}</td></tr>` : ""}
+        ${durationStr ? `<tr><td class="label">故障历时：</td><td class="val">${durationStr}</td></tr>` : ""}
+      </table>
+      <div style="text-align: center;">
+        <a href="https://status.yaoxi.wiki" class="btn" target="_blank">查看状态页看板 →</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+	if (token) {
+		try {
+			const resp = await fetch(`${gatewayUrl}/api/send/alert`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"x-api-key": token,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					to: targetEmail,
+					subject,
+					html,
+				}),
+			});
+			return { ok: resp.ok, status: resp.status };
+		} catch (err) {
+			return { ok: false, error: err?.message ?? String(err) };
+		}
+	}
+
+	if (env.RESEND_API_KEY) {
+		try {
+			const resp = await fetch("https://api.resend.com/emails", {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${env.RESEND_API_KEY}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					from: env.EMAIL_FROM || "Yaoxi Monitor <monitor@yaoxi.wiki>",
+					to: [targetEmail],
+					subject,
+					html,
+				}),
+			});
+			return { ok: resp.ok, status: resp.status };
+		} catch (err) {
+			return { ok: false, error: err?.message ?? String(err) };
+		}
+	}
+
+	return { skipped: true };
 }
 
 async function flashcatAlert(env, alert) {

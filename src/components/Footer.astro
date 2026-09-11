@@ -3,6 +3,7 @@
 import { execSync } from "node:child_process";
 import { profileConfig, siteConfig } from "../config";
 import { url } from "../utils/url-utils";
+import ContactModal from "./ContactModal.svelte";
 
 const currentYear = new Date().getFullYear();
 
@@ -35,7 +36,8 @@ try {
         <a class="transition link text-[var(--primary)] font-medium" target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可
         <br>
         <a class="transition link text-[var(--primary)] font-medium" target="_blank" href={url('rss.xml')}>RSS</a> /
-        <a class="transition link text-[var(--primary)] font-medium" target="_blank" href={url('sitemap-index.xml')}>网站地图</a>
+        <a class="transition link text-[var(--primary)] font-medium" target="_blank" href={url('sitemap-index.xml')}>网站地图</a> /
+        <ContactModal client:load />
         <br>
         由
         <a class="transition link text-[var(--primary)] font-medium" target="_blank" href="https://astro.build">Astro</a> 和

@@ -1,0 +1,47 @@
+name: Broadcast Newsletter (New Post)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/content/posts/**"
+  workflow_dispatch:
+    inputs:
+      preview:
+        description: "仅发送测试预览邮件 (true/false)"
+        type: boolean
+        required: false
+        default: false
+      file:
+        description: "指定广播的文章文件名 (如 expressive-code.md)，留空默认最新"
+        type: string
+        required: false
+        default: ""
+
+jobs:
+  broadcast:
+    name: Broadcast Post to Email Subscribers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Broadcast Post
+        env:
+          BLOG_API_BASE: "https://blog-api.yaoxi.cloud"
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          ARGS=""
+          if [ "${{ github.event.inputs.preview }}" = "true" ]; then
+            ARGS="$ARGS --preview"
+          fi
+          if [ -n "${{ github.event.inputs.file }}" ]; then
+            ARGS="$ARGS --file=${{ github.event.inputs.file }}"
+          fi
+          node scripts/broadcast-post.js $ARGS
