@@ -3,7 +3,7 @@ name: Deploy Astro to Firebase Hosting
 on:
   push:
     branches:
-      - main  # 如果仓库主分支名叫 master，记得改成 master 喵
+      - main  # 如果主分支是 master 请改成 master
 
 jobs:
   build_and_deploy:
@@ -15,11 +15,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 22
 
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Astro
         run: npm run build
