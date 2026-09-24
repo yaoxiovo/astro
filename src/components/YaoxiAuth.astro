@@ -1,0 +1,194 @@
+---
+// YaoxiAuth.astro — 耀西统一身份认证 (accounts.yaoxi.cloud SSO) 客户端初始化与状态管理
+import { siteConfig } from "@/config";
+
+const ssoConfig = siteConfig.sso || {
+  enable: true,
+  authUrl: "https://accounts.yaoxi.cloud",
+  clientId: "yaoxi-blog",
+};
+---
+
+<script define:vars={{ ssoConfig }}>
+(() => {
+  if (!ssoConfig.enable) return;
+
+  function initYaoxiSSO() {
+    if (typeof window.YaoxiAuth === "undefined") {
+      console.warn("[YaoxiAuth] SDK尚未就绪，将在延迟后重试...");
+      setTimeout(initYaoxiSSO, 100);
+      return;
+    }
+
+    if (!window.yaoxiAuth) {
+      window.yaoxiAuth = new window.YaoxiAuth({
+        clientId: ssoConfig.clientId || "yaoxi-blog",
+        authUrl: ssoConfig.authUrl || "https://accounts.yaoxi.cloud",
+        mode: "popup",
+        targetDomain: window.location.hostname,
+        scope: "openid profile email admin",
+      });
+
+      // 检查并处理重定向回调 (URL Hash 模式 #access_token=...)
+      const callbackResult = window.yaoxiAuth.handleCallback();
+      if (callbackResult) {
+        console.log("[YaoxiAuth] 重定向回调已解析并存储用户凭证:", callbackResult.user);
+      }
+    }
+
+    // 全局快捷调起方法
+    window.yaoxiLogin = async function (mode = "popup") {
+      try {
+        console.log(`[YaoxiAuth] 正在通过 ${mode} 模式调起认证中心...`);
+        const result = await window.yaoxiAuth.login({ mode });
+        console.log("[YaoxiAuth] 认证成功，用户信息:", result.user);
+        syncAuthState();
+        window.dispatchEvent(
+          new CustomEvent("yaoxi:auth:change", {
+            detail: { isAuthenticated: true, user: result.user, token: result.accessToken },
+          })
+        );
+        return result;
+      } catch (err) {
+        console.warn("[YaoxiAuth] 登录失败或用户取消:", err.message);
+        throw err;
+      }
+    };
+
+    window.yaoxiLogout = function () {
+      window.yaoxiAuth.logout();
+      syncAuthState();
+      window.dispatchEvent(
+        new CustomEvent("yaoxi:auth:change", {
+          detail: { isAuthenticated: false, user: null, token: null },
+        })
+      );
+      console.log("[YaoxiAuth] 已退出登录并清除本地凭证");
+    };
+
+    window.getYaoxiUser = function () {
+      return window.yaoxiAuth ? window.yaoxiAuth.getUser() : null;
+    };
+
+    // 同步 DOM 状态（Navbar 与用户控制面板）
+    function syncAuthState() {
+      const isAuthed = window.yaoxiAuth && window.yaoxiAuth.isAuthenticated();
+      const user = isAuthed ? window.yaoxiAuth.getUser() : null;
+
+      // 1. Navbar 头像 / 游客切换
+      const guestNavEl = document.getElementById("auth-nav-guest");
+      const userNavEl = document.getElementById("auth-nav-user");
+      const avatarNavEl = document.getElementById("auth-nav-avatar");
+
+      if (guestNavEl && userNavEl) {
+        if (isAuthed && user) {
+          guestNavEl.classList.add("hidden");
+          userNavEl.classList.remove("hidden");
+          userNavEl.classList.add("flex");
+          if (avatarNavEl) {
+            const initial = (user.name || user.sub || "Y").trim().charAt(0).toUpperCase();
+            avatarNavEl.textContent = initial;
+          }
+        } else {
+          userNavEl.classList.add("hidden");
+          userNavEl.classList.remove("flex");
+          guestNavEl.classList.remove("hidden");
+        }
+      }
+
+      // 2. 悬浮面板内容切换
+      const guestPanelEl = document.getElementById("auth-panel-guest");
+      const userPanelEl = document.getElementById("auth-panel-user");
+      const userNameEl = document.getElementById("auth-panel-username");
+      const userEmailEl = document.getElementById("auth-panel-email");
+      const userRoleBadgeEl = document.getElementById("auth-panel-role-badge");
+      const userPanelAvatarEl = document.getElementById("auth-panel-avatar");
+
+      if (guestPanelEl && userPanelEl) {
+        if (isAuthed && user) {
+          guestPanelEl.classList.add("hidden");
+          userPanelEl.classList.remove("hidden");
+          if (userNameEl) userNameEl.textContent = user.name || user.sub || "管理员";
+          if (userEmailEl) userEmailEl.textContent = user.email || "accounts.yaoxi.cloud";
+          if (userPanelAvatarEl) {
+            const initial = (user.name || user.sub || "Y").trim().charAt(0).toUpperCase();
+            userPanelAvatarEl.textContent = initial;
+          }
+          if (userRoleBadgeEl) {
+            const roles = Array.isArray(user.roles) ? user.roles : ["verified"];
+            userRoleBadgeEl.textContent = roles.includes("admin") ? "站长 / 管理员" : "已授权用户";
+          }
+        } else {
+          userPanelEl.classList.add("hidden");
+          guestPanelEl.classList.remove("hidden");
+        }
+      }
+
+      // 3. 通用 data-yaoxi-user 容器更新
+      document.querySelectorAll("[data-yaoxi-user-name]").forEach((el) => {
+        el.textContent = isAuthed && user ? (user.name || user.sub || "") : "";
+      });
+      document.querySelectorAll("[data-yaoxi-authed-only]").forEach((el) => {
+        if (isAuthed) {
+          el.classList.remove("hidden");
+        } else {
+          el.classList.add("hidden");
+        }
+      });
+      document.querySelectorAll("[data-yaoxi-guest-only]").forEach((el) => {
+        if (isAuthed) {
+          el.classList.add("hidden");
+        } else {
+          el.classList.remove("hidden");
+        }
+      });
+    }
+
+    // 绑定带 data-yaoxi-login / data-yaoxi-logout 的交互元素
+    function bindAuthElements() {
+      document.querySelectorAll("[data-yaoxi-login]").forEach((btn) => {
+        if (btn.dataset.yaoxiBound) return;
+        btn.dataset.yaoxiBound = "true";
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const mode = btn.getAttribute("data-yaoxi-login") || "popup";
+          window.yaoxiLogin(mode);
+        });
+      });
+
+      document.querySelectorAll("[data-yaoxi-logout]").forEach((btn) => {
+        if (btn.dataset.yaoxiBound) return;
+        btn.dataset.yaoxiBound = "true";
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          window.yaoxiLogout();
+        });
+      });
+    }
+
+    syncAuthState();
+    bindAuthElements();
+
+    // 通知外部认证状态就绪
+    window.dispatchEvent(
+      new CustomEvent("yaoxi:auth:ready", {
+        detail: {
+          isAuthenticated: window.yaoxiAuth.isAuthenticated(),
+          user: window.yaoxiAuth.getUser(),
+        },
+      })
+    );
+  }
+
+  // 页面加载及 Swup 路由更新事件监听
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initYaoxiSSO);
+  } else {
+    initYaoxiSSO();
+  }
+
+  document.addEventListener("swup:page:view", () => {
+    initYaoxiSSO();
+  });
+})();
+</script>

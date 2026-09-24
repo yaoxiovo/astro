@@ -8,6 +8,7 @@ import { profileConfig, siteConfig } from "@/config";
 import ConfigCarrier from "@components/ConfigCarrier.astro";
 import ReadingProgress from "@components/control/ReadingProgress.astro";
 import CookieConsent from "@components/CookieConsent.astro";
+import YaoxiAuth from "@components/YaoxiAuth.astro";
 import {
 	AUTO_MODE,
 	BANNER_HEIGHT,
@@ -173,6 +174,7 @@ const bannerOffset =
 		<meta name="generator" content={Astro.generator} />
 		{noindex && <meta name="robots" content="noindex, follow" />}
 		<script src="/js/umami-share.js?v=1.0.3" defer></script>
+		<script is:inline src="/js/yaoxi-auth.js"></script>
 
 		<meta name="referrer" content="no-referrer">
 		
@@ -352,6 +354,7 @@ const bannerOffset =
 		<ReadingProgress />
 		<CookieConsent />
 		<ConfigCarrier></ConfigCarrier>
+		<YaoxiAuth />
 		<slot />
 
 		<!-- increase the page height during page transition to prevent the scrolling animation from jumping -->
@@ -478,6 +481,7 @@ function setClickOutsideToClose(panel: string, ignores: string[]) {
 setClickOutsideToClose("display-setting", ["display-setting", "display-settings-switch"])
 setClickOutsideToClose("nav-menu-panel", ["nav-menu-panel", "nav-menu-switch"])
 setClickOutsideToClose("search-panel", ["search-panel", "search-bar", "search-switch"])
+setClickOutsideToClose("auth-panel", ["auth-panel", "auth-settings-switch"])
 
 
 function loadTheme() {

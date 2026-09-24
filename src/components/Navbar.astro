@@ -51,12 +51,90 @@ let links: NavBarLink[] = navBarConfig.links.map(
                     </button>
             )}
 
+            <!-- 统一身份认证 (SSO) 入口 -->
+            <button aria-label="统一身份认证" class="btn-plain scale-animation rounded-lg h-11 w-11 active:scale-90 relative flex items-center justify-center" id="auth-settings-switch" title="统一身份认证 (accounts.yaoxi.cloud)">
+                <div id="auth-nav-guest" class="flex items-center justify-center">
+                    <Icon name="material-symbols:account-circle-outline" class="text-[1.35rem]"></Icon>
+                </div>
+                <div id="auth-nav-user" class="hidden items-center justify-center">
+                    <div id="auth-nav-avatar" class="w-7 h-7 rounded-full bg-[var(--primary)] text-white font-bold flex items-center justify-center text-xs shadow-sm">
+                        Y
+                    </div>
+                </div>
+            </button>
+
             <button aria-label="Menu" name="Nav Menu" class="btn-plain scale-animation rounded-lg w-11 h-11 active:scale-90 md:!hidden" id="nav-menu-switch">
                 <Icon name="material-symbols:menu-rounded" class="text-[1.25rem]"></Icon>
             </button>
         </div>
         <NavMenuPanel links={links}></NavMenuPanel>
         <DisplaySettings client:only="svelte"></DisplaySettings>
+
+        <!-- Yaoxi SSO User Float Panel -->
+        <div id="auth-panel" class="float-panel float-panel-closed absolute transition-all w-80 right-4 px-4 py-4 z-50">
+            <!-- 未登录状态 -->
+            <div id="auth-panel-guest" class="flex flex-col gap-3">
+                <div class="flex items-center justify-between pb-2 border-b border-black/10 dark:border-white/10">
+                    <div class="font-bold text-sm text-black/80 dark:text-white/80 flex items-center gap-1.5">
+                        <Icon name="material-symbols:shield-person-outline" class="text-base text-[var(--primary)]"></Icon>
+                        统一身份认证
+                    </div>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] font-mono font-medium">SSO v1</span>
+                </div>
+                <p class="text-xs text-black/60 dark:text-white/60 leading-relaxed">
+                    对齐 Google Identity M3 规范，支持通行密钥 (Passkey) 生物认证与居中弹窗跨域授权。
+                </p>
+                <button type="button" data-yaoxi-login="popup" class="btn-regular w-full py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 bg-[var(--primary)] text-white hover:opacity-90 active:scale-95 transition">
+                    <Icon name="material-symbols:passkey" class="text-base"></Icon>
+                    <span>通过认证中心登录</span>
+                </button>
+                <div class="flex items-center justify-between text-[11px] text-black/50 dark:text-white/50 pt-1">
+                    <button type="button" data-yaoxi-login="redirect" class="hover:underline hover:text-[var(--primary)]">全页重定向模式</button>
+                    <a href="https://accounts.yaoxi.cloud" target="_blank" rel="noopener" class="hover:underline flex items-center gap-0.5 hover:text-[var(--primary)]">
+                        <span>accounts.yaoxi.cloud</span>
+                        <Icon name="fa6-solid:arrow-up-right-from-square" class="text-[9px]"></Icon>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 已登录状态 -->
+            <div id="auth-panel-user" class="hidden flex flex-col gap-3">
+                <div class="flex items-center gap-3 pb-3 border-b border-black/10 dark:border-white/10">
+                    <div id="auth-panel-avatar" class="w-10 h-10 rounded-full bg-[var(--primary)] text-white font-bold flex items-center justify-center text-sm shadow-sm flex-shrink-0">
+                        Y
+                    </div>
+                    <div class="flex flex-col min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5">
+                            <span id="auth-panel-username" class="font-bold text-sm text-black/90 dark:text-white/90 truncate">管理员</span>
+                            <span id="auth-panel-role-badge" class="text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400 font-medium">已授权</span>
+                        </div>
+                        <span id="auth-panel-email" class="text-xs text-black/50 dark:text-white/50 truncate font-mono">yaoxi@yaoxi.cloud</span>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-1.5 text-xs text-black/70 dark:text-white/70 bg-black/[0.03] dark:bg-white/[0.05] p-2.5 rounded-lg">
+                    <div class="flex items-center justify-between text-[11px]">
+                        <span class="text-black/50 dark:text-white/50">认证状态</span>
+                        <span class="text-green-600 dark:text-green-400 font-semibold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse"></span>
+                            RS256 签名有效
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px]">
+                        <span class="text-black/50 dark:text-white/50">认证中心</span>
+                        <span class="font-mono">accounts.yaoxi.cloud</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between pt-1 gap-2">
+                    <a href="https://accounts.yaoxi.cloud" target="_blank" rel="noopener" class="btn-plain text-xs py-1.5 px-3 rounded-lg flex items-center gap-1">
+                        <span>通行密钥管理</span>
+                        <Icon name="fa6-solid:arrow-up-right-from-square" class="text-[10px] text-black/40 dark:text-white/40"></Icon>
+                    </a>
+                    <button type="button" data-yaoxi-logout class="btn-regular text-xs py-1.5 px-3 rounded-lg text-red-500 hover:bg-red-500/10 transition font-medium">
+                        退出登录
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -69,6 +147,16 @@ function loadButtonScript() {
             let settingPanel = document.getElementById("display-setting");
             if (settingPanel) {
                 settingPanel.classList.toggle("float-panel-closed");
+            }
+        };
+    }
+
+    let authBtn = document.getElementById("auth-settings-switch");
+    if (authBtn) {
+        authBtn.onclick = function () {
+            let authPanel = document.getElementById("auth-panel");
+            if (authPanel) {
+                authPanel.classList.toggle("float-panel-closed");
             }
         };
     }

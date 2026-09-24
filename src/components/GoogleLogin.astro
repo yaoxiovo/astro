@@ -1,2 +1,6 @@
-<!-- GoogleLogin.astro has been disabled to prevent network latency and blocking in Mainland China -->
+---
+// GoogleLogin.astro (兼容层：已无缝升级为 accounts.yaoxi.cloud 统一身份认证中心 SSO)
+import YaoxiAuth from "./YaoxiAuth.astro";
+---
 
+<YaoxiAuth />

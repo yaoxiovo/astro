@@ -50,6 +50,11 @@ export type SiteConfig = {
 		text: string;
 	}[];
 	googleClientId?: string;
+	sso?: {
+		enable?: boolean;
+		authUrl?: string;
+		clientId?: string;
+	};
 };
 
 export type Favicon = {
