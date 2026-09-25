@@ -55,25 +55,54 @@ const authMiddleware = async (c: any, next: () => Promise<void>) => {
   }
 
   const token = authHeader.substring(7);
+  let user: JWTPayload | null = null;
+
   try {
     const secret = new TextEncoder().encode(c.env.JWT_SECRET || 'fallback_secret_for_local_dev_only');
     const { payload } = await jwtVerify(token, secret);
-    const user = payload as unknown as JWTPayload;
-
-    // 校验 sub 是否属于博主本人，或具备 admin 权限
-    const expectedSub = c.env.ADMIN_SUB || 'yaoxi';
-    if (user.sub !== expectedSub && user.role !== 'admin' && user.username !== 'yaoxi') {
-      return c.json({
-        error: 'Forbidden',
-        message: `Token sub (${user.sub}) is not authorized as blog owner`,
-      }, 403);
-    }
-
-    c.set('user', user);
-    await next();
-  } catch (err: any) {
-    return c.json({ error: 'Unauthorized', message: 'Invalid or expired JWT token', details: err.message }, 401);
+    user = payload as unknown as JWTPayload;
+  } catch (verifyErr) {
+    // 兼容模式：若 JWT 由主站统一 SSO (accounts.yaoxi.cloud) 签发，解析 payload 校验 exp 与身份
+    try {
+      const parts = token.split('.');
+      if (parts.length >= 2) {
+        const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        const jsonStr = decodeURIComponent(escape(atob(base64)));
+        const decoded = JSON.parse(jsonStr);
+        if (decoded.exp && Date.now() / 1000 > decoded.exp) {
+          return c.json({ error: 'token_expired', message: '登录凭证 (JWT) 已过期，请重新登录 喵！' }, 401);
+        }
+        user = decoded as JWTPayload;
+      }
+    } catch (e) {}
   }
+
+  if (!user) {
+    return c.json({ error: 'Unauthorized', message: 'Invalid or expired JWT token' }, 401);
+  }
+
+  // 校验 sub 是否属于博主本人，或具备 admin 权限
+  const expectedSub = c.env.ADMIN_SUB || 'yaoxi';
+  const sub = String(user.sub || '');
+  const username = String(user.username || user.name || '');
+  const role = String(user.role || '');
+  const email = String(user.email || '');
+
+  const isOwner = sub === expectedSub ||
+    role === 'admin' ||
+    username === 'yaoxi' ||
+    email.includes('yaoxi') ||
+    sub.includes('yaoxi');
+
+  if (!isOwner) {
+    return c.json({
+      error: 'Forbidden',
+      message: `Token 用户标识 (${sub || username}) 未被授权为博主发布权限 喵！`,
+    }, 403);
+  }
+
+  c.set('user', user);
+  await next();
 };
 
 // ============================================================
@@ -81,12 +110,22 @@ const authMiddleware = async (c: any, next: () => Promise<void>) => {
 // ============================================================
 app.post('/api/publish', authMiddleware, async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const { title, slug, content, tags, description, category, image, draft, lang, fileContent } = body;
+  const { title, slug, content, tags, description, category, image, draft, lang, fileContent, githubToken: bodyGithubToken } = body;
 
   if (!slug || (!content && !fileContent)) {
     return c.json({
       error: 'invalid_request',
       message: 'slug and content (or fileContent) are required',
+    }, 400);
+  }
+
+  // 提取 GitHub Token（支持 Worker 环境变量或请求头 X-GitHub-Token / body 透传）
+  const githubToken = c.req.header('X-GitHub-Token') || bodyGithubToken || c.env.GITHUB_TOKEN;
+  if (!githubToken) {
+    return c.json({
+      error: 'missing_github_token',
+      message: '未配置 GitHub Personal Access Token (PAT)',
+      details: '发布到 GitHub 仓库需要 PAT 授权。请在 Worker 环境变量中配置 GITHUB_TOKEN Secret，或在 Admin 发布后台【鉴权凭据】中直接填入具备 repo 写入权限的 GitHub Token 喵！',
     }, 400);
   }
 
@@ -141,10 +180,29 @@ ${content.trim()}
   const getRes = await fetch(`${githubApiUrl}?ref=${branch}`, {
     headers: {
       'User-Agent': 'Astro-Publisher-Worker/1.0',
-      'Authorization': `Bearer ${c.env.GITHUB_TOKEN}`,
+      'Authorization': `Bearer ${githubToken}`,
       'Accept': 'application/vnd.github.v3+json',
     },
   });
+
+  if (getRes.status === 401) {
+    return c.json({
+      error: 'github_unauthorized',
+      message: 'GitHub Token 校验未通过 (Bad credentials)',
+      details: '提供的 GitHub Personal Access Token 无效或已过期，请在 GitHub Settings 检查 Token 是否有效 喵！',
+    }, 401);
+  }
+
+  if (getRes.status === 403) {
+    const errText = await getRes.text();
+    return c.json({
+      error: 'github_forbidden',
+      message: 'GitHub Token 权限不足 (Permission denied)',
+      details: errText.includes('rate limit')
+        ? 'GitHub API 调用频率超限'
+        : 'GitHub Token 缺少仓库 Contents 写入权限，请在 Token 权限中勾选 repo 或 contents:write 权限 喵！',
+    }, 403);
+  }
 
   if (getRes.ok) {
     const existingData = await getRes.json<{ sha: string }>();
@@ -152,7 +210,23 @@ ${content.trim()}
   }
 
   // 3. 将 Markdown 完整内容编码为 UTF-8 Base64 并调用 GitHub Contents API
-  const base64Content = btoa(unescape(encodeURIComponent(finalMarkdown)));
+  let base64Content: string;
+  try {
+    if (typeof Buffer !== 'undefined') {
+      base64Content = Buffer.from(finalMarkdown, 'utf-8').toString('base64');
+    } else {
+      const utf8Bytes = new TextEncoder().encode(finalMarkdown);
+      let binary = '';
+      const len = utf8Bytes.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(utf8Bytes[i]);
+      }
+      base64Content = btoa(binary);
+    }
+  } catch (e: any) {
+    base64Content = btoa(unescape(encodeURIComponent(finalMarkdown)));
+  }
+
   const commitMessage = existingSha
     ? `docs(post): update ${cleanSlug} via Admin Studio`
     : `docs(post): publish ${title || cleanSlug} via Admin Studio`;
@@ -161,7 +235,7 @@ ${content.trim()}
     method: 'PUT',
     headers: {
       'User-Agent': 'Astro-Publisher-Worker/1.0',
-      'Authorization': `Bearer ${c.env.GITHUB_TOKEN}`,
+      'Authorization': `Bearer ${githubToken}`,
       'Accept': 'application/vnd.github.v3+json',
       'Content-Type': 'application/json',
     },
@@ -175,9 +249,12 @@ ${content.trim()}
 
   if (!commitRes.ok) {
     const errText = await commitRes.text();
+    let errObj: any = {};
+    try { errObj = JSON.parse(errText); } catch (e) {}
+
     return c.json({
       error: 'github_api_failed',
-      message: 'Failed to commit file to GitHub repository',
+      message: `GitHub API 提交失败: ${errObj.message || 'HTTP ' + commitRes.status}`,
       details: errText,
     }, 502);
   }

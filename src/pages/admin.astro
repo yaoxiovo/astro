@@ -231,7 +231,14 @@ import Layout from "@layouts/Layout.astro";
           </div>
           <div>
             <label for="input-access-token" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1">博主 Bearer Access Token (手动覆盖)</label>
-            <textarea id="input-access-token" rows="3" placeholder="自动从主站 SSO 同步，或手动粘贴 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none resize-none"></textarea>
+            <textarea id="input-access-token" rows="2" placeholder="自动从主站 SSO 同步，或手动粘贴 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none resize-none"></textarea>
+          </div>
+          <div>
+            <label for="input-github-token" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1 flex items-center justify-between">
+              <span>GitHub Personal Access Token (PAT)</span>
+              <span class="text-[10px] text-black/40 dark:text-white/40 font-normal">可选 · 具备 contents:write 权限</span>
+            </label>
+            <input type="password" id="input-github-token" placeholder="ghp_xxxx (留空使用 Worker 默认 GITHUB_TOKEN)" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none" />
           </div>
         </div>
 
@@ -320,6 +327,8 @@ import Layout from "@layouts/Layout.astro";
     const btnSaveAuth = document.getElementById('btn-save-auth');
     const inputApiEndpoint = document.getElementById('input-api-endpoint');
     const inputAccessToken = document.getElementById('input-access-token');
+    const inputGithubToken = document.getElementById('input-github-token');
+    const GITHUB_PAT_KEY = 'yaoxi_github_pat';
 
     // SSO 身份联动元素
     const modalSsoIndicator = document.getElementById('modal-sso-indicator');
@@ -431,6 +440,9 @@ import Layout from "@layouts/Layout.astro";
 
     const savedApi = localStorage.getItem(API_ENDPOINT_KEY);
     if (savedApi) inputApiEndpoint.value = savedApi;
+
+    const savedGithubPat = localStorage.getItem(GITHUB_PAT_KEY);
+    if (savedGithubPat && inputGithubToken) inputGithubToken.value = savedGithubPat;
 
     // 2. 统计计算函数
     function updateStats() {
@@ -635,8 +647,14 @@ import Layout from "@layouts/Layout.astro";
     btnSaveAuth.addEventListener('click', () => {
       const endpoint = inputApiEndpoint.value.trim().replace(/\/$/, '');
       const token = inputAccessToken.value.trim();
+      const githubPat = inputGithubToken ? inputGithubToken.value.trim() : '';
 
       if (endpoint) localStorage.setItem(API_ENDPOINT_KEY, endpoint);
+      if (githubPat) {
+        localStorage.setItem(GITHUB_PAT_KEY, githubPat);
+      } else {
+        localStorage.removeItem(GITHUB_PAT_KEY);
+      }
       if (token) {
         localStorage.setItem('yaoxi_access_token', token);
         localStorage.setItem('yaoxi_auth_token', token);
@@ -668,6 +686,7 @@ import Layout from "@layouts/Layout.astro";
       }
 
       const apiBase = (localStorage.getItem(API_ENDPOINT_KEY) || 'https://zk-api.yaoxi.cloud').replace(/\/$/, '');
+      const githubPat = localStorage.getItem(GITHUB_PAT_KEY) || (inputGithubToken ? inputGithubToken.value.trim() : '');
 
       // 进入发布状态
       btnPublish.disabled = true;
@@ -694,13 +713,18 @@ import Layout from "@layouts/Layout.astro";
       }, 1000);
 
       try {
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        };
+        if (githubPat) {
+          headers['X-GitHub-Token'] = githubPat;
+        }
+
         // 请求 Worker POST /api/publish
         const res = await fetch(`${apiBase}/api/publish`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
+          headers,
           body: JSON.stringify({
             title,
             slug,
@@ -708,12 +732,25 @@ import Layout from "@layouts/Layout.astro";
             tags,
             description: description || title,
             category: category || '技术分享',
+            githubToken: githubPat || undefined,
           })
         });
 
         if (!res.ok) {
-          const errData = await res.json().catch(() => ({ message: '网络请求错误' }));
-          throw new Error(errData.message || errData.details || `HTTP ${res.status}`);
+          let errData = {};
+          try {
+            errData = await res.json();
+          } catch (e) {
+            errData = { message: `网络请求失败 (HTTP ${res.status})` };
+          }
+          const detailStr = errData.details
+            ? (typeof errData.details === 'object' ? JSON.stringify(errData.details) : String(errData.details))
+            : '';
+          const fullMsg = [errData.message, detailStr].filter(Boolean).join(' - ') || `HTTP ${res.status}`;
+          const customErr = new Error(fullMsg);
+          customErr.stage = errData.error || `HTTP ${res.status}`;
+          customErr.errData = errData;
+          throw customErr;
         }
 
         const data = await res.json();
@@ -730,12 +767,31 @@ import Layout from "@layouts/Layout.astro";
 
       } catch (err) {
         clearInterval(timerInterval);
+        console.error('[Admin Publish Error]', err);
+
         deployTitle.textContent = '发布提交失败 喵！';
-        deploySubtitle.textContent = err.message;
         deployBadge.textContent = 'ERROR';
         deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-red-500/10 text-red-500 border border-red-500/20';
         deployProgressBar.style.width = '100%';
         deployProgressBar.className = 'h-full bg-red-500 rounded-full';
+        deployStageInfo.textContent = `失败原因: ${err.stage || 'GitHub API'}`;
+
+        const isAuthErr = String(err.message).includes('Token') ||
+          String(err.message).includes('GitHub') ||
+          String(err.message).includes('credentials') ||
+          String(err.message).includes('401') ||
+          String(err.message).includes('403') ||
+          String(err.message).includes('Unauthorized') ||
+          String(err.message).includes('Forbidden');
+
+        if (isAuthErr) {
+          deploySubtitle.innerHTML = `<span class="break-all">${err.message}</span><br/><button type="button" id="btn-fix-auth-err" class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/10 dark:bg-white/15 text-xs font-semibold text-[var(--primary)] hover:opacity-80 transition-all cursor-pointer"><span>🔐 打开【鉴权凭据】配置或更新有效 GitHub PAT / Token</span></button>`;
+          document.getElementById('btn-fix-auth-err')?.addEventListener('click', () => {
+            modalAuth.classList.remove('hidden');
+          });
+        } else {
+          deploySubtitle.textContent = err.message || '未知异常，请检查网络或控制台输出';
+        }
 
         btnPublish.disabled = false;
         publishSpinner.classList.add('hidden');
