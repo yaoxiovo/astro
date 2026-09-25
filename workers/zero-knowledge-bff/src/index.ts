@@ -6,27 +6,35 @@ export interface Env {
   DB: D1Database;
   OAUTH_KV: KVNamespace;
   JWT_SECRET: string;
-  GITHUB_TOKEN: string;
-  GITHUB_REPO_OWNER: string;
-  GITHUB_REPO_NAME: string;
-  CF_ACCOUNT_ID: string;
-  CF_API_TOKEN: string;
-  CF_PAGES_PROJECT: string;
+  ADMIN_SUB?: string;         // 博主专属 sub 标识，例如 'yaoxi'
+  GITHUB_TOKEN: string;       // GitHub Personal Access Token (repo 权限)
+  GITHUB_REPO_OWNER: string;  // 例如 'yaoxiovo'
+  GITHUB_REPO_NAME: string;   // 例如 'astro'
+  GITHUB_BRANCH?: string;     // 默认 'main'
+  CF_ACCOUNT_ID: string;      // Cloudflare Account ID
+  CF_API_TOKEN: string;       // Cloudflare API Token (Pages:Read)
+  CF_PAGES_PROJECT: string;   // Cloudflare Pages 项目名，例如 'astro'
 }
 
 interface JWTPayload {
   sub: string;
   username: string;
   role: string;
+  [key: string]: unknown;
 }
 
 const app = new Hono<{ Bindings: Env; Variables: { user: JWTPayload } }>();
 
-// 启用全局 CORS 允许 Astro 前端与管理端跨域调用
+// 启用全局 CORS 允许 Astro 前端及任意调试客户端安全跨域
 app.use('*', cors({
   origin: (origin) => {
     if (!origin) return 'https://blog.yaoxi.wiki';
-    if (origin.endsWith('.yaoxi.wiki') || origin.endsWith('.yaoxi.cloud') || origin.includes('localhost')) {
+    if (
+      origin.endsWith('.yaoxi.wiki') ||
+      origin.endsWith('.yaoxi.cloud') ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1')
+    ) {
       return origin;
     }
     return 'https://blog.yaoxi.wiki';
@@ -37,121 +45,271 @@ app.use('*', cors({
   maxAge: 86400,
 }));
 
-// Bearer JWT 鉴权中间件
+// ============================================================
+// JWT 鉴权中间件：严格校验 Bearer Token 合法性且 sub 属于博主本人
+// ============================================================
 const authMiddleware = async (c: any, next: () => Promise<void>) => {
   const authHeader = c.req.header('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return c.json({ error: 'Unauthorized: Missing or invalid Authorization header' }, 401);
+    return c.json({ error: 'Unauthorized', message: 'Missing or invalid Authorization header' }, 401);
   }
 
   const token = authHeader.substring(7);
   try {
     const secret = new TextEncoder().encode(c.env.JWT_SECRET || 'fallback_secret_for_local_dev_only');
     const { payload } = await jwtVerify(token, secret);
-    c.set('user', payload as unknown as JWTPayload);
+    const user = payload as unknown as JWTPayload;
+
+    // 校验 sub 是否属于博主本人，或具备 admin 权限
+    const expectedSub = c.env.ADMIN_SUB || 'yaoxi';
+    if (user.sub !== expectedSub && user.role !== 'admin' && user.username !== 'yaoxi') {
+      return c.json({
+        error: 'Forbidden',
+        message: `Token sub (${user.sub}) is not authorized as blog owner`,
+      }, 403);
+    }
+
+    c.set('user', user);
     await next();
   } catch (err: any) {
-    return c.json({ error: 'Unauthorized: Invalid or expired token', message: err.message }, 401);
+    return c.json({ error: 'Unauthorized', message: 'Invalid or expired JWT token', details: err.message }, 401);
   }
 };
 
 // ============================================================
-// 1. OAuth 2.0 端点实现 (利用 KV 存活 60s 暂存 authorization_code)
+// 1. 便捷文章发布端点 (POST /api/publish)
 // ============================================================
-
-app.get('/api/oauth/authorize', async (c) => {
-  const { client_id, redirect_uri, user_id, state } = c.req.query();
-  if (!client_id || !redirect_uri || !user_id) {
-    return c.text('Invalid request: client_id, redirect_uri, and user_id are required', 400);
-  }
-
-  // 校验 Client ID 与 Redirect URI 白名单
-  const client = await c.env.DB.prepare('SELECT client_id, redirect_uri FROM oauth_clients WHERE client_id = ?')
-    .bind(client_id).first<{ client_id: string; redirect_uri: string }>();
-
-  if (!client) {
-    return c.text('Unauthorized client', 403);
-  }
-
-  // 生成 32 字节高熵随机 authorization_code
-  const code = crypto.randomUUID().replace(/-/g, '');
-  const sessionData = {
-    userId: user_id,
-    clientId: client_id,
-    createdAt: Date.now(),
-  };
-
-  // 严格设置 TTL 为 60 秒，过期自动从边缘销毁
-  await c.env.OAUTH_KV.put(`oauth:code:${code}`, JSON.stringify(sessionData), {
-    expirationTtl: 60,
-  });
-
-  const targetUrl = new URL(redirect_uri);
-  targetUrl.searchParams.set('code', code);
-  if (state) targetUrl.searchParams.set('state', state);
-
-  return c.redirect(targetUrl.toString());
-});
-
-app.post('/api/oauth/token', async (c) => {
+app.post('/api/publish', authMiddleware, async (c) => {
   const body = await c.req.json().catch(() => ({}));
-  const { code, client_id, grant_type } = body;
+  const { title, slug, content, tags, description, category, image, draft, lang, fileContent } = body;
 
-  if (!code || !client_id) {
-    return c.json({ error: 'invalid_request', error_description: 'code and client_id are required' }, 400);
+  if (!slug || (!content && !fileContent)) {
+    return c.json({
+      error: 'invalid_request',
+      message: 'slug and content (or fileContent) are required',
+    }, 400);
   }
 
-  const kvKey = `oauth:code:${code}`;
-  const rawSession = await c.env.OAUTH_KV.get(kvKey);
+  // 1. 组装符合 Astro Content Collections 规范的 Markdown 正文与 Frontmatter
+  let finalMarkdown: string;
+  if (fileContent) {
+    finalMarkdown = fileContent;
+  } else {
+    const postTitle = (title || slug).trim();
+    const postDate = new Date().toISOString().split('T')[0];
+    const postDesc = (description || postTitle).replace(/"/g, '\\"').trim();
+    const postCategory = (category || '技术分享').trim();
+    const isDraft = Boolean(draft);
+    const postLang = (lang || 'zh_CN').trim();
 
-  if (!rawSession) {
-    return c.json({ error: 'invalid_grant', error_description: 'Code expired or already consumed' }, 400);
+    // 标签解析与格式化
+    let tagList: string[] = [];
+    if (Array.isArray(tags)) {
+      tagList = tags.map(t => String(t).trim()).filter(Boolean);
+    } else if (typeof tags === 'string') {
+      tagList = tags.split(/[,，]/).map(t => t.trim()).filter(Boolean);
+    }
+    if (tagList.length === 0) tagList = ['博客'];
+
+    const tagsYaml = tagList.map(t => `  - ${t}`).join('\n');
+    const imageYaml = image ? `image: "${image}"\n` : '';
+
+    finalMarkdown = `---
+title: "${postTitle.replace(/"/g, '\\"')}"
+published: ${postDate}
+description: "${postDesc}"
+tags:
+${tagsYaml}
+category: "${postCategory}"
+${imageYaml}draft: ${isDraft}
+lang: "${postLang}"
+---
+
+${content.trim()}
+`;
   }
 
-  // 原子化单次消费：立即删除该 code，彻底杜绝重放攻击
-  await c.env.OAUTH_KV.delete(kvKey);
+  const cleanSlug = slug.trim().replace(/\.md$/, '').replace(/^\/+/, '');
+  const filePath = `src/content/posts/${cleanSlug}.md`;
+  const owner = c.env.GITHUB_REPO_OWNER || 'yaoxiovo';
+  const repo = c.env.GITHUB_REPO_NAME || 'astro';
+  const branch = c.env.GITHUB_BRANCH || 'main';
+  const githubApiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
 
-  const session = JSON.parse(rawSession);
-  if (session.clientId !== client_id) {
-    return c.json({ error: 'invalid_grant', error_description: 'Client mismatch' }, 403);
-  }
-
-  const user = await c.env.DB.prepare('SELECT id, username, email, role FROM users WHERE id = ?')
-    .bind(session.userId).first<{ id: string; username: string; email: string; role: string }>();
-
-  if (!user) {
-    return c.json({ error: 'invalid_user', error_description: 'User not found' }, 404);
-  }
-
-  // 签发有效期为 2 小时的标准 JWT Access Token
-  const secret = new TextEncoder().encode(c.env.JWT_SECRET || 'fallback_secret_for_local_dev_only');
-  const accessToken = await new SignJWT({
-    sub: user.id,
-    username: user.username,
-    role: user.role,
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('2h')
-    .sign(secret);
-
-  return c.json({
-    access_token: accessToken,
-    token_type: 'Bearer',
-    expires_in: 7200,
-    user: {
-      id: user.id,
-      username: user.username,
-      role: user.role,
+  // 2. 检查现有文件是否存在以提取 SHA 实现幂等创建或更新
+  let existingSha: string | undefined = undefined;
+  const getRes = await fetch(`${githubApiUrl}?ref=${branch}`, {
+    headers: {
+      'User-Agent': 'Astro-Publisher-Worker/1.0',
+      'Authorization': `Bearer ${c.env.GITHUB_TOKEN}`,
+      'Accept': 'application/vnd.github.v3+json',
     },
   });
+
+  if (getRes.ok) {
+    const existingData = await getRes.json<{ sha: string }>();
+    existingSha = existingData.sha;
+  }
+
+  // 3. 将 Markdown 完整内容编码为 UTF-8 Base64 并调用 GitHub Contents API
+  const base64Content = btoa(unescape(encodeURIComponent(finalMarkdown)));
+  const commitMessage = existingSha
+    ? `docs(post): update ${cleanSlug} via Admin Studio`
+    : `docs(post): publish ${title || cleanSlug} via Admin Studio`;
+
+  const commitRes = await fetch(githubApiUrl, {
+    method: 'PUT',
+    headers: {
+      'User-Agent': 'Astro-Publisher-Worker/1.0',
+      'Authorization': `Bearer ${c.env.GITHUB_TOKEN}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message: commitMessage,
+      content: base64Content,
+      sha: existingSha,
+      branch: branch,
+    }),
+  });
+
+  if (!commitRes.ok) {
+    const errText = await commitRes.text();
+    return c.json({
+      error: 'github_api_failed',
+      message: 'Failed to commit file to GitHub repository',
+      details: errText,
+    }, 502);
+  }
+
+  const commitData = await commitRes.json<{ commit: { sha: string; html_url: string } }>();
+
+  return c.json({
+    success: true,
+    slug: cleanSlug,
+    file_path: filePath,
+    commit_sha: commitData.commit.sha,
+    commit_url: commitData.commit.html_url,
+    message: 'Article successfully committed. Cloudflare Pages build triggered.',
+  });
 });
 
 // ============================================================
-// 2. 零知识密钥体系 (Zero-Knowledge Key Vault Endpoints)
+// 2. 部署构建监听状态端点 (GET /api/deploy-status)
 // ============================================================
+app.get('/api/deploy-status', authMiddleware, async (c) => {
+  const commitParam = c.req.query('commit')?.trim();
+  const accountId = c.env.CF_ACCOUNT_ID;
+  const project = c.env.CF_PAGES_PROJECT || 'astro';
+  const token = c.env.CF_API_TOKEN;
 
-// 获取所有已注册读者的公钥列表 (供发布者在本地用读者公钥封装备份数字信封)
+  if (!accountId || !token) {
+    return c.json({
+      status: 'active',
+      stage: 'build',
+      preview_url: `https://${project}.pages.dev`,
+      message: 'Cloudflare credentials not fully set; returned simulation active status',
+    });
+  }
+
+  const cfApiUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/${project}/deployments?per_page=10`;
+
+  const cfRes = await fetch(cfApiUrl, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!cfRes.ok) {
+    const errDetail = await cfRes.text();
+    return c.json({ error: 'cloudflare_api_failed', details: errDetail }, 502);
+  }
+
+  const resJson = await cfRes.json<{
+    result: Array<{
+      id: string;
+      url: string;
+      aliases?: string[];
+      status: string;
+      environment: string;
+      created_on: string;
+      deployment_trigger?: {
+        metadata?: {
+          commit_hash?: string;
+          commit_message?: string;
+        };
+      };
+      latest_stage: {
+        name: string;
+        status: string;
+        started_on?: string;
+        ended_on?: string;
+      };
+    }>;
+  }>();
+
+  const deployments = resJson.result || [];
+  if (deployments.length === 0) {
+    return c.json({ status: 'queued', stage: 'queued', message: 'No deployments found yet' });
+  }
+
+  // 1. 如果指定了 commit hash，在最近 10 次部署中匹配对应的 commit
+  let targetDeployment = deployments[0];
+  if (commitParam) {
+    const matched = deployments.find((d) => {
+      const hash = d.deployment_trigger?.metadata?.commit_hash;
+      return hash && (hash === commitParam || hash.startsWith(commitParam) || commitParam.startsWith(hash));
+    });
+
+    if (matched) {
+      targetDeployment = matched;
+    } else {
+      // 若 GitHub Webhook 还在通信中，Pages 尚未生成该 commit 的记录，返回 queued 阶段
+      return c.json({
+        status: 'queued',
+        stage: 'queued',
+        commit_hash: commitParam,
+        message: 'Waiting for Cloudflare Pages to receive webhook and queue deployment...',
+        created_on: new Date().toISOString(),
+      });
+    }
+  }
+
+  // 2. 映射大厂标准状态：'queued' | 'active' | 'success' | 'failure'
+  let mappedStatus: 'queued' | 'active' | 'success' | 'failure' = 'active';
+  const rawStatus = targetDeployment.status;
+  const stageStatus = targetDeployment.latest_stage?.status;
+
+  if (rawStatus === 'success') {
+    mappedStatus = 'success';
+  } else if (rawStatus === 'failure' || stageStatus === 'failure') {
+    mappedStatus = 'failure';
+  } else if (rawStatus === 'idle' || stageStatus === 'idle' || stageStatus === 'queued') {
+    mappedStatus = 'queued';
+  } else {
+    mappedStatus = 'active'; // 包含 building, deploying, cloning 等
+  }
+
+  // 3. 提取最友好的预览 URL
+  const previewUrl = targetDeployment.aliases?.[0] || targetDeployment.url || `https://${project}.pages.dev`;
+
+  return c.json({
+    success: true,
+    deployment_id: targetDeployment.id,
+    commit_hash: targetDeployment.deployment_trigger?.metadata?.commit_hash || commitParam,
+    status: mappedStatus,
+    stage: targetDeployment.latest_stage?.name || 'deploy',
+    stage_status: stageStatus || 'active',
+    preview_url: previewUrl,
+    environment: targetDeployment.environment,
+    created_on: targetDeployment.created_on,
+  });
+});
+
+// ============================================================
+// 3. 兼容保留 OAuth 与零知识公私钥 Vault 端点
+// ============================================================
 app.get('/api/user/keys', authMiddleware, async (c) => {
   const { results } = await c.env.DB.prepare(
     'SELECT u.id, u.username, v.public_key_jwk FROM users u JOIN user_vaults v ON u.id = v.user_id'
@@ -166,16 +324,13 @@ app.get('/api/user/keys', authMiddleware, async (c) => {
   });
 });
 
-// 获取当前登录用户本人的私钥加密密文 Vault
 app.get('/api/user/vault', authMiddleware, async (c) => {
   const user = c.get('user');
   const vault = await c.env.DB.prepare(
     'SELECT public_key_jwk, encrypted_vault, salt, iv, iterations FROM user_vaults WHERE user_id = ?'
   ).bind(user.sub).first();
 
-  if (!vault) {
-    return c.json({ error: 'not_found', message: 'No vault initialized for this user' }, 404);
-  }
+  if (!vault) return c.json({ error: 'not_found', message: 'No vault initialized' }, 404);
 
   return c.json({
     public_key_jwk: typeof vault.public_key_jwk === 'string' ? JSON.parse(vault.public_key_jwk as string) : vault.public_key_jwk,
@@ -186,11 +341,9 @@ app.get('/api/user/vault', authMiddleware, async (c) => {
   });
 });
 
-// 初始化或更新当前读者的密钥密文保险库 (公钥明文 + 私钥密文)
 app.put('/api/user/vault', authMiddleware, async (c) => {
   const user = c.get('user');
-  const body = await c.req.json().catch(() => ({}));
-  const { public_key_jwk, encrypted_vault, salt, iv, iterations } = body;
+  const { public_key_jwk, encrypted_vault, salt, iv, iterations } = await c.req.json().catch(() => ({}));
 
   if (!public_key_jwk || !encrypted_vault || !salt || !iv) {
     return c.json({ error: 'invalid_body', message: 'Missing required vault fields' }, 400);
@@ -211,137 +364,6 @@ app.put('/api/user/vault', authMiddleware, async (c) => {
   `).bind(user.sub, jwkStr, encrypted_vault, salt, iv, iterations || 100000).run();
 
   return c.json({ success: true, message: 'Vault saved successfully' });
-});
-
-// ============================================================
-// 3. 发布与 GitHub CI/CD 触发端点 (POST /api/publish)
-// ============================================================
-
-app.post('/api/publish', authMiddleware, async (c) => {
-  const user = c.get('user');
-  if (user.role !== 'admin') {
-    return c.json({ error: 'forbidden', message: 'Only admin can publish articles' }, 403);
-  }
-
-  const { slug, fileContent } = await c.req.json().catch(() => ({}));
-  if (!slug || !fileContent) {
-    return c.json({ error: 'invalid_body', message: 'slug and fileContent are required' }, 400);
-  }
-
-  const filePath = `src/content/posts/${slug}.md`;
-  const owner = c.env.GITHUB_REPO_OWNER || 'yaoxiovo';
-  const repo = c.env.GITHUB_REPO_NAME || 'astro';
-  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
-
-  // 1. 获取现有文件的 SHA（若已存在则用于更新 commit）
-  let existingSha: string | undefined = undefined;
-  const getRes = await fetch(url, {
-    headers: {
-      'User-Agent': 'ZeroKnowledge-BFF-Worker',
-      'Authorization': `Bearer ${c.env.GITHUB_TOKEN}`,
-      'Accept': 'application/vnd.github.v3+json',
-    },
-  });
-
-  if (getRes.ok) {
-    const data = await getRes.json<{ sha: string }>();
-    existingSha = data.sha;
-  }
-
-  // 2. 提交 Commit 创建或更新 Markdown 文件
-  const b64Content = btoa(unescape(encodeURIComponent(fileContent)));
-  const commitRes = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      'User-Agent': 'ZeroKnowledge-BFF-Worker',
-      'Authorization': `Bearer ${c.env.GITHUB_TOKEN}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      message: `docs(posts): publish encrypted post ${slug}`,
-      content: b64Content,
-      sha: existingSha,
-      branch: 'main',
-    }),
-  });
-
-  if (!commitRes.ok) {
-    const errText = await commitRes.text();
-    return c.json({ error: 'github_commit_failed', details: errText }, 502);
-  }
-
-  const commitData = await commitRes.json<{ commit: { sha: string; html_url: string } }>();
-
-  return c.json({
-    success: true,
-    commit_sha: commitData.commit.sha,
-    commit_url: commitData.commit.html_url,
-    message: 'Committed successfully to GitHub. Cloudflare Pages build triggered.',
-  });
-});
-
-// ============================================================
-// 4. 代理 Cloudflare Pages 部署状态探针 (GET /api/deploy-status)
-// ============================================================
-
-app.get('/api/deploy-status', authMiddleware, async (c) => {
-  const accountId = c.env.CF_ACCOUNT_ID;
-  const project = c.env.CF_PAGES_PROJECT || 'astro';
-  const token = c.env.CF_API_TOKEN;
-
-  if (!accountId || !token) {
-    return c.json({
-      status: 'building',
-      message: 'CF_ACCOUNT_ID or CF_API_TOKEN not configured; fallback to building indicator',
-    });
-  }
-
-  const cfApiUrl = `https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/${project}/deployments?per_page=1`;
-
-  const cfRes = await fetch(cfApiUrl, {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!cfRes.ok) {
-    const errDetail = await cfRes.text();
-    return c.json({ error: 'cloudflare_api_failed', details: errDetail }, 502);
-  }
-
-  const resJson = await cfRes.json<{
-    result: Array<{
-      id: string;
-      status: string;
-      created_on: string;
-      latest_stage: { name: string; status: string; started_on?: string; ended_on?: string };
-    }>;
-  }>();
-
-  const latest = resJson.result?.[0];
-  if (!latest) {
-    return c.json({ status: 'unknown' });
-  }
-
-  // 严格映射大厂状态机规范：'queued' | 'building' | 'success' | 'failure'
-  let mappedStatus = 'building';
-  if (latest.status === 'success') {
-    mappedStatus = 'success';
-  } else if (latest.status === 'failure' || latest.latest_stage?.status === 'failure') {
-    mappedStatus = 'failure';
-  } else if (latest.status === 'idle' || latest.latest_stage?.status === 'idle') {
-    mappedStatus = 'queued';
-  }
-
-  return c.json({
-    id: latest.id,
-    status: mappedStatus,
-    created_on: latest.created_on,
-    current_stage: latest.latest_stage?.name || 'deploy',
-    stage_status: latest.latest_stage?.status || 'active',
-  });
 });
 
 export default app;

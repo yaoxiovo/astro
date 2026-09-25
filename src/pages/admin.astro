@@ -1,0 +1,687 @@
+---
+import Layout from "@layouts/Layout.astro";
+---
+
+<Layout title="文章发布与部署控制台 | 瑶曦博客" description="开箱即用的 Astro 博客便捷发布后台与实时部署监听系统" noindex={true}>
+  <div class="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+    
+    <!-- 顶部状态栏 -->
+    <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 mb-8 border-b border-[var(--line-divider)] gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <a href="/" class="p-2 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/15 transition-all text-sm font-medium flex items-center gap-1.5" title="返回主站">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>主站</span>
+          </a>
+          <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-black/90 dark:text-white/90">
+            便捷发布后台 <span class="text-xs px-2.5 py-1 rounded-full bg-[var(--primary)] text-white dark:text-black font-semibold ml-1">Studio</span>
+          </h1>
+        </div>
+        <p class="text-xs sm:text-sm text-black/50 dark:text-white/50 mt-1">
+          支持实时草稿暂存 · <kbd class="px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/15 text-[11px] font-mono">Ctrl+S</kbd> / <kbd class="px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/15 text-[11px] font-mono">Cmd+S</kbd> 极速发布 · 自动化监听 Cloudflare 构建
+        </p>
+      </div>
+
+      <!-- 右侧操作区：草稿状态、Token 鉴权设置、发布主按钮 -->
+      <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+        <div id="draft-status" class="hidden text-xs text-black/40 dark:text-white/40 items-center gap-1.5 font-mono">
+          <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="draft-time-text">草稿已保存</span>
+        </div>
+
+        <button id="btn-auth-config" class="px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/15 text-xs font-medium flex items-center gap-1.5 transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          </svg>
+          <span id="auth-status-text">鉴权凭据</span>
+        </button>
+
+        <button id="btn-publish" class="px-5 py-2.5 rounded-xl bg-[var(--primary)] hover:opacity-90 active:scale-95 text-white dark:text-black font-semibold text-sm shadow-md shadow-[var(--primary)]/20 transition-all flex items-center gap-2">
+          <svg id="publish-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <svg id="publish-icon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span id="btn-publish-text">发布并构建</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 部署构建实时进度条看板 (隐藏状态，发布后呼出) -->
+    <div id="deploy-panel" class="hidden mb-8 p-6 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)] shadow-lg backdrop-blur-md transition-all">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div id="deploy-state-indicator" class="h-3 w-3 rounded-full bg-amber-500 animate-ping"></div>
+          <div>
+            <h3 class="text-base font-bold text-black/90 dark:text-white/90" id="deploy-title">正在向 GitHub 提交文章 Commit...</h3>
+            <p class="text-xs text-black/50 dark:text-white/50 font-mono" id="deploy-subtitle">等待 Cloudflare Pages 捕获 Webhook</p>
+          </div>
+        </div>
+        <div id="deploy-badge" class="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20">
+          QUEUED
+        </div>
+      </div>
+
+      <!-- 动态进度条 -->
+      <div class="w-full bg-black/10 dark:bg-white/10 h-2.5 rounded-full overflow-hidden mb-3">
+        <div id="deploy-progress-bar" class="h-full bg-[var(--primary)] transition-all duration-500 ease-out rounded-full" style="width: 15%;"></div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-black/40 dark:text-white/40 font-mono">
+        <span id="deploy-stage-info">阶段: 初始化</span>
+        <span id="deploy-timer">耗时: 0s</span>
+      </div>
+
+      <!-- 发布成功后的跳转链接容器 -->
+      <div id="deploy-success-links" class="hidden mt-4 pt-4 border-t border-[var(--line-divider)] flex flex-wrap items-center gap-3">
+        <a id="link-live-post" href="#" target="_blank" class="px-4 py-2 rounded-xl bg-emerald-500 text-white font-medium text-xs flex items-center gap-1.5 shadow-sm hover:opacity-90">
+          <span>在新标签页阅读新文章</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+        <a id="link-preview-url" href="#" target="_blank" class="px-4 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono hover:bg-black/10 dark:hover:bg-white/15">
+          Pages 预览节点
+        </a>
+        <button id="btn-continue-writing" class="px-4 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-medium hover:bg-black/10 ml-auto">
+          再写一篇新文章
+        </button>
+      </div>
+    </div>
+
+    <!-- 主表单编辑区域 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- 左侧：文章元信息配置 (1 列) -->
+      <div class="lg:col-span-1 space-y-5">
+        <div class="p-5 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)]">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-black/60 dark:text-white/60 mb-4 flex items-center justify-between">
+            <span>文章元数据 (Frontmatter)</span>
+            <button id="btn-clear-draft" class="text-xs text-red-500/80 hover:text-red-500 transition-colors lowercase" title="清空全部输入与本地草稿">清空草稿</button>
+          </h2>
+
+          <div class="space-y-4">
+            <!-- 标题输入 -->
+            <div>
+              <label for="post-title" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">文章标题 (Title) *</label>
+              <input type="text" id="post-title" placeholder="输入引人注目的标题..." class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] focus:bg-white dark:focus:bg-black/40 text-sm outline-none transition-all" />
+            </div>
+
+            <!-- Slug 输入 -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="post-slug" class="block text-xs font-medium text-black/70 dark:text-white/70">唯一 Slug (URL 路径) *</label>
+                <button type="button" id="btn-toggle-auto-slug" class="text-[11px] text-[var(--primary)] hover:underline">自动同步标题</button>
+              </div>
+              <div class="relative">
+                <input type="text" id="post-slug" placeholder="my-awesome-article" class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] focus:bg-white dark:focus:bg-black/40 text-sm font-mono outline-none transition-all pr-8" />
+                <span class="absolute right-3 top-3 text-xs text-black/30 dark:text-white/30 font-mono">.md</span>
+              </div>
+            </div>
+
+            <!-- 标签 -->
+            <div>
+              <label for="post-tags" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">标签 (Tags，逗号分隔)</label>
+              <input type="text" id="post-tags" placeholder="Astro, Cloudflare, 架构设计" class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] focus:bg-white dark:focus:bg-black/40 text-sm outline-none transition-all" />
+            </div>
+
+            <!-- 分类 -->
+            <div>
+              <label for="post-category" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">所属分类 (Category)</label>
+              <input type="text" id="post-category" placeholder="技术分享" value="技术分享" class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] focus:bg-white dark:focus:bg-black/40 text-sm outline-none transition-all" />
+            </div>
+
+            <!-- 摘要 (Description) -->
+            <div>
+              <label for="post-desc" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">摘要说明 (Description) *</label>
+              <textarea id="post-desc" rows="3" placeholder="简要描述本文核心内容，将展示在列表卡片与 SEO 元信息中..." class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] focus:bg-white dark:focus:bg-black/40 text-sm outline-none transition-all resize-none"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- 统计面板卡片 -->
+        <div class="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)] flex items-center justify-around text-center text-xs">
+          <div>
+            <div class="text-base font-bold font-mono text-[var(--primary)]" id="stat-words">0</div>
+            <div class="text-black/40 dark:text-white/40">正文字数</div>
+          </div>
+          <div class="h-6 w-[1px] bg-[var(--line-divider)]"></div>
+          <div>
+            <div class="text-base font-bold font-mono text-black/80 dark:text-white/80" id="stat-minutes">0</div>
+            <div class="text-black/40 dark:text-white/40">预计阅读 (分)</div>
+          </div>
+          <div class="h-6 w-[1px] bg-[var(--line-divider)]"></div>
+          <div>
+            <div class="text-base font-bold font-mono text-emerald-500" id="stat-lines">0</div>
+            <div class="text-black/40 dark:text-white/40">文本行数</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：宽屏 Markdown 编辑器 (2 列) -->
+      <div class="lg:col-span-2 flex flex-col">
+        <div class="flex-1 flex flex-col rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)] overflow-hidden">
+          
+          <!-- 快捷工具栏 -->
+          <div class="flex items-center flex-wrap gap-1 px-3 py-2 bg-black/5 dark:bg-white/5 border-b border-[var(--line-divider)] text-xs">
+            <button type="button" class="toolbar-btn" data-syntax="**" title="粗体 (Ctrl+B)">粗体</button>
+            <button type="button" class="toolbar-btn" data-syntax="*" title="斜体 (Ctrl+I)">斜体</button>
+            <button type="button" class="toolbar-btn" data-prefix="## " title="二级标题">H2</button>
+            <button type="button" class="toolbar-btn" data-prefix="### " title="三级标题">H3</button>
+            <div class="h-4 w-[1px] bg-[var(--line-divider)] mx-1"></div>
+            <button type="button" class="toolbar-btn" data-syntax="`" title="行内代码">代码</button>
+            <button type="button" class="toolbar-btn" data-wrap="```\n" data-wrap-end="\n```" title="多行代码块">代码块</button>
+            <button type="button" class="toolbar-btn" data-prefix="> " title="引用块">引用</button>
+            <button type="button" class="toolbar-btn" data-prefix="- " title="无序列表">列表</button>
+            <button type="button" class="toolbar-btn" data-wrap="[标题](" data-wrap-end=")" title="链接">链接</button>
+            <button type="button" class="toolbar-btn" data-wrap="![" data-wrap-end="](url)" title="图片">图片</button>
+            <button type="button" class="toolbar-btn" data-insert="\n---\n" title="水平分割线">分割线</button>
+          </div>
+
+          <!-- 正文编辑区 -->
+          <textarea id="post-content" rows="22" placeholder="# 在此开始书写正文...\n\n支持标准的 GitHub Flavored Markdown 语法，随时输入即时自动保存草稿..." class="w-full flex-1 p-5 bg-transparent text-sm font-mono outline-none leading-relaxed resize-y min-h-[500px]"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- 鉴权凭据配置弹窗 (Modal) -->
+    <div id="modal-auth" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+      <div class="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)] shadow-2xl p-6">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-[var(--line-divider)]">
+          <h3 class="text-base font-bold text-black/90 dark:text-white/90 flex items-center gap-2">
+            <span>🔐</span>
+            <span>配置博主鉴权凭据 (Bearer Token)</span>
+          </h3>
+          <button id="btn-close-modal" class="text-black/40 dark:text-white/40 hover:text-black/80 dark:hover:text-white/80">✕</button>
+        </div>
+
+        <p class="text-xs text-black/60 dark:text-white/60 mb-4 leading-relaxed">
+          发布接口挂载了严格的 JWT 鉴权中间件。请填入经过博主自研 OAuth 2.0 / Passkey 认证中心签发的 Access Token，调用发布接口时会自动挂载在请求头中。
+        </p>
+
+        <div class="space-y-3 mb-5">
+          <div>
+            <label for="input-api-endpoint" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1">Worker BFF 接口地址</label>
+            <input type="text" id="input-api-endpoint" value="https://zk-api.yaoxi.cloud" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none" />
+          </div>
+          <div>
+            <label for="input-access-token" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1">博主 Bearer Access Token</label>
+            <textarea id="input-access-token" rows="4" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none resize-none"></textarea>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button id="btn-save-auth" class="px-4 py-2 rounded-xl bg-[var(--primary)] text-white dark:text-black font-semibold text-xs shadow-sm hover:opacity-90">
+            保存凭据
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</Layout>
+
+<style>
+  .toolbar-btn {
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-family: ui-monospace, monospace;
+    color: currentColor;
+    opacity: 0.7;
+    transition: all 0.15s ease;
+  }
+  .toolbar-btn:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.08);
+  }
+  :global(.dark) .toolbar-btn:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+  }
+</style>
+
+<script is:inline>
+  (function initAdminStudio() {
+    const STORAGE_KEY = 'yaoxi_admin_post_draft';
+    const TOKEN_KEY = 'yaoxi_access_token';
+    const API_ENDPOINT_KEY = 'yaoxi_worker_api_base';
+
+    // DOM 元素获取
+    const titleEl = document.getElementById('post-title');
+    const slugEl = document.getElementById('post-slug');
+    const tagsEl = document.getElementById('post-tags');
+    const categoryEl = document.getElementById('post-category');
+    const descEl = document.getElementById('post-desc');
+    const contentEl = document.getElementById('post-content');
+
+    const draftStatusEl = document.getElementById('draft-status');
+    const draftTimeTextEl = document.getElementById('draft-time-text');
+    const btnClearDraft = document.getElementById('btn-clear-draft');
+    const btnToggleAutoSlug = document.getElementById('btn-toggle-auto-slug');
+
+    const statWords = document.getElementById('stat-words');
+    const statMinutes = document.getElementById('stat-minutes');
+    const statLines = document.getElementById('stat-lines');
+
+    const btnPublish = document.getElementById('btn-publish');
+    const btnPublishText = document.getElementById('btn-publish-text');
+    const publishSpinner = document.getElementById('publish-spinner');
+    const publishIcon = document.getElementById('publish-icon');
+
+    // 部署看板元素
+    const deployPanel = document.getElementById('deploy-panel');
+    const deployTitle = document.getElementById('deploy-title');
+    const deploySubtitle = document.getElementById('deploy-subtitle');
+    const deployBadge = document.getElementById('deploy-badge');
+    const deployProgressBar = document.getElementById('deploy-progress-bar');
+    const deployStageInfo = document.getElementById('deploy-stage-info');
+    const deployTimer = document.getElementById('deploy-timer');
+    const deploySuccessLinks = document.getElementById('deploy-success-links');
+    const linkLivePost = document.getElementById('link-live-post');
+    const linkPreviewUrl = document.getElementById('link-preview-url');
+    const btnContinueWriting = document.getElementById('btn-continue-writing');
+
+    // Modal 元素
+    const btnAuthConfig = document.getElementById('btn-auth-config');
+    const authStatusText = document.getElementById('auth-status-text');
+    const modalAuth = document.getElementById('modal-auth');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    const btnSaveAuth = document.getElementById('btn-save-auth');
+    const inputApiEndpoint = document.getElementById('input-api-endpoint');
+    const inputAccessToken = document.getElementById('input-access-token');
+
+    let isAutoSlug = true;
+    let saveTimeout = null;
+    let deployPollTimer = null;
+    let deploySeconds = 0;
+    let timerInterval = null;
+
+    // 1. 初始化 Token 与 API Base
+    const savedApi = localStorage.getItem(API_ENDPOINT_KEY);
+    if (savedApi) inputApiEndpoint.value = savedApi;
+
+    const currentToken = localStorage.getItem(TOKEN_KEY) || localStorage.getItem('access_token');
+    if (currentToken) {
+      inputAccessToken.value = currentToken;
+      authStatusText.textContent = '已鉴权 ✓';
+      authStatusText.classList.add('text-emerald-500');
+    } else {
+      authStatusText.textContent = '未配置 Token';
+      authStatusText.classList.add('text-amber-500');
+    }
+
+    // 2. 统计计算函数
+    function updateStats() {
+      const text = contentEl.value || '';
+      const words = text.trim() ? text.trim().split(/\s+/).length + (text.match(/[\u4e00-\u9fa5]/g) || []).length : 0;
+      const lines = text ? text.split('\n').length : 0;
+      const minutes = Math.max(1, Math.ceil(words / 300));
+
+      statWords.textContent = words.toLocaleString();
+      statLines.textContent = lines.toLocaleString();
+      statMinutes.textContent = minutes.toString();
+    }
+
+    // 3. LocalStorage 实时自动暂存草稿
+    function saveDraft() {
+      const draft = {
+        title: titleEl.value,
+        slug: slugEl.value,
+        tags: tagsEl.value,
+        category: categoryEl.value,
+        description: descEl.value,
+        content: contentEl.value,
+        savedAt: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+
+      draftStatusEl.classList.remove('hidden');
+      draftStatusEl.classList.add('flex');
+      draftTimeTextEl.textContent = `草稿已于 ${draft.savedAt} 暂存`;
+    }
+
+    function triggerAutoSave() {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        saveDraft();
+        updateStats();
+      }, 300);
+    }
+
+    // 恢复草稿
+    function restoreDraft() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const draft = JSON.parse(raw);
+        if (draft.title) titleEl.value = draft.title;
+        if (draft.slug) {
+          slugEl.value = draft.slug;
+          isAutoSlug = false;
+        }
+        if (draft.tags) tagsEl.value = draft.tags;
+        if (draft.category) categoryEl.value = draft.category;
+        if (draft.description) descEl.value = draft.description;
+        if (draft.content) contentEl.value = draft.content;
+
+        if (draft.savedAt) {
+          draftStatusEl.classList.remove('hidden');
+          draftStatusEl.classList.add('flex');
+          draftTimeTextEl.textContent = `已恢复上次草稿 (${draft.savedAt})`;
+        }
+        updateStats();
+      } catch (e) {}
+    }
+
+    // 4. Slug 智能转换（标题小写化中划线连接）
+    function toKebabSlug(str) {
+      return str
+        .toLowerCase()
+        .trim()
+        .replace(/[\s\-_]+/g, '-')
+        .replace(/[^\w\u4e00-\u9fa5\-]+/g, '')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    titleEl.addEventListener('input', () => {
+      if (isAutoSlug) {
+        slugEl.value = toKebabSlug(titleEl.value);
+      }
+      triggerAutoSave();
+    });
+
+    slugEl.addEventListener('input', () => {
+      isAutoSlug = false;
+      triggerAutoSave();
+    });
+
+    btnToggleAutoSlug.addEventListener('click', () => {
+      isAutoSlug = true;
+      slugEl.value = toKebabSlug(titleEl.value);
+      triggerAutoSave();
+    });
+
+    [tagsEl, categoryEl, descEl, contentEl].forEach(el => {
+      el.addEventListener('input', triggerAutoSave);
+    });
+
+    // 清空草稿
+    btnClearDraft.addEventListener('click', () => {
+      if (confirm('确认清空当前所有输入及本地草稿缓存吗？此操作无法撤销喵！')) {
+        localStorage.removeItem(STORAGE_KEY);
+        titleEl.value = '';
+        slugEl.value = '';
+        tagsEl.value = '';
+        descEl.value = '';
+        contentEl.value = '';
+        categoryEl.value = '技术分享';
+        isAutoSlug = true;
+        draftStatusEl.classList.add('hidden');
+        updateStats();
+      }
+    });
+
+    // 5. 快捷工具栏注入
+    document.querySelectorAll('.toolbar-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const syntax = btn.getAttribute('data-syntax');
+        const prefix = btn.getAttribute('data-prefix');
+        const wrapStart = btn.getAttribute('data-wrap');
+        const wrapEnd = btn.getAttribute('data-wrap-end');
+        const insert = btn.getAttribute('data-insert');
+
+        const start = contentEl.selectionStart;
+        const end = contentEl.selectionEnd;
+        const selected = contentEl.value.substring(start, end);
+        let replacement = '';
+
+        if (syntax) {
+          replacement = `${syntax}${selected || '文本'}${syntax}`;
+        } else if (prefix) {
+          replacement = `${prefix}${selected || '标题'}`;
+        } else if (wrapStart && wrapEnd) {
+          replacement = `${wrapStart}${selected || '内容'}${wrapEnd}`;
+        } else if (insert) {
+          replacement = insert;
+        }
+
+        contentEl.setRangeText(replacement, start, end, 'select');
+        contentEl.focus();
+        triggerAutoSave();
+      });
+    });
+
+    // 6. 快捷键 Ctrl+S / Cmd+S 发布拦截
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        publishPost();
+      }
+    });
+
+    // 7. 鉴权配置 Modal
+    btnAuthConfig.addEventListener('click', () => {
+      modalAuth.classList.remove('hidden');
+    });
+
+    btnCloseModal.addEventListener('click', () => {
+      modalAuth.classList.add('hidden');
+    });
+
+    btnSaveAuth.addEventListener('click', () => {
+      const endpoint = inputApiEndpoint.value.trim().replace(/\/$/, '');
+      const token = inputAccessToken.value.trim();
+
+      if (endpoint) localStorage.setItem(API_ENDPOINT_KEY, endpoint);
+      if (token) {
+        localStorage.setItem(TOKEN_KEY, token);
+        authStatusText.textContent = '已鉴权 ✓';
+        authStatusText.classList.remove('text-amber-500');
+        authStatusText.classList.add('text-emerald-500');
+      }
+      modalAuth.classList.add('hidden');
+    });
+
+    // 8. 核心发布流程与构建监听
+    async function publishPost() {
+      const title = titleEl.value.trim();
+      const slug = slugEl.value.trim();
+      const description = descEl.value.trim();
+      const content = contentEl.value.trim();
+      const tags = tagsEl.value.trim();
+      const category = categoryEl.value.trim();
+
+      if (!title || !slug || !content) {
+        alert('请完整填写文章标题、Slug 路径以及 Markdown 正文内容 喵！');
+        return;
+      }
+
+      const token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem('access_token');
+      if (!token) {
+        alert('尚未配置博主 Token！请先点击右上角“鉴权凭据”按钮填入有效 Token 喵！');
+        modalAuth.classList.remove('hidden');
+        return;
+      }
+
+      const apiBase = (localStorage.getItem(API_ENDPOINT_KEY) || 'https://zk-api.yaoxi.cloud').replace(/\/$/, '');
+
+      // 进入发布状态
+      btnPublish.disabled = true;
+      publishSpinner.classList.remove('hidden');
+      publishIcon.classList.add('hidden');
+      btnPublishText.textContent = '正在发布...';
+
+      // 呼出部署面板
+      deployPanel.classList.remove('hidden');
+      deploySuccessLinks.classList.add('hidden');
+      deployProgressBar.style.width = '20%';
+      deployProgressBar.className = 'h-full bg-[var(--primary)] transition-all duration-500 ease-out rounded-full';
+      deployTitle.textContent = '正在向 GitHub 提交新文章 Commit...';
+      deploySubtitle.textContent = '生成符合 Astro Content Collections 规范的 Markdown 产物';
+      deployBadge.textContent = 'PUBLISHING';
+      deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20';
+      deployStageInfo.textContent = '阶段: GitHub API';
+
+      deploySeconds = 0;
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        deploySeconds++;
+        deployTimer.textContent = `耗时: ${deploySeconds}s`;
+      }, 1000);
+
+      try {
+        // 请求 Worker POST /api/publish
+        const res = await fetch(`${apiBase}/api/publish`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            title,
+            slug,
+            content,
+            tags,
+            description: description || title,
+            category: category || '技术分享',
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({ message: '网络请求错误' }));
+          throw new Error(errData.message || errData.details || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        const commitSha = data.commit_sha;
+
+        deployProgressBar.style.width = '40%';
+        deployTitle.textContent = `GitHub 提交成功 (${commitSha.substring(0, 7)})`;
+        deploySubtitle.textContent = '等待 Cloudflare Pages 启动自动化构建流水线...';
+        deployBadge.textContent = 'QUEUED';
+        deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20';
+
+        // 启动 3 秒轮询 GET /api/deploy-status
+        pollDeployStatus(apiBase, token, commitSha, slug);
+
+      } catch (err) {
+        clearInterval(timerInterval);
+        deployTitle.textContent = '发布提交失败 喵！';
+        deploySubtitle.textContent = err.message;
+        deployBadge.textContent = 'ERROR';
+        deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-red-500/10 text-red-500 border border-red-500/20';
+        deployProgressBar.style.width = '100%';
+        deployProgressBar.className = 'h-full bg-red-500 rounded-full';
+
+        btnPublish.disabled = false;
+        publishSpinner.classList.add('hidden');
+        publishIcon.classList.remove('hidden');
+        btnPublishText.textContent = '重新发布';
+      }
+    }
+
+    // 9. 轮询 Cloudflare Pages 部署状态
+    function pollDeployStatus(apiBase, token, commitSha, slug) {
+      if (deployPollTimer) clearInterval(deployPollTimer);
+
+      deployPollTimer = setInterval(async () => {
+        try {
+          const res = await fetch(`${apiBase}/api/deploy-status?commit=${commitSha}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!res.ok) return;
+
+          const data = await res.json();
+          const status = data.status; // 'queued' | 'active' | 'success' | 'failure'
+          const stage = data.stage || 'build';
+
+          if (status === 'queued') {
+            deployProgressBar.style.width = '35%';
+            deployBadge.textContent = 'QUEUED';
+            deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20';
+            deployTitle.textContent = 'Cloudflare Pages 构建排队中...';
+            deployStageInfo.textContent = `阶段: ${stage}`;
+          } else if (status === 'active') {
+            deployProgressBar.style.width = '70%';
+            deployBadge.textContent = 'ACTIVE';
+            deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20 animate-pulse';
+            deployTitle.textContent = 'Cloudflare Pages 正在构建与静态编译中...';
+            deployStageInfo.textContent = `阶段: ${stage}`;
+          } else if (status === 'success') {
+            // 部署成功！
+            clearInterval(deployPollTimer);
+            clearInterval(timerInterval);
+
+            deployProgressBar.style.width = '100%';
+            deployProgressBar.className = 'h-full bg-emerald-500 rounded-full transition-all';
+            deployBadge.textContent = 'SUCCESS';
+            deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
+            deployTitle.textContent = '🎉 全球边缘发布完成！文章已正式上线 喵！';
+            deploySubtitle.textContent = `Commit: ${commitSha.substring(0, 7)} · 全球 Anycast CDN 缓存已刷新`;
+            deployStageInfo.textContent = `阶段: 完成 (${stage})`;
+
+            // 成功后清除草稿
+            localStorage.removeItem(STORAGE_KEY);
+            draftStatusEl.classList.add('hidden');
+
+            // 呈现跳转与预览链接
+            const cleanSlug = slug.replace(/\.md$/, '').replace(/^\/+/, '');
+            linkLivePost.href = `/posts/${cleanSlug}/`;
+            linkPreviewUrl.href = data.preview_url || `https://astro.pages.dev`;
+            linkPreviewUrl.textContent = `预览节点 (${(data.preview_url || 'pages.dev').replace('https://', '').substring(0, 18)}...)`;
+            deploySuccessLinks.classList.remove('hidden');
+
+            btnPublish.disabled = false;
+            publishSpinner.classList.add('hidden');
+            publishIcon.classList.remove('hidden');
+            btnPublishText.textContent = '已发布上线';
+          } else if (status === 'failure') {
+            clearInterval(deployPollTimer);
+            clearInterval(timerInterval);
+
+            deployProgressBar.style.width = '100%';
+            deployProgressBar.className = 'h-full bg-red-500 rounded-full';
+            deployBadge.textContent = 'FAILURE';
+            deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-red-500/10 text-red-500 border border-red-500/20';
+            deployTitle.textContent = 'Cloudflare Pages 构建失败 喵！';
+            deploySubtitle.textContent = '请进入 Cloudflare 控制台查看详细构建日志与报错。';
+
+            btnPublish.disabled = false;
+            publishSpinner.classList.add('hidden');
+            publishIcon.classList.remove('hidden');
+            btnPublishText.textContent = '重试发布';
+          }
+        } catch (e) {
+          deployStageInfo.textContent = '探针网络微抖动，继续重试轮询中...';
+        }
+      }, 3000);
+    }
+
+    // 再写一篇
+    btnContinueWriting.addEventListener('click', () => {
+      titleEl.value = '';
+      slugEl.value = '';
+      tagsEl.value = '';
+      descEl.value = '';
+      contentEl.value = '';
+      isAutoSlug = true;
+      deployPanel.classList.add('hidden');
+      deploySuccessLinks.classList.add('hidden');
+      btnPublishText.textContent = '发布并构建';
+      updateStats();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    btnPublish.addEventListener('click', publishPost);
+
+    // 页面启动时恢复草稿
+    restoreDraft();
+  })();
+</script>
