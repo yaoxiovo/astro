@@ -1,0 +1,10 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import AdminPublish from "@components/AdminPublish.svelte";
+---
+
+<MainGridLayout title="受限文章发布控制台" description="Astro 端到端零知识混合加密发布控制台" noindex>
+  <div class="card-base px-4 md:px-8 pt-6 pb-8">
+    <AdminPublish client:only="svelte" />
+  </div>
+</MainGridLayout>

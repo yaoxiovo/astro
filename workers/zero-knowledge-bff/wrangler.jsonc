@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zero-knowledge-bff",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-08-11",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "zk-api.yaoxi.cloud",
+      "custom_domain": true
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "yaoxi-blog-d1",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "REPLACE_WITH_OAUTH_KV_ID"
+    }
+  ],
+  "vars": {
+    "GITHUB_REPO_OWNER": "yaoxiovo",
+    "GITHUB_REPO_NAME": "astro",
+    "CF_PAGES_PROJECT": "astro"
+  }
+}

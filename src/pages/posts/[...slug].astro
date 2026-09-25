@@ -5,6 +5,7 @@ import Markdown from "@components/misc/Markdown.astro";
 import SeriesNav from "@components/SeriesNav.astro";
 import CyberSummary from "@components/CyberSummary.astro";
 import PosterGenerator from "@components/PosterGenerator.astro";
+import EncryptedReader from "@components/EncryptedReader.svelte";
 // KaTeX 样式仅在文章页加载（避免全站阻塞渲染）
 import "katex/dist/katex.css";
 
@@ -97,6 +98,12 @@ const jsonLd = {
 		: {}),
 	...(entry.data.category ? { articleSection: entry.data.category } : {}),
 };
+
+let encryptedPayloadJson = "";
+if (entry.data.encrypted && (entry as any).body) {
+	const match = ((entry as any).body as string).match(/```encrypted-payload\s*\n([\s\S]*?)\n```/);
+	encryptedPayloadJson = match ? match[1].trim() : "";
+}
 ---
 <MainGridLayout banner={entry.data.image} image={articleImageUrl} title={entry.data.title} description={entry.data.description} lang={entry.data.lang} setOGTypeArticle={true} headings={headings} keywords={entry.data.tags} publishedTime={datePublishedISO} modifiedTime={dateModifiedISO} author={authorName}>
     <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
@@ -164,9 +171,13 @@ const jsonLd = {
                 <SeriesNav series={seriesName} posts={seriesPosts} currentSlug={entry.id} />
             )}
 
-            <Markdown class="mb-6 markdown-content onload-animation">
-                <Content />
-            </Markdown>
+            {entry.data.encrypted ? (
+                <EncryptedReader client:only="svelte" rawPayloadJson={encryptedPayloadJson} />
+            ) : (
+                <Markdown class="mb-6 markdown-content onload-animation">
+                    <Content />
+                </Markdown>
+            )}
 
             <!-- 文章反馈与编辑区域 -->
             <div class="mb-4 p-4 rounded-lg bg-[var(--license-block-bg)] border border-[var(--line-divider)] onload-animation">
