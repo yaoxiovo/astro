@@ -199,8 +199,29 @@ import Layout from "@layouts/Layout.astro";
           <button id="btn-close-modal" class="text-black/40 dark:text-white/40 hover:text-black/80 dark:hover:text-white/80">✕</button>
         </div>
 
+        <!-- SSO 身份状态联动卡片 -->
+        <div id="modal-sso-card" class="p-3.5 rounded-xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)] mb-4">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span id="modal-sso-indicator" class="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0"></span>
+              <div class="truncate">
+                <div id="modal-sso-name" class="text-xs font-bold text-black/85 dark:text-white/85 truncate">正在检测登录状态...</div>
+                <div id="modal-sso-sub" class="text-[11px] text-black/40 dark:text-white/40 font-mono truncate">耀西统一身份认证中心 (SSO)</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button type="button" id="btn-modal-sso-login" class="px-2.5 py-1.5 rounded-lg bg-[var(--primary)] text-white dark:text-black text-xs font-semibold hover:opacity-90 active:scale-95 transition-all">
+                🔑 一键登录
+              </button>
+              <button type="button" id="btn-modal-sso-logout" class="hidden px-2.5 py-1.5 rounded-lg bg-black/10 dark:bg-white/10 hover:bg-black/15 text-xs text-red-500 transition-all">
+                退出
+              </button>
+            </div>
+          </div>
+        </div>
+
         <p class="text-xs text-black/60 dark:text-white/60 mb-4 leading-relaxed">
-          发布接口挂载了严格的 JWT 鉴权中间件。请填入经过博主自研 OAuth 2.0 / Passkey 认证中心签发的 Access Token，调用发布接口时会自动挂载在请求头中。
+          发布接口挂载了严格的 JWT 鉴权中间件。主站已登录时将<span class="text-[var(--primary)] font-medium">自动无感读取凭据</span>；若需切换环境，也可手动指定 Worker 接口地址或覆盖 Token。
         </p>
 
         <div class="space-y-3 mb-5">
@@ -209,8 +230,8 @@ import Layout from "@layouts/Layout.astro";
             <input type="text" id="input-api-endpoint" value="https://zk-api.yaoxi.cloud" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none" />
           </div>
           <div>
-            <label for="input-access-token" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1">博主 Bearer Access Token</label>
-            <textarea id="input-access-token" rows="4" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none resize-none"></textarea>
+            <label for="input-access-token" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1">博主 Bearer Access Token (手动覆盖)</label>
+            <textarea id="input-access-token" rows="3" placeholder="自动从主站 SSO 同步，或手动粘贴 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none resize-none"></textarea>
           </div>
         </div>
 
@@ -247,8 +268,14 @@ import Layout from "@layouts/Layout.astro";
 <script is:inline>
   (function initAdminStudio() {
     const STORAGE_KEY = 'yaoxi_admin_post_draft';
-    const TOKEN_KEY = 'yaoxi_access_token';
     const API_ENDPOINT_KEY = 'yaoxi_worker_api_base';
+    const TOKEN_CANDIDATE_KEYS = [
+      'yaoxi_auth_token',     // yaoxi-auth.js SSO 核心 Token
+      'yaoxi_client_token',    // yaoxi-auth.js 客户端备用 Token
+      'yaoxi_access_token',    // admin 历史保存 Token
+      'access_token',          // 标准 OAuth 2.0 Token
+      'token',
+    ];
 
     // DOM 元素获取
     const titleEl = document.getElementById('post-title');
@@ -294,25 +321,116 @@ import Layout from "@layouts/Layout.astro";
     const inputApiEndpoint = document.getElementById('input-api-endpoint');
     const inputAccessToken = document.getElementById('input-access-token');
 
+    // SSO 身份联动元素
+    const modalSsoIndicator = document.getElementById('modal-sso-indicator');
+    const modalSsoName = document.getElementById('modal-sso-name');
+    const modalSsoSub = document.getElementById('modal-sso-sub');
+    const btnModalSsoLogin = document.getElementById('btn-modal-sso-login');
+    const btnModalSsoLogout = document.getElementById('btn-modal-sso-logout');
+
     let isAutoSlug = true;
     let saveTimeout = null;
     let deployPollTimer = null;
     let deploySeconds = 0;
     let timerInterval = null;
 
-    // 1. 初始化 Token 与 API Base
+    // 1. 统一 Token 与鉴权状态感知（自动打通主站 SSO 与本地 Storage）
+    function getAdminToken() {
+      // 优先从全局 SSO SDK 获取（内置过期时间校验）
+      if (window.yaoxiAuth && typeof window.yaoxiAuth.getToken === 'function') {
+        const sdkToken = window.yaoxiAuth.getToken();
+        if (sdkToken) return sdkToken;
+      }
+      // 逐级探测 localStorage 与 sessionStorage
+      for (const k of TOKEN_CANDIDATE_KEYS) {
+        const val = localStorage.getItem(k) || sessionStorage.getItem(k);
+        if (val && typeof val === 'string' && val.trim().length > 10) {
+          return val.trim();
+        }
+      }
+      return null;
+    }
+
+    function getAdminUser() {
+      if (window.yaoxiAuth && typeof window.yaoxiAuth.getUser === 'function') {
+        const u = window.yaoxiAuth.getUser();
+        if (u) return u;
+      }
+      const userKeys = ['yaoxi_auth_user', 'yaoxi_client_user', 'user_profile'];
+      for (const k of userKeys) {
+        const raw = localStorage.getItem(k) || sessionStorage.getItem(k);
+        if (raw) {
+          try {
+            return JSON.parse(raw);
+          } catch (e) {}
+        }
+      }
+      const token = getAdminToken();
+      if (token && window.yaoxiAuth && typeof window.yaoxiAuth.parseJwtPayload === 'function') {
+        try {
+          return window.yaoxiAuth.parseJwtPayload(token);
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    function syncAuthUI() {
+      const token = getAdminToken();
+      const user = getAdminUser();
+
+      if (token) {
+        const displayName = (user && (user.name || user.username || user.sub))
+          ? (user.name || user.username || user.sub)
+          : '博主';
+        authStatusText.textContent = `已鉴权 (${displayName}) ✓`;
+        authStatusText.classList.remove('text-amber-500');
+        authStatusText.classList.add('text-emerald-500');
+
+        if (!inputAccessToken.value || inputAccessToken.value !== token) {
+          inputAccessToken.value = token;
+        }
+
+        if (modalSsoIndicator) {
+          modalSsoIndicator.className = 'h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20 shrink-0';
+        }
+        if (modalSsoName) {
+          modalSsoName.textContent = `${displayName} · 已完成认证`;
+        }
+        if (modalSsoSub) {
+          const role = user?.role || 'admin';
+          modalSsoSub.textContent = `UID: ${user?.sub || '博主账户'} · 权限: ${role}`;
+        }
+        if (btnModalSsoLogin) {
+          btnModalSsoLogin.innerHTML = '<span>🔄 重新登录</span>';
+        }
+        if (btnModalSsoLogout) {
+          btnModalSsoLogout.classList.remove('hidden');
+        }
+      } else {
+        authStatusText.textContent = '未登录 / 无凭据';
+        authStatusText.classList.remove('text-emerald-500');
+        authStatusText.classList.add('text-amber-500');
+
+        if (modalSsoIndicator) {
+          modalSsoIndicator.className = 'h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0';
+        }
+        if (modalSsoName) {
+          modalSsoName.textContent = '未检测到 SSO 登录状态';
+        }
+        if (modalSsoSub) {
+          modalSsoSub.textContent = '点击右侧按钮调起 accounts.yaoxi.cloud 登录';
+        }
+        if (btnModalSsoLogin) {
+          btnModalSsoLogin.innerHTML = '<span>🔑 一键登录</span>';
+        }
+        if (btnModalSsoLogout) {
+          btnModalSsoLogout.classList.add('hidden');
+        }
+      }
+    }
+
     const savedApi = localStorage.getItem(API_ENDPOINT_KEY);
     if (savedApi) inputApiEndpoint.value = savedApi;
-
-    const currentToken = localStorage.getItem(TOKEN_KEY) || localStorage.getItem('access_token');
-    if (currentToken) {
-      inputAccessToken.value = currentToken;
-      authStatusText.textContent = '已鉴权 ✓';
-      authStatusText.classList.add('text-emerald-500');
-    } else {
-      authStatusText.textContent = '未配置 Token';
-      authStatusText.classList.add('text-amber-500');
-    }
 
     // 2. 统计计算函数
     function updateStats() {
@@ -463,8 +581,9 @@ import Layout from "@layouts/Layout.astro";
       }
     });
 
-    // 7. 鉴权配置 Modal
+    // 7. 鉴权配置 Modal 与 SSO 联动
     btnAuthConfig.addEventListener('click', () => {
+      syncAuthUI();
       modalAuth.classList.remove('hidden');
     });
 
@@ -472,17 +591,58 @@ import Layout from "@layouts/Layout.astro";
       modalAuth.classList.add('hidden');
     });
 
+    if (btnModalSsoLogin) {
+      btnModalSsoLogin.addEventListener('click', async () => {
+        if (typeof window.yaoxiLogin === 'function') {
+          try {
+            btnModalSsoLogin.disabled = true;
+            btnModalSsoLogin.textContent = '调起中...';
+            const res = await window.yaoxiLogin('popup');
+            if (res && res.accessToken) {
+              inputAccessToken.value = res.accessToken;
+            }
+          } catch (err) {
+            console.warn('[Admin] SSO 登录中止或失败:', err);
+          } finally {
+            btnModalSsoLogin.disabled = false;
+            syncAuthUI();
+          }
+        } else {
+          alert('YaoxiAuth SSO 客户端尚未完成加载，请刷新页面后重试 喵！');
+        }
+      });
+    }
+
+    if (btnModalSsoLogout) {
+      btnModalSsoLogout.addEventListener('click', () => {
+        if (typeof window.yaoxiLogout === 'function') {
+          window.yaoxiLogout();
+        } else if (window.yaoxiAuth && typeof window.yaoxiAuth.logout === 'function') {
+          window.yaoxiAuth.logout();
+        }
+        TOKEN_CANDIDATE_KEYS.forEach((k) => {
+          localStorage.removeItem(k);
+          sessionStorage.removeItem(k);
+        });
+        localStorage.removeItem('yaoxi_auth_user');
+        localStorage.removeItem('yaoxi_client_user');
+        localStorage.removeItem('user_profile');
+        inputAccessToken.value = '';
+        syncAuthUI();
+      });
+    }
+
     btnSaveAuth.addEventListener('click', () => {
       const endpoint = inputApiEndpoint.value.trim().replace(/\/$/, '');
       const token = inputAccessToken.value.trim();
 
       if (endpoint) localStorage.setItem(API_ENDPOINT_KEY, endpoint);
       if (token) {
-        localStorage.setItem(TOKEN_KEY, token);
-        authStatusText.textContent = '已鉴权 ✓';
-        authStatusText.classList.remove('text-amber-500');
-        authStatusText.classList.add('text-emerald-500');
+        localStorage.setItem('yaoxi_access_token', token);
+        localStorage.setItem('yaoxi_auth_token', token);
+        localStorage.setItem('yaoxi_client_token', token);
       }
+      syncAuthUI();
       modalAuth.classList.add('hidden');
     });
 
@@ -500,9 +660,9 @@ import Layout from "@layouts/Layout.astro";
         return;
       }
 
-      const token = localStorage.getItem(TOKEN_KEY) || localStorage.getItem('access_token');
+      const token = getAdminToken();
       if (!token) {
-        alert('尚未配置博主 Token！请先点击右上角“鉴权凭据”按钮填入有效 Token 喵！');
+        alert('尚未获取到有效博主 Token！请先一键登录或在“鉴权凭据”中填入 Token 喵！');
         modalAuth.classList.remove('hidden');
         return;
       }
@@ -590,9 +750,10 @@ import Layout from "@layouts/Layout.astro";
 
       deployPollTimer = setInterval(async () => {
         try {
+          const activeToken = token || getAdminToken();
           const res = await fetch(`${apiBase}/api/deploy-status?commit=${commitSha}`, {
             headers: {
-              'Authorization': `Bearer ${token}`
+              'Authorization': `Bearer ${activeToken}`
             }
           });
 
@@ -680,6 +841,25 @@ import Layout from "@layouts/Layout.astro";
     });
 
     btnPublish.addEventListener('click', publishPost);
+
+    // 监听全局 SSO 状态变化广播
+    window.addEventListener('yaoxi:auth:change', () => {
+      syncAuthUI();
+    });
+
+    // 监听跨标签页 Storage 变更（例如在主站或其他标签页完成登录）
+    window.addEventListener('storage', (e) => {
+      if (!e.key || e.key.includes('auth') || e.key.includes('token') || e.key.includes('user')) {
+        syncAuthUI();
+      }
+    });
+
+    // 初始执行与异步梯度重试探测（确保无论 SDK 何时挂载都能瞬间响应并同步）
+    syncAuthUI();
+    setTimeout(syncAuthUI, 100);
+    setTimeout(syncAuthUI, 300);
+    setTimeout(syncAuthUI, 800);
+    setTimeout(syncAuthUI, 1500);
 
     // 页面启动时恢复草稿
     restoreDraft();
