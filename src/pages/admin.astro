@@ -4,7 +4,105 @@ import { umamiConfig } from "../config";
 ---
 
 <Layout title="文章发布与部署控制台 | 瑶曦博客" description="开箱即用的 Astro 博客便捷发布后台与实时部署监听系统" noindex={true}>
-  <div id="admin-studio-root" class="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto" data-umami-base={umamiConfig.baseUrl} data-umami-share={umamiConfig.shareId}>
+  <!-- 🛡️ 管理后台安全访问守卫 (Admin Authentication & Role Guard) -->
+  <div id="admin-guard-container" class="min-h-[75vh] flex items-center justify-center py-12 px-4 sm:px-6 max-w-lg mx-auto transition-all duration-300">
+    
+    <!-- 状态 1: 正在校验管理权限 -->
+    <div id="guard-state-checking" class="w-full p-8 rounded-3xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)] shadow-xl backdrop-blur-xl text-center animate-fade-in">
+      <div class="inline-flex p-3 rounded-2xl bg-[var(--primary)]/10 text-[var(--primary)] mb-4 animate-pulse">
+        <svg class="animate-spin h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold text-black/90 dark:text-white/90 mb-2">
+        正在校验管理权限 喵...
+      </h3>
+      <p class="text-xs text-black/50 dark:text-white/50 leading-relaxed font-mono">
+        正在核验统一身份认证中心 (accounts.yaoxi.cloud) 下发的身份凭据与权限...
+      </p>
+    </div>
+
+    <!-- 状态 2: 检测到未登录，正在跳转至登录页 -->
+    <div id="guard-state-redirecting" class="hidden w-full p-8 rounded-3xl bg-black/5 dark:bg-white/5 border border-amber-500/20 shadow-xl backdrop-blur-xl text-center animate-fade-in">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center ring-8 ring-amber-500/5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+        </svg>
+      </div>
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 font-mono text-xs font-bold uppercase mb-3">
+        Redirecting · 未检测到登录
+      </div>
+      <h3 class="text-lg sm:text-xl font-bold text-black/90 dark:text-white/90 mb-2">
+        检测到未登录，正在跳转 喵！
+      </h3>
+      <p class="text-xs sm:text-sm text-black/60 dark:text-white/60 mb-6 leading-relaxed">
+        本后台仅限管理员访问。即将自动跳转至 <strong>耀西统一身份认证中心 (accounts.yaoxi.cloud)</strong> 完成登录喵呜~
+      </p>
+      <a id="btn-manual-login" href="https://accounts.yaoxi.cloud" class="w-full py-2.5 px-4 rounded-xl bg-[var(--primary)] text-white dark:text-black font-semibold text-xs shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+        <span>🔑 若未自动跳转，点击此处手动前往登录 喵</span>
+      </a>
+    </div>
+
+    <!-- 状态 3: 检测到已登录但不是管理员权限，直接安全拦截 (403 Forbidden) -->
+    <div id="guard-state-forbidden" class="hidden w-full p-8 rounded-3xl bg-black/5 dark:bg-white/5 border border-red-500/20 shadow-2xl backdrop-blur-xl text-center animate-fade-in">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center ring-8 ring-red-500/5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3.5a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 text-red-500 font-mono text-xs font-bold uppercase mb-3">
+        403 Forbidden · 权限不足
+      </div>
+      <h2 class="text-xl sm:text-2xl font-bold text-black/90 dark:text-white/90 mb-2">
+        访问已被安全拦截 喵！
+      </h2>
+      <p class="text-xs sm:text-sm text-black/60 dark:text-white/60 mb-6 leading-relaxed">
+        本后台仅对系统<strong>【管理员 (admin)】</strong>开放喵！统一身份认证中心下发的信息确认你当前仅拥有<strong>【成员 (member)】</strong>权限，已被安全网关直接拦截喵呜~！
+      </p>
+      
+      <!-- 当前登录身份信息卡片 -->
+      <div class="p-4 rounded-2xl bg-black/5 dark:bg-white/10 text-left mb-6 text-xs space-y-2.5 font-mono border border-[var(--line-divider)]">
+        <div class="flex justify-between items-center text-black/60 dark:text-white/60">
+          <span>登录账号:</span>
+          <span id="forbidden-user-name" class="font-bold text-black/90 dark:text-white/90"></span>
+        </div>
+        <div class="flex justify-between items-center text-black/60 dark:text-white/60">
+          <span>账号 UID:</span>
+          <span id="forbidden-user-uid" class="text-black/80 dark:text-white/80"></span>
+        </div>
+        <div class="flex justify-between items-center text-black/60 dark:text-white/60">
+          <span>下发角色:</span>
+          <span id="forbidden-user-role" class="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 font-bold">成员 (member)</span>
+        </div>
+        <div class="flex justify-between items-center text-black/60 dark:text-white/60">
+          <span>所需角色:</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-bold">系统管理员 (admin)</span>
+        </div>
+      </div>
+
+      <!-- 操作按钮群 -->
+      <div class="flex flex-col gap-2.5">
+        <button type="button" id="btn-forbidden-switch" class="w-full py-2.5 px-4 rounded-xl bg-[var(--primary)] text-white dark:text-black font-semibold text-xs shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          <span>🔄 切换管理员账号登录 喵</span>
+        </button>
+        <div class="flex items-center gap-2.5">
+          <a href="/" class="flex-1 py-2.5 px-4 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/15 text-xs font-medium text-black/80 dark:text-white/80 transition-all flex items-center justify-center gap-1.5">
+            <span>🏠 返回主站</span>
+          </a>
+          <button type="button" id="btn-forbidden-logout" class="py-2.5 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer">
+            <span>🚪 退出登录</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="admin-studio-root" style="display: none;" class="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto" data-umami-base={umamiConfig.baseUrl} data-umami-share={umamiConfig.shareId}>
     
     <!-- 顶部状态栏 -->
     <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 mb-8 border-b border-[var(--line-divider)] gap-4">
@@ -611,14 +709,84 @@ import { umamiConfig } from "../config";
     let deploySeconds = 0;
     let timerInterval = null;
 
+    // 0. JWT 解析与 URL 回调提取引擎
+    function parseJwtPayload(jwtToken) {
+      if (!jwtToken || typeof jwtToken !== 'string') return null;
+      try {
+        const parts = jwtToken.split('.');
+        if (parts.length >= 2) {
+          const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+          const jsonStr = decodeURIComponent(escape(atob(base64)));
+          return JSON.parse(jsonStr);
+        }
+      } catch (e) {
+        try {
+          const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+          return JSON.parse(atob(base64));
+        } catch (err) {}
+      }
+      return null;
+    }
+
+    function saveCallbackToken(token, expiresInSec) {
+      if (!token) return;
+      const exp = parseInt(expiresInSec, 10) || 7200;
+      const expTime = Date.now() + exp * 1000;
+      localStorage.setItem('yaoxi_auth_token', token);
+      localStorage.setItem('yaoxi_access_token', token);
+      localStorage.setItem('access_token', token);
+      localStorage.setItem('yaoxi_auth_exp', expTime.toString());
+
+      const user = parseJwtPayload(token);
+      if (user) {
+        localStorage.setItem('yaoxi_auth_user', JSON.stringify(user));
+        localStorage.setItem('user_profile', JSON.stringify(user));
+      }
+    }
+
+    function handleUrlCallback() {
+      // 1. 优先捕获 hash 模式回调 (#access_token=...)
+      if (window.location.hash && window.location.hash.includes('access_token')) {
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        if (accessToken) {
+          saveCallbackToken(accessToken, params.get('expires_in'));
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+          }
+          return true;
+        }
+      }
+      // 2. 检查 query 模式回调 (?access_token=... 或 ?token=...)
+      if (window.location.search && (window.location.search.includes('access_token') || window.location.search.includes('token'))) {
+        const params = new URLSearchParams(window.location.search);
+        const accessToken = params.get('access_token') || params.get('token');
+        if (accessToken) {
+          saveCallbackToken(accessToken, params.get('expires_in'));
+          if (window.history && window.history.replaceState) {
+            params.delete('access_token');
+            params.delete('token');
+            params.delete('expires_in');
+            const newSearch = params.toString() ? '?' + params.toString() : '';
+            window.history.replaceState(null, document.title, window.location.pathname + newSearch + window.location.hash);
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
     // 1. 统一 Token 与鉴权状态感知（自动打通主站 SSO 与本地 Storage）
     function getAdminToken() {
-      // 优先从全局 SSO SDK 获取（内置过期时间校验）
       if (window.yaoxiAuth && typeof window.yaoxiAuth.getToken === 'function') {
         const sdkToken = window.yaoxiAuth.getToken();
         if (sdkToken) return sdkToken;
       }
-      // 逐级探测 localStorage 与 sessionStorage
+      const expStr = localStorage.getItem('yaoxi_auth_exp');
+      if (expStr && Date.now() >= parseInt(expStr, 10)) {
+        return null;
+      }
       for (const k of TOKEN_CANDIDATE_KEYS) {
         const val = localStorage.getItem(k) || sessionStorage.getItem(k);
         if (val && typeof val === 'string' && val.trim().length > 10) {
@@ -643,12 +811,119 @@ import { umamiConfig } from "../config";
         }
       }
       const token = getAdminToken();
-      if (token && window.yaoxiAuth && typeof window.yaoxiAuth.parseJwtPayload === 'function') {
-        try {
-          return window.yaoxiAuth.parseJwtPayload(token);
-        } catch (e) {}
+      if (token) {
+        return parseJwtPayload(token);
       }
       return null;
+    }
+
+    /**
+     * 校验当前用户是否具备系统管理员 (admin) 权限
+     * 权限严格由认证中心 (accounts.yaoxi.cloud) 下发，绝不自行越权！
+     */
+    function checkUserIsAdmin(user) {
+      if (!user || typeof user !== 'object') return false;
+      const rawRole = String(user.role || '').toLowerCase().trim();
+      let roles = [];
+      if (Array.isArray(user.roles)) {
+        roles = user.roles.map((r) => String(r).toLowerCase().trim());
+      } else if (typeof user.roles === 'string') {
+        roles = user.roles.toLowerCase().split(',').map((r) => r.trim());
+      }
+      return (
+        rawRole === 'admin' ||
+        rawRole === 'administrator' ||
+        roles.includes('admin') ||
+        roles.includes('administrator') ||
+        user.is_admin === true ||
+        user.isAdmin === true
+      );
+    }
+
+    function buildSsoLoginUrl() {
+      const authUrl = 'https://accounts.yaoxi.cloud';
+      const clientId = 'yaoxi-blog';
+      const targetDomain = window.location.hostname;
+      const redirectUri = window.location.origin + window.location.pathname;
+
+      const params = new URLSearchParams({
+        client_id: clientId,
+        target_domain: targetDomain,
+        redirect_uri: redirectUri,
+        response_type: 'token',
+        scope: 'openid profile email admin',
+        state: 'st_' + Math.random().toString(36).substring(2, 10),
+      });
+      return `${authUrl}/accounts-login.html?${params.toString()}`;
+    }
+
+    /**
+     * 前置安全门禁与拦截器 (Gatekeeper & Interceptor)
+     * 1. 检测到未登录 -> 自动跳转到登录页
+     * 2. 检测到不是管理员权限 -> 直接拦截 (403 Forbidden)
+     * 3. 确认为管理员 -> 放行进入后台 Studio
+     */
+    function enforceAdminAuthGuard() {
+      handleUrlCallback();
+
+      const guardContainer = document.getElementById('admin-guard-container');
+      const guardChecking = document.getElementById('guard-state-checking');
+      const guardRedirecting = document.getElementById('guard-state-redirecting');
+      const guardForbidden = document.getElementById('guard-state-forbidden');
+      const studioRoot = document.getElementById('admin-studio-root');
+
+      const forbiddenUserName = document.getElementById('forbidden-user-name');
+      const forbiddenUserUid = document.getElementById('forbidden-user-uid');
+      const forbiddenUserRole = document.getElementById('forbidden-user-role');
+      const btnManualLogin = document.getElementById('btn-manual-login');
+
+      const token = getAdminToken();
+      const user = getAdminUser();
+
+      // 场景 1: 未登录 -> 拦截并自动跳转登录页
+      if (!token) {
+        if (studioRoot) studioRoot.style.display = 'none';
+        if (guardContainer) guardContainer.style.display = 'flex';
+        if (guardChecking) guardChecking.classList.add('hidden');
+        if (guardForbidden) guardForbidden.classList.add('hidden');
+        if (guardRedirecting) guardRedirecting.classList.remove('hidden');
+
+        const ssoLoginUrl = buildSsoLoginUrl();
+        if (btnManualLogin) btnManualLogin.href = ssoLoginUrl;
+
+        // 延迟 220ms 执行重定向，保证过渡自然且给用户清晰引导
+        setTimeout(() => {
+          if (!getAdminToken()) {
+            window.location.replace(ssoLoginUrl);
+          }
+        }, 220);
+        return false;
+      }
+
+      // 场景 2: 已登录，但缺乏管理员权限 -> 直接拦截 (403 Forbidden)
+      const isAdmin = checkUserIsAdmin(user);
+      if (!isAdmin) {
+        if (studioRoot) studioRoot.style.display = 'none';
+        if (guardContainer) guardContainer.style.display = 'flex';
+        if (guardChecking) guardChecking.classList.add('hidden');
+        if (guardRedirecting) guardRedirecting.classList.add('hidden');
+        if (guardForbidden) guardForbidden.classList.remove('hidden');
+
+        const displayName = (user && (user.name || user.username || user.email)) || '成员用户';
+        const uid = (user && (user.sub || user.id)) || '未知 UID';
+        const rawRole = (user && (user.role || (Array.isArray(user.roles) ? user.roles.join(', ') : ''))) || 'member';
+
+        if (forbiddenUserName) forbiddenUserName.textContent = displayName;
+        if (forbiddenUserUid) forbiddenUserUid.textContent = String(uid);
+        if (forbiddenUserRole) forbiddenUserRole.textContent = `${rawRole} (无管理员权限)`;
+
+        return false;
+      }
+
+      // 场景 3: 校验通过（管理员身份）-> 放行进入 Studio
+      if (guardContainer) guardContainer.style.display = 'none';
+      if (studioRoot) studioRoot.style.display = 'block';
+      return true;
     }
 
     function syncAuthUI() {
@@ -910,8 +1185,9 @@ import { umamiConfig } from "../config";
         localStorage.removeItem('yaoxi_auth_user');
         localStorage.removeItem('yaoxi_client_user');
         localStorage.removeItem('user_profile');
+        localStorage.removeItem('yaoxi_auth_exp');
         inputAccessToken.value = '';
-        syncAuthUI();
+        enforceAdminAuthGuard();
       });
     }
 
@@ -1573,6 +1849,11 @@ import { umamiConfig } from "../config";
     });
 
     btnPublish.addEventListener('click', () => {
+      if (!checkUserIsAdmin(getAdminUser())) {
+        alert('权限不足：当前账号不是系统管理员，已被禁止提交发布 喵！');
+        enforceAdminAuthGuard();
+        return;
+      }
       if (currentEditorMode === 'post') {
         publishPost();
       } else {
@@ -1580,26 +1861,78 @@ import { umamiConfig } from "../config";
       }
     });
 
+    // 绑定拦截页交互按钮
+    const btnForbiddenSwitch = document.getElementById('btn-forbidden-switch');
+    if (btnForbiddenSwitch) {
+      btnForbiddenSwitch.addEventListener('click', () => {
+        if (window.yaoxiAuth && typeof window.yaoxiAuth.logout === 'function') {
+          window.yaoxiAuth.logout();
+        } else {
+          TOKEN_CANDIDATE_KEYS.forEach((k) => localStorage.removeItem(k));
+          localStorage.removeItem('yaoxi_auth_user');
+          localStorage.removeItem('user_profile');
+          localStorage.removeItem('yaoxi_auth_exp');
+        }
+        window.location.replace(buildSsoLoginUrl());
+      });
+    }
+
+    const btnForbiddenLogout = document.getElementById('btn-forbidden-logout');
+    if (btnForbiddenLogout) {
+      btnForbiddenLogout.addEventListener('click', () => {
+        if (typeof window.yaoxiLogout === 'function') {
+          window.yaoxiLogout();
+        } else if (window.yaoxiAuth && typeof window.yaoxiAuth.logout === 'function') {
+          window.yaoxiAuth.logout();
+        } else {
+          TOKEN_CANDIDATE_KEYS.forEach((k) => localStorage.removeItem(k));
+          localStorage.removeItem('yaoxi_auth_user');
+          localStorage.removeItem('user_profile');
+          localStorage.removeItem('yaoxi_auth_exp');
+        }
+        window.location.reload();
+      });
+    }
+
     // 监听全局 SSO 状态变化广播
     window.addEventListener('yaoxi:auth:change', () => {
-      syncAuthUI();
+      if (enforceAdminAuthGuard()) {
+        syncAuthUI();
+      }
     });
 
     // 监听跨标签页 Storage 变更（例如在主站或其他标签页完成登录）
     window.addEventListener('storage', (e) => {
       if (!e.key || e.key.includes('auth') || e.key.includes('token') || e.key.includes('user')) {
+        if (enforceAdminAuthGuard()) {
+          syncAuthUI();
+        }
+      }
+    });
+
+    // 监听单页应用路由与页面加载
+    document.addEventListener('swup:page:view', () => {
+      if (enforceAdminAuthGuard()) {
+        syncAuthUI();
+      }
+    });
+    document.addEventListener('astro:page-load', () => {
+      if (enforceAdminAuthGuard()) {
         syncAuthUI();
       }
     });
 
-    // 初始执行与异步梯度重试探测（确保无论 SDK 何时挂载都能瞬间响应并同步）
-    syncAuthUI();
-    setTimeout(syncAuthUI, 100);
-    setTimeout(syncAuthUI, 300);
-    setTimeout(syncAuthUI, 800);
-    setTimeout(syncAuthUI, 1500);
+    // 页面启动时执行门禁校验
+    function runInitialGuard() {
+      if (enforceAdminAuthGuard()) {
+        syncAuthUI();
+        restoreDraft();
+      }
+    }
 
-    // 页面启动时恢复草稿
-    restoreDraft();
+    runInitialGuard();
+    setTimeout(runInitialGuard, 100);
+    setTimeout(runInitialGuard, 300);
+    setTimeout(runInitialGuard, 800);
   })();
 </script>
