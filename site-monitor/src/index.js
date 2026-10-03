@@ -38,9 +38,13 @@ function requireAdmin(request, env) {
 	const token = env.ADMIN_TOKEN;
 	if (!token) return false;
 	const auth = request.headers.get("Authorization") || "";
-	if (auth.startsWith("Bearer ") && auth.slice(7) === token) return true;
-	const url = new URL(request.url);
-	if (url.searchParams.get("secret") === token) return true;
+	if (auth.startsWith("Bearer ") && auth.slice(7).trim() === token) return true;
+	const customHeader = request.headers.get("X-Admin-Token") || "";
+	if (customHeader.trim() === token) return true;
+	if (env.ENVIRONMENT === "development") {
+		const url = new URL(request.url);
+		return url.searchParams.get("secret") === token;
+	}
 	return false;
 }
 

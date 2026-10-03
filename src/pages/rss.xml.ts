@@ -21,8 +21,9 @@ export async function GET(context: APIContext) {
 		throw Error("site not set");
 	}
 
-	// Use the same ordering as site listing (pinned first, then by published desc)
-	const posts = await getSortedPosts();
+	// Use the same ordering as site listing (pinned first, then by published desc), excluding encrypted posts
+	const allPosts = await getSortedPosts();
+	const posts = allPosts.filter((post) => !(post.data as any).encrypted);
 	const feed: RSSFeedItem[] = [];
 
 	for (const post of posts) {

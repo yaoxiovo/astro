@@ -93,6 +93,15 @@
         }
 
         const handleMessage = (event) => {
+          try {
+            const expectedOrigin = new URL(this.authUrl).origin;
+            if (event.origin !== expectedOrigin && event.origin !== 'https://accounts.yaoxi.cloud') {
+              return;
+            }
+          } catch (e) {
+            if (event.origin !== 'https://accounts.yaoxi.cloud') return;
+          }
+
           const data = event.data;
           if (!data || data.type !== 'YAOXI_SSO_SIGNATURE_CALLBACK') return;
           if (data.client_request_token !== clientRequestToken) return;
@@ -164,7 +173,7 @@
     }
 
     getToken() {
-      const token = localStorage.getItem(this.storagePrefix + 'token');
+      const token = localStorage.getItem(this.storagePrefix + 'token') || localStorage.getItem('yaoxi_access_token');
       const expStr = localStorage.getItem(this.storagePrefix + 'exp');
       if (!token) return null;
       if (expStr) {
@@ -181,6 +190,10 @@
       localStorage.removeItem(this.storagePrefix + 'token');
       localStorage.removeItem(this.storagePrefix + 'user');
       localStorage.removeItem(this.storagePrefix + 'exp');
+      localStorage.removeItem('yaoxi_access_token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('yaoxi_user_id');
+      localStorage.removeItem('user_id');
       try {
         localStorage.removeItem('user_profile');
         localStorage.removeItem('yaoxi_client_token');
@@ -190,9 +203,20 @@
 
     _saveAuthData(token, user, expiresInSec = 7200) {
       const expTime = Date.now() + expiresInSec * 1000;
+      const userId = (user && (user.sub || user.id || user.userId)) || '';
+
       localStorage.setItem(this.storagePrefix + 'token', token);
       localStorage.setItem(this.storagePrefix + 'user', JSON.stringify(user));
       localStorage.setItem(this.storagePrefix + 'exp', expTime.toString());
+
+      // 统一部署全局凭据字段，彻底联通 AdminPublish 与 EncryptedReader
+      localStorage.setItem('yaoxi_access_token', token);
+      localStorage.setItem('access_token', token);
+      if (userId) {
+        localStorage.setItem('yaoxi_user_id', String(userId));
+        localStorage.setItem('user_id', String(userId));
+      }
+
       try {
         localStorage.setItem('user_profile', JSON.stringify(user));
         localStorage.setItem('yaoxi_client_token', token);

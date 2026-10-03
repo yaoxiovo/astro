@@ -27,12 +27,28 @@
 
   const API_BASE = 'https://zk-api.yaoxi.cloud'; // 或你的 Worker 自定义域名
 
+  const escapeYaml = (str: string) => (str || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r?\n/g, ' ');
+
   onMount(async () => {
-    token = localStorage.getItem('yaoxi_access_token') || localStorage.getItem('access_token') || '';
+    token = localStorage.getItem('yaoxi_access_token') || localStorage.getItem('access_token') || localStorage.getItem('yaoxi_auth_token') || localStorage.getItem('yaoxi_client_token') || '';
     if (!token) {
-      statusText = '⚠️ 未检测到有效管理员凭据，请先在右上角完成 OAuth 2.0 登录 喵！';
+      statusText = '⚠️ 未检测到有效登录凭据，请先在右上角完成统一身份认证 喵！';
       return;
     }
+
+    // 由认证中心下发的身份信息判断权限
+    try {
+      const parts = token.split('.');
+      if (parts.length >= 2) {
+        const payload = JSON.parse(decodeURIComponent(escape(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))));
+        const role = String(payload.role || '').toLowerCase();
+        const roles = Array.isArray(payload.roles) ? payload.roles.map((r: any) => String(r).toLowerCase()) : [];
+        const isAdmin = role === 'admin' || roles.includes('admin') || payload.is_admin === true;
+        if (!isAdmin) {
+          statusText = 'ℹ️ 当前认证中心下发身份为【成员 (Member)】，发布文章需要管理员权限 喵！';
+        }
+      }
+    } catch {}
 
     try {
       const res = await fetch(`${API_BASE}/api/user/keys`, {
@@ -55,6 +71,21 @@
       alert('请完整填写文章 Slug、标题和 Markdown 内容 喵！');
       return;
     }
+
+    // 校验认证中心下发的身份是否为管理员
+    try {
+      const parts = token.split('.');
+      if (parts.length >= 2) {
+        const payload = JSON.parse(decodeURIComponent(escape(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))));
+        const role = String(payload.role || '').toLowerCase();
+        const roles = Array.isArray(payload.roles) ? payload.roles.map((r: any) => String(r).toLowerCase()) : [];
+        const isAdmin = role === 'admin' || roles.includes('admin') || payload.is_admin === true;
+        if (!isAdmin) {
+          alert('权限不足：当前认证中心下发的身份为【成员】，文章发布仅限【管理员】使用 喵！');
+          return;
+        }
+      }
+    } catch {}
 
     if (enableEncryption && selectedRecipientIds.length === 0) {
       alert('已开启端到端加密，请至少勾选一位授权读者 喵！');
@@ -79,15 +110,15 @@
         const payload = await encryptArticleContent(markdown, authorized);
 
         const tagsArray = tags.split(',').map(t => t.trim()).filter(Boolean);
-        const tagsYaml = tagsArray.map(t => `  - ${t}`).join('\n');
+        const tagsYaml = tagsArray.map(t => `  - ${escapeYaml(t)}`).join('\n');
 
         finalMarkdownFile = `---
-title: "${title}"
+title: "${escapeYaml(title)}"
 published: "${new Date().toISOString().split('T')[0]}"
 description: "本文受端到端零知识混合加密保护"
 tags:
 ${tagsYaml}
-category: "${category}"
+category: "${escapeYaml(category)}"
 encrypted: true
 draft: false
 ---
@@ -98,15 +129,15 @@ ${JSON.stringify(payload, null, 2)}
 `;
       } else {
         const tagsArray = tags.split(',').map(t => t.trim()).filter(Boolean);
-        const tagsYaml = tagsArray.map(t => `  - ${t}`).join('\n');
+        const tagsYaml = tagsArray.map(t => `  - ${escapeYaml(t)}`).join('\n');
 
         finalMarkdownFile = `---
-title: "${title}"
+title: "${escapeYaml(title)}"
 published: "${new Date().toISOString().split('T')[0]}"
-description: "${title}"
+description: "${escapeYaml(title)}"
 tags:
 ${tagsYaml}
-category: "${category}"
+category: "${escapeYaml(category)}"
 encrypted: false
 draft: false
 ---

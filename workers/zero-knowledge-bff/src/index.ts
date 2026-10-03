@@ -6,7 +6,8 @@ export interface Env {
   DB: D1Database;
   OAUTH_KV: KVNamespace;
   JWT_SECRET: string;
-  ADMIN_SUB?: string;         // 博主专属 sub 标识，例如 'yaoxi'
+  AUTH_SECRET?: string;
+  SSO_SECRET?: string;
   GITHUB_TOKEN: string;       // GitHub Personal Access Token (repo 权限)
   GITHUB_REPO_OWNER: string;  // 例如 'yaoxiovo'
   GITHUB_REPO_NAME: string;   // 例如 'astro'
@@ -18,12 +19,33 @@ export interface Env {
 
 interface JWTPayload {
   sub: string;
-  username: string;
-  role: string;
+  username?: string;
+  name?: string;
+  email?: string;
+  role?: string;              // 'admin' | 'member' | 'reader'
+  roles?: string[];
+  is_admin?: boolean;
+  is_member?: boolean;
   [key: string]: unknown;
 }
 
-const app = new Hono<{ Bindings: Env; Variables: { user: JWTPayload } }>();
+export type UserRole = 'admin' | 'member';
+
+/**
+ * 依据认证中心 (SSO / accounts.yaoxi.cloud) 下发的 Token 身份信息判断权限
+ * 纯粹由认证中心下发的信息决定是【管理员】还是【成员】，绝不硬编码在博客代码内！
+ */
+export function getAuthCenterRole(user: JWTPayload): UserRole {
+  if (!user) return 'member';
+  const role = String(user.role || '').toLowerCase();
+  const roles = Array.isArray(user.roles) ? user.roles.map((r: any) => String(r).toLowerCase()) : [];
+  if (role === 'admin' || roles.includes('admin') || user.is_admin === true) {
+    return 'admin';
+  }
+  return 'member';
+}
+
+const app = new Hono<{ Bindings: Env; Variables: { user: JWTPayload; userRole: UserRole } }>();
 
 // 启用全局 CORS 允许 Astro 前端及任意调试客户端安全跨域
 app.use('*', cors({
@@ -46,69 +68,78 @@ app.use('*', cors({
 }));
 
 // ============================================================
-// JWT 鉴权中间件：严格校验 Bearer Token 合法性且 sub 属于博主本人
+// 1. 通用身份认证中间件：校验认证中心密码学签名，提取下发的身份信息
 // ============================================================
-const authMiddleware = async (c: any, next: () => Promise<void>) => {
+const requireAuth = async (c: any, next: () => Promise<void>) => {
   const authHeader = c.req.header('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return c.json({ error: 'Unauthorized', message: 'Missing or invalid Authorization header' }, 401);
+    return c.json({ error: 'Unauthorized', message: '缺少有效的 Authorization 认证头 喵！' }, 401);
   }
 
-  const token = authHeader.substring(7);
+  const token = authHeader.substring(7).trim();
+  if (!token) {
+    return c.json({ error: 'Unauthorized', message: 'Bearer Token 为空 喵！' }, 401);
+  }
+
   let user: JWTPayload | null = null;
+  const secretsToTry: string[] = [
+    c.env.JWT_SECRET,
+    c.env.AUTH_SECRET,
+    c.env.SSO_SECRET,
+  ].filter(Boolean);
 
-  try {
-    const secret = new TextEncoder().encode(c.env.JWT_SECRET || 'fallback_secret_for_local_dev_only');
-    const { payload } = await jwtVerify(token, secret);
-    user = payload as unknown as JWTPayload;
-  } catch (verifyErr) {
-    // 兼容模式：若 JWT 由主站统一 SSO (accounts.yaoxi.cloud) 签发，解析 payload 校验 exp 与身份
+  if (secretsToTry.length === 0) {
+    secretsToTry.push('fallback_secret_for_local_dev_only');
+  }
+
+  // 严格尝试密码学验签
+  let verified = false;
+  for (const s of secretsToTry) {
     try {
-      const parts = token.split('.');
-      if (parts.length >= 2) {
-        const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-        const jsonStr = decodeURIComponent(escape(atob(base64)));
-        const decoded = JSON.parse(jsonStr);
-        if (decoded.exp && Date.now() / 1000 > decoded.exp) {
-          return c.json({ error: 'token_expired', message: '登录凭证 (JWT) 已过期，请重新登录 喵！' }, 401);
-        }
-        user = decoded as JWTPayload;
-      }
-    } catch (e) {}
+      const secretKey = new TextEncoder().encode(s);
+      const { payload } = await jwtVerify(token, secretKey);
+      user = payload as unknown as JWTPayload;
+      verified = true;
+      break;
+    } catch {
+      // 秘钥不匹配，继续尝试下一个候选秘钥
+    }
   }
 
-  if (!user) {
-    return c.json({ error: 'Unauthorized', message: 'Invalid or expired JWT token' }, 401);
-  }
-
-  // 校验 sub 是否属于博主本人，或具备 admin 权限
-  const expectedSub = c.env.ADMIN_SUB || 'yaoxi';
-  const sub = String(user.sub || '');
-  const username = String(user.username || user.name || '');
-  const role = String(user.role || '');
-  const email = String(user.email || '');
-
-  const isOwner = sub === expectedSub ||
-    role === 'admin' ||
-    username === 'yaoxi' ||
-    email.includes('yaoxi') ||
-    sub.includes('yaoxi');
-
-  if (!isOwner) {
+  if (!verified || !user) {
     return c.json({
-      error: 'Forbidden',
-      message: `Token 用户标识 (${sub || username}) 未被授权为博主发布权限 喵！`,
-    }, 403);
+      error: 'Unauthorized',
+      message: 'Token 密码学校验失败或签名无效，拒绝访问 喵！',
+    }, 401);
   }
 
+  // 由认证中心下发的 Claims 动态解析是成员还是管理员
+  const userRole = getAuthCenterRole(user);
   c.set('user', user);
+  c.set('userRole', userRole);
   await next();
 };
 
 // ============================================================
-// 1. 便捷文章发布端点 (POST /api/publish)
+// 2. 管理员专属中间件：由认证中心下发的信息决定是否具备 admin 权限
 // ============================================================
-app.post('/api/publish', authMiddleware, async (c) => {
+const requireAdmin = async (c: any, next: () => Promise<void>) => {
+  await requireAuth(c, async () => {
+    const userRole = c.get('userRole');
+    if (userRole !== 'admin') {
+      return c.json({
+        error: 'Forbidden',
+        message: '权限不足：当前操作仅限认证中心授权的【管理员 (admin)】访问，【成员 (member)】无权执行此操作 喵！',
+      }, 403);
+    }
+    await next();
+  });
+};
+
+// ============================================================
+// 1. 便捷文章发布端点 (POST /api/publish) - 仅限认证中心管理员
+// ============================================================
+app.post('/api/publish', requireAdmin, async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const { title, slug, content, tags, description, category, image, draft, lang, fileContent, githubToken: bodyGithubToken } = body;
 
@@ -116,6 +147,22 @@ app.post('/api/publish', authMiddleware, async (c) => {
     return c.json({
       error: 'invalid_request',
       message: 'slug and content (or fileContent) are required',
+    }, 400);
+  }
+
+  // 严格防范路径穿越：仅允许字母、数字、中文、中划线和下划线，严禁包含 '/'、'\' 或 '..'
+  const cleanSlug = String(slug).trim().replace(/\.md$/, '').replace(/^\/+/, '');
+  if (!cleanSlug || cleanSlug.includes('..') || cleanSlug.includes('/') || cleanSlug.includes('\\')) {
+    return c.json({
+      error: 'invalid_slug',
+      message: 'Slug 包含非法路径穿越字符，严禁写入 喵！',
+    }, 400);
+  }
+
+  if (!/^[a-zA-Z0-9_\-\u4e00-\u9fa5]+$/.test(cleanSlug)) {
+    return c.json({
+      error: 'invalid_slug',
+      message: 'Slug 仅支持字母、数字、中文、中划线及下划线 喵！',
     }, 400);
   }
 
@@ -134,10 +181,10 @@ app.post('/api/publish', authMiddleware, async (c) => {
   if (fileContent) {
     finalMarkdown = fileContent;
   } else {
-    const postTitle = (title || slug).trim();
+    const postTitle = (title || cleanSlug).trim();
     const postDate = new Date().toISOString().split('T')[0];
-    const postDesc = (description || postTitle).replace(/"/g, '\\"').trim();
-    const postCategory = (category || '技术分享').trim();
+    const postDesc = (description || postTitle).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ').trim();
+    const postCategory = (category || '技术分享').replace(/\\/g, '\\\\').replace(/"/g, '\\"').trim();
     const isDraft = Boolean(draft);
     const postLang = (lang || 'zh_CN').trim();
 
@@ -150,11 +197,11 @@ app.post('/api/publish', authMiddleware, async (c) => {
     }
     if (tagList.length === 0) tagList = ['博客'];
 
-    const tagsYaml = tagList.map(t => `  - ${t}`).join('\n');
-    const imageYaml = image ? `image: "${image}"\n` : '';
+    const tagsYaml = tagList.map(t => `  - ${t.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}`).join('\n');
+    const imageYaml = image ? `image: "${String(image).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"\n` : '';
 
     finalMarkdown = `---
-title: "${postTitle.replace(/"/g, '\\"')}"
+title: "${postTitle.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"
 published: ${postDate}
 description: "${postDesc}"
 tags:
@@ -168,7 +215,6 @@ ${content.trim()}
 `;
   }
 
-  const cleanSlug = slug.trim().replace(/\.md$/, '').replace(/^\/+/, '');
   const filePath = `src/content/posts/${cleanSlug}.md`;
   const owner = c.env.GITHUB_REPO_OWNER || 'yaoxiovo';
   const repo = c.env.GITHUB_REPO_NAME || 'astro';
@@ -272,9 +318,9 @@ ${content.trim()}
 });
 
 // ============================================================
-// 2. 部署构建监听状态端点 (GET /api/deploy-status)
+// 2. 部署构建监听状态端点 (GET /api/deploy-status) - 仅限管理员
 // ============================================================
-app.get('/api/deploy-status', authMiddleware, async (c) => {
+app.get('/api/deploy-status', requireAdmin, async (c) => {
   const commitParam = c.req.query('commit')?.trim();
   const accountId = c.env.CF_ACCOUNT_ID;
   const project = c.env.CF_PAGES_PROJECT || 'astro';
@@ -385,11 +431,27 @@ app.get('/api/deploy-status', authMiddleware, async (c) => {
 });
 
 // ============================================================
-// 3. 兼容保留 OAuth 与零知识公私钥 Vault 端点
+// 3. 当前登录用户身份与角色查询端点 (GET /api/auth/me)
 // ============================================================
-app.get('/api/user/keys', authMiddleware, async (c) => {
+app.get('/api/auth/me', requireAuth, async (c) => {
+  const user = c.get('user');
+  const userRole = c.get('userRole');
+  return c.json({
+    sub: user.sub,
+    username: user.username || user.name || user.sub,
+    email: user.email || '',
+    role: userRole,
+    isAdmin: userRole === 'admin',
+    isMember: userRole === 'member',
+  });
+});
+
+// ============================================================
+// 4. 零知识公私钥 Vault 端点 (成员与管理员通用权限)
+// ============================================================
+app.get('/api/user/keys', requireAuth, async (c) => {
   const { results } = await c.env.DB.prepare(
-    'SELECT u.id, u.username, v.public_key_jwk FROM users u JOIN user_vaults v ON u.id = v.user_id'
+    'SELECT v.user_id AS id, COALESCE(u.username, v.user_id) AS username, v.public_key_jwk FROM user_vaults v LEFT JOIN users u ON u.id = v.user_id'
   ).all();
 
   return c.json({
@@ -401,7 +463,7 @@ app.get('/api/user/keys', authMiddleware, async (c) => {
   });
 });
 
-app.get('/api/user/vault', authMiddleware, async (c) => {
+app.get('/api/user/vault', requireAuth, async (c) => {
   const user = c.get('user');
   const vault = await c.env.DB.prepare(
     'SELECT public_key_jwk, encrypted_vault, salt, iv, iterations FROM user_vaults WHERE user_id = ?'
@@ -418,8 +480,9 @@ app.get('/api/user/vault', authMiddleware, async (c) => {
   });
 });
 
-app.put('/api/user/vault', authMiddleware, async (c) => {
+app.put('/api/user/vault', requireAuth, async (c) => {
   const user = c.get('user');
+  const userRole = c.get('userRole') || 'member';
   const { public_key_jwk, encrypted_vault, salt, iv, iterations } = await c.req.json().catch(() => ({}));
 
   if (!public_key_jwk || !encrypted_vault || !salt || !iv) {
@@ -427,6 +490,27 @@ app.put('/api/user/vault', authMiddleware, async (c) => {
   }
 
   const jwkStr = typeof public_key_jwk === 'string' ? public_key_jwk : JSON.stringify(public_key_jwk);
+  const safeUsername = String(user.username || user.name || `user_${user.sub}`);
+  const safeEmail = String(user.email || `${user.sub}@accounts.yaoxi.cloud`);
+
+  // 保证 users 表记录存在并同步最新角色（避免外键约束报错与 INNER JOIN 遗漏）
+  try {
+    await c.env.DB.prepare(`
+      INSERT INTO users (id, username, email, role, created_at)
+      VALUES (?, ?, ?, ?, unixepoch())
+      ON CONFLICT(id) DO UPDATE SET
+        username = excluded.username,
+        email = excluded.email,
+        role = excluded.role
+    `).bind(user.sub, safeUsername, safeEmail, userRole).run();
+  } catch {
+    try {
+      await c.env.DB.prepare(`
+        INSERT OR IGNORE INTO users (id, username, email, role, created_at)
+        VALUES (?, ?, ?, ?, unixepoch())
+      `).bind(user.sub, `${safeUsername}_${user.sub.slice(0, 6)}`, `${user.sub}@accounts.yaoxi.cloud`, userRole).run();
+    } catch {}
+  }
 
   await c.env.DB.prepare(`
     INSERT INTO user_vaults (user_id, public_key_jwk, encrypted_vault, salt, iv, iterations, updated_at)

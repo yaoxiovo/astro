@@ -8,15 +8,20 @@ import type { APIRoute } from "astro";
  */
 export const GET: APIRoute = async () => {
 	const all = await getCollection("moments");
+	const now = new Date();
 	const capsules = all
 		.filter((m) => m.data.capsule)
-		.map((m) => ({
-			slug: stripMomentId(m.id),
-			capsule: m.data.capsule,
-			published: m.data.published,
-			tags: extractMomentTags(m.body),
-			text: momentToText(m.body).slice(0, 120),
-		}))
+		.map((m) => {
+			const isExpired = new Date(m.data.capsule) <= now;
+			return {
+				slug: stripMomentId(m.id),
+				capsule: m.data.capsule,
+				published: m.data.published,
+				tags: extractMomentTags(m.body),
+				text: isExpired ? momentToText(m.body).slice(0, 120) : "[未到期时间胶囊：正文已封存未解锁]",
+				isUnlocked: isExpired,
+			};
+		})
 		.sort((a, b) => String(a.capsule).localeCompare(String(b.capsule)));
 
 	return new Response(JSON.stringify({ updated: new Date().toISOString(), capsules }), {

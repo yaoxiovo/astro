@@ -67,7 +67,7 @@ async function main() {
 		for (const item of files) {
 			const text = fs.readFileSync(item.full, "utf-8");
 			const fm = parseFrontmatter(text);
-			if (fm.draft !== true) {
+			if (fm.draft !== true && fm.encrypted !== true) {
 				targetFile = item.file;
 				break;
 			}
@@ -85,6 +85,10 @@ async function main() {
 
 	if (fm.draft === true) {
 		console.log(`文章 ${targetFile} 为草稿(draft: true)，跳过广播。`);
+		return;
+	}
+	if (fm.encrypted === true) {
+		console.log(`文章 ${targetFile} 为端到端加密文章(encrypted: true)，跳过全员邮件广播。`);
 		return;
 	}
 

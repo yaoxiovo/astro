@@ -406,8 +406,11 @@ import Layout from "@layouts/Layout.astro";
           modalSsoName.textContent = `${displayName} · 已完成认证`;
         }
         if (modalSsoSub) {
-          const role = user?.role || 'admin';
-          modalSsoSub.textContent = `UID: ${user?.sub || '博主账户'} · 权限: ${role}`;
+          const rawRole = String(user?.role || '').toLowerCase();
+          const roles = Array.isArray(user?.roles) ? user.roles.map((r) => String(r).toLowerCase()) : [];
+          const isAdmin = rawRole === 'admin' || roles.includes('admin') || user?.is_admin === true;
+          const roleDisplay = isAdmin ? '管理员 (admin)' : '成员 (member)';
+          modalSsoSub.textContent = `UID: ${user?.sub || '用户账户'} · 身份: ${roleDisplay}`;
         }
         if (btnModalSsoLogin) {
           btnModalSsoLogin.innerHTML = '<span>🔄 重新登录</span>';
@@ -680,9 +683,20 @@ import Layout from "@layouts/Layout.astro";
 
       const token = getAdminToken();
       if (!token) {
-        alert('尚未获取到有效博主 Token！请先一键登录或在“鉴权凭据”中填入 Token 喵！');
+        alert('尚未获取到有效认证 Token！请先一键登录或在“鉴权凭据”中填入 Token 喵！');
         modalAuth.classList.remove('hidden');
         return;
+      }
+
+      const user = getAdminUser();
+      if (user) {
+        const rawRole = String(user.role || '').toLowerCase();
+        const roles = Array.isArray(user.roles) ? user.roles.map((r) => String(r).toLowerCase()) : [];
+        const isAdmin = rawRole === 'admin' || roles.includes('admin') || user.is_admin === true;
+        if (!isAdmin) {
+          alert('权限不足：当前登录账户由认证中心标记为【成员 (member)】，无权发布文章！发布操作仅限【管理员 (admin)】喵！');
+          return;
+        }
       }
 
       const apiBase = (localStorage.getItem(API_ENDPOINT_KEY) || 'https://zk-api.yaoxi.cloud').replace(/\/$/, '');

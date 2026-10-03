@@ -28,7 +28,14 @@
         payload = rawPayloadJson;
       }
 
-      currentUserId = localStorage.getItem('yaoxi_user_id') || localStorage.getItem('user_id') || '';
+      let uid = localStorage.getItem('yaoxi_user_id') || localStorage.getItem('user_id') || '';
+      if (!uid) {
+        try {
+          const authUser = JSON.parse(localStorage.getItem('yaoxi_auth_user') || localStorage.getItem('user_profile') || '{}');
+          uid = authUser.sub || authUser.id || '';
+        } catch {}
+      }
+      currentUserId = uid;
 
       if (payload && currentUserId) {
         hasMatchingEnvelope = payload.envelopes.some(e => e.user_id === currentUserId);
@@ -53,7 +60,7 @@
     errorMsg = '';
 
     try {
-      const token = localStorage.getItem('yaoxi_access_token') || localStorage.getItem('access_token');
+      const token = localStorage.getItem('yaoxi_access_token') || localStorage.getItem('access_token') || localStorage.getItem('yaoxi_auth_token') || localStorage.getItem('yaoxi_client_token');
       if (!token) {
         throw new Error('未检测到登录授权凭据，请先在右上角完成统一身份认证 喵！');
       }

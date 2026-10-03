@@ -108,15 +108,21 @@ const ssoConfig = siteConfig.sso || {
         if (isAuthed && user) {
           guestPanelEl.classList.add("hidden");
           userPanelEl.classList.remove("hidden");
-          if (userNameEl) userNameEl.textContent = user.name || user.sub || "管理员";
-          if (userEmailEl) userEmailEl.textContent = user.email || "accounts.yaoxi.cloud";
+          const rawRole = String(user.role || "").toLowerCase();
+          const roles = Array.isArray(user.roles) ? user.roles.map((r) => String(r).toLowerCase()) : [];
+          const isAdmin = rawRole === "admin" || roles.includes("admin") || user.is_admin === true;
+
+          if (userNameEl) userNameEl.textContent = user.name || user.username || user.sub || "用户";
+          if (userEmailEl) userEmailEl.textContent = user.email || user.sub || "accounts.yaoxi.cloud";
           if (userPanelAvatarEl) {
-            const initial = (user.name || user.sub || "Y").trim().charAt(0).toUpperCase();
+            const initial = (user.name || user.username || user.sub || "U").trim().charAt(0).toUpperCase();
             userPanelAvatarEl.textContent = initial;
           }
           if (userRoleBadgeEl) {
-            const roles = Array.isArray(user.roles) ? user.roles : ["verified"];
-            userRoleBadgeEl.textContent = roles.includes("admin") ? "站长 / 管理员" : "已授权用户";
+            userRoleBadgeEl.textContent = isAdmin ? "管理员" : "成员";
+            userRoleBadgeEl.className = isAdmin
+              ? "text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium"
+              : "text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium";
           }
         } else {
           userPanelEl.classList.add("hidden");
@@ -125,11 +131,29 @@ const ssoConfig = siteConfig.sso || {
       }
 
       // 3. 通用 data-yaoxi-user 容器更新
+      const currentRole = isAuthed && user ? (String(user.role || "").toLowerCase()) : "";
+      const currentRoles = isAuthed && user && Array.isArray(user.roles) ? user.roles.map((r) => String(r).toLowerCase()) : [];
+      const isCurrentAdmin = isAuthed && user && (currentRole === "admin" || currentRoles.includes("admin") || user.is_admin === true);
+
       document.querySelectorAll("[data-yaoxi-user-name]").forEach((el) => {
-        el.textContent = isAuthed && user ? (user.name || user.sub || "") : "";
+        el.textContent = isAuthed && user ? (user.name || user.username || user.sub || "") : "";
       });
       document.querySelectorAll("[data-yaoxi-authed-only]").forEach((el) => {
         if (isAuthed) {
+          el.classList.remove("hidden");
+        } else {
+          el.classList.add("hidden");
+        }
+      });
+      document.querySelectorAll("[data-yaoxi-admin-only]").forEach((el) => {
+        if (isAuthed && isCurrentAdmin) {
+          el.classList.remove("hidden");
+        } else {
+          el.classList.add("hidden");
+        }
+      });
+      document.querySelectorAll("[data-yaoxi-member-only]").forEach((el) => {
+        if (isAuthed && !isCurrentAdmin) {
           el.classList.remove("hidden");
         } else {
           el.classList.add("hidden");

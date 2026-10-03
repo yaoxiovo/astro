@@ -63,17 +63,31 @@ function tooManyRequests(retryAfter = 60, message = "请求过于频繁，请稍
 	return json({ error: "rate limited", message }, 429, { "Retry-After": String(retryAfter) });
 }
 
-/** 统一成功/失败 HTML 状态页展示 */
+/** HTML 字符安全转义防范 XSS */
+function htmlEsc(str = "") {
+	return String(str)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
+/** 统一成功/失败 HTML 状态页展示（严格转义输入，URL 限白名单协议） */
 function htmlPage({ title, heading, message, buttonText = "返回博客", buttonUrl = BLOG_ORIGIN, isSuccess = true }) {
 	const color = isSuccess ? "#2563eb" : "#dc2626";
 	const icon = isSuccess ? "✅" : "⚠️";
+	const safeButtonUrl = (buttonUrl.startsWith("https://") || buttonUrl.startsWith("/") || buttonUrl.startsWith("http://localhost"))
+		? htmlEsc(buttonUrl)
+		: htmlEsc(BLOG_ORIGIN);
+
 	return new Response(
 		`<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} - Yaoxi Blog</title>
+  <title>${htmlEsc(title)} - Yaoxi Blog</title>
   <style>
     body { margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; color: #1e293b; }
     .card { background: #ffffff; max-width: 460px; width: 88%; padding: 36px 30px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06), 0 8px 10px -6px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; text-align: center; }
@@ -87,9 +101,9 @@ function htmlPage({ title, heading, message, buttonText = "返回博客", button
 <body>
   <div class="card">
     <div class="icon">${icon}</div>
-    <h1>${heading}</h1>
-    <p>${message}</p>
-    <a href="${buttonUrl}" class="btn">${buttonText}</a>
+    <h1>${htmlEsc(heading)}</h1>
+    <p>${htmlEsc(message)}</p>
+    <a href="${safeButtonUrl}" class="btn">${htmlEsc(buttonText)}</a>
   </div>
 </body>
 </html>`,
@@ -115,14 +129,20 @@ function getStorageKv(env) {
 	return env?.NEWSLETTER_KV || env?.RATE_LIMIT_KV || null;
 }
 
-/** 管理员鉴权 */
+/** 管理员鉴权（加固：优先从 Authorization 或 X-Admin-Token 请求头验证，杜绝 URL 明文传参泄露） */
 function requireAdmin(request, env) {
 	const token = env?.ADMIN_TOKEN;
 	if (!token) return false;
 	const auth = request.headers.get("Authorization") || "";
-	if (auth.startsWith("Bearer ") && auth.slice(7) === token) return true;
-	const url = new URL(request.url);
-	return url.searchParams.get("secret") === token;
+	if (auth.startsWith("Bearer ") && auth.slice(7).trim() === token) return true;
+	const customHeader = request.headers.get("X-Admin-Token") || "";
+	if (customHeader.trim() === token) return true;
+	// 仅在本地开发模式下允许 query 参数兜底
+	if (env?.ENVIRONMENT === "development") {
+		const url = new URL(request.url);
+		return url.searchParams.get("secret") === token;
+	}
+	return false;
 }
 
 /** 安全读取 KV 计数 */
@@ -144,7 +164,7 @@ async function setRateCount(env, key, data, ttl) {
 	} catch {}
 }
 
-/** 通用限流检查（单 IP + 全局） */
+/** 通用限流检查（单 IP + 全局：修复原子累加与计数器停滞死锁 Bug） */
 async function checkRateLimit(env, ip) {
 	if (!env?.RATE_LIMIT_KV) return { allowed: true, retryAfter: 0, ipCount: 0, globalCount: 0 };
 
@@ -159,6 +179,7 @@ async function checkRateLimit(env, ip) {
 	if (ipData) {
 		if (now - ipData.windowStart > RATE_LIMIT.IP_WINDOW_MS) {
 			ipCount = 0;
+			ipWindowStart = now;
 		} else {
 			ipCount = ipData.count;
 			ipWindowStart = ipData.windowStart;
@@ -170,6 +191,7 @@ async function checkRateLimit(env, ip) {
 	if (globalData) {
 		if (now - globalData.windowStart > RATE_LIMIT.GLOBAL_WINDOW_MS) {
 			globalCount = 0;
+			globalWindowStart = now;
 		} else {
 			globalCount = globalData.count;
 			globalWindowStart = globalData.windowStart;
@@ -180,17 +202,17 @@ async function checkRateLimit(env, ip) {
 		return { allowed: false, retryAfter: 60, ipCount, globalCount };
 	}
 
-	const shouldWrite = ipCount % 5 === 0 || ipCount >= RATE_LIMIT.IP_MAX - 5 || globalCount % 5 === 0;
+	const newIpCount = ipCount + 1;
+	const newGlobalCount = globalCount + 1;
+	const ttl = RATE_LIMIT.KV_TTL;
 
-	if (shouldWrite) {
-		const ttl = RATE_LIMIT.KV_TTL;
-		await Promise.all([
-			setRateCount(env, ipKey, { count: ipCount + 1, windowStart: ipWindowStart }, ttl),
-			setRateCount(env, globalKey, { count: globalCount + 1, windowStart: globalWindowStart }, ttl),
-		]);
-	}
+	// 每次有效请求必须真实递增 KV 计数，坚决杜绝采样判断导致 count 永久卡死在 1 的重大逻辑缺陷！
+	await Promise.all([
+		setRateCount(env, ipKey, { count: newIpCount, windowStart: ipWindowStart }, ttl),
+		setRateCount(env, globalKey, { count: newGlobalCount, windowStart: globalWindowStart }, ttl),
+	]);
 
-	return { allowed: true, retryAfter: 0, ipCount: ipCount + 1, globalCount: globalCount + 1 };
+	return { allowed: true, retryAfter: 0, ipCount: newIpCount, globalCount: newGlobalCount };
 }
 
 /** 检查特定敏感接口的独立 IP 限流 */
@@ -637,36 +659,42 @@ async function handleBroadcast(request, env, url) {
 	let sentCount = 0;
 	let failCount = 0;
 
-	for (const sub of list) {
-		const unsubUrl = `${url.origin}/api/newsletter/unsubscribe?token=${encodeURIComponent(sub.token)}`;
-		const html = buildBroadcastHtml({
-			title: body.title,
-			summary: body.summary || body.title,
-			url: body.url,
-			pubDate: body.pubDate,
-			tags: body.tags || [],
-			author: body.author || "瑶曦",
-			type: body.type || "post",
-			unsubscribeUrl: unsubUrl,
-			siteName: "瑶曦 Blog",
-			siteUrl: BLOG_ORIGIN,
-		});
+	// 并发批次控制（每次并发 5 封，避免 Worker 30s Wall-clock 超时或网关熔断）
+	const BATCH_SIZE = 5;
+	for (let i = 0; i < list.length; i += BATCH_SIZE) {
+		const chunk = list.slice(i, i + BATCH_SIZE);
+		const results = await Promise.allSettled(
+			chunk.map(async (sub) => {
+				const unsubUrl = `${url.origin}/api/newsletter/unsubscribe?token=${encodeURIComponent(sub.token)}`;
+				const html = buildBroadcastHtml({
+					title: body.title,
+					summary: body.summary || body.title,
+					url: body.url,
+					pubDate: body.pubDate,
+					tags: body.tags || [],
+					author: body.author || "瑶曦",
+					type: body.type || "post",
+					unsubscribeUrl: unsubUrl,
+					siteName: "瑶曦 Blog",
+					siteUrl: BLOG_ORIGIN,
+				});
 
-		const res = await sendEmail(env, {
-			to: sub.email,
-			subject: `【新文章】${body.title} - 瑶曦 Blog`,
-			html,
-			prefix: "notify",
-			headers: {
-				"List-Unsubscribe": `<${unsubUrl}>`,
-				"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-			},
-		});
+				return sendEmail(env, {
+					to: sub.email,
+					subject: `【新文章】${body.title} - 瑶曦 Blog`,
+					html,
+					prefix: "notify",
+					headers: {
+						"List-Unsubscribe": `<${unsubUrl}>`,
+						"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+					},
+				});
+			}),
+		);
 
-		if (res.ok) {
-			sentCount++;
-		} else {
-			failCount++;
+		for (const r of results) {
+			if (r.status === "fulfilled" && r.value?.ok) sentCount++;
+			else failCount++;
 		}
 	}
 
@@ -718,7 +746,7 @@ async function handleWeeklyDigest(request, env, url) {
 		return json({ ok: res.ok, mode: "preview", target, id: res.id, error: res.error });
 	}
 
-	// 批量发送给活跃订阅者
+	// 批量发送给活跃订阅者（分批并发）
 	let list = [];
 	try {
 		const rawList = await kv.get("sub:list");
@@ -728,31 +756,39 @@ async function handleWeeklyDigest(request, env, url) {
 	let sentCount = 0;
 	let failCount = 0;
 
-	for (const sub of list) {
-		const unsubUrl = `${url.origin}/api/newsletter/unsubscribe?token=${encodeURIComponent(sub.token)}`;
-		const html = buildWeeklyDigestHtml({
-			weekRange,
-			posts,
-			momentsCount,
-			topTags,
-			unsubscribeUrl: unsubUrl,
-			siteName: "瑶曦 Blog",
-			siteUrl: BLOG_ORIGIN,
-		});
+	const BATCH_SIZE = 5;
+	for (let i = 0; i < list.length; i += BATCH_SIZE) {
+		const chunk = list.slice(i, i + BATCH_SIZE);
+		const results = await Promise.allSettled(
+			chunk.map(async (sub) => {
+				const unsubUrl = `${url.origin}/api/newsletter/unsubscribe?token=${encodeURIComponent(sub.token)}`;
+				const html = buildWeeklyDigestHtml({
+					weekRange,
+					posts,
+					momentsCount,
+					topTags,
+					unsubscribeUrl: unsubUrl,
+					siteName: "瑶曦 Blog",
+					siteUrl: BLOG_ORIGIN,
+				});
 
-		const res = await sendEmail(env, {
-			to: sub.email,
-			subject: `📊【每周精选】瑶曦 Blog 周报 (${weekRange})`,
-			html,
-			prefix: "bot",
-			headers: {
-				"List-Unsubscribe": `<${unsubUrl}>`,
-				"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-			},
-		});
+				return sendEmail(env, {
+					to: sub.email,
+					subject: `📊【每周精选】瑶曦 Blog 周报 (${weekRange})`,
+					html,
+					prefix: "bot",
+					headers: {
+						"List-Unsubscribe": `<${unsubUrl}>`,
+						"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+					},
+				});
+			}),
+		);
 
-		if (res.ok) sentCount++;
-		else failCount++;
+		for (const r of results) {
+			if (r.status === "fulfilled" && r.value?.ok) sentCount++;
+			else failCount++;
+		}
 	}
 
 	return json({ ok: true, total: list.length, sent: sentCount, failed: failCount });

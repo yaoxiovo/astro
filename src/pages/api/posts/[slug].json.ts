@@ -32,8 +32,9 @@ export const GET: APIRoute = async ({ params }) => {
 		});
 	}
 
-	const text = mdToText(post.body);
-	const wordCount = text.length;
+	const isEncrypted = post.data.encrypted === true;
+	const text = isEncrypted ? "[本文受端到端加密保护]" : mdToText(post.body);
+	const wordCount = isEncrypted ? 0 : text.length;
 	const { data } = post;
 
 	return new Response(
@@ -43,6 +44,7 @@ export const GET: APIRoute = async ({ params }) => {
 			published: data.published,
 			updated: data.updated || null,
 			draft: data.draft || false,
+			encrypted: isEncrypted,
 			description: data.description || "",
 			image: data.image || "",
 			tags: data.tags || [],
@@ -55,9 +57,9 @@ export const GET: APIRoute = async ({ params }) => {
 			next: data.nextSlug ? { slug: data.nextSlug, title: data.nextTitle } : null,
 			// 统计
 			wordCount,
-			readingTime: Math.max(1, Math.round(wordCount / 400)), // 中文约 400 字/分钟
+			readingTime: isEncrypted ? 0 : Math.max(1, Math.round(wordCount / 400)), // 中文约 400 字/分钟
 			// 摘要：frontmatter description 优先，否则取正文前 200 字
-			excerpt: data.description || mdToText(post.body, 200),
+			excerpt: data.description || (isEncrypted ? "[本文受端到端加密保护]" : mdToText(post.body, 200)),
 			// 纯文本正文（供第三方/AI/小程序直接消费）
 			text,
 		}),
