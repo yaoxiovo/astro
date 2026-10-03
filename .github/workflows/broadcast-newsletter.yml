@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -36,6 +38,7 @@ jobs:
         env:
           BLOG_API_BASE: "https://blog-api.yaoxi.cloud"
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
           ARGS=""
           if [ "${{ github.event.inputs.preview }}" = "true" ]; then

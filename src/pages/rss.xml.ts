@@ -1,7 +1,6 @@
 import { getImage } from "astro:assets";
 import { getCollection } from "astro:content";
 import { siteConfig } from "@/config";
-import { getSortedPosts } from "@/utils/content-utils";
 import rss from "@astrojs/rss";
 import type { RSSFeedItem } from "@astrojs/rss";
 import type { APIContext, ImageMetadata } from "astro";
@@ -21,9 +20,13 @@ export async function GET(context: APIContext) {
 		throw Error("site not set");
 	}
 
-	// Use the same ordering as site listing (pinned first, then by published desc), excluding encrypted posts
-	const allPosts = await getSortedPosts();
-	const posts = allPosts.filter((post) => !(post.data as any).encrypted);
+	// RSS feed must strictly follow chronological order (newest published date first), ignoring homepage pinned state
+	const allPosts = await getCollection("posts", ({ data }) => {
+		return import.meta.env.PROD ? data.draft !== true : true;
+	});
+	const posts = allPosts
+		.filter((post) => !(post.data as any).encrypted)
+		.sort((a, b) => new Date(b.data.published).getTime() - new Date(a.data.published).getTime());
 	const feed: RSSFeedItem[] = [];
 
 	for (const post of posts) {
