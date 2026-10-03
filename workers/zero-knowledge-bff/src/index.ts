@@ -318,6 +318,157 @@ ${content.trim()}
 });
 
 // ============================================================
+// 1.5 便捷朋友圈动态与时间胶囊发布端点 (POST /api/publish-moment) - 仅限管理员
+// ============================================================
+app.post('/api/publish-moment', requireAdmin, async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const { content, text, slug, author, source, images, videos, pinned, replyTo, capsule, githubToken: bodyGithubToken } = body;
+
+  const momentText = (content || text || '').trim();
+  if (!momentText) {
+    return c.json({
+      error: 'invalid_request',
+      message: '动态正文内容不能为空 喵！',
+    }, 400);
+  }
+
+  // 默认 slug 按时间戳生成：如 moment-20261003-163000
+  const now = new Date();
+  const defaultSlug = `moment-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+  const rawSlug = (slug || defaultSlug).trim().replace(/\.md$/, '').replace(/^\/+/, '');
+
+  if (!/^[a-zA-Z0-9_\-\u4e00-\u9fa5]+$/.test(rawSlug)) {
+    return c.json({
+      error: 'invalid_slug',
+      message: 'Slug 仅支持字母、数字、中文、中划线及下划线 喵！',
+    }, 400);
+  }
+
+  const githubToken = c.req.header('X-GitHub-Token') || bodyGithubToken || c.env.GITHUB_TOKEN;
+  if (!githubToken) {
+    return c.json({
+      error: 'missing_github_token',
+      message: 'Worker 未配置 GITHUB_TOKEN，且客户端未提供 X-GitHub-Token 头 喵！',
+    }, 401);
+  }
+
+  const postDate = now.toISOString();
+  const authorName = (author || '瑶曦').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const sourceName = (source || 'Astro Web Studio').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const isPinned = Boolean(pinned);
+
+  let imageList: string[] = [];
+  if (Array.isArray(images)) {
+    imageList = images.map((img: any) => String(img).trim()).filter(Boolean);
+  } else if (typeof images === 'string' && images.trim()) {
+    imageList = images.split(/[\n,]+/).map((s: string) => s.trim()).filter(Boolean);
+  }
+
+  let videoList: string[] = [];
+  if (Array.isArray(videos)) {
+    videoList = videos.map((v: any) => String(v).trim()).filter(Boolean);
+  } else if (typeof videos === 'string' && videos.trim()) {
+    videoList = videos.split(/[\n,]+/).map((s: string) => s.trim()).filter(Boolean);
+  }
+
+  const imagesYaml = imageList.length > 0
+    ? `images:\n${imageList.map(img => `  - "${img.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`).join('\n')}\n`
+    : '';
+
+  const videosYaml = videoList.length > 0
+    ? `videos:\n${videoList.map(v => `  - "${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`).join('\n')}\n`
+    : '';
+
+  const capsuleYaml = capsule ? `capsule: ${new Date(capsule).toISOString()}\n` : '';
+  const replyToYaml = replyTo ? `replyTo: "${String(replyTo).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"\n` : '';
+
+  const finalMarkdown = `---
+published: ${postDate}
+author: "${authorName}"
+source: "${sourceName}"
+pinned: ${isPinned}
+${capsuleYaml}${replyToYaml}${imagesYaml}${videosYaml}---
+
+${momentText}
+`;
+
+  const filePath = `src/content/moments/${rawSlug}.md`;
+  const owner = c.env.GITHUB_REPO_OWNER || 'yaoxiovo';
+  const repo = c.env.GITHUB_REPO_NAME || 'astro';
+  const branch = c.env.GITHUB_BRANCH || 'main';
+  const githubApiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+
+  // 检查已有文件 SHA
+  let existingSha: string | undefined;
+  const getRes = await fetch(`${githubApiUrl}?ref=${branch}`, {
+    headers: {
+      'User-Agent': 'Astro-Publisher-Worker/1.0',
+      'Authorization': `Bearer ${githubToken}`,
+      'Accept': 'application/vnd.github.v3+json',
+    },
+  });
+
+  if (getRes.ok) {
+    const existingData = await getRes.json<{ sha: string }>();
+    existingSha = existingData.sha;
+  }
+
+  let base64Content: string;
+  try {
+    const utf8Bytes = new TextEncoder().encode(finalMarkdown);
+    let binary = '';
+    for (let i = 0; i < utf8Bytes.byteLength; i++) {
+      binary += String.fromCharCode(utf8Bytes[i]);
+    }
+    base64Content = btoa(binary);
+  } catch {
+    base64Content = btoa(unescape(encodeURIComponent(finalMarkdown)));
+  }
+
+  const commitMessage = existingSha
+    ? `feat(moment): update ${rawSlug} via Web Studio`
+    : `feat(moment): publish ${rawSlug} via Web Studio`;
+
+  const commitRes = await fetch(githubApiUrl, {
+    method: 'PUT',
+    headers: {
+      'User-Agent': 'Astro-Publisher-Worker/1.0',
+      'Authorization': `Bearer ${githubToken}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message: commitMessage,
+      content: base64Content,
+      branch,
+      sha: existingSha,
+    }),
+  });
+
+  if (!commitRes.ok) {
+    const errText = await commitRes.text();
+    let errObj: any = {};
+    try { errObj = JSON.parse(errText); } catch {}
+    return c.json({
+      error: 'github_api_failed',
+      message: `GitHub API 提交朋友圈动态失败: ${errObj.message || 'HTTP ' + commitRes.status}`,
+      details: errText,
+    }, 502);
+  }
+
+  const commitData = await commitRes.json<{ commit: { sha: string; html_url: string } }>();
+
+  return c.json({
+    success: true,
+    slug: rawSlug,
+    file_path: filePath,
+    commit_sha: commitData.commit.sha,
+    commit_url: commitData.commit.html_url,
+    message: 'Moment successfully committed. Cloudflare Pages build triggered.',
+  });
+});
+
+// ============================================================
 // 2. 部署构建监听状态端点 (GET /api/deploy-status) - 仅限管理员
 // ============================================================
 app.get('/api/deploy-status', requireAdmin, async (c) => {
