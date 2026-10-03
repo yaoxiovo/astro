@@ -1,9 +1,10 @@
 ---
 import Layout from "@layouts/Layout.astro";
+import { umamiConfig } from "../config";
 ---
 
 <Layout title="文章发布与部署控制台 | 瑶曦博客" description="开箱即用的 Astro 博客便捷发布后台与实时部署监听系统" noindex={true}>
-  <div class="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+  <div id="admin-studio-root" class="min-h-screen py-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto" data-umami-base={umamiConfig.baseUrl} data-umami-share={umamiConfig.shareId}>
     
     <!-- 顶部状态栏 -->
     <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 mb-8 border-b border-[var(--line-divider)] gap-4">
@@ -94,12 +95,15 @@ import Layout from "@layouts/Layout.astro";
     </div>
 
     <!-- 顶部工作台模式切换 Tab -->
-    <div class="flex items-center gap-2 p-1.5 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)] w-fit mb-6">
+    <div class="flex items-center gap-2 p-1.5 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)] w-fit mb-6 flex-wrap">
       <button type="button" id="tab-mode-post" class="px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-[var(--primary)] text-white dark:text-black shadow-sm flex items-center gap-1.5 cursor-pointer">
         <span>📝 撰写长文 (Blog Post)</span>
       </button>
       <button type="button" id="tab-mode-moment" class="px-4 py-2 rounded-xl text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
         <span>💬 发朋友圈 / 胶囊 (Moment & Capsule)</span>
+      </button>
+      <button type="button" id="tab-mode-analytics" class="px-4 py-2 rounded-xl text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
+        <span>📊 流量大盘 (Live Analytics)</span>
       </button>
     </div>
 
@@ -313,6 +317,119 @@ import Layout from "@layouts/Layout.astro";
       </div>
     </div>
 
+    <!-- 3. Umami 实时流量与访问分析大盘 (默认隐藏) -->
+    <div id="panel-analytics" class="hidden space-y-6">
+      <!-- 顶部概览与控制器 -->
+      <div class="p-5 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-3">
+            <h2 class="text-base font-bold text-black/90 dark:text-white/90 flex items-center gap-2">
+              <span>📊</span>
+              <span>站点访问与流量实时看板 (Umami Analytics)</span>
+            </h2>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>实时在线: <strong id="umami-active-visitors" class="font-mono">1</strong> 人</span>
+            </span>
+          </div>
+          <p class="text-xs text-black/50 dark:text-white/50 mt-1 font-mono">
+            API 节点: {umamiConfig.baseUrl} · Share ID: {umamiConfig.shareId}
+          </p>
+        </div>
+
+        <!-- 时间筛选器与刷新 -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="p-1 rounded-xl bg-black/5 dark:bg-white/10 flex items-center text-xs font-medium">
+            <button type="button" class="analytics-range-btn px-2.5 py-1 rounded-lg transition-all" data-range="today">今日</button>
+            <button type="button" class="analytics-range-btn px-2.5 py-1 rounded-lg bg-[var(--primary)] text-white dark:text-black font-semibold shadow-sm transition-all" data-range="7d">近 7 天</button>
+            <button type="button" class="analytics-range-btn px-2.5 py-1 rounded-lg transition-all" data-range="30d">近 30 天</button>
+          </div>
+          <button type="button" id="btn-refresh-analytics" class="p-2 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/15 text-xs text-black/70 dark:text-white/70 transition-all flex items-center gap-1 cursor-pointer" title="刷新流量数据">
+            <svg id="analytics-refresh-icon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 四项核心指标卡片 -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)]">
+          <div class="text-xs text-black/50 dark:text-white/50 mb-1">页面浏览量 (PV)</div>
+          <div id="stat-pv" class="text-2xl font-bold font-mono text-[var(--primary)]">-</div>
+          <div class="text-[11px] text-black/40 dark:text-white/40 mt-1 font-mono">Pageviews</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)]">
+          <div class="text-xs text-black/50 dark:text-white/50 mb-1">独立访客 (UV)</div>
+          <div id="stat-uv" class="text-2xl font-bold font-mono text-emerald-500">-</div>
+          <div class="text-[11px] text-black/40 dark:text-white/40 mt-1 font-mono">Unique Visitors</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)]">
+          <div class="text-xs text-black/50 dark:text-white/50 mb-1">访问会话 (Visits)</div>
+          <div id="stat-visits" class="text-2xl font-bold font-mono text-purple-500">-</div>
+          <div class="text-[11px] text-black/40 dark:text-white/40 mt-1 font-mono">Total Sessions</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)]">
+          <div class="text-xs text-black/50 dark:text-white/50 mb-1">跳出率 (Bounce Rate)</div>
+          <div id="stat-bounce" class="text-2xl font-bold font-mono text-amber-500">-</div>
+          <div class="text-[11px] text-black/40 dark:text-white/40 mt-1 font-mono">Bounce Ratio</div>
+        </div>
+      </div>
+
+      <!-- 细分榜单网格 -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 热门页面与文章 Top 7 (占 2 列) -->
+        <div class="lg:col-span-2 p-5 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)]">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-bold text-black/85 dark:text-white/85 flex items-center gap-1.5">
+              <span>🔥</span>
+              <span>高频热门文章与页面排行 (Top Pages)</span>
+            </h3>
+            <span class="text-[11px] text-black/40 dark:text-white/40 font-mono">浏览次数</span>
+          </div>
+          <div id="analytics-top-pages" class="space-y-2.5">
+            <div class="text-xs text-black/40 dark:text-white/40 text-center py-6">正在加载数据...</div>
+          </div>
+        </div>
+
+        <!-- 来源渠道与地域分布 (占 1 列) -->
+        <div class="space-y-6">
+          <!-- 来源渠道 -->
+          <div class="p-5 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)]">
+            <h3 class="text-sm font-bold text-black/85 dark:text-white/85 mb-3 flex items-center gap-1.5">
+              <span>🧭</span>
+              <span>主要访问来源 (Referrers)</span>
+            </h3>
+            <div id="analytics-top-referrers" class="space-y-2 text-xs">
+              <div class="text-xs text-black/40 dark:text-white/40 text-center py-4">正在加载数据...</div>
+            </div>
+          </div>
+
+          <!-- 访客地域 -->
+          <div class="p-5 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)]">
+            <h3 class="text-sm font-bold text-black/85 dark:text-white/85 mb-3 flex items-center gap-1.5">
+              <span>🌍</span>
+              <span>访客国家与地区 (Countries)</span>
+            </h3>
+            <div id="analytics-top-countries" class="space-y-2 text-xs">
+              <div class="text-xs text-black/40 dark:text-white/40 text-center py-4">正在加载数据...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部跳转外部完整控制台 -->
+      <div class="p-4 rounded-xl bg-[var(--primary)]/5 border border-[var(--primary)]/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+        <span class="text-black/70 dark:text-white/70">需要查看完整漏斗、留存率或自定义事件跟踪分析？</span>
+        <a href={`${umamiConfig.baseUrl}/share/${umamiConfig.shareId}`} target="_blank" rel="noopener noreferrer" class="px-3.5 py-1.5 rounded-lg bg-[var(--primary)] text-white dark:text-black font-semibold hover:opacity-90 transition-all flex items-center gap-1 shrink-0">
+          <span>打开完整 Umami 报表控制台</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
+      </div>
+    </div>
+
     <!-- 鉴权凭据配置弹窗 (Modal) -->
     <div id="modal-auth" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
       <div class="w-full max-w-md rounded-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)] shadow-2xl p-6">
@@ -463,11 +580,13 @@ import Layout from "@layouts/Layout.astro";
     const btnModalSsoLogout = document.getElementById('btn-modal-sso-logout');
 
     // 工作台模式切换
-    let currentEditorMode = 'post'; // 'post' | 'moment'
+    let currentEditorMode = 'post'; // 'post' | 'moment' | 'analytics'
     const tabModePost = document.getElementById('tab-mode-post');
     const tabModeMoment = document.getElementById('tab-mode-moment');
+    const tabModeAnalytics = document.getElementById('tab-mode-analytics');
     const panelPostEditor = document.getElementById('panel-post-editor');
     const panelMomentEditor = document.getElementById('panel-moment-editor');
+    const panelAnalytics = document.getElementById('panel-analytics');
 
     // 朋友圈动态 DOM 元素
     const momentSlugEl = document.getElementById('moment-slug');
@@ -966,25 +1085,199 @@ import Layout from "@layouts/Layout.astro";
     // 模式切换与动态交互初始化
     function setEditorMode(mode) {
       currentEditorMode = mode;
+      const tabInactiveClass = 'px-4 py-2 rounded-xl text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer';
+      const tabActiveClass = 'px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-[var(--primary)] text-white dark:text-black shadow-sm flex items-center gap-1.5 cursor-pointer';
+
       if (mode === 'post') {
-        tabModePost.className = 'px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-[var(--primary)] text-white dark:text-black shadow-sm flex items-center gap-1.5 cursor-pointer';
-        tabModeMoment.className = 'px-4 py-2 rounded-xl text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer';
+        tabModePost.className = tabActiveClass;
+        tabModeMoment.className = tabInactiveClass;
+        tabModeAnalytics.className = tabInactiveClass;
         panelPostEditor.classList.remove('hidden');
         panelMomentEditor.classList.add('hidden');
+        panelAnalytics.classList.add('hidden');
+        btnPublish.classList.remove('hidden');
         btnPublishText.textContent = '发布文章并构建';
         btnContinueWriting.textContent = '再写一篇新文章';
-      } else {
-        tabModeMoment.className = 'px-4 py-2 rounded-xl text-xs font-semibold transition-all bg-[var(--primary)] text-white dark:text-black shadow-sm flex items-center gap-1.5 cursor-pointer';
-        tabModePost.className = 'px-4 py-2 rounded-xl text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer';
+      } else if (mode === 'moment') {
+        tabModeMoment.className = tabActiveClass;
+        tabModePost.className = tabInactiveClass;
+        tabModeAnalytics.className = tabInactiveClass;
         panelMomentEditor.classList.remove('hidden');
         panelPostEditor.classList.add('hidden');
+        panelAnalytics.classList.add('hidden');
+        btnPublish.classList.remove('hidden');
         btnPublishText.textContent = '发布动态并构建';
         btnContinueWriting.textContent = '再发一条新动态';
+      } else if (mode === 'analytics') {
+        tabModeAnalytics.className = tabActiveClass;
+        tabModePost.className = tabInactiveClass;
+        tabModeMoment.className = tabInactiveClass;
+        panelAnalytics.classList.remove('hidden');
+        panelPostEditor.classList.add('hidden');
+        panelMomentEditor.classList.add('hidden');
+        btnPublish.classList.add('hidden');
+        loadUmamiAnalytics();
       }
     }
 
     tabModePost?.addEventListener('click', () => setEditorMode('post'));
     tabModeMoment?.addEventListener('click', () => setEditorMode('moment'));
+    tabModeAnalytics?.addEventListener('click', () => setEditorMode('analytics'));
+
+    // ============================================================
+    // Umami 流量统计大盘自动化处理
+    // ============================================================
+    let umamiWebsiteId = null;
+    let umamiToken = null;
+    let analyticsRange = '7d';
+    let isFetchingAnalytics = false;
+
+    const rootEl = document.getElementById('admin-studio-root');
+    const umamiBaseUrl = rootEl?.getAttribute('data-umami-base') || 'https://umami.yaoxi.cloud';
+    const umamiShareId = rootEl?.getAttribute('data-umami-share') || 'CLGxRecPqPn9IidK';
+
+    async function ensureUmamiAuth() {
+      if (umamiWebsiteId && umamiToken) return { websiteId: umamiWebsiteId, token: umamiToken };
+      const res = await fetch(`${umamiBaseUrl}/api/share/${umamiShareId}`);
+      if (!res.ok) throw new Error(`Umami Share 认证失败: HTTP ${res.status}`);
+      const data = await res.json();
+      umamiWebsiteId = data.websiteId;
+      umamiToken = data.token;
+      return { websiteId: umamiWebsiteId, token: umamiToken };
+    }
+
+    async function loadUmamiAnalytics() {
+      if (isFetchingAnalytics) return;
+      isFetchingAnalytics = true;
+      const refreshIcon = document.getElementById('analytics-refresh-icon');
+      refreshIcon?.classList.add('animate-spin');
+
+      const elActive = document.getElementById('umami-active-visitors');
+      const elPv = document.getElementById('stat-pv');
+      const elUv = document.getElementById('stat-uv');
+      const elVisits = document.getElementById('stat-visits');
+      const elBounce = document.getElementById('stat-bounce');
+      const elTopPages = document.getElementById('analytics-top-pages');
+      const elTopReferrers = document.getElementById('analytics-top-referrers');
+      const elTopCountries = document.getElementById('analytics-top-countries');
+
+      try {
+        const { websiteId, token } = await ensureUmamiAuth();
+        const headers = { 'x-umami-share-token': token };
+
+        const now = Date.now();
+        let days = 7;
+        if (analyticsRange === 'today') days = 1;
+        else if (analyticsRange === '30d') days = 30;
+        const startAt = now - days * 86400000;
+
+        const [activeRes, statsRes, pagesRes, refRes, countryRes] = await Promise.allSettled([
+          fetch(`${umamiBaseUrl}/api/websites/${websiteId}/active`, { headers }).then(r => r.json()),
+          fetch(`${umamiBaseUrl}/api/websites/${websiteId}/stats?startAt=${startAt}&endAt=${now}`, { headers }).then(r => r.json()),
+          fetch(`${umamiBaseUrl}/api/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${now}&type=path&limit=7`, { headers }).then(r => r.json()),
+          fetch(`${umamiBaseUrl}/api/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${now}&type=referrer&limit=5`, { headers }).then(r => r.json()),
+          fetch(`${umamiBaseUrl}/api/websites/${websiteId}/metrics?startAt=${startAt}&endAt=${now}&type=country&limit=5`, { headers }).then(r => r.json()),
+        ]);
+
+        if (activeRes.status === 'fulfilled' && activeRes.value) {
+          if (elActive) elActive.textContent = activeRes.value.visitors ?? 0;
+        }
+
+        if (statsRes.status === 'fulfilled' && statsRes.value) {
+          const s = statsRes.value;
+          if (elPv) elPv.textContent = (s.pageviews ?? 0).toLocaleString();
+          if (elUv) elUv.textContent = (s.visitors ?? 0).toLocaleString();
+          if (elVisits) elVisits.textContent = (s.visits ?? 0).toLocaleString();
+          const bounceRate = s.visits ? Math.round(((s.bounces ?? 0) / s.visits) * 100) : 0;
+          if (elBounce) elBounce.textContent = `${bounceRate}%`;
+        }
+
+        if (pagesRes.status === 'fulfilled' && Array.isArray(pagesRes.value)) {
+          const pages = pagesRes.value;
+          if (pages.length === 0) {
+            if (elTopPages) elTopPages.innerHTML = '<div class="text-xs text-black/40 dark:text-white/40 text-center py-6">暂无访问页面记录 喵~</div>';
+          } else {
+            const maxViews = Math.max(...pages.map(p => p.y || 1));
+            if (elTopPages) {
+              elTopPages.innerHTML = pages.map((p, idx) => {
+                const percent = Math.round(((p.y || 0) / maxViews) * 100);
+                return `
+                  <div class="p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition-all">
+                    <div class="flex items-center justify-between text-xs mb-1.5">
+                      <div class="flex items-center gap-2 truncate pr-2">
+                        <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-mono font-bold ${idx < 3 ? 'bg-[var(--primary)] text-white dark:text-black' : 'bg-black/10 dark:bg-white/10 text-black/60 dark:text-white/60'} shrink-0">${idx + 1}</span>
+                        <a href="${p.x}" target="_blank" class="truncate font-mono text-black/85 dark:text-white/85 hover:text-[var(--primary)]">${p.x}</a>
+                      </div>
+                      <span class="font-mono font-bold text-black/80 dark:text-white/80 shrink-0">${p.y} 次</span>
+                    </div>
+                    <div class="w-full bg-black/5 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+                      <div class="h-full bg-[var(--primary)] rounded-full transition-all duration-500" style="width: ${percent}%;"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('');
+            }
+          }
+        }
+
+        if (refRes.status === 'fulfilled' && Array.isArray(refRes.value)) {
+          const refs = refRes.value;
+          if (elTopReferrers) {
+            if (refs.length === 0) {
+              elTopReferrers.innerHTML = '<div class="text-xs text-black/40 dark:text-white/40 text-center py-4">直接访问 (Direct) 或暂无外链</div>';
+            } else {
+              elTopReferrers.innerHTML = refs.map(r => `
+                <div class="flex items-center justify-between py-1 border-b border-[var(--line-divider)]/40 last:border-none">
+                  <span class="truncate font-mono text-black/70 dark:text-white/70">${r.x || '直接访问 (Direct)'}</span>
+                  <span class="font-mono font-bold text-[var(--primary)] shrink-0">${r.y}</span>
+                </div>
+              `).join('');
+            }
+          }
+        }
+
+        if (countryRes.status === 'fulfilled' && Array.isArray(countryRes.value)) {
+          const countries = countryRes.value;
+          if (elTopCountries) {
+            if (countries.length === 0) {
+              elTopCountries.innerHTML = '<div class="text-xs text-black/40 dark:text-white/40 text-center py-4">暂无地域统计数据</div>';
+            } else {
+              elTopCountries.innerHTML = countries.map(c => `
+                <div class="flex items-center justify-between py-1 border-b border-[var(--line-divider)]/40 last:border-none">
+                  <span class="font-mono text-black/70 dark:text-white/70">${c.x || '未知'}</span>
+                  <span class="font-mono font-bold text-emerald-500 shrink-0">${c.y}</span>
+                </div>
+              `).join('');
+            }
+          }
+        }
+
+      } catch (err) {
+        console.error('[Umami Analytics Error]', err);
+        if (elTopPages) elTopPages.innerHTML = `<div class="text-xs text-red-500 text-center py-6">无法连接至 Umami 节点: ${err.message || '网络连接异常'} 喵！</div>`;
+      } finally {
+        isFetchingAnalytics = false;
+        refreshIcon?.classList.remove('animate-spin');
+      }
+    }
+
+    document.querySelectorAll('.analytics-range-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget;
+        const range = target.getAttribute('data-range');
+        if (!range || range === analyticsRange) return;
+        analyticsRange = range;
+        document.querySelectorAll('.analytics-range-btn').forEach(b => {
+          b.className = 'analytics-range-btn px-2.5 py-1 rounded-lg transition-all text-black/60 dark:text-white/60';
+        });
+        target.className = 'analytics-range-btn px-2.5 py-1 rounded-lg bg-[var(--primary)] text-white dark:text-black font-semibold shadow-sm transition-all';
+        loadUmamiAnalytics();
+      });
+    });
+
+    document.getElementById('btn-refresh-analytics')?.addEventListener('click', () => {
+      loadUmamiAnalytics();
+    });
 
     momentIsCapsuleEl?.addEventListener('change', () => {
       if (momentIsCapsuleEl.checked) {

@@ -42,6 +42,8 @@ headings.forEach(h => {
 });
 const mindmapData = JSON.stringify(mindmapMd);
 const rawPostMarkdown = entry.data.encrypted ? "" : (entry.body || "");
+const articleTitle = entry.data.title;
+const postId = entry.id;
 
 // 获取同系列文章
 const allPosts = await getSortedPosts();
@@ -193,6 +195,10 @@ if (entry.data.encrypted && (entry as any).body) {
                         <p class="text-black/80 dark:text-white/80 text-sm">这篇文章是否对你有帮助？</p>
                     </div>
                     <div class="flex gap-2 flex-wrap items-center">
+                        <button id="btn-tts-listen" class="group flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] active:bg-[var(--btn-regular-bg-active)] text-[var(--btn-content)] text-xs font-medium transition-all active:scale-95 cursor-pointer" title="智能语音朗读全文">
+                            <Icon name="material-symbols:headphones-outline" class="text-[0.875rem] group-hover:scale-110 transition-transform"></Icon>
+                            <span id="tts-btn-text">朗读</span>
+                        </button>
                         <button id="btn-copy-md" class="group flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] active:bg-[var(--btn-regular-bg-active)] text-[var(--btn-content)] text-xs font-medium transition-all active:scale-95 cursor-pointer" title="复制文章 Markdown 源码">
                             <Icon name="material-symbols:content-copy-outline" class="text-[0.875rem] group-hover:scale-110 transition-transform"></Icon>
                             <span>复制 MD</span>
@@ -361,6 +367,36 @@ if (entry.data.encrypted && (entry as any).body) {
             </div>
 
             {licenseConfig.enable && <License title={entry.data.title} slug={entry.id} pubDate={entry.data.published} class="mb-6 rounded-xl license-container onload-animation"></License>}
+
+            <!-- 文章 Git 修订历史折叠组件 -->
+            <div id="post-revision-history" class="mb-6 p-4 rounded-xl border border-[var(--line-divider)] bg-black/[0.02] dark:bg-white/[0.02] transition-all" data-entry-id={entry.id}>
+                <div class="flex items-center justify-between cursor-pointer select-none" id="history-header">
+                    <div class="flex items-center gap-2 text-xs font-semibold text-black/75 dark:text-white/75">
+                        <Icon name="material-symbols:history" class="text-sm text-[var(--primary)]" />
+                        <span>文章修订历史版本 (Git Revision History)</span>
+                        <span id="history-count-badge" class="px-1.5 py-0.5 rounded text-[10px] bg-black/5 dark:bg-white/10 font-mono text-black/50 dark:text-white/50">点击展开</span>
+                    </div>
+                    <div class="flex items-center gap-1 text-[11px] text-[var(--primary)]">
+                        <span id="history-toggle-text">展开</span>
+                        <Icon name="material-symbols:keyboard-arrow-down" id="history-toggle-icon" class="text-base transition-transform duration-200" />
+                    </div>
+                </div>
+                
+                <div id="history-content" class="hidden mt-3 pt-3 border-t border-[var(--line-divider)]">
+                    <div id="history-timeline-list" class="space-y-2.5">
+                        <div class="text-xs text-black/40 dark:text-white/40 text-center py-2">
+                            点击后自动向 GitHub API 获取提交历史...
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2.5 border-t border-[var(--line-divider)]/50 flex justify-between items-center text-[11px]">
+                        <a href={`https://github.com/yaoxiovo/astro/commits/main/src/content/posts/${entry.id}`} target="_blank" rel="noopener noreferrer" class="text-[var(--primary)] hover:underline flex items-center gap-1 font-medium">
+                            <span>在 GitHub 查看完整变更 Commits</span>
+                            <Icon name="material-symbols:open-in-new" class="text-xs" />
+                        </a>
+                        <span class="text-black/30 dark:text-white/30 font-mono">Git Verifiable</span>
+                    </div>
+                </div>
+            </div>
             
 
             
@@ -592,6 +628,55 @@ if (entry.data.encrypted && (entry as any).body) {
     }
 </style>
 
+    <!-- 原生 Web Speech 智能语音朗读控制条 (默认隐藏) -->
+    <div id="tts-player-bar" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 hidden flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-black/85 dark:bg-neutral-900/90 text-white border border-white/10 dark:border-white/20 shadow-2xl backdrop-blur-md text-xs select-none">
+      <div class="flex items-center gap-1.5 pr-2 border-r border-white/20">
+        <span id="tts-pulse-dot" class="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="font-bold tracking-tight text-[var(--primary)] font-mono">TTS 朗读</span>
+      </div>
+      
+      <div id="tts-progress-info" class="text-[11px] font-mono text-white/70 min-w-[70px] text-center">
+        准备中
+      </div>
+
+      <!-- 播放/暂停控制 -->
+      <button id="tts-btn-toggle" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white flex items-center justify-center cursor-pointer" title="播放/暂停">
+        <Icon name="material-symbols:pause" id="tts-icon-pause" class="text-base" />
+        <Icon name="material-symbols:play-arrow" id="tts-icon-play" class="text-base hidden" />
+      </button>
+
+      <!-- 停止控制 -->
+      <button id="tts-btn-stop" class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white/80 hover:text-white flex items-center justify-center cursor-pointer" title="停止朗读">
+        <Icon name="material-symbols:stop" class="text-base" />
+      </button>
+
+      <!-- 语速调节 -->
+      <button id="tts-btn-rate" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-mono font-bold text-white/90 cursor-pointer" title="调节语速">
+        1.0x
+      </button>
+
+      <!-- 关闭按钮 -->
+      <button id="tts-btn-close" class="p-1 rounded-lg hover:bg-white/10 text-white/50 hover:text-white cursor-pointer ml-1" title="关闭播报器">
+        ✕
+      </button>
+    </div>
+
+    <!-- 划词智能操作胶囊工具条 (默认隐藏) -->
+    <div id="selection-action-toolbar" class="fixed z-50 hidden flex items-center gap-1 p-1 bg-black/90 dark:bg-white/95 text-white dark:text-black rounded-xl shadow-2xl backdrop-blur-md transition-all duration-150 select-none border border-white/15 dark:border-black/15 text-xs">
+      <button id="sel-btn-quote" class="flex items-center gap-1 px-2.5 py-1 hover:bg-white/15 dark:hover:bg-black/10 rounded-lg font-medium cursor-pointer transition active:scale-95">
+        <Icon name="material-symbols:format-quote-outline" class="text-sm text-[var(--primary)]"></Icon>
+        <span>引用</span>
+      </button>
+      <button id="sel-btn-search" class="flex items-center gap-1 px-2.5 py-1 hover:bg-white/15 dark:hover:bg-black/10 rounded-lg font-medium cursor-pointer transition active:scale-95">
+        <Icon name="material-symbols:search" class="text-sm text-[var(--primary)]"></Icon>
+        <span>快搜</span>
+      </button>
+      <button id="sel-btn-comment" class="flex items-center gap-1 px-2.5 py-1 hover:bg-white/15 dark:hover:bg-black/10 rounded-lg font-medium cursor-pointer transition active:scale-95">
+        <Icon name="material-symbols:chat-bubble-outline" class="text-sm text-[var(--primary)]"></Icon>
+        <span>探讨</span>
+      </button>
+    </div>
+
     <!-- 浮动返回顶部与实时进度胶囊 -->
     <button id="btn-back-to-top" class="fixed bottom-6 right-6 z-40 px-3 py-2 rounded-2xl bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md border border-[var(--line-divider)] shadow-lg hover:shadow-xl transition-all duration-300 opacity-0 pointer-events-none translate-y-4 hover:scale-105 active:scale-95 flex items-center gap-1.5 text-xs font-mono text-black/70 dark:text-white/70 cursor-pointer" aria-label="返回顶部">
       <Icon name="material-symbols:arrow-upward" class="text-base text-[var(--primary)]" />
@@ -603,7 +688,7 @@ if (entry.data.encrypted && (entry as any).body) {
       <span id="copy-toast-text">已复制 喵！</span>
     </div>
 
-<script define:vars={{ rawPostMarkdown }}>
+<script define:vars={{ rawPostMarkdown, articleTitle, postId }}>
     function initArticleTools() {
         const progressBar = document.getElementById('reading-progress-bar');
         const backToTopBtn = document.getElementById('btn-back-to-top');
@@ -678,6 +763,332 @@ if (entry.data.encrypted && (entry as any).body) {
                 showToast('已复制文章分享链接 喵！');
             } catch (e) {
                 showToast('复制链接失败 喵！');
+            }
+        });
+
+        // ============================================================
+        // 1. 原生 Web Speech API 文章智能语音朗读器 (TTS)
+        // ============================================================
+        let ttsParagraphs = [];
+        let ttsIndex = 0;
+        let isTTSPlaying = false;
+        const ttsRates = [1.0, 1.25, 1.5, 0.8];
+        let currentRateIndex = 0;
+
+        const btnTtsListen = document.getElementById('btn-tts-listen');
+        const ttsPlayerBar = document.getElementById('tts-player-bar');
+        const ttsProgressInfo = document.getElementById('tts-progress-info');
+        const ttsBtnToggle = document.getElementById('tts-btn-toggle');
+        const ttsBtnStop = document.getElementById('tts-btn-stop');
+        const ttsBtnRate = document.getElementById('tts-btn-rate');
+        const ttsBtnClose = document.getElementById('tts-btn-close');
+        const ttsIconPause = document.getElementById('tts-icon-pause');
+        const ttsIconPlay = document.getElementById('tts-icon-play');
+        const ttsPulseDot = document.getElementById('tts-pulse-dot');
+
+        function collectTTSParagraphs() {
+            const rawNodes = Array.from(document.querySelectorAll('#post-container .markdown-content > p, #post-container .markdown-content > h2, #post-container .markdown-content > h3, #post-container .markdown-content > blockquote, #post-container .markdown-content > ul > li, #post-container .markdown-content > ol > li'));
+            return rawNodes.filter(el => {
+                if (el.closest('pre') || el.closest('code') || el.closest('.katex') || el.closest('#mindmap-container')) return false;
+                const txt = el.textContent ? el.textContent.trim() : '';
+                return txt.length > 1;
+            });
+        }
+
+        function highlightTTSParagraph(idx) {
+            ttsParagraphs.forEach((p, i) => {
+                if (i === idx) {
+                    p.style.transition = 'all 0.3s ease';
+                    p.style.backgroundColor = 'rgba(var(--primary-rgb, 59, 130, 246), 0.12)';
+                    p.style.borderLeft = '3px solid var(--primary)';
+                    p.style.paddingLeft = '10px';
+                    p.style.borderRadius = '4px';
+                    p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    p.style.backgroundColor = '';
+                    p.style.borderLeft = '';
+                    p.style.paddingLeft = '';
+                }
+            });
+        }
+
+        function clearTTSHighlight() {
+            ttsParagraphs.forEach(p => {
+                p.style.backgroundColor = '';
+                p.style.borderLeft = '';
+                p.style.paddingLeft = '';
+            });
+        }
+
+        function speakTTSParagraph(index) {
+            if (!('speechSynthesis' in window)) return;
+            if (index < 0 || index >= ttsParagraphs.length) {
+                stopTTS();
+                showToast('文章朗读已完毕 喵！');
+                return;
+            }
+
+            ttsIndex = index;
+            highlightTTSParagraph(ttsIndex);
+
+            if (ttsProgressInfo) {
+                ttsProgressInfo.textContent = `第 ${ttsIndex + 1} / ${ttsParagraphs.length} 段`;
+            }
+
+            window.speechSynthesis.cancel();
+            const textToSpeak = ttsParagraphs[ttsIndex].textContent.trim();
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.rate = ttsRates[currentRateIndex];
+            utterance.lang = 'zh-CN';
+
+            utterance.onend = () => {
+                if (isTTSPlaying) {
+                    if (ttsIndex + 1 < ttsParagraphs.length) {
+                        speakTTSParagraph(ttsIndex + 1);
+                    } else {
+                        stopTTS();
+                        showToast('文章朗读完毕 喵！');
+                    }
+                }
+            };
+
+            utterance.onerror = (e) => {
+                if (e.error !== 'canceled' && e.error !== 'interrupted') {
+                    console.error('[TTS Error]', e);
+                    stopTTS();
+                }
+            };
+
+            window.speechSynthesis.speak(utterance);
+            isTTSPlaying = true;
+            ttsIconPause?.classList.remove('hidden');
+            ttsIconPlay?.classList.add('hidden');
+            ttsPulseDot?.classList.remove('hidden');
+        }
+
+        function startTTS() {
+            if (!('speechSynthesis' in window)) {
+                showToast('当前浏览器不支持 Web Speech 语音朗读 喵！');
+                return;
+            }
+            ttsParagraphs = collectTTSParagraphs();
+            if (ttsParagraphs.length === 0) {
+                showToast('未找到可朗读的正文段落 喵！');
+                return;
+            }
+            ttsPlayerBar?.classList.remove('hidden');
+            speakTTSParagraph(0);
+        }
+
+        function pauseTTS() {
+            if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+                window.speechSynthesis.pause();
+                isTTSPlaying = false;
+                ttsIconPause?.classList.add('hidden');
+                ttsIconPlay?.classList.remove('hidden');
+                ttsPulseDot?.classList.add('hidden');
+            }
+        }
+
+        function resumeTTS() {
+            if (window.speechSynthesis.paused) {
+                window.speechSynthesis.resume();
+                isTTSPlaying = true;
+                ttsIconPause?.classList.remove('hidden');
+                ttsIconPlay?.classList.add('hidden');
+                ttsPulseDot?.classList.remove('hidden');
+            } else {
+                speakTTSParagraph(ttsIndex);
+            }
+        }
+
+        function stopTTS() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            isTTSPlaying = false;
+            clearTTSHighlight();
+            ttsIconPause?.classList.add('hidden');
+            ttsIconPlay?.classList.remove('hidden');
+            ttsPulseDot?.classList.add('hidden');
+            if (ttsProgressInfo) ttsProgressInfo.textContent = '已暂停';
+        }
+
+        btnTtsListen?.addEventListener('click', () => {
+            if (ttsPlayerBar && !ttsPlayerBar.classList.contains('hidden') && isTTSPlaying) {
+                pauseTTS();
+            } else {
+                startTTS();
+            }
+        });
+
+        ttsBtnToggle?.addEventListener('click', () => {
+            if (isTTSPlaying) {
+                pauseTTS();
+            } else {
+                resumeTTS();
+            }
+        });
+
+        ttsBtnStop?.addEventListener('click', stopTTS);
+
+        ttsBtnRate?.addEventListener('click', () => {
+            currentRateIndex = (currentRateIndex + 1) % ttsRates.length;
+            const newRate = ttsRates[currentRateIndex];
+            if (ttsBtnRate) ttsBtnRate.textContent = `${newRate}x`;
+            if (isTTSPlaying) {
+                speakTTSParagraph(ttsIndex);
+            }
+        });
+
+        ttsBtnClose?.addEventListener('click', () => {
+            stopTTS();
+            ttsPlayerBar?.classList.add('hidden');
+        });
+
+        window.addEventListener('beforeunload', stopTTS);
+
+        // ============================================================
+        // 2. 划词智能操作胶囊工具条 (Selection Floating Toolbar)
+        // ============================================================
+        const selectionToolbar = document.getElementById('selection-action-toolbar');
+        const selBtnQuote = document.getElementById('sel-btn-quote');
+        const selBtnSearch = document.getElementById('sel-btn-search');
+        const selBtnComment = document.getElementById('sel-btn-comment');
+
+        let activeSelectedText = '';
+
+        function handleTextSelection() {
+            const sel = window.getSelection();
+            const text = sel ? sel.toString().trim() : '';
+            const postContainer = document.getElementById('post-container');
+
+            if (!selectionToolbar) return;
+
+            if (text.length >= 2 && postContainer && sel.rangeCount > 0) {
+                const range = sel.getRangeAt(0);
+                if (postContainer.contains(range.commonAncestorContainer)) {
+                    activeSelectedText = text;
+                    const rect = range.getBoundingClientRect();
+                    selectionToolbar.classList.remove('hidden');
+                    const top = Math.max(12, rect.top - 46);
+                    const left = Math.min(window.innerWidth - 190, Math.max(10, rect.left + rect.width / 2 - 85));
+                    selectionToolbar.style.top = `${top}px`;
+                    selectionToolbar.style.left = `${left}px`;
+                    return;
+                }
+            }
+            selectionToolbar.classList.add('hidden');
+        }
+
+        document.addEventListener('selectionchange', handleTextSelection);
+
+        selBtnQuote?.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!activeSelectedText) return;
+            const quoteContent = `> ${activeSelectedText}\n>\n> —— 摘自瑶曦《${articleTitle}》\n> 原文直达: ${window.location.href}`;
+            try {
+                await navigator.clipboard.writeText(quoteContent);
+                showToast('已复制金句引用与出处 喵！');
+            } catch {
+                showToast('复制失败，请手动选取 喵！');
+            }
+            selectionToolbar?.classList.add('hidden');
+            window.getSelection()?.removeAllRanges();
+        });
+
+        selBtnSearch?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!activeSelectedText) return;
+            const query = activeSelectedText;
+            selectionToolbar?.classList.add('hidden');
+            window.dispatchEvent(new CustomEvent('yaoxi:search', { detail: { query } }));
+        });
+
+        selBtnComment?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectionToolbar?.classList.add('hidden');
+            const giscus = document.getElementById('giscus-container');
+            giscus?.scrollIntoView({ behavior: 'smooth' });
+            showToast('已跳转至评论探讨区 喵！');
+        });
+
+        // ============================================================
+        // 3. 文章 Git Revision History 历史版本动态拉取
+        // ============================================================
+        const historyContainer = document.getElementById('post-revision-history');
+        const historyHeader = document.getElementById('history-header');
+        const historyContent = document.getElementById('history-content');
+        const timelineList = document.getElementById('history-timeline-list');
+        const historyBadge = document.getElementById('history-count-badge');
+        const historyToggleText = document.getElementById('history-toggle-text');
+        const historyToggleIcon = document.getElementById('history-toggle-icon');
+
+        let isHistoryFetched = false;
+
+        async function fetchGitHistory() {
+            if (isHistoryFetched) return;
+            isHistoryFetched = true;
+            try {
+                const entryFile = historyContainer?.getAttribute('data-entry-id') || postId;
+                const apiUrl = `https://api.github.com/repos/yaoxiovo/astro/commits?path=src/content/posts/${encodeURIComponent(entryFile)}&per_page=5`;
+                const res = await fetch(apiUrl);
+                if (!res.ok) {
+                    if (res.status === 403) {
+                        if (timelineList) timelineList.innerHTML = '<div class="text-xs text-amber-500/80 text-center py-2">已触发 GitHub 匿名 API 访问频控保护，请点击下方直达链接查看 喵~</div>';
+                        if (historyBadge) historyBadge.textContent = '频控限制';
+                        return;
+                    }
+                    throw new Error(`HTTP ${res.status}`);
+                }
+                const commits = await res.json();
+                if (!Array.isArray(commits) || commits.length === 0) {
+                    if (timelineList) timelineList.innerHTML = '<div class="text-xs text-black/40 dark:text-white/40 text-center py-2">暂无历史提交记录（可能为初始未推送草稿）喵~</div>';
+                    if (historyBadge) historyBadge.textContent = '初始版本';
+                    return;
+                }
+
+                if (historyBadge) historyBadge.textContent = `${commits.length} 次更新记录`;
+
+                if (timelineList) {
+                    timelineList.innerHTML = commits.map((c, i) => {
+                        const dateStr = new Date(c.commit.author.date).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                        const firstLineMsg = (c.commit.message || '').split('\n')[0];
+                        const shortSha = c.sha.substring(0, 7);
+                        return `
+                          <div class="flex items-start gap-3 relative pl-4 border-l-2 ${i === 0 ? 'border-[var(--primary)]' : 'border-black/10 dark:border-white/10'} pb-3 last:pb-0">
+                            <span class="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full ${i === 0 ? 'bg-[var(--primary)]' : 'bg-black/30 dark:bg-white/30'}"></span>
+                            <div class="flex-1 min-w-0">
+                              <div class="flex items-center justify-between text-xs mb-0.5">
+                                <span class="font-medium text-black/85 dark:text-white/85 truncate pr-2">${firstLineMsg}</span>
+                                <a href="${c.html_url}" target="_blank" rel="noopener noreferrer" class="font-mono text-[11px] text-[var(--primary)] hover:underline shrink-0">${shortSha}</a>
+                              </div>
+                              <div class="text-[10px] text-black/40 dark:text-white/40 font-mono">
+                                ${dateStr} · 提交者: ${c.commit.author.name}
+                              </div>
+                            </div>
+                          </div>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error('[Git History Error]', err);
+                if (timelineList) timelineList.innerHTML = '<div class="text-xs text-red-400 text-center py-2">获取修订记录失败，请点击下方直达 GitHub 查看 喵~</div>';
+                if (historyBadge) historyBadge.textContent = '获取异常';
+            }
+        }
+
+        historyHeader?.addEventListener('click', () => {
+            const isHidden = historyContent?.classList.contains('hidden');
+            if (isHidden) {
+                historyContent?.classList.remove('hidden');
+                if (historyToggleText) historyToggleText.textContent = '收起';
+                if (historyToggleIcon) historyToggleIcon.style.transform = 'rotate(180deg)';
+                fetchGitHistory();
+            } else {
+                historyContent?.classList.add('hidden');
+                if (historyToggleText) historyToggleText.textContent = '展开';
+                if (historyToggleIcon) historyToggleIcon.style.transform = 'rotate(0deg)';
             }
         });
     }

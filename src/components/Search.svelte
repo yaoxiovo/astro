@@ -265,9 +265,28 @@ onMount(() => {
 		}
 	};
 
+	const handleCustomSearch = (e: Event) => {
+		const customEvent = e as CustomEvent<{ query: string }>;
+		const query = customEvent.detail?.query?.trim();
+		if (!query) return;
+		ensureDataLoaded();
+		const panel = document.getElementById("search-panel");
+		panel?.classList.remove("float-panel-closed");
+		setPanelVisibility(true, true);
+		if (window.innerWidth >= 1024) {
+			keywordDesktop = query;
+			desktopInputEl?.focus();
+		} else {
+			keywordMobile = query;
+			mobileInputEl?.focus();
+		}
+	};
+
 	window.addEventListener("keydown", handleGlobalKeyDown);
+	window.addEventListener("yaoxi:search", handleCustomSearch);
 	return () => {
 		window.removeEventListener("keydown", handleGlobalKeyDown);
+		window.removeEventListener("yaoxi:search", handleCustomSearch);
 	};
 });
 
