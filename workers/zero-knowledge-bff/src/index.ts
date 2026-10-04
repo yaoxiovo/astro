@@ -679,7 +679,11 @@ app.get('/api/ddos', async (c) => {
     });
   }
 
-  const token = c.env.CF_API_TOKEN;
+  const clientToken = c.req.header('x-cf-token') || c.req.header('cf-api-token');
+  const clientZoneId = c.req.header('x-cf-zone-id') || c.req.header('cf-zone-id');
+  const token = clientToken || c.env.CF_API_TOKEN;
+  let zoneId = clientZoneId || c.env.CF_ZONE_ID;
+
   if (!token) {
     return c.json({
       status: 'normal',
@@ -703,28 +707,54 @@ app.get('/api/ddos', async (c) => {
   }
 
   try {
-    let zoneId = '';
-    const zoneRes = await fetch('https://api.cloudflare.com/client/v4/zones?name=yaoxi.wiki', {
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    });
-    if (zoneRes.ok) {
-      const zJson: any = await zoneRes.json();
-      if (zJson.result?.[0]?.id) zoneId = zJson.result[0].id;
+    let targetZones: Array<{ id: string; name: string }> = [];
+    if (zoneId) {
+      targetZones = [{ id: zoneId, name: targetDomain }];
+    } else {
+      try {
+        const zoneRes = await fetch('https://api.cloudflare.com/client/v4/zones?status=active', {
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        });
+        if (zoneRes.ok) {
+          const zJson: any = await zoneRes.json();
+          if (Array.isArray(zJson.result) && zJson.result.length > 0) {
+            targetZones = zJson.result.map((z: any) => ({ id: z.id, name: z.name }));
+          }
+        }
+      } catch (e) {
+        console.warn('[BFF ddos] 获取活跃 Zone 列表失败:', e);
+      }
+
+      if (targetZones.length === 0) {
+        try {
+          const fallbackRes = await fetch('https://api.cloudflare.com/client/v4/zones?name=yaoxi.wiki', {
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          });
+          if (fallbackRes.ok) {
+            const fbJson: any = await fallbackRes.json();
+            if (fbJson.result?.[0]?.id) {
+              targetZones = [{ id: fbJson.result[0].id, name: fbJson.result[0].name || 'yaoxi.wiki' }];
+            }
+          }
+        } catch (e) {
+          console.warn('[BFF ddos] 回退获取 yaoxi.wiki 失败:', e);
+        }
+      }
     }
 
-    if (!zoneId) {
+    if (targetZones.length === 0) {
       return c.json({
         status: 'normal',
         hasAttack: false,
         isDemo: false,
         target: targetDomain,
-        zone: 'yaoxi.wiki',
+        zone: '未知',
         activeAttacks: 0,
         totalEvents: 0,
         summary: { dropped: 0, blocked: 0, challenged: 0, topCountries: [], topASNs: [], topTargets: [] },
         events: [],
         cfConnected: false,
-        message: 'Could not resolve Cloudflare Zone ID for yaoxi.wiki',
+        message: 'Could not resolve any active Cloudflare Zone IDs',
         updatedAt: new Date().toISOString(),
       });
     }
@@ -764,38 +794,68 @@ app.get('/api/ddos', async (c) => {
       }
     `;
 
-    const cfRes = await fetch('https://api.cloudflare.com/client/v4/graphql', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: gqlQuery, variables: { zoneTag: zoneId, since, until, limit } }),
+    const isMitigationEvent = (e: any) => {
+      const a = String(e.action || '').toLowerCase();
+      const s = String(e.source || '').toLowerCase();
+      if (a === 'allow' || a === 'log' || a === 'skip' || a === 'bypass') return false;
+      if (
+        a.includes('drop') ||
+        a.includes('block') ||
+        a.includes('challenge') ||
+        a.includes('close') ||
+        a.includes('mitigate')
+      ) {
+        return true;
+      }
+      if (
+        s.includes('ddos') ||
+        s.includes('dos') ||
+        s.includes('rate') ||
+        s.includes('waf') ||
+        s.includes('securitylevel') ||
+        s.includes('underattack') ||
+        s.includes('botmanagement')
+      ) {
+        return true;
+      }
+      return false;
+    };
+
+    const zoneQueries = targetZones.slice(0, 5).map(async (zone) => {
+      try {
+        const cfRes = await fetch('https://api.cloudflare.com/client/v4/graphql', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: gqlQuery, variables: { zoneTag: zone.id, since, until, limit } }),
+        });
+        if (!cfRes.ok) return [];
+        const cfData: any = await cfRes.json();
+        const raw = cfData?.data?.viewer?.zones?.[0]?.securityEventsAdaptive || [];
+        return raw.map((e: any) => ({ ...e, zoneName: zone.name }));
+      } catch (err) {
+        console.warn(`[BFF ddos] 请求 Zone ${zone.name} 失败:`, err);
+        return [];
+      }
     });
 
-    if (!cfRes.ok) {
-      const errText = await cfRes.text();
-      return c.json({
-        status: 'normal',
-        hasAttack: false,
-        isDemo: false,
-        target: targetDomain,
-        zone: 'yaoxi.wiki',
-        activeAttacks: 0,
-        totalEvents: 0,
-        events: [],
-        summary: { dropped: 0, blocked: 0, challenged: 0, topCountries: [], topASNs: [], topTargets: [] },
-        cfConnected: false,
-        error: 'cloudflare_graphql_failed',
-        details: errText.slice(0, 200),
-        updatedAt: new Date().toISOString(),
-      });
-    }
+    const zoneResults = await Promise.all(zoneQueries);
+    const allRawEvents = zoneResults.flat();
+    const ddosEvents = allRawEvents.filter(isMitigationEvent);
+    ddosEvents.sort((a: any, b: any) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime());
 
-    const cfData: any = await cfRes.json();
-    const rawEvents = cfData?.data?.viewer?.zones?.[0]?.securityEventsAdaptive || [];
-    const ddosEvents = rawEvents.filter((e: any) => {
+    const getAttackType = (e: any) => {
       const s = String(e.source || '').toLowerCase();
       const a = String(e.action || '').toLowerCase();
-      return s.includes('ddos') || s.includes('dos') || s.includes('rate') || a.includes('drop') || a.includes('block') || a.includes('challenge');
-    });
+      if (s.includes('rate')) return '频率限制熔断 (Rate Limit)';
+      if (s.includes('l7ddos') || s.includes('ddos')) return 'HTTP DDoS 自动清洗';
+      if (s.includes('securitylevel') || s.includes('underattack')) return 'Under Attack 攻击防御模式';
+      if (s.includes('waf')) return 'WAF 规则拦截防护';
+      if (s.includes('bot')) return '恶意爬虫检测拦截';
+      if (a.includes('challenge')) return '验证码/质询防御 (Challenge)';
+      if (a.includes('drop')) return '流量静默丢弃 (Drop)';
+      if (a.includes('block')) return 'IP/访问阻断 (Block)';
+      return '边缘防御拦截 (Edge Mitigation)';
+    };
 
     const formattedEvents = ddosEvents.map((e: any, idx: number) => {
       let maskedIp = '未知';
@@ -816,20 +876,29 @@ app.get('/api/ddos', async (c) => {
         asn: e.clientAsn ? `AS${e.clientAsn}` : '未知网络',
         asnDesc: e.clientASNDescription || '',
         method: e.clientRequestHTTPMethodName || 'GET',
-        host: e.clientRequestHTTPHost || targetDomain,
+        host: e.clientRequestHTTPHost || (e.zoneName ? `*.${e.zoneName}` : targetDomain),
         path: e.clientRequestPath || '/',
         ua: e.userAgent || '',
-        attackType: 'L7 HTTP DDoS 防护拦截',
+        attackType: getAttackType(e),
       };
     });
 
+    const nowMs = Date.now();
+    let activeAttacks = 0;
+    for (const ev of formattedEvents) {
+      if (nowMs - new Date(ev.timestamp).getTime() <= 15 * 60 * 1000) {
+        activeAttacks++;
+      }
+    }
+
+    const targetDisplay = targetZones.map((z) => z.name).join(', ');
     return c.json({
-      status: formattedEvents.length > 0 ? 'attack' : 'normal',
+      status: activeAttacks > 0 ? 'attack' : (formattedEvents.length > 0 ? 'elevated' : 'normal'),
       hasAttack: formattedEvents.length > 0,
       isDemo: false,
-      target: targetDomain,
-      zone: 'yaoxi.wiki',
-      activeAttacks: formattedEvents.length > 0 ? 1 : 0,
+      target: targetDisplay,
+      zone: targetDisplay,
+      activeAttacks,
       totalEvents: formattedEvents.length,
       timeRange: { since, until, hours },
       summary: {

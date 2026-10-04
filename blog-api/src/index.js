@@ -1021,9 +1021,11 @@ async function handleDDoS(request, env, url) {
 		});
 	}
 
-	// 2. 真实查询 Cloudflare 日志
-	const cfToken = env.CF_API_TOKEN || env.CLOUDFLARE_API_TOKEN;
-	let cfZoneId = env.CF_ZONE_ID || env.CLOUDFLARE_ZONE_ID;
+	// 2. 真实查询 Cloudflare 日志 (支持请求头透传 Token 与 Worker Secrets 自动回退)
+	const clientToken = request?.headers ? (request.headers.get("x-cf-token") || request.headers.get("cf-api-token")) : null;
+	const clientZoneId = request?.headers ? (request.headers.get("x-cf-zone-id") || request.headers.get("cf-zone-id")) : null;
+	const cfToken = clientToken || env.CF_API_TOKEN || env.CLOUDFLARE_API_TOKEN;
+	let cfZoneId = clientZoneId || env.CF_ZONE_ID || env.CLOUDFLARE_ZONE_ID;
 
 	if (!cfToken) {
 		return json({
@@ -1054,9 +1056,10 @@ async function handleDDoS(request, env, url) {
 		});
 	}
 
-	// 尝试从 KV 缓存中获取（TTL 60秒，避免频繁打垮 Cloudflare GraphQL 配额）
-	const cacheKey = `ddos:cache:${hours}:${limit}`;
-	if (env.RATE_LIMIT_KV) {
+	// 尝试从 KV 缓存中获取（TTL 60秒，携带个性化 Token 时旁路缓存）
+	const tokenHash = cfToken ? cfToken.slice(-6) : "env";
+	const cacheKey = `ddos:cache:${tokenHash}:${hours}:${limit}:${cfZoneId || "all"}`;
+	if (env.RATE_LIMIT_KV && !clientToken) {
 		try {
 			const cached = await env.RATE_LIMIT_KV.get(cacheKey, "json");
 			if (cached) {
@@ -1067,10 +1070,13 @@ async function handleDDoS(request, env, url) {
 		}
 	}
 
-	// 如果没有 Zone ID，动态查找 yaoxi.wiki 的 zone ID
-	if (!cfZoneId) {
+	// 动态解析 Zone 列表 (优先使用指定 Zone ID，未指定时自动探测名下全部活跃 Zone 并聚合)
+	let targetZones = [];
+	if (cfZoneId) {
+		targetZones = [{ id: cfZoneId, name: targetDomain }];
+	} else {
 		try {
-			const zoneRes = await fetch("https://api.cloudflare.com/client/v4/zones?name=yaoxi.wiki", {
+			const zoneRes = await fetch("https://api.cloudflare.com/client/v4/zones?status=active", {
 				headers: {
 					Authorization: `Bearer ${cfToken}`,
 					"Content-Type": "application/json"
@@ -1078,28 +1084,48 @@ async function handleDDoS(request, env, url) {
 			});
 			if (zoneRes.ok) {
 				const zoneData = await zoneRes.json();
-				if (zoneData.result && zoneData.result[0]) {
-					cfZoneId = zoneData.result[0].id;
+				if (Array.isArray(zoneData.result) && zoneData.result.length > 0) {
+					targetZones = zoneData.result.map(z => ({ id: z.id, name: z.name }));
 				}
 			}
 		} catch (e) {
-			console.warn("[ddos] 动态获取 Zone ID 失败:", e);
+			console.warn("[ddos] 动态获取活跃 Zone 列表失败:", e);
+		}
+
+		// 回退兼容：若 status=active 为空，尝试查找 yaoxi.wiki
+		if (targetZones.length === 0) {
+			try {
+				const fallbackRes = await fetch("https://api.cloudflare.com/client/v4/zones?name=yaoxi.wiki", {
+					headers: {
+						Authorization: `Bearer ${cfToken}`,
+						"Content-Type": "application/json"
+					}
+				});
+				if (fallbackRes.ok) {
+					const fbData = await fallbackRes.json();
+					if (fbData.result && fbData.result[0]) {
+						targetZones = [{ id: fbData.result[0].id, name: fbData.result[0].name || "yaoxi.wiki" }];
+					}
+				}
+			} catch (e) {
+				console.warn("[ddos] 回退获取 yaoxi.wiki Zone 失败:", e);
+			}
 		}
 	}
 
-	if (!cfZoneId) {
+	if (targetZones.length === 0) {
 		return json({
 			status: "normal",
 			hasAttack: false,
 			isDemo: false,
 			target: targetDomain,
-			zone: "yaoxi.wiki",
+			zone: "未知",
 			activeAttacks: 0,
 			totalEvents: 0,
 			events: [],
 			summary: { dropped: 0, blocked: 0, challenged: 0, topCountries: [], topASNs: [], topTargets: [] },
 			cfConnected: false,
-			message: "无法定位 Cloudflare Zone ID，请配置 CF_ZONE_ID 喵~",
+			message: "未能定位任何可用的 Cloudflare Zone ID，请检查 API Token 权限或配置 CF_ZONE_ID 喵~",
 			updatedAt: new Date().toISOString()
 		});
 	}
@@ -1157,62 +1183,93 @@ async function handleDDoS(request, env, url) {
 		}
 	`;
 
+	const isMitigationEvent = (e) => {
+		const a = String(e.action || "").toLowerCase();
+		const s = String(e.source || "").toLowerCase();
+		if (a === "allow" || a === "log" || a === "skip" || a === "bypass") return false;
+		if (
+			a.includes("drop") ||
+			a.includes("block") ||
+			a.includes("challenge") ||
+			a.includes("close") ||
+			a.includes("mitigate")
+		) {
+			return true;
+		}
+		if (
+			s.includes("ddos") ||
+			s.includes("dos") ||
+			s.includes("rate") ||
+			s.includes("waf") ||
+			s.includes("securitylevel") ||
+			s.includes("underattack") ||
+			s.includes("botmanagement")
+		) {
+			return true;
+		}
+		return false;
+	};
+
 	try {
-		const cfRes = await fetch("https://api.cloudflare.com/client/v4/graphql", {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${cfToken}`,
-				"Content-Type": "application/json"
-			},
-			body: JSON.stringify({
-				query: gqlQuery,
-				variables: {
-					zoneTag: cfZoneId,
-					since,
-					until,
-					limit
+		const zoneQueries = targetZones.slice(0, 5).map(async (zone) => {
+			try {
+				const cfRes = await fetch("https://api.cloudflare.com/client/v4/graphql", {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${cfToken}`,
+						"Content-Type": "application/json"
+					},
+					body: JSON.stringify({
+						query: gqlQuery,
+						variables: {
+							zoneTag: zone.id,
+							since,
+							until,
+							limit
+						}
+					})
+				});
+
+				if (!cfRes.ok) {
+					const errText = await cfRes.text();
+					console.warn(`[ddos] Cloudflare GraphQL 报错 (Zone ${zone.name}):`, errText);
+					return [];
 				}
-			})
+
+				const cfData = await cfRes.json();
+				const rawEvents = cfData?.data?.viewer?.zones?.[0]?.securityEventsAdaptive || [];
+				return rawEvents.map(e => ({ ...e, zoneName: zone.name }));
+			} catch (err) {
+				console.warn(`[ddos] 请求 Cloudflare GraphQL 异常 (Zone ${zone.name}):`, err);
+				return [];
+			}
 		});
 
-		if (!cfRes.ok) {
-			const errText = await cfRes.text();
-			console.warn("[ddos] Cloudflare GraphQL 报错:", errText);
-			return json({
-				status: "normal",
-				hasAttack: false,
-				isDemo: false,
-				target: targetDomain,
-				zone: "yaoxi.wiki",
-				activeAttacks: 0,
-				totalEvents: 0,
-				events: [],
-				summary: { dropped: 0, blocked: 0, challenged: 0, topCountries: [], topASNs: [], topTargets: [] },
-				cfConnected: false,
-				error: "cloudflare_graphql_failed",
-				details: errText.slice(0, 300),
-				updatedAt: new Date().toISOString()
-			});
-		}
+		const zoneResults = await Promise.all(zoneQueries);
+		const allRawEvents = zoneResults.flat();
 
-		const cfData = await cfRes.json();
-		const rawEvents = cfData?.data?.viewer?.zones?.[0]?.securityEventsAdaptive || [];
+		// 筛选拦截防护与 DDoS 防御事件
+		const ddosEvents = allRawEvents.filter(isMitigationEvent);
+		ddosEvents.sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime());
 
-		// 筛选与 DDoS 紧密相关的事件或所有处置拦截事件
-		const ddosEvents = rawEvents.filter((e) => {
+		const getAttackType = (e) => {
 			const s = String(e.source || "").toLowerCase();
 			const a = String(e.action || "").toLowerCase();
-			return s.includes("ddos") || s.includes("dos") || s.includes("rate") || a.includes("drop") || a.includes("block") || a.includes("challenge");
-		});
+			if (s.includes("rate")) return "频率限制熔断 (Rate Limit)";
+			if (s.includes("l7ddos") || s.includes("ddos")) return "HTTP DDoS 自动清洗";
+			if (s.includes("securitylevel") || s.includes("underattack")) return "Under Attack 攻击防御模式";
+			if (s.includes("waf")) return "WAF 规则拦截防护";
+			if (s.includes("bot")) return "恶意爬虫检测拦截";
+			if (a.includes("challenge")) return "验证码/质询防御 (Challenge)";
+			if (a.includes("drop")) return "流量静默丢弃 (Drop)";
+			if (a.includes("block")) return "IP/访问阻断 (Block)";
+			return "边缘防御拦截 (Edge Mitigation)";
+		};
 
 		// 格式化事件列表
 		const formattedEvents = ddosEvents.map((e, idx) => {
 			const ip = e.clientIP ? maskIp(e.clientIP) : "未知";
-			let attackType = "L7 HTTP DDoS 防护拦截";
-			if (e.source === "rateLimit") attackType = "频率限制熔断 (Rate Limit)";
-			else if (e.source === "l7ddos") attackType = "HTTP DDoS 自动清洗";
-			else if (e.source === "waf") attackType = "WAF 规则拦截防护";
-			else if (e.source === "botManagement") attackType = "恶意爬虫检测拦截";
+			const attackType = getAttackType(e);
 
 			return {
 				id: e.rayName || `event-${idx}`,
@@ -1227,7 +1284,7 @@ async function handleDDoS(request, env, url) {
 				asn: e.clientAsn ? `AS${e.clientAsn}` : "未知网络",
 				asnDesc: e.clientASNDescription || "",
 				method: e.clientRequestHTTPMethodName || "GET",
-				host: e.clientRequestHTTPHost || targetDomain,
+				host: e.clientRequestHTTPHost || (e.zoneName ? `*.${e.zoneName}` : targetDomain),
 				path: e.clientRequestPath || "/",
 				ua: e.userAgent || "",
 				attackType
@@ -1279,7 +1336,11 @@ async function handleDDoS(request, env, url) {
 		const topASNs = Array.from(asnMap.entries())
 			.sort((a, b) => b[1] - a[1])
 			.slice(0, 5)
-			.map(([asn, count]) => ({ asn, count }));
+			.map(([asn, count]) => ({
+				asn: asn.split(" - ")[0],
+				desc: asn.split(" - ")[1] || "",
+				count
+			}));
 
 		const topTargets = Array.from(pathMap.entries())
 			.sort((a, b) => b[1] - a[1])
@@ -1287,18 +1348,19 @@ async function handleDDoS(request, env, url) {
 			.map(([path, count]) => ({ path, count }));
 
 		let status = "normal";
-		if (activeAttacks >= 3) {
+		if (activeAttacks > 0) {
 			status = "attack";
 		} else if (totalCount > 0) {
 			status = "elevated";
 		}
 
+		const targetDisplay = targetZones.map(z => z.name).join(", ");
 		const resultPayload = {
 			status,
 			hasAttack: totalCount > 0,
 			isDemo: false,
-			target: targetDomain,
-			zone: "yaoxi.wiki",
+			target: targetDisplay,
+			zone: targetDisplay,
 			activeAttacks,
 			totalEvents: totalCount,
 			timeRange: { since, until, hours },
@@ -1315,7 +1377,7 @@ async function handleDDoS(request, env, url) {
 			updatedAt: new Date().toISOString()
 		};
 
-		if (env.RATE_LIMIT_KV) {
+		if (env.RATE_LIMIT_KV && !clientToken) {
 			try {
 				await env.RATE_LIMIT_KV.put(cacheKey, JSON.stringify(resultPayload), { expirationTtl: 60 });
 			} catch (e) {
@@ -1331,7 +1393,7 @@ async function handleDDoS(request, env, url) {
 			hasAttack: false,
 			isDemo: false,
 			target: targetDomain,
-			zone: "yaoxi.wiki",
+			zone: targetZones.map(z => z.name).join(", ") || "yaoxi.wiki",
 			activeAttacks: 0,
 			totalEvents: 0,
 			events: [],

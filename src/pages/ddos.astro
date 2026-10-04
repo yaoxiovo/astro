@@ -415,7 +415,8 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
 
         <div>
           <label class="block font-medium text-black/70 dark:text-white/70 mb-1">Cloudflare Zone ID (可选)</label>
-          <input type="text" id="setting-cf-zone-id" placeholder="例如 023e105f4ecef8ad9ca31a8372d0c353" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 font-mono text-xs outline-none focus:border-[var(--primary)]" />
+          <input type="text" id="setting-cf-zone-id" placeholder="例如 023e105f4ecef8ad9ca31a8372d0c353（留空自动探测）" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 font-mono text-xs outline-none focus:border-[var(--primary)]" />
+          <p class="text-[11px] text-black/40 dark:text-white/40 mt-1">留空时自动并发探测拉取名下全部活跃域名（如 yaoxi.cloud 与 yaoxi.wiki）的安全事件喵~</p>
         </div>
       </div>
 
@@ -729,7 +730,7 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
     const customToken = resolveCfToken();
     const customZone = localStorage.getItem(STORAGE_KEY_ZONE);
 
-    let apiUrl = `${endpoint}/api/ddos?hours=${currentHours}&limit=50`;
+    let apiUrl = `${endpoint}/api/ddos?hours=${currentHours}&limit=100`;
     if (isDemoMode) {
       apiUrl += "&demo=1";
     }
@@ -738,25 +739,31 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
       let data = null;
       let usedDirectCF = false;
 
-      // 如果用户在本地配置了直接访问 CF GraphQL
-      if (customToken && customZone && !isDemoMode) {
+      // 如果用户持有 Token（随统一认证中心下发或手动填写），尝试本地直接访问 CF GraphQL
+      if (customToken && !isDemoMode) {
         try {
           data = await queryCloudflareDirect(customToken, customZone, currentHours);
-          usedDirectCF = true;
+          if (data && (data.cfConnected || data.totalEvents > 0)) {
+            usedDirectCF = true;
+          }
         } catch (e) {
           console.warn("[DDoS] 本地直连 CF 失败，回退至 Worker 网关:", e);
         }
       }
 
       if (!data) {
-        const res = await fetch(apiUrl);
+        const reqHeaders = { "Content-Type": "application/json" };
+        if (customToken) reqHeaders["x-cf-token"] = customToken;
+        if (customZone) reqHeaders["x-cf-zone-id"] = customZone;
+
+        const res = await fetch(apiUrl, { headers: reqHeaders });
         if (res.ok) {
           data = await res.json();
         } else {
           // 备用：尝试回退到 zk-api
           if (!endpoint.includes("zk-api.yaoxi.cloud")) {
-            const fallbackUrl = `https://zk-api.yaoxi.cloud/api/ddos?hours=${currentHours}&limit=50${isDemoMode ? "&demo=1" : ""}`;
-            const fbRes = await fetch(fallbackUrl);
+            const fallbackUrl = `https://zk-api.yaoxi.cloud/api/ddos?hours=${currentHours}&limit=100${isDemoMode ? "&demo=1" : ""}`;
+            const fbRes = await fetch(fallbackUrl, { headers: reqHeaders });
             if (fbRes.ok) data = await fbRes.json();
           }
         }
@@ -780,13 +787,37 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
     const since = new Date(Date.now() - hours * 3600 * 1000).toISOString();
     const until = new Date().toISOString();
 
+    // 动态探测活跃 Zone 列表
+    let targetZones = [];
+    if (zoneId) {
+      targetZones = [{ id: zoneId, name: "custom-zone" }];
+    } else {
+      try {
+        const zoneRes = await fetch("https://api.cloudflare.com/client/v4/zones?status=active", {
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        });
+        if (zoneRes.ok) {
+          const zJson = await zoneRes.json();
+          if (Array.isArray(zJson.result) && zJson.result.length > 0) {
+            targetZones = zJson.result.map((z) => ({ id: z.id, name: z.name }));
+          }
+        }
+      } catch (e) {
+        console.warn("[DDoS Direct] 动态获取 Zone 失败:", e);
+      }
+    }
+
+    if (targetZones.length === 0) {
+      throw new Error("未指定 Zone ID 且无法自动探测活跃 Zone（可能因浏览器跨域 CORS 拦截），正在切换至 Worker 网关喵~");
+    }
+
     const gql = `
-      query GetSecurityLogs($zoneTag: String!, $since: String!, $until: String!) {
+      query GetSecurityLogs($zoneTag: String!, $since: String!, $until: String!, $limit: Int!) {
         viewer {
           zones(filter: { zoneTag: $zoneTag }) {
             securityEventsAdaptive(
               filter: { datetime_geq: $since, datetime_leq: $until },
-              limit: 50,
+              limit: $limit,
               orderBy: [datetime_DESC]
             ) {
               action
@@ -796,10 +827,12 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
               clientIP
               clientRequestHTTPHost
               clientRequestHTTPMethodName
+              clientRequestHTTPProtocol
               clientRequestPath
               datetime
               rayName
               ruleId
+              rulesetId
               source
               userAgent
             }
@@ -808,47 +841,106 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
       }
     `;
 
-    const res = await fetch("https://api.cloudflare.com/client/v4/graphql", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ query: gql, variables: { zoneTag: zoneId, since, until } }),
-    });
+    const isMitigationEvent = (e) => {
+      const a = String(e.action || "").toLowerCase();
+      const s = String(e.source || "").toLowerCase();
+      if (a === "allow" || a === "log" || a === "skip" || a === "bypass") return false;
+      if (
+        a.includes("drop") ||
+        a.includes("block") ||
+        a.includes("challenge") ||
+        a.includes("close") ||
+        a.includes("mitigate")
+      ) {
+        return true;
+      }
+      if (
+        s.includes("ddos") ||
+        s.includes("dos") ||
+        s.includes("rate") ||
+        s.includes("waf") ||
+        s.includes("securitylevel") ||
+        s.includes("underattack") ||
+        s.includes("botmanagement")
+      ) {
+        return true;
+      }
+      return false;
+    };
 
-    if (!res.ok) throw new Error("CF GraphQL 响应状态: " + res.status);
-    const j = await res.json();
-    const rawEvents = j?.data?.viewer?.zones?.[0]?.securityEventsAdaptive || [];
-
-    const ddosEvents = rawEvents.filter((e) => {
+    const getAttackType = (e) => {
       const s = String(e.source || "").toLowerCase();
       const a = String(e.action || "").toLowerCase();
-      return s.includes("ddos") || s.includes("dos") || s.includes("rate") || a.includes("drop") || a.includes("block");
+      if (s.includes("rate")) return "频率限制熔断 (Rate Limit)";
+      if (s.includes("l7ddos") || s.includes("ddos")) return "HTTP DDoS 自动清洗";
+      if (s.includes("securitylevel") || s.includes("underattack")) return "Under Attack 攻击防御模式";
+      if (s.includes("waf")) return "WAF 规则拦截防护";
+      if (s.includes("bot")) return "恶意爬虫检测拦截";
+      if (a.includes("challenge")) return "验证码/质询防御 (Challenge)";
+      if (a.includes("drop")) return "流量静默丢弃 (Drop)";
+      if (a.includes("block")) return "IP/访问阻断 (Block)";
+      return "边缘防御拦截 (Edge Mitigation)";
+    };
+
+    const zoneQueries = targetZones.slice(0, 5).map(async (zone) => {
+      try {
+        const res = await fetch("https://api.cloudflare.com/client/v4/graphql", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ query: gql, variables: { zoneTag: zone.id, since, until, limit: 100 } }),
+        });
+        if (!res.ok) return [];
+        const j = await res.json();
+        const raw = j?.data?.viewer?.zones?.[0]?.securityEventsAdaptive || [];
+        return raw.map((e) => ({ ...e, zoneName: zone.name }));
+      } catch (err) {
+        console.warn(`[DDoS Direct] 查询 Zone ${zone.name} 失败:`, err);
+        return [];
+      }
     });
 
+    const zoneResults = await Promise.all(zoneQueries);
+    const allRawEvents = zoneResults.flat();
+    const ddosEvents = allRawEvents.filter(isMitigationEvent);
+    ddosEvents.sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime());
+
+    const formattedEvents = ddosEvents.map((e, idx) => ({
+      id: e.rayName || `event-${idx}`,
+      timestamp: e.datetime,
+      action: e.action || "drop",
+      source: e.source || "l7ddos",
+      ruleId: e.ruleId || e.rulesetId || "CF L7 Mitigation",
+      rayId: e.rayName || "",
+      ip: e.clientIP ? (e.clientIP.includes(".") ? e.clientIP.replace(/\.\d+$/, ".***") : e.clientIP) : "未知",
+      country: e.clientCountryName || "未知地区",
+      countryCode: "UN",
+      asn: e.clientAsn ? `AS${e.clientAsn}` : "未知网络",
+      asnDesc: e.clientASNDescription || "",
+      method: e.clientRequestHTTPMethodName || "GET",
+      host: e.clientRequestHTTPHost || (e.zoneName ? `*.${e.zoneName}` : "blog.yaoxi.wiki"),
+      path: e.clientRequestPath || "/",
+      ua: e.userAgent || "",
+      attackType: getAttackType(e),
+    }));
+
+    const nowMs = Date.now();
+    let activeAttacks = 0;
+    for (const ev of formattedEvents) {
+      if (nowMs - new Date(ev.timestamp).getTime() <= 15 * 60 * 1000) {
+        activeAttacks++;
+      }
+    }
+
+    const targetDisplay = targetZones.map((z) => z.name).join(", ");
     return {
-      status: ddosEvents.length > 0 ? "attack" : "normal",
-      hasAttack: ddosEvents.length > 0,
+      status: activeAttacks > 0 ? "attack" : (formattedEvents.length > 0 ? "elevated" : "normal"),
+      hasAttack: formattedEvents.length > 0,
       isDemo: false,
-      target: "blog.yaoxi.wiki",
-      activeAttacks: ddosEvents.length > 0 ? 1 : 0,
-      totalEvents: ddosEvents.length,
-      events: ddosEvents.map((e, idx) => ({
-        id: e.rayName || `event-${idx}`,
-        timestamp: e.datetime,
-        action: e.action || "drop",
-        source: e.source || "l7ddos",
-        ruleId: e.ruleId || "CF L7 Mitigation",
-        rayId: e.rayName || "",
-        ip: e.clientIP ? e.clientIP.replace(/\.\d+$/, ".***") : "未知",
-        country: e.clientCountryName || "未知地区",
-        countryCode: "UN",
-        asn: e.clientAsn ? `AS${e.clientAsn}` : "未知网络",
-        asnDesc: e.clientASNDescription || "",
-        method: e.clientRequestHTTPMethodName || "GET",
-        host: e.clientRequestHTTPHost || "blog.yaoxi.wiki",
-        path: e.clientRequestPath || "/",
-        ua: e.userAgent || "",
-        attackType: "L7 HTTP DDoS 清洗",
-      })),
+      target: targetDisplay,
+      zone: targetDisplay,
+      activeAttacks,
+      totalEvents: formattedEvents.length,
+      events: formattedEvents,
       cfConnected: true,
       updatedAt: new Date().toISOString(),
     };
