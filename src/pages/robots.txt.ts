@@ -9,6 +9,8 @@ User-agent: *
 Allow: /
 Disallow: /cdn/
 Disallow: /draft/
+Disallow: /admin/
+Disallow: /api/
 
 Sitemap: ${sitemapUrl}
 `.trim();

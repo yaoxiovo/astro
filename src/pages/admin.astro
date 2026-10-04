@@ -576,9 +576,12 @@ import { umamiConfig } from "../config";
           <div>
             <label for="input-github-token" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1 flex items-center justify-between">
               <span>GitHub Personal Access Token (PAT)</span>
-              <span class="text-[10px] text-black/40 dark:text-white/40 font-normal">可选 · 具备 contents:write 权限</span>
+              <span class="text-[10px] text-[var(--primary)] font-medium">推荐配置 · 客户端免 BFF 直连</span>
             </label>
-            <input type="password" id="input-github-token" placeholder="ghp_xxxx (留空使用 Worker 默认 GITHUB_TOKEN)" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none" />
+            <input type="password" id="input-github-token" placeholder="ghp_xxxx 或 github_pat_xxxx (需 contents:write 权限)" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none" />
+            <p class="text-[10px] text-black/40 dark:text-white/40 mt-1 leading-normal">
+              建议填入具备仓库 contents:write 权限的 PAT。配置后发布文章与动态将直接调用 GitHub 官方 API 提交，0 中间件延迟且永不因 Worker 宕机受阻喵！
+            </p>
           </div>
         </div>
 
@@ -1262,6 +1265,81 @@ import { umamiConfig } from "../config";
       modalAuth.classList.add('hidden');
     });
 
+    // UTF-8 安全 Base64 编码 (兼容中文字符与 Emoji)
+    function toBase64Utf8(str) {
+      return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+      }));
+    }
+
+    // 客户端直接调用 GitHub REST API 提交 Commit (免 Worker BFF 依赖)
+    async function commitDirectToGitHub(pat, filePath, fileContent, commitMsg) {
+      const owner = 'yaoxiovo';
+      const repo = 'astro';
+      const branch = 'main';
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+
+      let existingSha = undefined;
+      const getRes = await fetch(`${apiUrl}?ref=${branch}`, {
+        headers: {
+          'Authorization': `Bearer ${pat}`,
+          'Accept': 'application/vnd.github.v3+json',
+        }
+      });
+
+      if (getRes.status === 401) {
+        const err = new Error('GitHub PAT 鉴权未通过 (401 Bad credentials)！请检查 Token 是否有效或已过期 喵！');
+        err.stage = 'GitHub Token 鉴权失败 (401)';
+        throw err;
+      }
+      if (getRes.status === 403) {
+        const errText = await getRes.text();
+        const msg = errText.includes('rate limit')
+          ? 'GitHub API 访问频率超限 喵！'
+          : 'GitHub Token 权限不足 (403)！请确保已勾选 contents:write 或 repo 写入权限 喵！';
+        const err = new Error(msg);
+        err.stage = 'GitHub 权限不足 (403)';
+        throw err;
+      }
+      if (getRes.ok) {
+        try {
+          const existingData = await getRes.json();
+          existingSha = existingData.sha;
+        } catch (e) {}
+      }
+
+      const putRes = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${pat}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: commitMsg || (existingSha ? `docs: update ${filePath} via Admin Studio` : `docs: publish ${filePath} via Admin Studio`),
+          content: toBase64Utf8(fileContent),
+          sha: existingSha,
+          branch: branch,
+        })
+      });
+
+      if (!putRes.ok) {
+        const errText = await putRes.text();
+        let errJson = {};
+        try { errJson = JSON.parse(errText); } catch(e) {}
+        const msg = errJson.message || `HTTP ${putRes.status}`;
+        const err = new Error(`GitHub 提交失败 (${putRes.status}): ${msg}`);
+        err.stage = `GitHub API (${putRes.status})`;
+        throw err;
+      }
+
+      const putData = await putRes.json();
+      return {
+        commit_sha: putData.commit.sha,
+        commit_url: putData.commit.html_url
+      };
+    }
+
     // 8. 核心发布流程与构建监听
     async function publishPost() {
       const title = titleEl.value.trim();
@@ -1312,7 +1390,7 @@ import { umamiConfig } from "../config";
       deploySubtitle.textContent = '生成符合 Astro Content Collections 规范的 Markdown 产物';
       deployBadge.textContent = 'PUBLISHING';
       deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20';
-      deployStageInfo.textContent = '阶段: GitHub API';
+      deployStageInfo.textContent = githubPat ? '阶段: GitHub API 直连提交' : '阶段: Worker BFF 代理提交';
 
       deploySeconds = 0;
       if (timerInterval) clearInterval(timerInterval);
@@ -1322,48 +1400,89 @@ import { umamiConfig } from "../config";
       }, 1000);
 
       try {
-        const headers = {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        };
+        let commitSha = '';
+        const cleanSlug = slug.replace(/\.md$/, '').replace(/^\/+/, '');
+
         if (githubPat) {
-          headers['X-GitHub-Token'] = githubPat;
-        }
+          // 客户端 GitHub API 直连通道 (免 BFF 中间件)
+          deployStageInfo.textContent = '阶段: GitHub API 直连提交';
+          const postTitle = title;
+          const postDate = new Date().toISOString().split('T')[0];
+          const postDesc = (description || postTitle).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ').trim();
+          const postCategory = (category || '技术分享').replace(/\\/g, '\\\\').replace(/"/g, '\\"').trim();
 
-        // 请求 Worker POST /api/publish
-        const res = await fetch(`${apiBase}/api/publish`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            title,
-            slug,
-            content,
-            tags,
-            description: description || title,
-            category: category || '技术分享',
-            githubToken: githubPat || undefined,
-          })
-        });
-
-        if (!res.ok) {
-          let errData = {};
-          try {
-            errData = await res.json();
-          } catch (e) {
-            errData = { message: `网络请求失败 (HTTP ${res.status})` };
+          let tagList = [];
+          if (tags) {
+            tagList = tags.split(/[,，]/).map(t => t.trim()).filter(Boolean);
           }
-          const detailStr = errData.details
-            ? (typeof errData.details === 'object' ? JSON.stringify(errData.details) : String(errData.details))
-            : '';
-          const fullMsg = [errData.message, detailStr].filter(Boolean).join(' - ') || `HTTP ${res.status}`;
-          const customErr = new Error(fullMsg);
-          customErr.stage = errData.error || `HTTP ${res.status}`;
-          customErr.errData = errData;
-          throw customErr;
-        }
+          if (tagList.length === 0) tagList = ['博客'];
+          const tagsYaml = tagList.map(t => `  - ${t.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}`).join('\n');
 
-        const data = await res.json();
-        const commitSha = data.commit_sha;
+          const markdownFile = `---
+title: "${postTitle.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"
+published: ${postDate}
+description: "${postDesc}"
+tags:
+${tagsYaml}
+category: "${postCategory}"
+draft: false
+lang: "zh_CN"
+---
+
+${content.trim()}
+`;
+          const res = await commitDirectToGitHub(githubPat, `src/content/posts/${cleanSlug}.md`, markdownFile, `docs(post): publish ${title} via Admin Studio`);
+          commitSha = res.commit_sha;
+        } else {
+          // Worker BFF 代理通道
+          deployStageInfo.textContent = '阶段: Worker BFF 代理提交';
+          const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          };
+          try {
+            const res = await fetch(`${apiBase}/api/publish`, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify({
+                title,
+                slug,
+                content,
+                tags,
+                description: description || title,
+                category: category || '技术分享',
+                githubToken: undefined,
+              })
+            });
+
+            if (!res.ok) {
+              let errData = {};
+              try {
+                errData = await res.json();
+              } catch (e) {
+                errData = { message: `网络请求失败 (HTTP ${res.status})` };
+              }
+              const detailStr = errData.details
+                ? (typeof errData.details === 'object' ? JSON.stringify(errData.details) : String(errData.details))
+                : '';
+              const fullMsg = [errData.message, detailStr].filter(Boolean).join(' - ') || `HTTP ${res.status}`;
+              const customErr = new Error(fullMsg);
+              customErr.stage = errData.error || `HTTP ${res.status}`;
+              customErr.errData = errData;
+              throw customErr;
+            }
+
+            const data = await res.json();
+            commitSha = data.commit_sha;
+          } catch (fetchErr) {
+            if (fetchErr.name === 'TypeError' || String(fetchErr.message).includes('fetch')) {
+              const err = new Error(`无法连接到 Worker BFF 网关 (${apiBase})，且尚未配置 GitHub PAT！请在右上角【鉴权凭据】中填入具备 contents:write 权限的 GitHub PAT，即可启用浏览器客户端直连提交 喵！`);
+              err.stage = 'BFF 网关离线 / 未配置 PAT';
+              throw err;
+            }
+            throw fetchErr;
+          }
+        }
 
         deployProgressBar.style.width = '40%';
         deployTitle.textContent = `GitHub 提交成功 (${commitSha.substring(0, 7)})`;
@@ -1383,7 +1502,7 @@ import { umamiConfig } from "../config";
         deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-red-500/10 text-red-500 border border-red-500/20';
         deployProgressBar.style.width = '100%';
         deployProgressBar.className = 'h-full bg-red-500 rounded-full';
-        deployStageInfo.textContent = `失败原因: ${err.stage || 'GitHub API'}`;
+        deployStageInfo.textContent = `失败原因: ${err.stage || '网络或接口异常'}`;
 
         const isAuthErr = String(err.message).includes('Token') ||
           String(err.message).includes('GitHub') ||
@@ -1391,10 +1510,11 @@ import { umamiConfig } from "../config";
           String(err.message).includes('401') ||
           String(err.message).includes('403') ||
           String(err.message).includes('Unauthorized') ||
-          String(err.message).includes('Forbidden');
+          String(err.message).includes('Forbidden') ||
+          String(err.message).includes('PAT');
 
         if (isAuthErr) {
-          deploySubtitle.innerHTML = `<span class="break-all">${err.message}</span><br/><button type="button" id="btn-fix-auth-err" class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/10 dark:bg-white/15 text-xs font-semibold text-[var(--primary)] hover:opacity-80 transition-all cursor-pointer"><span>🔐 打开【鉴权凭据】配置或更新有效 GitHub PAT / Token</span></button>`;
+          deploySubtitle.innerHTML = `<span class="break-all">${err.message}</span><br/><button type="button" id="btn-fix-auth-err" class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/10 dark:bg-white/15 text-xs font-semibold text-[var(--primary)] hover:opacity-80 transition-all cursor-pointer"><span>🔐 打开【鉴权凭据】配置或更新有效 GitHub PAT</span></button>`;
           document.getElementById('btn-fix-auth-err')?.addEventListener('click', () => {
             modalAuth.classList.remove('hidden');
           });
@@ -1708,7 +1828,7 @@ import { umamiConfig } from "../config";
       deploySubtitle.textContent = '生成符合 Astro Moments 规范的 Markdown 产物';
       deployBadge.textContent = 'PUBLISHING';
       deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20';
-      deployStageInfo.textContent = '阶段: GitHub API';
+      deployStageInfo.textContent = githubPat ? '阶段: GitHub API 直连提交' : '阶段: Worker BFF 代理提交';
 
       deploySeconds = 0;
       if (timerInterval) clearInterval(timerInterval);
@@ -1718,47 +1838,84 @@ import { umamiConfig } from "../config";
       }, 1000);
 
       try {
-        const headers = {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        };
+        let commitSha = '';
+        let momentSlug = slug || `m-${Date.now()}`;
+
         if (githubPat) {
-          headers['X-GitHub-Token'] = githubPat;
-        }
+          deployStageInfo.textContent = '阶段: GitHub API 直连提交';
+          const nowIso = new Date().toISOString();
+          const imgList = rawImages ? rawImages.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : [];
+          const videoList = rawVideos ? rawVideos.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : [];
 
-        const payload = {
-          content,
-          slug: slug || undefined,
-          author,
-          source,
-          pinned,
-          replyTo: replyTo || undefined,
-          capsule: isCapsule ? new Date(capsuleDate).toISOString() : undefined,
-          images: rawImages ? rawImages.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : [],
-          videos: rawVideos ? rawVideos.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : [],
-          githubToken: githubPat || undefined,
-        };
+          const imagesYaml = imgList.length > 0
+            ? `images:\n${imgList.map(img => `  - "${img.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`).join('\n')}\n`
+            : '';
+          const videosYaml = videoList.length > 0
+            ? `videos:\n${videoList.map(v => `  - "${v.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`).join('\n')}\n`
+            : '';
+          const capsuleYaml = isCapsule && capsuleDate ? `capsule: ${new Date(capsuleDate).toISOString()}\n` : '';
+          const replyToYaml = replyTo ? `replyTo: "${String(replyTo).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"\n` : '';
 
-        const res = await fetch(`${apiBase}/api/publish-moment`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(payload)
-        });
+          const momentFile = `---
+published: ${nowIso}
+author: "${(author || '瑶曦').replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"
+source: "${(source || 'Astro Web Studio').replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"
+pinned: ${Boolean(pinned)}
+${capsuleYaml}${replyToYaml}${imagesYaml}${videosYaml}---
 
-        if (!res.ok) {
-          let errData = {};
-          try { errData = await res.json(); } catch (e) {
-            errData = { message: `网络请求失败 (HTTP ${res.status})` };
+${content.trim()}
+`;
+          const res = await commitDirectToGitHub(githubPat, `src/content/moments/${momentSlug}.md`, momentFile, `docs(moment): publish moment ${momentSlug} via Admin Studio`);
+          commitSha = res.commit_sha;
+        } else {
+          deployStageInfo.textContent = '阶段: Worker BFF 代理提交';
+          const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          };
+          const payload = {
+            content,
+            slug: slug || undefined,
+            author,
+            source,
+            pinned,
+            replyTo: replyTo || undefined,
+            capsule: isCapsule ? new Date(capsuleDate).toISOString() : undefined,
+            images: rawImages ? rawImages.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : [],
+            videos: rawVideos ? rawVideos.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : [],
+            githubToken: undefined,
+          };
+
+          try {
+            const res = await fetch(`${apiBase}/api/publish-moment`, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+              let errData = {};
+              try { errData = await res.json(); } catch (e) {
+                errData = { message: `网络请求失败 (HTTP ${res.status})` };
+              }
+              const fullMsg = [errData.message, errData.details].filter(Boolean).join(' - ') || `HTTP ${res.status}`;
+              const customErr = new Error(fullMsg);
+              customErr.stage = errData.error || `HTTP ${res.status}`;
+              throw customErr;
+            }
+
+            const data = await res.json();
+            commitSha = data.commit_sha;
+            momentSlug = data.slug || momentSlug;
+          } catch (fetchErr) {
+            if (fetchErr.name === 'TypeError' || String(fetchErr.message).includes('fetch')) {
+              const err = new Error(`无法连接到 Worker BFF 网关 (${apiBase})，且尚未配置 GitHub PAT！请在右上角【鉴权凭据】中填入具备 contents:write 权限的 GitHub PAT，即可启用浏览器客户端直连提交 喵！`);
+              err.stage = 'BFF 网关离线 / 未配置 PAT';
+              throw err;
+            }
+            throw fetchErr;
           }
-          const fullMsg = [errData.message, errData.details].filter(Boolean).join(' - ') || `HTTP ${res.status}`;
-          const customErr = new Error(fullMsg);
-          customErr.stage = errData.error || `HTTP ${res.status}`;
-          throw customErr;
         }
-
-        const data = await res.json();
-        const commitSha = data.commit_sha;
-        const momentSlug = data.slug;
 
         deployProgressBar.style.width = '40%';
         deployTitle.textContent = `GitHub 动态提交成功 (${commitSha.substring(0, 7)})`;
@@ -1777,8 +1934,25 @@ import { umamiConfig } from "../config";
         deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-red-500/10 text-red-500 border border-red-500/20';
         deployProgressBar.style.width = '100%';
         deployProgressBar.className = 'h-full bg-red-500 rounded-full';
-        deployStageInfo.textContent = `失败原因: ${err.stage || 'GitHub API'}`;
-        deploySubtitle.textContent = err.message || '未知异常，请检查网络或控制台输出';
+        deployStageInfo.textContent = `失败原因: ${err.stage || '网络或接口异常'}`;
+
+        const isAuthErr = String(err.message).includes('Token') ||
+          String(err.message).includes('GitHub') ||
+          String(err.message).includes('credentials') ||
+          String(err.message).includes('401') ||
+          String(err.message).includes('403') ||
+          String(err.message).includes('Unauthorized') ||
+          String(err.message).includes('Forbidden') ||
+          String(err.message).includes('PAT');
+
+        if (isAuthErr) {
+          deploySubtitle.innerHTML = `<span class="break-all">${err.message}</span><br/><button type="button" id="btn-fix-auth-err-moment" class="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/10 dark:bg-white/15 text-xs font-semibold text-[var(--primary)] hover:opacity-80 transition-all cursor-pointer"><span>🔐 打开【鉴权凭据】配置或更新有效 GitHub PAT</span></button>`;
+          document.getElementById('btn-fix-auth-err-moment')?.addEventListener('click', () => {
+            modalAuth.classList.remove('hidden');
+          });
+        } else {
+          deploySubtitle.textContent = err.message || '未知异常，请检查网络或控制台输出';
+        }
 
         btnPublish.disabled = false;
         publishSpinner.classList.add('hidden');
