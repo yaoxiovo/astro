@@ -593,33 +593,60 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
 
     if (syncCredsBtn) {
       syncCredsBtn.onclick = async () => {
-        if (typeof window.yaoxiSyncCredentials === "function") {
-          syncCredsBtn.disabled = true;
-          syncCredsBtn.innerHTML = "<span>⏳ 下发中...</span>";
-          try {
-            const creds = await window.yaoxiSyncCredentials();
-            if (creds && (creds.cf_token || creds.github_pat)) {
-              if (creds.cf_token) {
+        syncCredsBtn.disabled = true;
+        syncCredsBtn.innerHTML = "<span>⏳ 下发中...</span>";
+        try {
+          const endpoint = document.getElementById("setting-api-endpoint")?.value.trim() || "";
+          let creds = null;
+          if (typeof window.yaoxiSyncCredentials === "function") {
+            creds = await window.yaoxiSyncCredentials(endpoint);
+          }
+
+          if (creds && (creds.cf_token || creds.github_pat)) {
+            if (creds.cf_token) {
+              document.getElementById("setting-cf-token").value = creds.cf_token;
+              localStorage.setItem(STORAGE_KEY_TOKEN, creds.cf_token);
+            }
+            if (creds.cf_zone_id) {
+              document.getElementById("setting-cf-zone-id").value = creds.cf_zone_id;
+              localStorage.setItem(STORAGE_KEY_ZONE, creds.cf_zone_id);
+            }
+            updateSettingBadges();
+            alert("🎉 已随统一认证中心成功下发 Cloudflare 运维凭据喵！");
+            return;
+          }
+
+          const shouldReLogin = confirm(
+            "💡 未在当前登录凭据中检测到 Cloudflare Token 喵！\n\n" +
+            "【原因说明】\n" +
+            "如果您是在认证中心后台刚刚配置的 Token，由于历史 JWT 已经签发，必须重新调起认证中心授权一次，才能签发并带出最新配置的 platform_tokens 喵。\n\n" +
+            "是否立即调起 accounts.yaoxi.cloud 一键刷新授权 喵？"
+          );
+
+          if (shouldReLogin && typeof window.yaoxiLogin === "function") {
+            syncCredsBtn.innerHTML = "<span>🔑 正在重新授权...</span>";
+            const authRes = await window.yaoxiLogin("popup");
+            if (authRes && authRes.accessToken) {
+              creds = await window.yaoxiSyncCredentials(endpoint);
+              if (creds && creds.cf_token) {
                 document.getElementById("setting-cf-token").value = creds.cf_token;
                 localStorage.setItem(STORAGE_KEY_TOKEN, creds.cf_token);
+                if (creds.cf_zone_id) {
+                  document.getElementById("setting-cf-zone-id").value = creds.cf_zone_id;
+                  localStorage.setItem(STORAGE_KEY_ZONE, creds.cf_zone_id);
+                }
+                updateSettingBadges();
+                alert("✨ 重新授权成功！Cloudflare 运维凭据已自动同步装载 喵！");
+              } else {
+                alert("⚠️ 重新授权完成，但认证中心下发的凭据中未包含 cloudflare 字段。请检查认证中心用户配置中是否已填写 Cloudflare Token 喵！");
               }
-              if (creds.cf_zone_id) {
-                document.getElementById("setting-cf-zone-id").value = creds.cf_zone_id;
-                localStorage.setItem(STORAGE_KEY_ZONE, creds.cf_zone_id);
-              }
-              updateSettingBadges();
-              alert("已随统一认证中心成功下发 Cloudflare 运维凭据喵！");
-            } else {
-              alert("未从认证中心拉取到运维凭据，请确认当前账号具备管理员权限喵！");
             }
-          } catch (e) {
-            alert("同步下发异常: " + e.message);
-          } finally {
-            syncCredsBtn.disabled = false;
-            syncCredsBtn.innerHTML = "<span>🔄 重新下发凭据</span>";
           }
-        } else {
-          alert("统一认证中心客户端尚未就绪 喵！");
+        } catch (e) {
+          alert("同步下发异常: " + (e.message || e));
+        } finally {
+          syncCredsBtn.disabled = false;
+          syncCredsBtn.innerHTML = "<span>🔄 重新下发凭据</span>";
         }
       };
     }

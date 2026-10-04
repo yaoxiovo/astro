@@ -1403,27 +1403,52 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
 
     if (btnSyncCredsSso) {
       btnSyncCredsSso.addEventListener('click', async () => {
-        if (typeof window.yaoxiSyncCredentials === 'function') {
-          btnSyncCredsSso.disabled = true;
-          btnSyncCredsSso.innerHTML = '<span>⏳ 同步中...</span>';
-          try {
-            const creds = await window.yaoxiSyncCredentials();
-            if (creds && creds.github_pat) {
-              if (inputGithubToken) inputGithubToken.value = creds.github_pat;
-              alert('博主操作凭据已随认证中心成功一并下发喵！');
-            } else {
-              alert('未从认证中心或 Worker BFF 获取到凭据，请确认当前账号具备管理员权限喵！');
-            }
-          } catch (err) {
-            console.warn('[Admin] 凭据同步失败:', err);
-            alert('同步下发失败: ' + err.message);
-          } finally {
-            btnSyncCredsSso.disabled = false;
-            btnSyncCredsSso.innerHTML = '<span>🔄 重新同步下发</span>';
-            syncAuthUI();
+        btnSyncCredsSso.disabled = true;
+        btnSyncCredsSso.innerHTML = '<span>⏳ 同步中...</span>';
+        try {
+          const endpoint = inputApiEndpoint ? inputApiEndpoint.value.trim() : '';
+          let creds = null;
+          if (typeof window.yaoxiSyncCredentials === 'function') {
+            creds = await window.yaoxiSyncCredentials(endpoint);
           }
-        } else {
-          alert('认证中心 SDK 尚未就绪 喵！');
+
+          if (creds && creds.github_pat) {
+            if (inputGithubToken) inputGithubToken.value = creds.github_pat;
+            alert('🎉 恭喜！博主操作凭据已随认证中心成功一并下发装载喵！');
+            syncAuthUI();
+            return;
+          }
+
+          // 若当前本地 JWT 与 BFF 均未包含 platform_tokens，判定为配置 Token 前签署的历史登录态
+          const shouldReLogin = confirm(
+            '💡 未在当前登录凭据中检测到最新平台 Token 喵！\n\n' +
+            '【原因排查】\n' +
+            '如果您是在认证中心后台刚刚配置或更新的 Token，由于浏览器持有的是此前签署的静态 JWT 会话，必须重新调起认证中心授权一次，才能签发并带出最新配置的 platform_tokens 喵。\n\n' +
+            '是否立即调起 accounts.yaoxi.cloud 一键刷新授权 喵？'
+          );
+
+          if (shouldReLogin && typeof window.yaoxiLogin === 'function') {
+            btnSyncCredsSso.innerHTML = '<span>🔑 正在重新授权...</span>';
+            const authRes = await window.yaoxiLogin('popup');
+            if (authRes && authRes.accessToken) {
+              inputAccessToken.value = authRes.accessToken;
+              // 重新授权后立即再次尝试同步
+              creds = await window.yaoxiSyncCredentials(endpoint);
+              if (creds && creds.github_pat) {
+                if (inputGithubToken) inputGithubToken.value = creds.github_pat;
+                alert('✨ 重新授权成功！认证中心最新配置的 GitHub PAT 已自动下发并装载 喵！');
+              } else {
+                alert('⚠️ 重新授权完成，但认证中心下发的 platform_tokens 中仍未包含 github 字段喵。\n请检查认证中心管理后台 -> 用户管理 -> 该账号的【GitHub Personal Access Token】是否已保存生效喵！');
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('[Admin] 凭据同步失败:', err);
+          alert('同步下发异常: ' + (err.message || err));
+        } finally {
+          btnSyncCredsSso.disabled = false;
+          btnSyncCredsSso.innerHTML = '<span>🔄 重新同步下发</span>';
+          syncAuthUI();
         }
       });
     }

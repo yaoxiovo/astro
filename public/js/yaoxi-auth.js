@@ -317,11 +317,44 @@
     /**
      * 随认证中心一并拉取并下发博主全量运维与发布凭据 (GET /api/credentials)
      */
-    async syncCredentials(apiBase = 'https://zk-api.yaoxi.cloud') {
+    async syncCredentials(apiBase) {
       const token = this.getToken();
       if (!token) return null;
+
+      // 1. 优先从当前持有的 JWT Token 深度解码提取 platform_tokens 与凭据
+      const payload = this.parseJwtPayload(token);
+      const user = this.getUser() || payload;
+      let platformTokens = this.getPlatformTokens();
+
+      if (!platformTokens || Object.keys(platformTokens).length === 0) {
+        platformTokens = payload.platform_tokens || (user && user.platform_tokens) || {};
+      }
+
+      let githubPat = platformTokens.github || payload.github_pat || (user && (user.github_pat || user.github_token || user.pat)) || localStorage.getItem('yaoxi_github_pat') || localStorage.getItem('yaoxi_admin_github_pat') || null;
+      let cfToken = platformTokens.cloudflare || payload.cf_token || (user && (user.cf_token || user.cloudflare_token)) || localStorage.getItem('yaoxi_ddos_cf_token') || null;
+      let cfZoneId = platformTokens.cloudflare_zone || payload.cf_zone_id || (user && (user.cf_zone_id || user.cf_zone)) || localStorage.getItem('yaoxi_ddos_cf_zone_id') || null;
+
+      // 如果当前会话或 JWT Claims 中已包含有效凭据，立即写入并分发广播！
+      if (githubPat || cfToken) {
+        const creds = {
+          github_pat: githubPat,
+          cf_token: cfToken,
+          cf_zone_id: cfZoneId,
+          platform_tokens: {
+            github: githubPat,
+            cloudflare: cfToken,
+            cloudflare_zone: cfZoneId,
+          },
+          source: 'session_claims',
+        };
+        this._persistCredentials(creds);
+        return creds;
+      }
+
+      // 2. 尝试从 Worker BFF /api/credentials 换取代持凭据
+      const endpoint = (apiBase || (typeof localStorage !== 'undefined' && localStorage.getItem('yaoxi_api_endpoint')) || 'https://zk-api.yaoxi.cloud').replace(/\/$/, '');
       try {
-        const url = `${apiBase.replace(/\/$/, '')}/api/credentials`;
+        const url = `${endpoint}/api/credentials`;
         const res = await fetch(url, {
           method: 'GET',
           headers: {
@@ -329,36 +362,42 @@
             Accept: 'application/json',
           },
         });
-        if (!res.ok) return null;
-        const data = await res.json();
-        if (data && data.success && data.credentials) {
-          const creds = data.credentials;
-          if (creds.platform_tokens && typeof creds.platform_tokens === 'object') {
-            localStorage.setItem(this.storagePrefix + 'platform_tokens', JSON.stringify(creds.platform_tokens));
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && data.credentials) {
+            this._persistCredentials(data.credentials);
+            return data.credentials;
           }
-          if (creds.github_pat) {
-            localStorage.setItem('yaoxi_github_pat', creds.github_pat);
-            localStorage.setItem('yaoxi_admin_github_pat', creds.github_pat);
-          }
-          if (creds.cf_token) {
-            localStorage.setItem('yaoxi_ddos_cf_token', creds.cf_token);
-          }
-          if (creds.cf_zone_id) {
-            localStorage.setItem('yaoxi_ddos_cf_zone_id', creds.cf_zone_id);
-          }
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(
-              new CustomEvent('yaoxi:credentials:sync', {
-                detail: creds,
-              })
-            );
-          }
-          return creds;
         }
       } catch (err) {
-        console.warn('[YaoxiAuth] 随认证中心下发凭据异常:', err);
+        console.warn('[YaoxiAuth] 请求 Worker BFF 凭据接口异常:', err);
       }
+
       return null;
+    }
+
+    _persistCredentials(creds) {
+      if (!creds || typeof creds !== 'object') return;
+      if (creds.platform_tokens && typeof creds.platform_tokens === 'object') {
+        localStorage.setItem(this.storagePrefix + 'platform_tokens', JSON.stringify(creds.platform_tokens));
+      }
+      if (creds.github_pat) {
+        localStorage.setItem('yaoxi_github_pat', creds.github_pat);
+        localStorage.setItem('yaoxi_admin_github_pat', creds.github_pat);
+      }
+      if (creds.cf_token) {
+        localStorage.setItem('yaoxi_ddos_cf_token', creds.cf_token);
+      }
+      if (creds.cf_zone_id) {
+        localStorage.setItem('yaoxi_ddos_cf_zone_id', creds.cf_zone_id);
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('yaoxi:credentials:sync', {
+            detail: creds,
+          })
+        );
+      }
     }
 
     parseJwtPayload(jwtToken) {
