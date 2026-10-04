@@ -138,6 +138,11 @@ export const navBarConfig: NavBarConfig = {
 			external: false,
 		},
 		{
+			name: "DDoS 告警",
+			url: "/ddos/",
+			external: false,
+		},
+		{
 			name: "其他网站",
 			url: "/posts/other-sites/", // Internal links should not include the base path, as it is automatically added
 			external: false, // Show an external link icon and will open in a new tab
@@ -147,7 +152,6 @@ export const navBarConfig: NavBarConfig = {
 			url: "https://umami.yaoxi.cloud/share/CLGxRecPqPn9IidK", // Internal links should not include the base path, as it is automatically added
 			external: true, // Show an external link icon and will open in a new tab
 		},
-			
 	],
 };
 

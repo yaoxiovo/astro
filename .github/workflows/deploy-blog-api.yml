@@ -81,6 +81,15 @@ jobs:
           if [ -n "$EMAIL_FROM" ]; then
             echo "$EMAIL_FROM" | npx wrangler secret put EMAIL_FROM || true
           fi
+          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "$CLOUDFLARE_API_TOKEN" | npx wrangler secret put CF_API_TOKEN || true
+          fi
+          if [ -n "$CLOUDFLARE_ZONE_ID" ]; then
+            echo "$CLOUDFLARE_ZONE_ID" | npx wrangler secret put CF_ZONE_ID || true
+          fi
+          if [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "$CLOUDFLARE_ACCOUNT_ID" | npx wrangler secret put CF_ACCOUNT_ID || true
+          fi
         env:
           MAIL_GATEWAY_TOKEN: ${{ secrets.MAIL_GATEWAY_TOKEN }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
@@ -91,6 +100,7 @@ jobs:
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
 
       - name: Deploy Worker
         run: npx wrangler deploy

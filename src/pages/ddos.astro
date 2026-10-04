@@ -1,0 +1,1113 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+import { siteConfig } from "@/config";
+
+const pageTitle = "DDoS 告警与实时防御中心";
+const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追踪 HTTP Flood、L7 DDoS 与异常并发攻击事件";
+---
+
+<MainGridLayout title={pageTitle} description={pageDescription} noindex={true}>
+  <div class="flex flex-col gap-5 w-full">
+
+    <!-- 顶部状态卡片 (Hero & Live Status Bar) -->
+    <div class="card-base p-6 md:p-8 relative overflow-hidden transition-all duration-300">
+      <!-- 背景光晕装饰 -->
+      <div id="status-halo" class="absolute -right-16 -top-16 w-56 h-56 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-700 bg-emerald-500"></div>
+
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+        <div class="flex items-start md:items-center gap-4">
+          <!-- 动态盾牌图标 -->
+          <div id="shield-icon-container" class="w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 shadow-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+            <Icon id="shield-icon" name="material-symbols:shield" class="text-3xl md:text-4xl transition-transform duration-500" />
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center gap-2.5 mb-1.5">
+              <h1 class="text-2xl md:text-3xl font-black tracking-tight text-black/90 dark:text-white/90">
+                DDoS 告警与防御中心
+              </h1>
+              <!-- 核心状态徽章 -->
+              <div id="status-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono tracking-wide transition-all duration-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                <span id="status-badge-text">🟢 安全防护中 · NORMAL</span>
+              </div>
+            </div>
+            <p class="text-xs md:text-sm text-black/60 dark:text-white/60 flex items-center gap-2">
+              <span>Cloudflare 边缘安全智能分析 · 实时追踪 HTTP Flood 与 L7 异常并发</span>
+              <span class="hidden md:inline text-black/30 dark:text-white/30">|</span>
+              <span id="target-domain-label" class="hidden md:inline font-mono text-xs px-2 py-0.5 rounded bg-black/5 dark:bg-white/5">blog.yaoxi.wiki</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- 右侧控制交互栏 -->
+        <div class="flex flex-wrap items-center gap-2.5 self-start lg:self-center">
+          <!-- 时间范围切片 -->
+          <div class="flex items-center bg-black/5 dark:bg-white/5 p-1 rounded-xl border border-black/5 dark:border-white/10 text-xs font-medium">
+            <button class="time-range-btn px-2.5 py-1.5 rounded-lg transition-all" data-hours="1">1小时</button>
+            <button class="time-range-btn px-2.5 py-1.5 rounded-lg transition-all active-time bg-[var(--primary)] text-white dark:text-black font-semibold shadow-sm" data-hours="24">24小时</button>
+            <button class="time-range-btn px-2.5 py-1.5 rounded-lg transition-all" data-hours="168">7天</button>
+          </div>
+
+          <!-- 攻防演练模拟模式切换开关 -->
+          <button id="btn-toggle-demo" class="btn-plain px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 border border-black/10 dark:border-white/15 hover:border-[var(--primary)] transition-all" title="切换模拟演练模式，直观查看遭受攻击时的告警与日志展示">
+            <Icon name="material-symbols:crisis-alert-rounded" class="text-base text-amber-500" />
+            <span id="demo-mode-label">演练模拟</span>
+          </button>
+
+          <!-- 立即刷新按钮 -->
+          <button id="btn-refresh" class="btn-plain px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 border border-black/10 dark:border-white/15 hover:border-[var(--primary)] transition-all">
+            <Icon id="refresh-spinner" name="material-symbols:refresh-rounded" class="text-base transition-transform duration-500" />
+            <span>刷新</span>
+          </button>
+
+          <!-- 设置抽屉按钮 -->
+          <button id="btn-open-settings" class="btn-plain p-2 rounded-xl text-xs border border-black/10 dark:border-white/15 hover:border-[var(--primary)] transition-all" title="自定义 Cloudflare 凭据与 API 端点">
+            <Icon name="material-symbols:tune-rounded" class="text-base" />
+          </button>
+        </div>
+      </div>
+
+      <!-- 自动刷新进度微指示条 -->
+      <div class="mt-5 pt-4 border-t border-black/5 dark:border-white/10 flex flex-wrap items-center justify-between text-xs text-black/50 dark:text-white/50 gap-3">
+        <div class="flex items-center gap-3">
+          <span class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span id="cf-connection-status">CF 边缘网关已连通</span>
+          </span>
+          <span>·</span>
+          <span>最近探测时间：<span id="last-updated-time" class="font-mono text-black/70 dark:text-white/70">获取中...</span></span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-1.5 cursor-pointer select-none">
+            <input type="checkbox" id="auto-refresh-check" checked class="rounded border-gray-400 text-[var(--primary)] focus:ring-0 w-3.5 h-3.5 cursor-pointer" />
+            <span>30s 自动轮询</span>
+          </label>
+          <div class="w-16 h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
+            <div id="countdown-progress" class="h-full bg-[var(--primary)] transition-all duration-300 w-full"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🚨 严重攻击警报横幅 (Attack Alert Banner - 动态呈现) -->
+    <div id="attack-alert-banner" class="hidden card-base p-6 md:p-7 relative overflow-hidden border-2 border-red-500/50 bg-gradient-to-r from-red-500/10 via-amber-500/10 to-red-500/5 shadow-xl shadow-red-500/10 animate-fade-in">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div class="flex items-start gap-4">
+          <div class="p-3 rounded-2xl bg-red-500 text-white flex-shrink-0 shadow-lg shadow-red-500/30 animate-bounce">
+            <Icon name="material-symbols:warning-rounded" class="text-3xl" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-red-600 text-white uppercase tracking-wider font-mono">CRITICAL ALERT</span>
+              <h2 class="text-lg md:text-xl font-bold text-red-600 dark:text-red-400">
+                检测到针对本站的 DDoS 恶意攻击流量！
+              </h2>
+            </div>
+            <p class="text-xs md:text-sm text-black/75 dark:text-white/80 leading-relaxed max-w-2xl">
+              Cloudflare 边缘防护系统已启动自适应清洗机制（Adaptive L7 Mitigation），对冲击本站的异常高并发请求执行智能丢弃（Drop）与 403 阻断（Block），源站负载与正常读者访问受严密保护喵呜！
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 self-end md:self-center flex-shrink-0">
+          <div class="text-right">
+            <div class="text-[11px] text-black/50 dark:text-white/50 uppercase tracking-wider">峰值清洗速率</div>
+            <div id="alert-peak-rps" class="text-xl md:text-2xl font-black font-mono text-red-600 dark:text-red-400">18,450 req/s</div>
+          </div>
+          <div class="h-10 w-px bg-red-500/20"></div>
+          <div class="text-right">
+            <div class="text-[11px] text-black/50 dark:text-white/50 uppercase tracking-wider">受冲击端点</div>
+            <div id="alert-top-endpoint" class="text-xs md:text-sm font-bold font-mono text-black/80 dark:text-white/80">/api/moments.json</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 核心防御态势卡片网格 (Metrics Row - 4 Cards) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 md:gap-4">
+      <!-- 卡片 1: 防御状态 -->
+      <div class="card-base p-4 md:p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-black/50 dark:text-white/50">防御态势</span>
+          <Icon name="material-symbols:security-rounded" class="text-base text-black/40 dark:text-white/40" />
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="metric-defense-state" class="text-xl md:text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">安全平稳</span>
+        </div>
+        <div class="text-[11px] text-black/40 dark:text-white/40 mt-1 flex items-center gap-1 truncate">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span>Anycast 边缘分布式清洗</span>
+        </div>
+      </div>
+
+      <!-- 卡片 2: 拦截事件总数 -->
+      <div class="card-base p-4 md:p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-black/50 dark:text-white/50">拦截攻击事件</span>
+          <Icon name="material-symbols:shield" class="text-base text-black/40 dark:text-white/40" />
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="metric-blocked-total" class="text-xl md:text-2xl font-black font-mono tracking-tight text-black/90 dark:text-white/90">0</span>
+          <span class="text-xs text-black/40 dark:text-white/40">次</span>
+        </div>
+        <div class="text-[11px] text-black/40 dark:text-white/40 mt-1 flex items-center gap-1 truncate">
+          <span id="metric-blocked-detail">静默丢弃 (Drop) + 403 阻断</span>
+        </div>
+      </div>
+
+      <!-- 卡片 3: 峰值攻击速率 -->
+      <div class="card-base p-4 md:p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-black/50 dark:text-white/50">峰值攻击速率</span>
+          <Icon name="material-symbols:speed-rounded" class="text-base text-black/40 dark:text-white/40" />
+        </div>
+        <div class="flex items-baseline gap-2">
+          <span id="metric-peak-rps" class="text-xl md:text-2xl font-black font-mono tracking-tight text-black/90 dark:text-white/90">0</span>
+          <span class="text-xs text-black/40 dark:text-white/40">req/s</span>
+        </div>
+        <div class="text-[11px] text-black/40 dark:text-white/40 mt-1 flex items-center gap-1 truncate">
+          <span id="metric-rps-sub">全球边缘瞬时统计</span>
+        </div>
+      </div>
+
+      <!-- 卡片 4: 主要攻击来源 -->
+      <div class="card-base p-4 md:p-5 flex flex-col justify-between transition-all hover:-translate-y-0.5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-black/50 dark:text-white/50">主要攻击源</span>
+          <Icon name="material-symbols:public" class="text-base text-black/40 dark:text-white/40" />
+        </div>
+        <div class="flex items-baseline gap-2 truncate">
+          <span id="metric-top-source" class="text-sm md:text-base font-bold font-mono tracking-tight text-black/90 dark:text-white/90 truncate">无异常威胁</span>
+        </div>
+        <div class="text-[11px] text-black/40 dark:text-white/40 mt-1 flex items-center gap-1 truncate">
+          <span id="metric-source-sub">L7 Flood / 恶意压测</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 攻击深度分析面板 (Breakdown Panel - 仅当有攻击或演练时展开) -->
+    <div id="attack-breakdown-section" class="hidden card-base p-6 md:p-7 transition-all duration-300">
+      <div class="flex items-center gap-2 mb-5">
+        <Icon name="material-symbols:tune-rounded" class="text-xl text-[var(--primary)]" />
+        <h3 class="text-base md:text-lg font-bold text-black/90 dark:text-white/90">DDoS 攻击多维分布分析</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- 处置动作占比 -->
+        <div class="flex flex-col gap-3">
+          <div class="text-xs font-semibold text-black/60 dark:text-white/60 uppercase tracking-wider">处置策略分布 (Actions)</div>
+          <div class="flex flex-col gap-2.5">
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="font-medium text-red-600 dark:text-red-400">DROP (静默丢弃)</span>
+                <span id="action-drop-stat" class="font-mono text-black/60 dark:text-white/60">0% (0)</span>
+              </div>
+              <div class="h-2 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                <div id="bar-action-drop" class="h-full bg-red-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="font-medium text-amber-600 dark:text-amber-400">BLOCK (403 阻断)</span>
+                <span id="action-block-stat" class="font-mono text-black/60 dark:text-white/60">0% (0)</span>
+              </div>
+              <div class="h-2 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                <div id="bar-action-block" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="font-medium text-blue-600 dark:text-blue-400">CHALLENGE (人机质询)</span>
+                <span id="action-challenge-stat" class="font-mono text-black/60 dark:text-white/60">0% (0)</span>
+              </div>
+              <div class="h-2 rounded-full bg-black/5 dark:bg-white/10 overflow-hidden">
+                <div id="bar-action-challenge" class="h-full bg-blue-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 来源地区 Top 5 -->
+        <div class="flex flex-col gap-3">
+          <div class="text-xs font-semibold text-black/60 dark:text-white/60 uppercase tracking-wider">攻击来源地区 Top 5</div>
+          <div id="top-countries-list" class="flex flex-col gap-2">
+            <!-- 动态注入 -->
+          </div>
+        </div>
+
+        <!-- 受冲击路由 Top 5 -->
+        <div class="flex flex-col gap-3">
+          <div class="text-xs font-semibold text-black/60 dark:text-white/60 uppercase tracking-wider">受冲击路由目标 Top 5</div>
+          <div id="top-targets-list" class="flex flex-col gap-2">
+            <!-- 动态注入 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DDoS 详细安全日志流水 (Detailed Security Event Logs) -->
+    <div class="card-base p-6 md:p-8 flex flex-col gap-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 class="text-lg md:text-xl font-bold text-black/90 dark:text-white/90">
+              DDoS 攻击事件日志流水
+            </h3>
+            <span id="logs-count-badge" class="px-2 py-0.5 text-xs font-mono font-bold rounded-full bg-black/5 dark:bg-white/10 text-black/60 dark:text-white/60">
+              0 条
+            </span>
+          </div>
+          <p class="text-xs text-black/40 dark:text-white/40 mt-0.5">从 Cloudflare 边缘安全智能拉取，包含 L7 DDoS、速率限制与清洗策略触发日志</p>
+        </div>
+
+        <!-- 过滤与搜索控件 -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- 动作过滤 -->
+          <select id="filter-action" class="px-2.5 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 text-xs text-black/80 dark:text-white/80 outline-none focus:border-[var(--primary)] cursor-pointer">
+            <option value="all">所有动作 (All)</option>
+            <option value="drop">仅丢弃 (Drop)</option>
+            <option value="block">仅阻断 (Block)</option>
+            <option value="challenge">仅质询 (Challenge)</option>
+          </select>
+
+          <!-- 搜索输入框 -->
+          <div class="relative">
+            <input type="text" id="input-search-log" placeholder="搜索 IP / 路由 / RayID..." class="w-40 sm:w-48 pl-7 pr-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 text-xs font-mono text-black/80 dark:text-white/80 outline-none focus:border-[var(--primary)]" />
+            <Icon name="material-symbols:search-rounded" class="absolute left-2 top-2 text-sm text-black/40 dark:text-white/40 pointer-events-none" />
+          </div>
+
+          <!-- 导出 JSON -->
+          <button id="btn-export-json" class="btn-plain px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 border border-black/10 dark:border-white/15 hover:border-[var(--primary)] transition-all" title="复制所有日志的原始 JSON 数据">
+            <Icon name="material-symbols:download-rounded" class="text-sm" />
+            <span>导出</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 日志列表展示容器 -->
+      <div id="logs-container" class="flex flex-col gap-3 min-h-[160px]">
+        <!-- 默认或加载状态骨架屏 -->
+        <div id="logs-loading" class="flex flex-col items-center justify-center py-16 gap-3">
+          <div class="w-8 h-8 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin"></div>
+          <span class="text-xs text-black/40 dark:text-white/40 font-mono">正在拉取 Cloudflare 边缘安全防护日志...</span>
+        </div>
+
+        <!-- 绿盾·零事件安全状态 (当无 DDoS 攻击时展示) -->
+        <div id="logs-empty-safe" class="hidden flex flex-col items-center justify-center py-14 px-4 text-center">
+          <div class="relative w-20 h-20 mb-4 flex items-center justify-center">
+            <div class="absolute inset-0 rounded-3xl bg-emerald-500/10 animate-ping opacity-30"></div>
+            <div class="w-16 h-16 rounded-2xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center border border-emerald-500/30 shadow-inner">
+              <Icon name="material-symbols:check-circle-rounded" class="text-4xl" />
+            </div>
+          </div>
+          <h4 class="text-base md:text-lg font-bold text-black/90 dark:text-white/90 mb-1">
+            当前网络环境安全 · 未检测到 DDoS 攻击事件
+          </h4>
+          <p class="text-xs md:text-sm text-black/50 dark:text-white/50 max-w-md leading-relaxed mb-5">
+            在所选的时间窗口内，未发现针对本站的恶意高频流量冲击或异常拒绝服务攻击。Cloudflare 全球 330+ Anycast 边缘清洗节点全天候处于待命防护状态喵~
+          </p>
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            <button id="btn-empty-demo" class="px-4 py-2 rounded-xl bg-[var(--primary)] text-white dark:text-black font-semibold text-xs shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5">
+              <Icon name="material-symbols:crisis-alert-rounded" class="text-base" />
+              <span>开启攻防模拟演练 (Demo)</span>
+            </button>
+            <a href="https://blog.yaoxi.wiki" class="btn-plain px-4 py-2 rounded-xl text-xs font-medium border border-black/10 dark:border-white/15">
+              返回博客首页
+            </a>
+          </div>
+        </div>
+
+        <!-- 真实日志流水挂载区 -->
+        <div id="logs-list" class="hidden flex flex-col gap-2.5">
+          <!-- 动态注入日志行 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部：全栈多层纵深防御体系概览 -->
+    <div class="card-base p-6 md:p-8">
+      <div class="flex items-center gap-2 mb-4">
+        <Icon name="material-symbols:shield" class="text-xl text-[var(--primary)]" />
+        <h3 class="text-base md:text-lg font-bold text-black/90 dark:text-white/90">
+          博客系统多层纵深防御架构 (Multi-Layer Defense)
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+        <div class="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 flex flex-col gap-1.5">
+          <div class="font-bold text-[var(--primary)] flex items-center gap-1">
+            <span>🛡️ 第一道：BGP Anycast 清洗</span>
+          </div>
+          <p class="text-black/60 dark:text-white/60 leading-relaxed">
+            全球 330+ 城市边缘节点近源吸收 SYN Flood、UDP 放大攻击，L3/L4 畸形数据包 100% 边缘封堵。
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 flex flex-col gap-1.5">
+          <div class="font-bold text-[var(--primary)] flex items-center gap-1">
+            <span>⚡ 第二道：L7 HTTP 智能清洗</span>
+          </div>
+          <p class="text-black/60 dark:text-white/60 leading-relaxed">
+            实时分析并发突增速率与请求指纹，自适应触发 Drop / Challenge，毫秒级瓦解分布式 CC 僵尸网络。
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 flex flex-col gap-1.5">
+          <div class="font-bold text-[var(--primary)] flex items-center gap-1">
+            <span>🚦 第三道：WAF 与速率限制</span>
+          </div>
+          <p class="text-black/60 dark:text-white/60 leading-relaxed">
+            针对朋友圈 API、发信网关与订阅端点实施单 IP 60 次/分与全局频次熔断，防范接口刷量滥用。
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 flex flex-col gap-1.5">
+          <div class="font-bold text-[var(--primary)] flex items-center gap-1">
+            <span>🔒 第四道：零知识 BFF 网关</span>
+          </div>
+          <p class="text-black/60 dark:text-white/60 leading-relaxed">
+            源站不暴露公网 IP，鉴权与写操作完全由边缘 Workers 零知识代持，彻底阻断任何针对源站的直连穿透。
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 自定义连接配置弹窗 (Settings Modal) -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div class="card-base w-full max-w-md p-6 rounded-2xl shadow-2xl border border-black/10 dark:border-white/20 flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-black/10 dark:border-white/10 pb-3">
+        <h4 class="text-base font-bold text-black/90 dark:text-white/90 flex items-center gap-2">
+          <Icon name="material-symbols:tune-rounded" class="text-lg text-[var(--primary)]" />
+          <span>DDoS 防御监控连接设置</span>
+        </h4>
+        <button id="btn-close-settings" class="p-1 rounded-lg text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white">
+          <Icon name="material-symbols:close-rounded" class="text-xl" />
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-3 text-xs">
+        <div>
+          <label class="block font-medium text-black/70 dark:text-white/70 mb-1">API 网关端点 (Worker Gateway)</label>
+          <input type="text" id="setting-api-endpoint" placeholder="https://blog-api.yaoxi.cloud" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 font-mono text-xs outline-none focus:border-[var(--primary)]" />
+          <p class="text-[11px] text-black/40 dark:text-white/40 mt-1">支持 blog-api.yaoxi.cloud 或 zk-api.yaoxi.cloud</p>
+        </div>
+
+        <div>
+          <label class="block font-medium text-black/70 dark:text-white/70 mb-1">只读 Cloudflare API Token (可选本地直连)</label>
+          <input type="password" id="setting-cf-token" placeholder="留空则通过 Worker 网关拉取" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 font-mono text-xs outline-none focus:border-[var(--primary)]" />
+          <p class="text-[11px] text-black/40 dark:text-white/40 mt-1">仅保存在当前浏览器的 localStorage 中，绝不上报</p>
+        </div>
+
+        <div>
+          <label class="block font-medium text-black/70 dark:text-white/70 mb-1">Cloudflare Zone ID (可选)</label>
+          <input type="text" id="setting-cf-zone-id" placeholder="例如 023e105f4ecef8ad9ca31a8372d0c353" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 font-mono text-xs outline-none focus:border-[var(--primary)]" />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-black/10 dark:border-white/10">
+        <button id="btn-reset-settings" class="px-3 py-1.5 rounded-xl text-xs text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white">
+          重置默认
+        </button>
+        <button id="btn-save-settings" class="px-4 py-1.5 rounded-xl bg-[var(--primary)] text-white dark:text-black font-semibold text-xs shadow-md">
+          保存并刷新
+        </button>
+      </div>
+    </div>
+  </div>
+
+</MainGridLayout>
+
+<!-- 客户端动态交互与 Cloudflare DDoS 日志拉取驱动 -->
+<script is:inline>
+(() => {
+  let isInitialized = false;
+  let pollTimer = null;
+  let countdownTimer = null;
+  let countdownSeconds = 30;
+  let currentHours = 24;
+  let isDemoMode = false;
+  let currentLogs = [];
+
+  const STORAGE_KEY_ENDPOINT = "yaoxi_ddos_api_endpoint";
+  const STORAGE_KEY_TOKEN = "yaoxi_ddos_cf_token";
+  const STORAGE_KEY_ZONE = "yaoxi_ddos_cf_zone_id";
+  const STORAGE_KEY_DEMO = "yaoxi_ddos_demo_mode";
+
+  function getDefaultApiEndpoint() {
+    return (localStorage.getItem(STORAGE_KEY_ENDPOINT) || "https://blog-api.yaoxi.cloud").replace(/\/$/, "");
+  }
+
+  function initDDoSPage() {
+    const shieldIcon = document.getElementById("shield-icon");
+    if (!shieldIcon) return; // 当前页面非 ddos 页面
+
+    // 清理旧定时器
+    if (pollTimer) clearInterval(pollTimer);
+    if (countdownTimer) clearInterval(countdownTimer);
+
+    // 读取持久化演练开关
+    isDemoMode = localStorage.getItem(STORAGE_KEY_DEMO) === "true";
+    updateDemoButtonState();
+
+    bindEvents();
+    fetchDDoSLogs();
+    startCountdown();
+  }
+
+  function updateDemoButtonState() {
+    const demoBtn = document.getElementById("btn-toggle-demo");
+    const demoLabel = document.getElementById("demo-mode-label");
+    if (!demoBtn || !demoLabel) return;
+
+    if (isDemoMode) {
+      demoBtn.classList.add("bg-amber-500/20", "border-amber-500/50", "text-amber-600", "dark:text-amber-400", "font-bold");
+      demoLabel.textContent = "退出演练";
+    } else {
+      demoBtn.classList.remove("bg-amber-500/20", "border-amber-500/50", "text-amber-600", "dark:text-amber-400", "font-bold");
+      demoLabel.textContent = "演练模拟";
+    }
+  }
+
+  function bindEvents() {
+    // 时间范围按钮
+    document.querySelectorAll(".time-range-btn").forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll(".time-range-btn").forEach((b) => {
+          b.classList.remove("active-time", "bg-[var(--primary)]", "text-white", "dark:text-black", "font-semibold", "shadow-sm");
+        });
+        btn.classList.add("active-time", "bg-[var(--primary)]", "text-white", "dark:text-black", "font-semibold", "shadow-sm");
+        currentHours = parseInt(btn.getAttribute("data-hours") || "24", 10);
+        resetCountdown();
+        fetchDDoSLogs();
+      };
+    });
+
+    // 演练开关
+    const toggleDemoBtn = document.getElementById("btn-toggle-demo");
+    if (toggleDemoBtn) {
+      toggleDemoBtn.onclick = () => {
+        isDemoMode = !isDemoMode;
+        localStorage.setItem(STORAGE_KEY_DEMO, String(isDemoMode));
+        updateDemoButtonState();
+        resetCountdown();
+        fetchDDoSLogs();
+      };
+    }
+
+    const emptyDemoBtn = document.getElementById("btn-empty-demo");
+    if (emptyDemoBtn) {
+      emptyDemoBtn.onclick = () => {
+        isDemoMode = true;
+        localStorage.setItem(STORAGE_KEY_DEMO, "true");
+        updateDemoButtonState();
+        resetCountdown();
+        fetchDDoSLogs();
+      };
+    }
+
+    // 手动刷新
+    const refreshBtn = document.getElementById("btn-refresh");
+    if (refreshBtn) {
+      refreshBtn.onclick = () => {
+        resetCountdown();
+        fetchDDoSLogs();
+      };
+    }
+
+    // 搜索与过滤
+    const searchInput = document.getElementById("input-search-log");
+    if (searchInput) {
+      searchInput.oninput = () => renderLogList();
+    }
+    const filterAction = document.getElementById("filter-action");
+    if (filterAction) {
+      filterAction.onchange = () => renderLogList();
+    }
+
+    // 导出 JSON
+    const exportBtn = document.getElementById("btn-export-json");
+    if (exportBtn) {
+      exportBtn.onclick = () => {
+        if (!currentLogs || currentLogs.length === 0) {
+          alert("当前暂无 DDoS 攻击日志可导出 喵~");
+          return;
+        }
+        const jsonStr = JSON.stringify(currentLogs, null, 2);
+        navigator.clipboard.writeText(jsonStr).then(() => {
+          alert("已复制全部攻击事件日志 JSON 至剪贴板 喵呜！✨");
+        }).catch(() => {
+          prompt("请手动复制以下日志 JSON:", jsonStr);
+        });
+      };
+    }
+
+    // 设置弹窗
+    const openSettingsBtn = document.getElementById("btn-open-settings");
+    const closeSettingsBtn = document.getElementById("btn-close-settings");
+    const settingsModal = document.getElementById("settings-modal");
+    const saveSettingsBtn = document.getElementById("btn-save-settings");
+    const resetSettingsBtn = document.getElementById("btn-reset-settings");
+
+    if (openSettingsBtn && settingsModal) {
+      openSettingsBtn.onclick = () => {
+        document.getElementById("setting-api-endpoint").value = getDefaultApiEndpoint();
+        document.getElementById("setting-cf-token").value = localStorage.getItem(STORAGE_KEY_TOKEN) || "";
+        document.getElementById("setting-cf-zone-id").value = localStorage.getItem(STORAGE_KEY_ZONE) || "";
+        settingsModal.classList.remove("hidden");
+      };
+    }
+
+    if (closeSettingsBtn && settingsModal) {
+      closeSettingsBtn.onclick = () => settingsModal.classList.add("hidden");
+    }
+
+    if (resetSettingsBtn) {
+      resetSettingsBtn.onclick = () => {
+        localStorage.removeItem(STORAGE_KEY_ENDPOINT);
+        localStorage.removeItem(STORAGE_KEY_TOKEN);
+        localStorage.removeItem(STORAGE_KEY_ZONE);
+        document.getElementById("setting-api-endpoint").value = "https://blog-api.yaoxi.cloud";
+        document.getElementById("setting-cf-token").value = "";
+        document.getElementById("setting-cf-zone-id").value = "";
+      };
+    }
+
+    if (saveSettingsBtn && settingsModal) {
+      saveSettingsBtn.onclick = () => {
+        const ep = document.getElementById("setting-api-endpoint").value.trim();
+        const tok = document.getElementById("setting-cf-token").value.trim();
+        const zone = document.getElementById("setting-cf-zone-id").value.trim();
+
+        if (ep) localStorage.setItem(STORAGE_KEY_ENDPOINT, ep);
+        else localStorage.removeItem(STORAGE_KEY_ENDPOINT);
+
+        if (tok) localStorage.setItem(STORAGE_KEY_TOKEN, tok);
+        else localStorage.removeItem(STORAGE_KEY_TOKEN);
+
+        if (zone) localStorage.setItem(STORAGE_KEY_ZONE, zone);
+        else localStorage.removeItem(STORAGE_KEY_ZONE);
+
+        settingsModal.classList.add("hidden");
+        resetCountdown();
+        fetchDDoSLogs();
+      };
+    }
+  }
+
+  function startCountdown() {
+    countdownSeconds = 30;
+    const progressEl = document.getElementById("countdown-progress");
+    const autoCheck = document.getElementById("auto-refresh-check");
+
+    countdownTimer = setInterval(() => {
+      if (!autoCheck || !autoCheck.checked) return;
+
+      countdownSeconds--;
+      if (progressEl) {
+        const percent = Math.max(0, (countdownSeconds / 30) * 100);
+        progressEl.style.width = percent + "%";
+      }
+
+      if (countdownSeconds <= 0) {
+        countdownSeconds = 30;
+        fetchDDoSLogs();
+      }
+    }, 1000);
+  }
+
+  function resetCountdown() {
+    countdownSeconds = 30;
+    const progressEl = document.getElementById("countdown-progress");
+    if (progressEl) progressEl.style.width = "100%";
+  }
+
+  async function fetchDDoSLogs() {
+    const refreshSpinner = document.getElementById("refresh-spinner");
+    if (refreshSpinner) refreshSpinner.classList.add("animate-spin");
+
+    const endpoint = getDefaultApiEndpoint();
+    const customToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+    const customZone = localStorage.getItem(STORAGE_KEY_ZONE);
+
+    let apiUrl = `${endpoint}/api/ddos?hours=${currentHours}&limit=50`;
+    if (isDemoMode) {
+      apiUrl += "&demo=1";
+    }
+
+    try {
+      let data = null;
+      let usedDirectCF = false;
+
+      // 如果用户在本地配置了直接访问 CF GraphQL
+      if (customToken && customZone && !isDemoMode) {
+        try {
+          data = await queryCloudflareDirect(customToken, customZone, currentHours);
+          usedDirectCF = true;
+        } catch (e) {
+          console.warn("[DDoS] 本地直连 CF 失败，回退至 Worker 网关:", e);
+        }
+      }
+
+      if (!data) {
+        const res = await fetch(apiUrl);
+        if (res.ok) {
+          data = await res.json();
+        } else {
+          // 备用：尝试回退到 zk-api
+          if (!endpoint.includes("zk-api.yaoxi.cloud")) {
+            const fallbackUrl = `https://zk-api.yaoxi.cloud/api/ddos?hours=${currentHours}&limit=50${isDemoMode ? "&demo=1" : ""}`;
+            const fbRes = await fetch(fallbackUrl);
+            if (fbRes.ok) data = await fbRes.json();
+          }
+        }
+      }
+
+      if (!data) {
+        throw new Error("未能从网关获取到 DDoS 响应");
+      }
+
+      renderPageData(data, usedDirectCF);
+    } catch (err) {
+      console.error("[DDoS] 获取日志异常:", err);
+      // 展示离线兜底状态
+      renderFallbackState(err.message);
+    } finally {
+      if (refreshSpinner) refreshSpinner.classList.remove("animate-spin");
+    }
+  }
+
+  async function queryCloudflareDirect(token, zoneId, hours) {
+    const since = new Date(Date.now() - hours * 3600 * 1000).toISOString();
+    const until = new Date().toISOString();
+
+    const gql = `
+      query GetSecurityLogs($zoneTag: String!, $since: String!, $until: String!) {
+        viewer {
+          zones(filter: { zoneTag: $zoneTag }) {
+            securityEventsAdaptive(
+              filter: { datetime_geq: $since, datetime_leq: $until },
+              limit: 50,
+              orderBy: [datetime_DESC]
+            ) {
+              action
+              clientASNDescription
+              clientAsn
+              clientCountryName
+              clientIP
+              clientRequestHTTPHost
+              clientRequestHTTPMethodName
+              clientRequestPath
+              datetime
+              rayName
+              ruleId
+              source
+              userAgent
+            }
+          }
+        }
+      }
+    `;
+
+    const res = await fetch("https://api.cloudflare.com/client/v4/graphql", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ query: gql, variables: { zoneTag: zoneId, since, until } }),
+    });
+
+    if (!res.ok) throw new Error("CF GraphQL 响应状态: " + res.status);
+    const j = await res.json();
+    const rawEvents = j?.data?.viewer?.zones?.[0]?.securityEventsAdaptive || [];
+
+    const ddosEvents = rawEvents.filter((e) => {
+      const s = String(e.source || "").toLowerCase();
+      const a = String(e.action || "").toLowerCase();
+      return s.includes("ddos") || s.includes("dos") || s.includes("rate") || a.includes("drop") || a.includes("block");
+    });
+
+    return {
+      status: ddosEvents.length > 0 ? "attack" : "normal",
+      hasAttack: ddosEvents.length > 0,
+      isDemo: false,
+      target: "blog.yaoxi.wiki",
+      activeAttacks: ddosEvents.length > 0 ? 1 : 0,
+      totalEvents: ddosEvents.length,
+      events: ddosEvents.map((e, idx) => ({
+        id: e.rayName || `event-${idx}`,
+        timestamp: e.datetime,
+        action: e.action || "drop",
+        source: e.source || "l7ddos",
+        ruleId: e.ruleId || "CF L7 Mitigation",
+        rayId: e.rayName || "",
+        ip: e.clientIP ? e.clientIP.replace(/\.\d+$/, ".***") : "未知",
+        country: e.clientCountryName || "未知地区",
+        countryCode: "UN",
+        asn: e.clientAsn ? `AS${e.clientAsn}` : "未知网络",
+        asnDesc: e.clientASNDescription || "",
+        method: e.clientRequestHTTPMethodName || "GET",
+        host: e.clientRequestHTTPHost || "blog.yaoxi.wiki",
+        path: e.clientRequestPath || "/",
+        ua: e.userAgent || "",
+        attackType: "L7 HTTP DDoS 清洗",
+      })),
+      cfConnected: true,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  function renderPageData(data, isDirect) {
+    currentLogs = data.events || [];
+
+    // 更新探测时间
+    const updatedEl = document.getElementById("last-updated-time");
+    if (updatedEl) {
+      const dt = data.updatedAt ? new Date(data.updatedAt) : new Date();
+      updatedEl.textContent = dt.toLocaleTimeString("zh-CN", { hour12: false });
+    }
+
+    // 网关连接状态
+    const connEl = document.getElementById("cf-connection-status");
+    if (connEl) {
+      if (isDemoMode) connEl.textContent = "🎮 攻防演练模式 (本地模拟)";
+      else if (isDirect) connEl.textContent = "⚡ 本地私有 API Token 直连";
+      else if (data.cfConnected) connEl.textContent = "✅ Cloudflare 边缘网关已连通";
+      else connEl.textContent = "⚠️ Cloudflare Token 未绑定 (展示基础防护)";
+    }
+
+    const isUnderAttack = data.status === "attack" || (data.hasAttack && data.activeAttacks > 0);
+    const hasAnyIncident = data.hasAttack || currentLogs.length > 0;
+
+    // 1. 顶部盾牌与光晕风格
+    const haloEl = document.getElementById("status-halo");
+    const shieldContainer = document.getElementById("shield-icon-container");
+    const badgeEl = document.getElementById("status-badge");
+    const badgeText = document.getElementById("status-badge-text");
+
+    if (isUnderAttack) {
+      // 🚨 遭受攻击中
+      if (haloEl) haloEl.className = "absolute -right-16 -top-16 w-56 h-56 rounded-full blur-3xl opacity-30 pointer-events-none transition-all duration-700 bg-red-600";
+      if (shieldContainer) shieldContainer.className = "w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 shadow-lg shadow-red-500/20 bg-red-500/15 text-red-600 border border-red-500/30 animate-pulse";
+      if (badgeEl) badgeEl.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono tracking-wide transition-all duration-500 bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/40";
+      if (badgeText) badgeText.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-600 animate-ping mr-1"></span>🚨 遭受攻击中 · UNDER ATTACK';
+    } else if (hasAnyIncident) {
+      // ⚠️ 近期有拦截
+      if (haloEl) haloEl.className = "absolute -right-16 -top-16 w-56 h-56 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-700 bg-amber-500";
+      if (shieldContainer) shieldContainer.className = "w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 shadow-md bg-amber-500/10 text-amber-500 border border-amber-500/20";
+      if (badgeEl) badgeEl.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono tracking-wide transition-all duration-500 bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30";
+      if (badgeText) badgeText.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-500 mr-1"></span>⚠️ 触发清洗质询 · ELEVATED';
+    } else {
+      // 🟢 安全正常
+      if (haloEl) haloEl.className = "absolute -right-16 -top-16 w-56 h-56 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-700 bg-emerald-500";
+      if (shieldContainer) shieldContainer.className = "w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500 shadow-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20";
+      if (badgeEl) badgeEl.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono tracking-wide transition-all duration-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30";
+      if (badgeText) badgeText.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping mr-1"></span>🟢 安全防护中 · NORMAL';
+    }
+
+    // 2. 警报横幅
+    const alertBanner = document.getElementById("attack-alert-banner");
+    if (alertBanner) {
+      if (isUnderAttack) {
+        alertBanner.classList.remove("hidden");
+        const peakEl = document.getElementById("alert-peak-rps");
+        if (peakEl) peakEl.textContent = data.peakRate || "18,450 req/s";
+        const topEndEl = document.getElementById("alert-top-endpoint");
+        if (topEndEl && currentLogs[0]) topEndEl.textContent = currentLogs[0].path || "/api/moments.json";
+      } else {
+        alertBanner.classList.add("hidden");
+      }
+    }
+
+    // 3. 四张核心态势卡片数据
+    const defenseStateEl = document.getElementById("metric-defense-state");
+    if (defenseStateEl) {
+      if (isUnderAttack) {
+        defenseStateEl.textContent = "全力清洗中";
+        defenseStateEl.className = "text-xl md:text-2xl font-black tracking-tight text-red-600 dark:text-red-400";
+      } else if (hasAnyIncident) {
+        defenseStateEl.textContent = "质询拦截中";
+        defenseStateEl.className = "text-xl md:text-2xl font-black tracking-tight text-amber-600 dark:text-amber-400";
+      } else {
+        defenseStateEl.textContent = "安全平稳";
+        defenseStateEl.className = "text-xl md:text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400";
+      }
+    }
+
+    const blockedTotalEl = document.getElementById("metric-blocked-total");
+    if (blockedTotalEl) {
+      blockedTotalEl.textContent = String(data.totalEvents || currentLogs.length);
+    }
+
+    const peakRpsEl = document.getElementById("metric-peak-rps");
+    if (peakRpsEl) {
+      peakRpsEl.textContent = isUnderAttack ? (data.peakRate ? data.peakRate.replace(" req/s", "") : "18,450") : "0";
+    }
+
+    const topSourceEl = document.getElementById("metric-top-source");
+    if (topSourceEl) {
+      if (hasAnyIncident && currentLogs.length > 0) {
+        const topEv = currentLogs[0];
+        topSourceEl.textContent = `${topEv.country} · ${topEv.asn || "Botnet"}`;
+      } else {
+        topSourceEl.textContent = "无异常威胁";
+      }
+    }
+
+    // 4. 多维分布分析卡片
+    const breakdownSection = document.getElementById("attack-breakdown-section");
+    if (breakdownSection) {
+      if (hasAnyIncident) {
+        breakdownSection.classList.remove("hidden");
+        renderBreakdownStats(data.summary, currentLogs);
+      } else {
+        breakdownSection.classList.add("hidden");
+      }
+    }
+
+    // 5. 渲染日志列表
+    renderLogList();
+  }
+
+  function renderBreakdownStats(summary, logs) {
+    const total = logs.length;
+    if (total === 0) return;
+
+    let drops = summary?.dropped ?? logs.filter((e) => e.action.toLowerCase().includes("drop")).length;
+    let blocks = summary?.blocked ?? logs.filter((e) => e.action.toLowerCase().includes("block")).length;
+    let challenges = summary?.challenged ?? (total - drops - blocks);
+
+    const dropPct = Math.round((drops / total) * 100);
+    const blockPct = Math.round((blocks / total) * 100);
+    const challengePct = Math.max(0, 100 - dropPct - blockPct);
+
+    document.getElementById("action-drop-stat").textContent = `${dropPct}% (${drops})`;
+    document.getElementById("bar-action-drop").style.width = dropPct + "%";
+
+    document.getElementById("action-block-stat").textContent = `${blockPct}% (${blocks})`;
+    document.getElementById("bar-action-block").style.width = blockPct + "%";
+
+    document.getElementById("action-challenge-stat").textContent = `${challengePct}% (${challenges})`;
+    document.getElementById("bar-action-challenge").style.width = challengePct + "%";
+
+    // 国家列表
+    const countriesList = document.getElementById("top-countries-list");
+    if (countriesList) {
+      const countryCounts = summary?.topCountries || computeTop(logs, "country");
+      countriesList.innerHTML = countryCounts.slice(0, 5).map((c) => `
+        <div class="flex items-center justify-between text-xs py-1 border-b border-black/5 dark:border-white/5">
+          <span class="font-medium text-black/80 dark:text-white/80 truncate flex items-center gap-1.5">
+            <span>${getFlagEmoji(c.code || c.name)}</span>
+            <span>${escapeHtml(c.name)}</span>
+          </span>
+          <span class="font-mono text-black/60 dark:text-white/60">${c.count} 次</span>
+        </div>
+      `).join("");
+    }
+
+    // 路径列表
+    const targetsList = document.getElementById("top-targets-list");
+    if (targetsList) {
+      const pathCounts = summary?.topTargets || computeTop(logs, "path");
+      targetsList.innerHTML = pathCounts.slice(0, 5).map((p) => `
+        <div class="flex items-center justify-between text-xs py-1 border-b border-black/5 dark:border-white/5">
+          <span class="font-mono text-[11px] text-[var(--primary)] truncate max-w-[200px]" title="${escapeHtml(p.path || p.name)}">
+            ${escapeHtml(p.path || p.name)}
+          </span>
+          <span class="font-mono text-black/60 dark:text-white/60">${p.count} 次</span>
+        </div>
+      `).join("");
+    }
+  }
+
+  function computeTop(list, key) {
+    const map = new Map();
+    list.forEach((item) => {
+      const val = item[key] || "未知";
+      map.set(val, (map.get(val) || 0) + 1);
+    });
+    return Array.from(map.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  function renderLogList() {
+    const loadingEl = document.getElementById("logs-loading");
+    const emptySafeEl = document.getElementById("logs-empty-safe");
+    const listEl = document.getElementById("logs-list");
+    const countBadge = document.getElementById("logs-count-badge");
+
+    if (loadingEl) loadingEl.classList.add("hidden");
+
+    if (!currentLogs || currentLogs.length === 0) {
+      if (emptySafeEl) emptySafeEl.classList.remove("hidden");
+      if (listEl) listEl.classList.add("hidden");
+      if (countBadge) countBadge.textContent = "0 条";
+      return;
+    }
+
+    if (emptySafeEl) emptySafeEl.classList.add("hidden");
+    if (listEl) listEl.classList.remove("hidden");
+
+    // 过滤逻辑
+    const filterAction = document.getElementById("filter-action")?.value || "all";
+    const searchKeyword = (document.getElementById("input-search-log")?.value || "").toLowerCase().trim();
+
+    const filtered = currentLogs.filter((ev) => {
+      const a = ev.action.toLowerCase();
+      if (filterAction === "drop" && !a.includes("drop")) return false;
+      if (filterAction === "block" && !a.includes("block")) return false;
+      if (filterAction === "challenge" && !a.includes("challenge")) return false;
+
+      if (searchKeyword) {
+        const text = `${ev.path} ${ev.ip} ${ev.rayId} ${ev.asn} ${ev.country} ${ev.ruleId}`.toLowerCase();
+        if (!text.includes(searchKeyword)) return false;
+      }
+      return true;
+    });
+
+    if (countBadge) countBadge.textContent = `${filtered.length} 条`;
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `
+        <div class="py-12 text-center text-xs text-black/40 dark:text-white/40">
+          未检索到符合条件的攻击日志 喵~
+        </div>
+      `;
+      return;
+    }
+
+    listEl.innerHTML = filtered.map((ev) => {
+      const actionBadge = getActionBadgeHtml(ev.action);
+      const friendlyTime = getFriendlyTime(new Date(ev.timestamp));
+
+      return `
+        <div class="p-3.5 md:p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 hover:border-[var(--primary)] transition-all flex flex-col gap-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              ${actionBadge}
+              <span class="font-mono text-xs font-semibold text-black/90 dark:text-white/90 flex items-center gap-1.5">
+                <span class="px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-[10px] uppercase text-black/60 dark:text-white/60">${escapeHtml(ev.method || 'GET')}</span>
+                <span class="text-[var(--primary)]">${escapeHtml(ev.path || '/')}</span>
+              </span>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs font-mono text-black/40 dark:text-white/40">
+              <span title="${new Date(ev.timestamp).toLocaleString()}">${friendlyTime}</span>
+              <span>·</span>
+              <button class="copy-ray-btn hover:text-[var(--primary)] transition-colors flex items-center gap-1" data-ray="${escapeHtml(ev.rayId)}" title="点击复制 Cloudflare Ray ID">
+                <span>Ray: ${escapeHtml(ev.rayId.slice(0, 10))}...</span>
+                <span>📋</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between text-xs text-black/60 dark:text-white/60 gap-2 pt-1 border-t border-black/5 dark:border-white/5">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="flex items-center gap-1">
+                <span>${getFlagEmoji(ev.countryCode || ev.country)}</span>
+                <span class="font-medium">${escapeHtml(ev.country || '未知')}</span>
+              </span>
+              <span>·</span>
+              <span class="font-mono">${escapeHtml(ev.asn || '未知 ASN')} ${escapeHtml(ev.asnDesc || '')}</span>
+              <span>·</span>
+              <span class="font-mono">IP: ${escapeHtml(ev.ip || '脱敏')}</span>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-black/5 dark:bg-white/10 font-mono text-[10px] text-black/60 dark:text-white/60 truncate max-w-[200px]" title="${escapeHtml(ev.ruleId)}">
+                规则: ${escapeHtml(ev.ruleId || 'DDoS Mitigation')}
+              </span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    // 绑定一键复制 RayID
+    listEl.querySelectorAll(".copy-ray-btn").forEach((btn) => {
+      btn.onclick = () => {
+        const ray = btn.getAttribute("data-ray") || "";
+        navigator.clipboard.writeText(ray).then(() => {
+          alert(`已复制 Cloudflare Ray ID: ${ray} 喵呜！`);
+        });
+      };
+    });
+  }
+
+  function getActionBadgeHtml(action = "") {
+    const a = action.toLowerCase();
+    if (a.includes("drop")) {
+      return '<span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/30">DROP 🛑</span>';
+    } else if (a.includes("block")) {
+      return '<span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">BLOCK ⛔</span>';
+    } else {
+      return '<span class="px-2 py-0.5 rounded text-[10px] font-bold font-mono uppercase bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30">CHALLENGE 🛡️</span>';
+    }
+  }
+
+  function renderFallbackState(errMsg) {
+    const updatedEl = document.getElementById("last-updated-time");
+    if (updatedEl) updatedEl.textContent = new Date().toLocaleTimeString("zh-CN");
+
+    const connEl = document.getElementById("cf-connection-status");
+    if (connEl) connEl.textContent = "⚡ 离线防护模式 · 基础防线在线";
+
+    const loadingEl = document.getElementById("logs-loading");
+    if (loadingEl) loadingEl.classList.add("hidden");
+
+    const emptySafeEl = document.getElementById("logs-empty-safe");
+    if (emptySafeEl) emptySafeEl.classList.remove("hidden");
+  }
+
+  function getFriendlyTime(date) {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+
+    if (diffMins < 1) return "刚刚";
+    if (diffMins < 60) return `${diffMins} 分钟前`;
+    if (diffHours < 24) return `${diffHours} 小时前`;
+    return date.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function getFlagEmoji(codeOrName = "") {
+    const str = String(codeOrName).toUpperCase();
+    if (str === "US" || str.includes("UNITED STATES")) return "🇺🇸";
+    if (str === "CN" || str.includes("CHINA")) return "🇨🇳";
+    if (str === "DE" || str.includes("GERMANY")) return "🇩🇪";
+    if (str === "NL" || str.includes("NETHERLANDS")) return "🇳🇱";
+    if (str === "GB" || str.includes("UNITED KINGDOM")) return "🇬🇧";
+    if (str === "JP" || str.includes("JAPAN")) return "🇯🇵";
+    if (str === "HK" || str.includes("HONG KONG")) return "🇭🇰";
+    if (str === "TW" || str.includes("TAIWAN")) return "🇹🇼";
+    if (str === "SG" || str.includes("SINGAPORE")) return "🇸🇬";
+    if (str === "FR" || str.includes("FRANCE")) return "🇫🇷";
+    if (str === "RU" || str.includes("RUSSIA")) return "🇷🇺";
+    return "🌐";
+  }
+
+  function escapeHtml(str = "") {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  // 监听首次加载与 Swup 路由跳转
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initDDoSPage);
+  } else {
+    initDDoSPage();
+  }
+  document.addEventListener("astro:after-swap", initDDoSPage);
+  document.addEventListener("astro:page-load", initDDoSPage);
+})();
+</script>

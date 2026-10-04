@@ -530,7 +530,299 @@ ${momentText}
 });
 
 // ============================================================
-// 2. 部署构建监听状态端点 (GET /api/deploy-status) - 仅限管理员
+// 2. DDoS 告警与实时安全防御日志 (GET /api/ddos)
+// ============================================================
+app.get('/api/ddos', async (c) => {
+  const hours = Math.min(168, Math.max(1, parseInt(c.req.query('hours') || '24', 10)));
+  const limit = Math.min(100, Math.max(1, parseInt(c.req.query('limit') || '50', 10)));
+  const isDemo = c.req.query('demo') === 'true' || c.req.query('demo') === '1';
+  const targetDomain = c.req.query('domain') || 'blog.yaoxi.wiki';
+
+  if (isDemo) {
+    const now = Date.now();
+    return c.json({
+      status: 'attack',
+      hasAttack: true,
+      isDemo: true,
+      target: targetDomain,
+      zone: 'yaoxi.wiki',
+      activeAttacks: 3,
+      totalEvents: 148,
+      peakRate: '18,450 req/s',
+      timeRange: {
+        since: new Date(now - hours * 3600 * 1000).toISOString(),
+        until: new Date(now).toISOString(),
+        hours,
+      },
+      summary: {
+        dropped: 92,
+        blocked: 44,
+        challenged: 12,
+        topCountries: [
+          { name: 'United States', code: 'US', count: 68, percentage: 46 },
+          { name: 'China', code: 'CN', count: 35, percentage: 24 },
+          { name: 'Germany', code: 'DE', count: 21, percentage: 14 },
+          { name: 'Netherlands', code: 'NL', count: 14, percentage: 9 },
+          { name: 'Others', code: 'UN', count: 10, percentage: 7 },
+        ],
+        topASNs: [
+          { asn: 'AS13335', desc: 'CLOUDFLARENET', count: 52 },
+          { asn: 'AS4134', desc: 'CHINANET-BACKBONE', count: 35 },
+          { asn: 'AS16509', desc: 'AMAZON-02', count: 28 },
+          { asn: 'AS24940', desc: 'HETZNER-AS', count: 21 },
+        ],
+        topTargets: [
+          { path: '/api/moments.json', count: 76 },
+          { path: '/', count: 48 },
+          { path: '/api/newsletter/subscribe', count: 24 },
+        ],
+      },
+      events: [
+        {
+          id: 'cf-ray-8ccd1049281a',
+          timestamp: new Date(now - 2 * 60 * 1000).toISOString(),
+          action: 'drop',
+          source: 'l7ddos',
+          ruleId: 'cloudflare-http-ddos-mitigation-standard',
+          rayId: '8ccd1049281a',
+          ip: '198.51.100.***',
+          country: 'United States',
+          countryCode: 'US',
+          asn: 'AS13335',
+          asnDesc: 'CLOUDFLARENET',
+          method: 'GET',
+          host: targetDomain,
+          path: '/api/moments.json',
+          ua: 'Go-http-client/1.1 (Flood-Botnet/2.4)',
+          attackType: 'HTTP Flood (Layer 7)',
+        },
+        {
+          id: 'cf-ray-8ccd0f93a11b',
+          timestamp: new Date(now - 5 * 60 * 1000).toISOString(),
+          action: 'block',
+          source: 'rateLimit',
+          ruleId: 'rate-limit-sensitive-endpoints',
+          rayId: '8ccd0f93a11b',
+          ip: '114.248.***.***',
+          country: 'China',
+          countryCode: 'CN',
+          asn: 'AS4134',
+          asnDesc: 'CHINANET-BACKBONE',
+          method: 'POST',
+          host: targetDomain,
+          path: '/api/newsletter/subscribe',
+          ua: 'python-requests/2.31.0',
+          attackType: 'Rate Limit Triggered (API Abuse)',
+        },
+        {
+          id: 'cf-ray-8ccd0e88c03c',
+          timestamp: new Date(now - 9 * 60 * 1000).toISOString(),
+          action: 'drop',
+          source: 'l7ddos',
+          ruleId: 'cloudflare-http-ddos-mitigation-high-rate',
+          rayId: '8ccd0e88c03c',
+          ip: '54.210.***.***',
+          country: 'United States',
+          countryCode: 'US',
+          asn: 'AS16509',
+          asnDesc: 'AMAZON-02',
+          method: 'GET',
+          host: targetDomain,
+          path: '/',
+          ua: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) (Bot Attack Engine)',
+          attackType: 'Volumetric HTTP Flood',
+        },
+      ],
+      cfConnected: true,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  const token = c.env.CF_API_TOKEN;
+  if (!token) {
+    return c.json({
+      status: 'normal',
+      hasAttack: false,
+      isDemo: false,
+      target: targetDomain,
+      zone: 'yaoxi.wiki',
+      activeAttacks: 0,
+      totalEvents: 0,
+      timeRange: {
+        since: new Date(Date.now() - hours * 3600 * 1000).toISOString(),
+        until: new Date().toISOString(),
+        hours,
+      },
+      summary: { dropped: 0, blocked: 0, challenged: 0, topCountries: [], topASNs: [], topTargets: [] },
+      events: [],
+      cfConnected: false,
+      message: 'Cloudflare credentials not set in BFF Worker',
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  try {
+    let zoneId = '';
+    const zoneRes = await fetch('https://api.cloudflare.com/client/v4/zones?name=yaoxi.wiki', {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    });
+    if (zoneRes.ok) {
+      const zJson: any = await zoneRes.json();
+      if (zJson.result?.[0]?.id) zoneId = zJson.result[0].id;
+    }
+
+    if (!zoneId) {
+      return c.json({
+        status: 'normal',
+        hasAttack: false,
+        isDemo: false,
+        target: targetDomain,
+        zone: 'yaoxi.wiki',
+        activeAttacks: 0,
+        totalEvents: 0,
+        summary: { dropped: 0, blocked: 0, challenged: 0, topCountries: [], topASNs: [], topTargets: [] },
+        events: [],
+        cfConnected: false,
+        message: 'Could not resolve Cloudflare Zone ID for yaoxi.wiki',
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    const since = new Date(Date.now() - hours * 3600 * 1000).toISOString();
+    const until = new Date().toISOString();
+
+    const gqlQuery = `
+      query GetSecurityEvents($zoneTag: String!, $since: String!, $until: String!, $limit: Int!) {
+        viewer {
+          zones(filter: { zoneTag: $zoneTag }) {
+            securityEventsAdaptive(
+              filter: {
+                datetime_geq: $since,
+                datetime_leq: $until
+              },
+              limit: $limit,
+              orderBy: [datetime_DESC]
+            ) {
+              action
+              clientASNDescription
+              clientAsn
+              clientCountryName
+              clientIP
+              clientRequestHTTPHost
+              clientRequestHTTPMethodName
+              clientRequestHTTPProtocol
+              clientRequestPath
+              datetime
+              rayName
+              ruleId
+              source
+              userAgent
+            }
+          }
+        }
+      }
+    `;
+
+    const cfRes = await fetch('https://api.cloudflare.com/client/v4/graphql', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: gqlQuery, variables: { zoneTag: zoneId, since, until, limit } }),
+    });
+
+    if (!cfRes.ok) {
+      const errText = await cfRes.text();
+      return c.json({
+        status: 'normal',
+        hasAttack: false,
+        isDemo: false,
+        target: targetDomain,
+        zone: 'yaoxi.wiki',
+        activeAttacks: 0,
+        totalEvents: 0,
+        events: [],
+        summary: { dropped: 0, blocked: 0, challenged: 0, topCountries: [], topASNs: [], topTargets: [] },
+        cfConnected: false,
+        error: 'cloudflare_graphql_failed',
+        details: errText.slice(0, 200),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    const cfData: any = await cfRes.json();
+    const rawEvents = cfData?.data?.viewer?.zones?.[0]?.securityEventsAdaptive || [];
+    const ddosEvents = rawEvents.filter((e: any) => {
+      const s = String(e.source || '').toLowerCase();
+      const a = String(e.action || '').toLowerCase();
+      return s.includes('ddos') || s.includes('dos') || s.includes('rate') || a.includes('drop') || a.includes('block') || a.includes('challenge');
+    });
+
+    const formattedEvents = ddosEvents.map((e: any, idx: number) => {
+      let maskedIp = '未知';
+      if (e.clientIP && e.clientIP.includes('.')) {
+        const parts = e.clientIP.split('.');
+        if (parts.length === 4) maskedIp = `${parts[0]}.${parts[1]}.***.${parts[3]}`;
+      }
+      return {
+        id: e.rayName || `event-${idx}`,
+        timestamp: e.datetime,
+        action: e.action || 'drop',
+        source: e.source || 'l7ddos',
+        ruleId: e.ruleId || 'Cloudflare DDoS Mitigation',
+        rayId: e.rayName || '',
+        ip: maskedIp,
+        country: e.clientCountryName || '未知国家/地区',
+        countryCode: 'UN',
+        asn: e.clientAsn ? `AS${e.clientAsn}` : '未知网络',
+        asnDesc: e.clientASNDescription || '',
+        method: e.clientRequestHTTPMethodName || 'GET',
+        host: e.clientRequestHTTPHost || targetDomain,
+        path: e.clientRequestPath || '/',
+        ua: e.userAgent || '',
+        attackType: 'L7 HTTP DDoS 防护拦截',
+      };
+    });
+
+    return c.json({
+      status: formattedEvents.length > 0 ? 'attack' : 'normal',
+      hasAttack: formattedEvents.length > 0,
+      isDemo: false,
+      target: targetDomain,
+      zone: 'yaoxi.wiki',
+      activeAttacks: formattedEvents.length > 0 ? 1 : 0,
+      totalEvents: formattedEvents.length,
+      timeRange: { since, until, hours },
+      summary: {
+        dropped: formattedEvents.filter((e: any) => e.action.includes('drop')).length,
+        blocked: formattedEvents.filter((e: any) => e.action.includes('block')).length,
+        challenged: formattedEvents.filter((e: any) => e.action.includes('challenge')).length,
+        topCountries: [],
+        topASNs: [],
+        topTargets: [],
+      },
+      events: formattedEvents,
+      cfConnected: true,
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    return c.json({
+      status: 'normal',
+      hasAttack: false,
+      isDemo: false,
+      target: targetDomain,
+      zone: 'yaoxi.wiki',
+      activeAttacks: 0,
+      totalEvents: 0,
+      events: [],
+      summary: { dropped: 0, blocked: 0, challenged: 0, topCountries: [], topASNs: [], topTargets: [] },
+      cfConnected: false,
+      error: err.message,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+});
+
+// ============================================================
+// 3. 部署构建监听状态端点 (GET /api/deploy-status) - 仅限管理员
 // ============================================================
 app.get('/api/deploy-status', requireAdmin, async (c) => {
   const commitParam = c.req.query('commit')?.trim();

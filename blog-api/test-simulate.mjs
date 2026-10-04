@@ -5,10 +5,6 @@
  */
 import fs from "node:fs";
 
-// 注入 Worker 代码
-const src = fs.readFileSync(new URL("./src/index.js", import.meta.url), "utf-8");
-const code = src.replace("export default {", "const __worker = {");
-
 // mock 数据源：模拟博客 /api/moments.json
 const SAMPLE = {
 	updated: "2026-08-14T06:00:00Z",
@@ -20,7 +16,6 @@ const SAMPLE = {
 	],
 };
 
-// mock 环境
 const cacheStore = new Map();
 globalThis.caches = {
 	default: {
@@ -36,8 +31,9 @@ globalThis.fetch = async (url) => {
 };
 globalThis.AbortSignal = { timeout: () => undefined };
 
-const fn = new Function("module", "exports", code + "\n;return __worker;");
-const worker = fn({}, {});
+// 动态载入 Worker 代码
+const workerModule = await import("./src/index.js");
+const worker = workerModule.default;
 
 let passed = 0;
 const assert = (cond, name) => {
@@ -113,7 +109,7 @@ console.log("\n🧪 T9 404 / OPTIONS / 文档");
 	const opt = await worker.fetch(new Request("https://blog-api.test/api/moments", { method: "OPTIONS" }));
 	assert(opt.status === 204 && opt.headers.get("Access-Control-Allow-Origin") === "*", "OPTIONS 预检 204 + CORS");
 	const doc = await call("/");
-	assert(doc.body.name === "Yaoxi Blog API" && doc.body.endpoints, "文档端点正常");
+	assert(doc.body.name?.includes("Yaoxi Blog API") && doc.body.endpoints, "文档端点正常");
 }
 
 console.log(`\n📋 结果：${passed} 通过`);

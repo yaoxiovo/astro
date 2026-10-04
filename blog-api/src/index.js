@@ -872,6 +872,515 @@ async function handleContact(request, env, url) {
 	});
 }
 
+/**
+ * 处理 DDoS 告警与实时安全日志查询
+ * GET /api/ddos?hours=24&limit=50&demo=0&domain=blog.yaoxi.wiki
+ */
+async function handleDDoS(request, env, url) {
+	const hours = Math.min(168, Math.max(1, parseInt(url.searchParams.get("hours") || "24", 10)));
+	const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get("limit") || "50", 10)));
+	const isDemo = url.searchParams.get("demo") === "true" || url.searchParams.get("demo") === "1";
+	const targetDomain = url.searchParams.get("domain") || "blog.yaoxi.wiki";
+
+	// 1. 如果请求模拟演示数据（攻防演练模式）
+	if (isDemo) {
+		const now = Date.now();
+		const demoEvents = [
+			{
+				id: "cf-ray-8ccd1049281a",
+				timestamp: new Date(now - 2 * 60 * 1000).toISOString(),
+				action: "drop",
+				source: "l7ddos",
+				ruleId: "cloudflare-http-ddos-mitigation-standard",
+				rayId: "8ccd1049281a",
+				ip: "198.51.100.***",
+				country: "United States",
+				countryCode: "US",
+				asn: "AS13335",
+				asnDesc: "CLOUDFLARENET",
+				method: "GET",
+				host: targetDomain,
+				path: "/api/moments.json",
+				ua: "Go-http-client/1.1 (Flood-Botnet/2.4)",
+				attackType: "HTTP Flood (Layer 7)"
+			},
+			{
+				id: "cf-ray-8ccd0f93a11b",
+				timestamp: new Date(now - 5 * 60 * 1000).toISOString(),
+				action: "block",
+				source: "rateLimit",
+				ruleId: "rate-limit-sensitive-endpoints",
+				rayId: "8ccd0f93a11b",
+				ip: "114.248.***.***",
+				country: "China",
+				countryCode: "CN",
+				asn: "AS4134",
+				asnDesc: "CHINANET-BACKBONE",
+				method: "POST",
+				host: targetDomain,
+				path: "/api/newsletter/subscribe",
+				ua: "python-requests/2.31.0",
+				attackType: "Rate Limit Triggered (API Abuse)"
+			},
+			{
+				id: "cf-ray-8ccd0e88c03c",
+				timestamp: new Date(now - 9 * 60 * 1000).toISOString(),
+				action: "drop",
+				source: "l7ddos",
+				ruleId: "cloudflare-http-ddos-mitigation-high-rate",
+				rayId: "8ccd0e88c03c",
+				ip: "54.210.***.***",
+				country: "United States",
+				countryCode: "US",
+				asn: "AS16509",
+				asnDesc: "AMAZON-02",
+				method: "GET",
+				host: targetDomain,
+				path: "/",
+				ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) (Bot Attack Engine)",
+				attackType: "Volumetric HTTP Flood"
+			},
+			{
+				id: "cf-ray-8ccd0d712fa9",
+				timestamp: new Date(now - 14 * 60 * 1000).toISOString(),
+				action: "managed_challenge",
+				source: "waf",
+				ruleId: "waf-bot-fight-mode",
+				rayId: "8ccd0d712fa9",
+				ip: "144.76.***.***",
+				country: "Germany",
+				countryCode: "DE",
+				asn: "AS24940",
+				asnDesc: "HETZNER-AS",
+				method: "GET",
+				host: targetDomain,
+				path: "/api/moments.json",
+				ua: "curl/8.1.2",
+				attackType: "Automated Scraping Bot"
+			},
+			{
+				id: "cf-ray-8ccd0b201cd5",
+				timestamp: new Date(now - 22 * 60 * 1000).toISOString(),
+				action: "block",
+				source: "waf",
+				ruleId: "waf-anomaly-useragent-block",
+				rayId: "8ccd0b201cd5",
+				ip: "185.220.***.***",
+				country: "Netherlands",
+				countryCode: "NL",
+				asn: "AS60729",
+				asnDesc: "Zwiebelfreunde",
+				method: "POST",
+				host: targetDomain,
+				path: "/api/contact",
+				ua: "Masscan/1.3.2",
+				attackType: "Automated Probe & Injection"
+			}
+		];
+
+		return json({
+			status: "attack",
+			hasAttack: true,
+			isDemo: true,
+			target: targetDomain,
+			zone: "yaoxi.wiki",
+			activeAttacks: 3,
+			totalEvents: 148,
+			peakRate: "18,450 req/s",
+			timeRange: {
+				since: new Date(now - hours * 3600 * 1000).toISOString(),
+				until: new Date(now).toISOString(),
+				hours,
+			},
+			summary: {
+				dropped: 92,
+				blocked: 44,
+				challenged: 12,
+				topCountries: [
+					{ name: "United States", code: "US", count: 68, percentage: 46 },
+					{ name: "China", code: "CN", count: 35, percentage: 24 },
+					{ name: "Germany", code: "DE", count: 21, percentage: 14 },
+					{ name: "Netherlands", code: "NL", count: 14, percentage: 9 },
+					{ name: "Others", code: "UN", count: 10, percentage: 7 }
+				],
+				topASNs: [
+					{ asn: "AS13335", desc: "CLOUDFLARENET", count: 52 },
+					{ asn: "AS4134", desc: "CHINANET-BACKBONE", count: 35 },
+					{ asn: "AS16509", desc: "AMAZON-02", count: 28 },
+					{ asn: "AS24940", desc: "HETZNER-AS", count: 21 }
+				],
+				topTargets: [
+					{ path: "/api/moments.json", count: 76 },
+					{ path: "/", count: 48 },
+					{ path: "/api/newsletter/subscribe", count: 24 }
+				]
+			},
+			events: demoEvents,
+			cfConnected: true,
+			updatedAt: new Date().toISOString()
+		});
+	}
+
+	// 2. 真实查询 Cloudflare 日志
+	const cfToken = env.CF_API_TOKEN || env.CLOUDFLARE_API_TOKEN;
+	let cfZoneId = env.CF_ZONE_ID || env.CLOUDFLARE_ZONE_ID;
+
+	if (!cfToken) {
+		return json({
+			status: "normal",
+			hasAttack: false,
+			isDemo: false,
+			target: targetDomain,
+			zone: "yaoxi.wiki",
+			activeAttacks: 0,
+			totalEvents: 0,
+			timeRange: {
+				since: new Date(Date.now() - hours * 3600 * 1000).toISOString(),
+				until: new Date().toISOString(),
+				hours,
+			},
+			summary: {
+				dropped: 0,
+				blocked: 0,
+				challenged: 0,
+				topCountries: [],
+				topASNs: [],
+				topTargets: []
+			},
+			events: [],
+			cfConnected: false,
+			message: "Cloudflare API Token 未配置在 Worker Secrets 中喵~",
+			updatedAt: new Date().toISOString()
+		});
+	}
+
+	// 尝试从 KV 缓存中获取（TTL 60秒，避免频繁打垮 Cloudflare GraphQL 配额）
+	const cacheKey = `ddos:cache:${hours}:${limit}`;
+	if (env.RATE_LIMIT_KV) {
+		try {
+			const cached = await env.RATE_LIMIT_KV.get(cacheKey, "json");
+			if (cached) {
+				return json({ ...cached, _fromCache: true });
+			}
+		} catch (e) {
+			console.warn("[ddos] 读取 KV 缓存失败:", e);
+		}
+	}
+
+	// 如果没有 Zone ID，动态查找 yaoxi.wiki 的 zone ID
+	if (!cfZoneId) {
+		try {
+			const zoneRes = await fetch("https://api.cloudflare.com/client/v4/zones?name=yaoxi.wiki", {
+				headers: {
+					Authorization: `Bearer ${cfToken}`,
+					"Content-Type": "application/json"
+				}
+			});
+			if (zoneRes.ok) {
+				const zoneData = await zoneRes.json();
+				if (zoneData.result && zoneData.result[0]) {
+					cfZoneId = zoneData.result[0].id;
+				}
+			}
+		} catch (e) {
+			console.warn("[ddos] 动态获取 Zone ID 失败:", e);
+		}
+	}
+
+	if (!cfZoneId) {
+		return json({
+			status: "normal",
+			hasAttack: false,
+			isDemo: false,
+			target: targetDomain,
+			zone: "yaoxi.wiki",
+			activeAttacks: 0,
+			totalEvents: 0,
+			events: [],
+			summary: { dropped: 0, blocked: 0, challenged: 0, topCountries: [], topASNs: [], topTargets: [] },
+			cfConnected: false,
+			message: "无法定位 Cloudflare Zone ID，请配置 CF_ZONE_ID 喵~",
+			updatedAt: new Date().toISOString()
+		});
+	}
+
+	// 构造 GraphQL 查询
+	const since = new Date(Date.now() - hours * 3600 * 1000).toISOString();
+	const until = new Date().toISOString();
+
+	const gqlQuery = `
+		query GetSecurityEvents($zoneTag: String!, $since: String!, $until: String!, $limit: Int!) {
+			viewer {
+				zones(filter: { zoneTag: $zoneTag }) {
+					securityEventsAdaptive(
+						filter: {
+							datetime_geq: $since,
+							datetime_leq: $until
+						},
+						limit: $limit,
+						orderBy: [datetime_DESC]
+					) {
+						action
+						clientASNDescription
+						clientAsn
+						clientCountryName
+						clientIP
+						clientRequestHTTPHost
+						clientRequestHTTPMethodName
+						clientRequestHTTPProtocol
+						clientRequestPath
+						clientRequestQuery
+						datetime
+						rayName
+						ruleId
+						rulesetId
+						source
+						userAgent
+					}
+					securityEventsAdaptiveGroups(
+						filter: {
+							datetime_geq: $since,
+							datetime_leq: $until
+						},
+						limit: 15,
+						orderBy: [count_DESC]
+					) {
+						count
+						dimensions {
+							action
+							source
+							clientCountryName
+						}
+					}
+				}
+			}
+		}
+	`;
+
+	try {
+		const cfRes = await fetch("https://api.cloudflare.com/client/v4/graphql", {
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${cfToken}`,
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify({
+				query: gqlQuery,
+				variables: {
+					zoneTag: cfZoneId,
+					since,
+					until,
+					limit
+				}
+			})
+		});
+
+		if (!cfRes.ok) {
+			const errText = await cfRes.text();
+			console.warn("[ddos] Cloudflare GraphQL 报错:", errText);
+			return json({
+				status: "normal",
+				hasAttack: false,
+				isDemo: false,
+				target: targetDomain,
+				zone: "yaoxi.wiki",
+				activeAttacks: 0,
+				totalEvents: 0,
+				events: [],
+				summary: { dropped: 0, blocked: 0, challenged: 0, topCountries: [], topASNs: [], topTargets: [] },
+				cfConnected: false,
+				error: "cloudflare_graphql_failed",
+				details: errText.slice(0, 300),
+				updatedAt: new Date().toISOString()
+			});
+		}
+
+		const cfData = await cfRes.json();
+		const rawEvents = cfData?.data?.viewer?.zones?.[0]?.securityEventsAdaptive || [];
+
+		// 筛选与 DDoS 紧密相关的事件或所有处置拦截事件
+		const ddosEvents = rawEvents.filter((e) => {
+			const s = String(e.source || "").toLowerCase();
+			const a = String(e.action || "").toLowerCase();
+			return s.includes("ddos") || s.includes("dos") || s.includes("rate") || a.includes("drop") || a.includes("block") || a.includes("challenge");
+		});
+
+		// 格式化事件列表
+		const formattedEvents = ddosEvents.map((e, idx) => {
+			const ip = e.clientIP ? maskIp(e.clientIP) : "未知";
+			let attackType = "L7 HTTP DDoS 防护拦截";
+			if (e.source === "rateLimit") attackType = "频率限制熔断 (Rate Limit)";
+			else if (e.source === "l7ddos") attackType = "HTTP DDoS 自动清洗";
+			else if (e.source === "waf") attackType = "WAF 规则拦截防护";
+			else if (e.source === "botManagement") attackType = "恶意爬虫检测拦截";
+
+			return {
+				id: e.rayName || `event-${idx}`,
+				timestamp: e.datetime,
+				action: e.action || "drop",
+				source: e.source || "l7ddos",
+				ruleId: e.ruleId || e.rulesetId || "Cloudflare Edge Mitigation",
+				rayId: e.rayName || "",
+				ip,
+				country: e.clientCountryName || "未知国家/地区",
+				countryCode: getCountryCode(e.clientCountryName),
+				asn: e.clientAsn ? `AS${e.clientAsn}` : "未知网络",
+				asnDesc: e.clientASNDescription || "",
+				method: e.clientRequestHTTPMethodName || "GET",
+				host: e.clientRequestHTTPHost || targetDomain,
+				path: e.clientRequestPath || "/",
+				ua: e.userAgent || "",
+				attackType
+			};
+		});
+
+		// 汇总计算
+		let dropped = 0;
+		let blocked = 0;
+		let challenged = 0;
+		const countryMap = new Map();
+		const asnMap = new Map();
+		const pathMap = new Map();
+		const nowMs = Date.now();
+		let activeAttacks = 0;
+
+		for (const ev of formattedEvents) {
+			const a = ev.action.toLowerCase();
+			if (a.includes("drop")) dropped++;
+			else if (a.includes("block")) blocked++;
+			else challenged++;
+
+			const evTime = new Date(ev.timestamp).getTime();
+			if (nowMs - evTime <= 15 * 60 * 1000) {
+				activeAttacks++;
+			}
+
+			countryMap.set(ev.country, (countryMap.get(ev.country) || 0) + 1);
+			if (ev.asn) {
+				const key = `${ev.asn} - ${ev.asnDesc || ""}`.trim();
+				asnMap.set(key, (asnMap.get(key) || 0) + 1);
+			}
+			if (ev.path) {
+				pathMap.set(ev.path, (pathMap.get(ev.path) || 0) + 1);
+			}
+		}
+
+		const totalCount = formattedEvents.length;
+		const topCountries = Array.from(countryMap.entries())
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, 5)
+			.map(([name, count]) => ({
+				name,
+				code: getCountryCode(name),
+				count,
+				percentage: totalCount > 0 ? Math.round((count / totalCount) * 100) : 0
+			}));
+
+		const topASNs = Array.from(asnMap.entries())
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, 5)
+			.map(([asn, count]) => ({ asn, count }));
+
+		const topTargets = Array.from(pathMap.entries())
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, 5)
+			.map(([path, count]) => ({ path, count }));
+
+		let status = "normal";
+		if (activeAttacks >= 3) {
+			status = "attack";
+		} else if (totalCount > 0) {
+			status = "elevated";
+		}
+
+		const resultPayload = {
+			status,
+			hasAttack: totalCount > 0,
+			isDemo: false,
+			target: targetDomain,
+			zone: "yaoxi.wiki",
+			activeAttacks,
+			totalEvents: totalCount,
+			timeRange: { since, until, hours },
+			summary: {
+				dropped,
+				blocked,
+				challenged,
+				topCountries,
+				topASNs,
+				topTargets
+			},
+			events: formattedEvents,
+			cfConnected: true,
+			updatedAt: new Date().toISOString()
+		};
+
+		if (env.RATE_LIMIT_KV) {
+			try {
+				await env.RATE_LIMIT_KV.put(cacheKey, JSON.stringify(resultPayload), { expirationTtl: 60 });
+			} catch (e) {
+				console.warn("[ddos] 写入 KV 缓存失败:", e);
+			}
+		}
+
+		return json(resultPayload);
+	} catch (err) {
+		console.error("[ddos] 请求失败:", err);
+		return json({
+			status: "normal",
+			hasAttack: false,
+			isDemo: false,
+			target: targetDomain,
+			zone: "yaoxi.wiki",
+			activeAttacks: 0,
+			totalEvents: 0,
+			events: [],
+			summary: { dropped: 0, blocked: 0, challenged: 0, topCountries: [], topASNs: [], topTargets: [] },
+			cfConnected: false,
+			error: err.message,
+			updatedAt: new Date().toISOString()
+		});
+	}
+}
+
+/** 辅助函数：IP 脱敏 */
+function maskIp(ip = "") {
+	if (!ip) return "";
+	if (ip.includes(".")) {
+		const parts = ip.split(".");
+		if (parts.length === 4) return `${parts[0]}.${parts[1]}.***.${parts[3]}`;
+	}
+	if (ip.includes(":")) {
+		const parts = ip.split(":");
+		if (parts.length > 2) return `${parts[0]}:${parts[1]}:****:****:${parts[parts.length - 1]}`;
+	}
+	return ip;
+}
+
+/** 辅助函数：国家代码映射（用于 Flag 呈现） */
+function getCountryCode(countryName = "") {
+	const map = {
+		"United States": "US",
+		"China": "CN",
+		"Germany": "DE",
+		"Netherlands": "NL",
+		"United Kingdom": "GB",
+		"Japan": "JP",
+		"Hong Kong": "HK",
+		"Taiwan": "TW",
+		"Singapore": "SG",
+		"France": "FR",
+		"Russia": "RU",
+		"Canada": "CA",
+		"Australia": "AU",
+		"Korea": "KR",
+		"South Korea": "KR",
+		"India": "IN",
+		"Brazil": "BR"
+	};
+	return map[countryName] || "UN";
+}
+
 /* ================= Worker Fetch 入口 ================= */
 
 export default {
@@ -890,6 +1399,7 @@ export default {
 				mailGateway: "https://mail-api.yaoxi.cloud",
 				endpoints: {
 					"GET /api/moments": "参数化朋友圈查询",
+					"GET /api/ddos": "Cloudflare DDoS 实时告警与安全防御日志查询",
 					"POST /api/newsletter/subscribe": "读者邮箱订阅（发送 Double Opt-in 激活邮件）",
 					"GET /api/newsletter/verify": "激活订阅链接（通过邮件中的 Token 激活）",
 					"GET /api/newsletter/unsubscribe": "一键退订链接",
@@ -902,6 +1412,11 @@ export default {
 					global: `${RATE_LIMIT.GLOBAL_MAX} 次 / ${RATE_LIMIT.GLOBAL_WINDOW_MS / 1000} 秒`,
 				},
 			});
+		}
+
+		// DDoS 告警与安全防御日志查询
+		if (url.pathname === "/api/ddos" && request.method === "GET") {
+			return handleDDoS(request, env, url);
 		}
 
 		// 朋友圈查询
