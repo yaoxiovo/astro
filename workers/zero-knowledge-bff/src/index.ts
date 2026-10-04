@@ -318,6 +318,67 @@ ${content.trim()}
 });
 
 // ============================================================
+// 1.2 便捷文章删除端点 (DELETE /api/post/:slug) - 仅限管理员
+// ============================================================
+app.delete('/api/post/:slug', requireAdmin, async (c) => {
+  const slug = c.req.param('slug');
+  const cleanSlug = String(slug).trim().replace(/\.md$/, '').replace(/^\/+/, '');
+  const githubToken = c.req.header('X-GitHub-Token') || c.env.GITHUB_TOKEN;
+  if (!githubToken) {
+    return c.json({ error: 'missing_github_token', message: '未配置 GitHub PAT' }, 400);
+  }
+
+  const filePath = `src/content/posts/${cleanSlug}.md`;
+  const owner = c.env.GITHUB_REPO_OWNER || 'yaoxiovo';
+  const repo = c.env.GITHUB_REPO_NAME || 'astro';
+  const branch = c.env.GITHUB_BRANCH || 'main';
+  const githubApiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+
+  // 1. 获取现有文件的 sha
+  const getRes = await fetch(`${githubApiUrl}?ref=${branch}`, {
+    headers: {
+      'User-Agent': 'Astro-Publisher-Worker/1.0',
+      'Authorization': `Bearer ${githubToken}`,
+      'Accept': 'application/vnd.github.v3+json',
+    },
+  });
+
+  if (!getRes.ok) {
+    return c.json({ error: 'file_not_found', message: `文章不存在或已被删除: ${cleanSlug}` }, 404);
+  }
+
+  const fileData = await getRes.json<{ sha: string }>();
+
+  // 2. 发起 DELETE
+  const delRes = await fetch(githubApiUrl, {
+    method: 'DELETE',
+    headers: {
+      'User-Agent': 'Astro-Publisher-Worker/1.0',
+      'Authorization': `Bearer ${githubToken}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      message: `docs(post): delete ${cleanSlug} via Admin Studio`,
+      sha: fileData.sha,
+      branch: branch,
+    }),
+  });
+
+  if (!delRes.ok) {
+    const errText = await delRes.text();
+    return c.json({ error: 'delete_failed', message: `删除失败: ${errText}` }, 502);
+  }
+
+  const delData = await delRes.json<{ commit: { sha: string } }>();
+  return c.json({
+    success: true,
+    commit_sha: delData.commit.sha,
+    message: `文章 ${cleanSlug} 已从仓库删除`
+  });
+});
+
+// ============================================================
 // 1.5 便捷朋友圈动态与时间胶囊发布端点 (POST /api/publish-moment) - 仅限管理员
 // ============================================================
 app.post('/api/publish-moment', requireAdmin, async (c) => {
