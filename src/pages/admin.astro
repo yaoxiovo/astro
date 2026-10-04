@@ -763,6 +763,15 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
     const btnSyncCredsSso = document.getElementById('btn-sync-creds-sso');
     const GITHUB_PAT_KEY = 'yaoxi_github_pat';
 
+    // 智能解析 GitHub PAT：优先读取统一认证中心官方下发的 platform_tokens.github
+    function resolveGithubPat() {
+      if (typeof window !== 'undefined' && window.yaoxiAuth && typeof window.yaoxiAuth.getPlatformToken === 'function') {
+        const pt = window.yaoxiAuth.getPlatformToken('github');
+        if (pt) return pt;
+      }
+      return localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat') || (inputGithubToken ? inputGithubToken.value.trim() : '');
+    }
+
     // SSO 身份联动元素
     const modalSsoIndicator = document.getElementById('modal-sso-indicator');
     const modalSsoName = document.getElementById('modal-sso-name');
@@ -1103,7 +1112,7 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
       if (studioRoot) studioRoot.style.display = 'block';
 
       // 管理员登录态下，若本地未缓存 GitHub PAT，自动随统一认证中心静默下发凭据
-      const cachedPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat');
+      const cachedPat = resolveGithubPat();
       if (!cachedPat && typeof window.yaoxiSyncCredentials === 'function') {
         window.yaoxiSyncCredentials().catch(() => {});
       }
@@ -1115,7 +1124,7 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
       const token = getAdminToken();
       const user = getAdminUser();
 
-      const savedGithubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat');
+      const savedGithubPat = resolveGithubPat();
       if (savedGithubPat) {
         if (inputGithubToken && (!inputGithubToken.value || inputGithubToken.value !== savedGithubPat)) {
           inputGithubToken.value = savedGithubPat;
@@ -1182,7 +1191,7 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
     const savedApi = localStorage.getItem(API_ENDPOINT_KEY);
     if (savedApi) inputApiEndpoint.value = savedApi;
 
-    const savedGithubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat');
+    const savedGithubPat = resolveGithubPat();
     if (savedGithubPat && inputGithubToken) {
       inputGithubToken.value = savedGithubPat;
       if (badgeGithubPatAuto) badgeGithubPatAuto.classList.remove('hidden');
@@ -1635,7 +1644,7 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
       }
 
       const apiBase = (localStorage.getItem(API_ENDPOINT_KEY) || 'https://zk-api.yaoxi.cloud').replace(/\/$/, '');
-      let githubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat') || (inputGithubToken ? inputGithubToken.value.trim() : '');
+      let githubPat = resolveGithubPat();
 
       // 若未配置 PAT，且属于管理员登录态，先尝试随认证中心自动下发
       if (!githubPat && typeof window.yaoxiSyncCredentials === 'function') {
@@ -1986,7 +1995,7 @@ ${content.trim()}
       if (!confirmed) return;
 
       const token = getAdminToken();
-      let githubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat') || (inputGithubToken ? inputGithubToken.value.trim() : '');
+      let githubPat = resolveGithubPat();
       const apiBase = (localStorage.getItem(API_ENDPOINT_KEY) || 'https://zk-api.yaoxi.cloud').replace(/\/$/, '');
 
       if (!githubPat && typeof window.yaoxiSyncCredentials === 'function') {
@@ -2084,7 +2093,7 @@ ${content.trim()}
     }
 
     async function syncFromGitHub() {
-      let githubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat') || (inputGithubToken ? inputGithubToken.value.trim() : '');
+      let githubPat = resolveGithubPat();
 
       // 若尚未获取到 PAT，且支持统一认证中心下发，先尝试静默下发拉取
       if (!githubPat && typeof window.yaoxiSyncCredentials === 'function') {
@@ -2544,7 +2553,7 @@ ${content.trim()}
       }
 
       const apiBase = (localStorage.getItem(API_ENDPOINT_KEY) || 'https://zk-api.yaoxi.cloud').replace(/\/$/, '');
-      let githubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat') || (inputGithubToken ? inputGithubToken.value.trim() : '');
+      let githubPat = resolveGithubPat();
 
       if (!githubPat && typeof window.yaoxiSyncCredentials === 'function') {
         try {
@@ -2706,7 +2715,7 @@ ${content.trim()}
     function pollDeployStatus(apiBase, token, commitSha, slug, targetType = 'post') {
       if (deployPollTimer) clearInterval(deployPollTimer);
 
-      const githubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat') || (inputGithubToken ? inputGithubToken.value.trim() : '');
+      const githubPat = resolveGithubPat();
       const cleanSlug = String(slug || '').replace(/\.md$/, '').replace(/^\/+/, '');
       let pollAttempts = 0;
 

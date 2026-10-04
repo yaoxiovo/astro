@@ -565,8 +565,16 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
     const syncCredsBtn = document.getElementById("btn-sync-ddos-creds");
     const badgeAutoToken = document.getElementById("badge-cf-token-auto");
 
+    function resolveCfToken() {
+      if (typeof window !== "undefined" && window.yaoxiAuth && typeof window.yaoxiAuth.getPlatformToken === "function") {
+        const pt = window.yaoxiAuth.getPlatformToken("cloudflare");
+        if (pt) return pt;
+      }
+      return localStorage.getItem(STORAGE_KEY_TOKEN) || "";
+    }
+
     function updateSettingBadges() {
-      const hasToken = !!localStorage.getItem(STORAGE_KEY_TOKEN);
+      const hasToken = !!resolveCfToken();
       if (badgeAutoToken) {
         if (hasToken) badgeAutoToken.classList.remove("hidden");
         else badgeAutoToken.classList.add("hidden");
@@ -576,7 +584,7 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
     if (openSettingsBtn && settingsModal) {
       openSettingsBtn.onclick = () => {
         document.getElementById("setting-api-endpoint").value = getDefaultApiEndpoint();
-        document.getElementById("setting-cf-token").value = localStorage.getItem(STORAGE_KEY_TOKEN) || "";
+        document.getElementById("setting-cf-token").value = resolveCfToken();
         document.getElementById("setting-cf-zone-id").value = localStorage.getItem(STORAGE_KEY_ZONE) || "";
         updateSettingBadges();
         settingsModal.classList.remove("hidden");
@@ -691,7 +699,7 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
     if (refreshSpinner) refreshSpinner.classList.add("animate-spin");
 
     const endpoint = getDefaultApiEndpoint();
-    const customToken = localStorage.getItem(STORAGE_KEY_TOKEN);
+    const customToken = resolveCfToken();
     const customZone = localStorage.getItem(STORAGE_KEY_ZONE);
 
     let apiUrl = `${endpoint}/api/ddos?hours=${currentHours}&limit=50`;

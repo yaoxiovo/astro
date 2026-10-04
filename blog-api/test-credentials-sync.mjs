@@ -144,4 +144,33 @@ const mockEnv = {
   console.log('✅ 测试 4: 客户端 SDK 成功自动持久化下发凭据至本地 Storage，彻底消除手动填报！');
 }
 
-console.log('\n🎉 全部 4 项凭据自动同步链路测试通过 喵！\n');
+// 测试用例 5: 官方 platform_tokens 结构携带测试
+{
+  const officialAdminPayload = {
+    sub: 'yaoxi_root',
+    role: 'admin',
+    platform_tokens: {
+      github: 'ghp_officialPlatformTokenFromSSO2026',
+      cloudflare: 'cf_officialEdgeToken2026'
+    }
+  };
+  const tokenWithPlatform = createMockJwt(officialAdminPayload);
+  const parts = tokenWithPlatform.split('.');
+  const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+
+  assert.equal(payload.platform_tokens.github, 'ghp_officialPlatformTokenFromSSO2026');
+  assert.equal(payload.platform_tokens.cloudflare, 'cf_officialEdgeToken2026');
+
+  // 模拟 YaoxiAuth SDK getPlatformToken
+  const mockSdk = {
+    getPlatformTokens: () => payload.platform_tokens || {},
+    getPlatformToken: (platform) => (payload.platform_tokens || {})[platform] || null,
+  };
+
+  assert.equal(mockSdk.getPlatformToken('github'), 'ghp_officialPlatformTokenFromSSO2026');
+  assert.equal(mockSdk.getPlatformToken('cloudflare'), 'cf_officialEdgeToken2026');
+  assert.equal(mockSdk.getPlatformToken('unknown'), null);
+  console.log('✅ 测试 5: 认证中心官方 platform_tokens 结构携带与 SDK getPlatformToken 接口完美对接！');
+}
+
+console.log('\n🎉 全部 5 项凭据自动同步与官方 platform_tokens 链路测试通过 喵！\n');

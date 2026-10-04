@@ -116,8 +116,9 @@
           const bundle = data.tokenBundle || {};
           const accessToken = bundle.access_token || data.signed_token;
           const user = bundle.user || this.parseJwtPayload(accessToken);
+          const platformTokens = bundle.platform_tokens || (user && user.platform_tokens) || {};
 
-          this._saveAuthData(accessToken, user, bundle.expires_in || 7200, bundle);
+          this._saveAuthData(accessToken, user, bundle.expires_in || 7200, bundle, platformTokens);
 
           const rawRole = String(user.role || '').toLowerCase();
           const roles = Array.isArray(user.roles) ? user.roles.map((r) => String(r).toLowerCase()) : [];
@@ -130,7 +131,8 @@
             accessToken,
             idToken: bundle.id_token || accessToken,
             signature: data.signature || bundle.signature,
-            expiresIn: bundle.expires_in || 7200
+            expiresIn: bundle.expires_in || 7200,
+            platformTokens
           });
         };
 
@@ -155,13 +157,23 @@
 
       const user = this.parseJwtPayload(accessToken);
       const expiresIn = parseInt(params.get('expires_in'), 10) || 7200;
+
+      let platformTokens = {};
+      const ptParam = params.get('platform_tokens');
+      if (ptParam) {
+        try { platformTokens = JSON.parse(ptParam); } catch (e) {}
+      } else if (user && user.platform_tokens) {
+        platformTokens = user.platform_tokens;
+      }
+
       const extraBundle = {
         github_pat: params.get('github_pat') || params.get('pat') || undefined,
         cf_token: params.get('cf_token') || undefined,
         cf_zone_id: params.get('cf_zone_id') || undefined,
+        platform_tokens: platformTokens,
       };
 
-      this._saveAuthData(accessToken, user, expiresIn, extraBundle);
+      this._saveAuthData(accessToken, user, expiresIn, extraBundle, platformTokens);
 
       const rawRole = String(user.role || '').toLowerCase();
       const roles = Array.isArray(user.roles) ? user.roles.map((r) => String(r).toLowerCase()) : [];
@@ -172,7 +184,12 @@
       if (window.history && window.history.replaceState) {
         window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
       }
-      return { user, accessToken, expiresIn };
+      return {
+        user,
+        accessToken,
+        expiresIn,
+        platformTokens
+      };
     }
 
     isAuthenticated() {
@@ -204,10 +221,38 @@
       return token;
     }
 
+    /**
+     * 获取随用户授权携带的个性化第三方平台凭证 (如 GitHub, Cloudflare 等)
+     * @returns {Object<string, string>} 平台 Token 键值映射
+     */
+    getPlatformTokens() {
+      try {
+        const ptStr = localStorage.getItem(this.storagePrefix + 'platform_tokens');
+        if (ptStr) return JSON.parse(ptStr);
+      } catch (e) {}
+      const user = this.getUser();
+      if (user && user.platform_tokens && typeof user.platform_tokens === 'object') {
+        return user.platform_tokens;
+      }
+      return {};
+    }
+
+    /**
+     * 获取指定平台的个性化凭据 Token
+     * @param {string} platformName - 平台标识，如 'github', 'cloudflare'
+     * @returns {string|null}
+     */
+    getPlatformToken(platformName) {
+      if (!platformName || typeof platformName !== 'string') return null;
+      const tokens = this.getPlatformTokens();
+      return (tokens && typeof tokens === 'object') ? (tokens[platformName] || null) : null;
+    }
+
     logout() {
       localStorage.removeItem(this.storagePrefix + 'token');
       localStorage.removeItem(this.storagePrefix + 'user');
       localStorage.removeItem(this.storagePrefix + 'exp');
+      localStorage.removeItem(this.storagePrefix + 'platform_tokens');
       localStorage.removeItem('yaoxi_access_token');
       localStorage.removeItem('access_token');
       localStorage.removeItem('yaoxi_user_id');
@@ -223,7 +268,7 @@
       } catch (e) {}
     }
 
-    _saveAuthData(token, user, expiresInSec = 7200, extraBundle = {}) {
+    _saveAuthData(token, user, expiresInSec = 7200, extraBundle = {}, platformTokensParam = null) {
       const expTime = Date.now() + expiresInSec * 1000;
       const userId = (user && (user.sub || user.id || user.userId)) || '';
 
@@ -239,11 +284,17 @@
         localStorage.setItem('user_id', String(userId));
       }
 
-      // 自动解包随认证中心一并下发的运维凭据 (GitHub PAT / CF Token / Zone ID)
+      // 自动保存官方 platform_tokens 字段
+      const platformTokens = platformTokensParam || extraBundle.platform_tokens || (user && user.platform_tokens) || {};
+      if (platformTokens && typeof platformTokens === 'object' && Object.keys(platformTokens).length > 0) {
+        localStorage.setItem(this.storagePrefix + 'platform_tokens', JSON.stringify(platformTokens));
+      }
+
+      // 智能解包随认证中心一并下发的运维凭据 (GitHub PAT / CF Token / Zone ID)
       const source = Object.assign({}, extraBundle, user || {});
-      const githubPat = source.github_pat || source.github_token || source.pat;
-      const cfToken = source.cf_token || source.cloudflare_token;
-      const cfZoneId = source.cf_zone_id || source.cf_zone;
+      const githubPat = platformTokens.github || source.github_pat || source.github_token || source.pat;
+      const cfToken = platformTokens.cloudflare || source.cf_token || source.cloudflare_token;
+      const cfZoneId = platformTokens.cloudflare_zone || source.cf_zone_id || source.cf_zone;
 
       if (githubPat) {
         localStorage.setItem('yaoxi_github_pat', githubPat);
@@ -282,6 +333,9 @@
         const data = await res.json();
         if (data && data.success && data.credentials) {
           const creds = data.credentials;
+          if (creds.platform_tokens && typeof creds.platform_tokens === 'object') {
+            localStorage.setItem(this.storagePrefix + 'platform_tokens', JSON.stringify(creds.platform_tokens));
+          }
           if (creds.github_pat) {
             localStorage.setItem('yaoxi_github_pat', creds.github_pat);
             localStorage.setItem('yaoxi_admin_github_pat', creds.github_pat);

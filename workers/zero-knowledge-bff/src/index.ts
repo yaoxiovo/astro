@@ -27,6 +27,7 @@ interface JWTPayload {
   roles?: string[];
   is_admin?: boolean;
   is_member?: boolean;
+  platform_tokens?: Record<string, string>;
   github_pat?: string;
   github_token?: string;
   pat?: string;
@@ -541,9 +542,10 @@ ${momentText}
 // ============================================================
 app.get('/api/credentials', requireAdmin, async (c) => {
   const user = c.get('user');
-  const githubToken = user.github_pat || user.github_token || user.pat || c.env.GITHUB_TOKEN || null;
-  const cfToken = user.cf_token || user.cloudflare_token || c.env.CF_API_TOKEN || null;
-  const cfZoneId = user.cf_zone_id || user.cf_zone || c.env.CF_ZONE_ID || null;
+  const platformTokens = (user.platform_tokens as Record<string, string>) || {};
+  const githubToken = platformTokens.github || user.github_pat || user.github_token || user.pat || c.env.GITHUB_TOKEN || null;
+  const cfToken = platformTokens.cloudflare || user.cf_token || user.cloudflare_token || c.env.CF_API_TOKEN || null;
+  const cfZoneId = platformTokens.cloudflare_zone || user.cf_zone_id || user.cf_zone || c.env.CF_ZONE_ID || null;
 
   return c.json({
     success: true,
@@ -557,6 +559,11 @@ app.get('/api/credentials', requireAdmin, async (c) => {
       cf_token: cfToken,
       cf_zone_id: cfZoneId,
       cf_account_id: c.env.CF_ACCOUNT_ID || null,
+      platform_tokens: {
+        github: githubToken,
+        cloudflare: cfToken,
+        cloudflare_zone: cfZoneId,
+      },
       api_endpoint: 'https://zk-api.yaoxi.cloud',
     },
     message: '博主操作凭据已随认证中心登录态成功一并下发喵！',
