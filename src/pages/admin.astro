@@ -657,13 +657,18 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
             <textarea id="input-access-token" rows="2" placeholder="自动从主站 SSO 同步，或手动粘贴 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none resize-none"></textarea>
           </div>
           <div>
-            <label for="input-github-token" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1 flex items-center justify-between">
-              <span>GitHub Personal Access Token (PAT)</span>
-              <span class="text-[10px] text-[var(--primary)] font-medium">推荐配置 · 客户端免 BFF 直连</span>
-            </label>
-            <input type="password" id="input-github-token" placeholder="ghp_xxxx 或 github_pat_xxxx (需 contents:write 权限)" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none" />
+            <div class="flex items-center justify-between mb-1">
+              <label for="input-github-token" class="text-xs font-medium text-black/70 dark:text-white/70">GitHub Personal Access Token (PAT)</label>
+              <div class="flex items-center gap-1.5">
+                <span id="badge-github-pat-auto" class="hidden text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-medium">✨ 随认证中心自动下发</span>
+                <button type="button" id="btn-sync-creds-sso" class="text-[10px] px-2 py-0.5 rounded-md bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-all font-medium flex items-center gap-1 cursor-pointer">
+                  <span>🔄 重新同步下发</span>
+                </button>
+              </div>
+            </div>
+            <input type="password" id="input-github-token" placeholder="已由统一认证中心自动下发，或手动粘贴 ghp_xxxx" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-mono border border-transparent focus:border-[var(--primary)] outline-none" />
             <p class="text-[10px] text-black/40 dark:text-white/40 mt-1 leading-normal">
-              建议填入具备仓库 contents:write 权限的 PAT。配置后发布文章与动态将直接调用 GitHub 官方 API 提交，0 中间件延迟且永不因 Worker 宕机受阻喵！
+              已接入耀西统一身份认证中心 (SSO)。登录博主管理员身份后，系统将自动随认证中心一并下发代持的 GitHub PAT 与运维凭据，完全免去手动复制粘贴 喵！
             </p>
           </div>
         </div>
@@ -754,6 +759,8 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
     const inputApiEndpoint = document.getElementById('input-api-endpoint');
     const inputAccessToken = document.getElementById('input-access-token');
     const inputGithubToken = document.getElementById('input-github-token');
+    const badgeGithubPatAuto = document.getElementById('badge-github-pat-auto');
+    const btnSyncCredsSso = document.getElementById('btn-sync-creds-sso');
     const GITHUB_PAT_KEY = 'yaoxi_github_pat';
 
     // SSO 身份联动元素
@@ -1094,12 +1101,29 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
       // 场景 3: 校验通过（管理员身份）-> 放行进入 Studio
       if (guardContainer) guardContainer.style.display = 'none';
       if (studioRoot) studioRoot.style.display = 'block';
+
+      // 管理员登录态下，若本地未缓存 GitHub PAT，自动随统一认证中心静默下发凭据
+      const cachedPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat');
+      if (!cachedPat && typeof window.yaoxiSyncCredentials === 'function') {
+        window.yaoxiSyncCredentials().catch(() => {});
+      }
+
       return true;
     }
 
     function syncAuthUI() {
       const token = getAdminToken();
       const user = getAdminUser();
+
+      const savedGithubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat');
+      if (savedGithubPat) {
+        if (inputGithubToken && (!inputGithubToken.value || inputGithubToken.value !== savedGithubPat)) {
+          inputGithubToken.value = savedGithubPat;
+        }
+        if (badgeGithubPatAuto) badgeGithubPatAuto.classList.remove('hidden');
+      } else {
+        if (badgeGithubPatAuto) badgeGithubPatAuto.classList.add('hidden');
+      }
 
       if (token) {
         const displayName = (user && (user.name || user.username || user.sub))
@@ -1158,8 +1182,11 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
     const savedApi = localStorage.getItem(API_ENDPOINT_KEY);
     if (savedApi) inputApiEndpoint.value = savedApi;
 
-    const savedGithubPat = localStorage.getItem(GITHUB_PAT_KEY);
-    if (savedGithubPat && inputGithubToken) inputGithubToken.value = savedGithubPat;
+    const savedGithubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat');
+    if (savedGithubPat && inputGithubToken) {
+      inputGithubToken.value = savedGithubPat;
+      if (badgeGithubPatAuto) badgeGithubPatAuto.classList.remove('hidden');
+    }
 
     // 2. 统计计算函数
     function updateStats() {
@@ -1357,10 +1384,49 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
         localStorage.removeItem('yaoxi_client_user');
         localStorage.removeItem('user_profile');
         localStorage.removeItem('yaoxi_auth_exp');
+        localStorage.removeItem('yaoxi_github_pat');
+        localStorage.removeItem('yaoxi_admin_github_pat');
         inputAccessToken.value = '';
+        if (inputGithubToken) inputGithubToken.value = '';
         enforceAdminAuthGuard();
       });
     }
+
+    if (btnSyncCredsSso) {
+      btnSyncCredsSso.addEventListener('click', async () => {
+        if (typeof window.yaoxiSyncCredentials === 'function') {
+          btnSyncCredsSso.disabled = true;
+          btnSyncCredsSso.innerHTML = '<span>⏳ 同步中...</span>';
+          try {
+            const creds = await window.yaoxiSyncCredentials();
+            if (creds && creds.github_pat) {
+              if (inputGithubToken) inputGithubToken.value = creds.github_pat;
+              alert('博主操作凭据已随认证中心成功一并下发喵！');
+            } else {
+              alert('未从认证中心或 Worker BFF 获取到凭据，请确认当前账号具备管理员权限喵！');
+            }
+          } catch (err) {
+            console.warn('[Admin] 凭据同步失败:', err);
+            alert('同步下发失败: ' + err.message);
+          } finally {
+            btnSyncCredsSso.disabled = false;
+            btnSyncCredsSso.innerHTML = '<span>🔄 重新同步下发</span>';
+            syncAuthUI();
+          }
+        } else {
+          alert('认证中心 SDK 尚未就绪 喵！');
+        }
+      });
+    }
+
+    // 监听全局凭据下发广播 (由 YaoxiAuth SDK 触发)
+    window.addEventListener('yaoxi:credentials:sync', (e) => {
+      const creds = e.detail;
+      if (creds && creds.github_pat) {
+        if (inputGithubToken) inputGithubToken.value = creds.github_pat;
+      }
+      syncAuthUI();
+    });
 
     btnSaveAuth.addEventListener('click', () => {
       const endpoint = inputApiEndpoint.value.trim().replace(/\/$/, '');
@@ -1370,8 +1436,10 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
       if (endpoint) localStorage.setItem(API_ENDPOINT_KEY, endpoint);
       if (githubPat) {
         localStorage.setItem(GITHUB_PAT_KEY, githubPat);
+        localStorage.setItem('yaoxi_admin_github_pat', githubPat);
       } else {
         localStorage.removeItem(GITHUB_PAT_KEY);
+        localStorage.removeItem('yaoxi_admin_github_pat');
       }
       if (token) {
         localStorage.setItem('yaoxi_access_token', token);
@@ -1567,7 +1635,18 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
       }
 
       const apiBase = (localStorage.getItem(API_ENDPOINT_KEY) || 'https://zk-api.yaoxi.cloud').replace(/\/$/, '');
-      const githubPat = localStorage.getItem(GITHUB_PAT_KEY) || (inputGithubToken ? inputGithubToken.value.trim() : '');
+      let githubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat') || (inputGithubToken ? inputGithubToken.value.trim() : '');
+
+      // 若未配置 PAT，且属于管理员登录态，先尝试随认证中心自动下发
+      if (!githubPat && typeof window.yaoxiSyncCredentials === 'function') {
+        try {
+          const creds = await window.yaoxiSyncCredentials();
+          if (creds && creds.github_pat) {
+            githubPat = creds.github_pat;
+            if (inputGithubToken) inputGithubToken.value = creds.github_pat;
+          }
+        } catch (e) {}
+      }
 
       // 进入发布状态
       btnPublish.disabled = true;
@@ -1907,8 +1986,18 @@ ${content.trim()}
       if (!confirmed) return;
 
       const token = getAdminToken();
-      const githubPat = localStorage.getItem(GITHUB_PAT_KEY) || (inputGithubToken ? inputGithubToken.value.trim() : '');
+      let githubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat') || (inputGithubToken ? inputGithubToken.value.trim() : '');
       const apiBase = (localStorage.getItem(API_ENDPOINT_KEY) || 'https://zk-api.yaoxi.cloud').replace(/\/$/, '');
+
+      if (!githubPat && typeof window.yaoxiSyncCredentials === 'function') {
+        try {
+          const creds = await window.yaoxiSyncCredentials();
+          if (creds && creds.github_pat) {
+            githubPat = creds.github_pat;
+            if (inputGithubToken) inputGithubToken.value = creds.github_pat;
+          }
+        } catch (e) {}
+      }
 
       if (!githubPat && !token) {
         alert('尚未获取到有效凭据！请在右上角“鉴权凭据”中填入具备 repo/contents:write 权限的 GitHub PAT 喵！');
@@ -1995,11 +2084,17 @@ ${content.trim()}
     }
 
     async function syncFromGitHub() {
-      const githubPat = localStorage.getItem(GITHUB_PAT_KEY) || (inputGithubToken ? inputGithubToken.value.trim() : '');
-      if (!githubPat) {
-        alert('实时同步需要读取 GitHub 仓库 API，请先在右上角【鉴权凭据】中填入 GitHub PAT 喵！');
-        modalAuth.classList.remove('hidden');
-        return;
+      let githubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat') || (inputGithubToken ? inputGithubToken.value.trim() : '');
+
+      // 若尚未获取到 PAT，且支持统一认证中心下发，先尝试静默下发拉取
+      if (!githubPat && typeof window.yaoxiSyncCredentials === 'function') {
+        try {
+          const creds = await window.yaoxiSyncCredentials();
+          if (creds && creds.github_pat) {
+            githubPat = creds.github_pat;
+            if (inputGithubToken) inputGithubToken.value = creds.github_pat;
+          }
+        } catch (e) {}
       }
 
       if (btnSyncGithubPosts) btnSyncGithubPosts.disabled = true;
@@ -2013,14 +2108,21 @@ ${content.trim()}
         const branch = 'main';
         const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/src/content/posts?ref=${branch}&_t=${Date.now()}`;
 
+        const reqHeaders = {
+          'Accept': 'application/vnd.github.v3+json',
+        };
+        if (githubPat) {
+          reqHeaders['Authorization'] = `Bearer ${githubPat}`;
+        }
+
         const res = await fetch(apiUrl, {
-          headers: {
-            'Authorization': `Bearer ${githubPat}`,
-            'Accept': 'application/vnd.github.v3+json',
-          }
+          headers: reqHeaders
         });
 
         if (!res.ok) {
+          if (res.status === 403) {
+            throw new Error('GitHub API 调用速率受限 (Rate Limit)。请检查统一认证中心是否已下发有效 PAT 喵！');
+          }
           throw new Error(`GitHub API 响应失败 (${res.status})`);
         }
 
@@ -2442,7 +2544,17 @@ ${content.trim()}
       }
 
       const apiBase = (localStorage.getItem(API_ENDPOINT_KEY) || 'https://zk-api.yaoxi.cloud').replace(/\/$/, '');
-      const githubPat = localStorage.getItem(GITHUB_PAT_KEY) || (inputGithubToken ? inputGithubToken.value.trim() : '');
+      let githubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat') || (inputGithubToken ? inputGithubToken.value.trim() : '');
+
+      if (!githubPat && typeof window.yaoxiSyncCredentials === 'function') {
+        try {
+          const creds = await window.yaoxiSyncCredentials();
+          if (creds && creds.github_pat) {
+            githubPat = creds.github_pat;
+            if (inputGithubToken) inputGithubToken.value = creds.github_pat;
+          }
+        } catch (e) {}
+      }
 
       btnPublish.disabled = true;
       publishSpinner.classList.remove('hidden');
@@ -2594,7 +2706,7 @@ ${content.trim()}
     function pollDeployStatus(apiBase, token, commitSha, slug, targetType = 'post') {
       if (deployPollTimer) clearInterval(deployPollTimer);
 
-      const githubPat = localStorage.getItem(GITHUB_PAT_KEY) || (inputGithubToken ? inputGithubToken.value.trim() : '');
+      const githubPat = localStorage.getItem(GITHUB_PAT_KEY) || localStorage.getItem('yaoxi_admin_github_pat') || (inputGithubToken ? inputGithubToken.value.trim() : '');
       const cleanSlug = String(slug || '').replace(/\.md$/, '').replace(/^\/+/, '');
       let pollAttempts = 0;
 

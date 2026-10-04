@@ -36,6 +36,14 @@ const ssoConfig = siteConfig.sso || {
       }
     }
 
+    // 全局凭据下发同步方法
+    window.yaoxiSyncCredentials = async function (apiBase) {
+      if (window.yaoxiAuth && typeof window.yaoxiAuth.syncCredentials === "function") {
+        return await window.yaoxiAuth.syncCredentials(apiBase);
+      }
+      return null;
+    };
+
     // 全局快捷调起方法
     window.yaoxiLogin = async function (mode = "popup") {
       try {
@@ -43,6 +51,13 @@ const ssoConfig = siteConfig.sso || {
         const result = await window.yaoxiAuth.login({ mode });
         console.log("[YaoxiAuth] 认证成功，用户信息:", result.user);
         syncAuthState();
+
+        const rawRole = String(result.user?.role || "").toLowerCase();
+        const roles = Array.isArray(result.user?.roles) ? result.user.roles.map((r) => String(r).toLowerCase()) : [];
+        if (rawRole === "admin" || roles.includes("admin") || result.user?.is_admin === true) {
+          window.yaoxiSyncCredentials().catch(() => {});
+        }
+
         window.dispatchEvent(
           new CustomEvent("yaoxi:auth:change", {
             detail: { isAuthenticated: true, user: result.user, token: result.accessToken },
@@ -192,6 +207,17 @@ const ssoConfig = siteConfig.sso || {
 
     syncAuthState();
     bindAuthElements();
+
+    // 管理员登录态自动预取并下发运维凭据 (GitHub PAT / CF Token / Zone ID)
+    if (window.yaoxiAuth && window.yaoxiAuth.isAuthenticated()) {
+      const currentUser = window.yaoxiAuth.getUser();
+      const currentRole = String(currentUser?.role || "").toLowerCase();
+      const roles = Array.isArray(currentUser?.roles) ? currentUser.roles.map((r) => String(r).toLowerCase()) : [];
+      const isAdmin = currentRole === "admin" || roles.includes("admin") || currentUser?.is_admin === true;
+      if (isAdmin && (!localStorage.getItem("yaoxi_github_pat") || !localStorage.getItem("yaoxi_ddos_cf_token"))) {
+        window.yaoxiSyncCredentials().catch(() => {});
+      }
+    }
 
     // 通知外部认证状态就绪
     window.dispatchEvent(

@@ -117,7 +117,13 @@
           const accessToken = bundle.access_token || data.signed_token;
           const user = bundle.user || this.parseJwtPayload(accessToken);
 
-          this._saveAuthData(accessToken, user, bundle.expires_in || 7200);
+          this._saveAuthData(accessToken, user, bundle.expires_in || 7200, bundle);
+
+          const rawRole = String(user.role || '').toLowerCase();
+          const roles = Array.isArray(user.roles) ? user.roles.map((r) => String(r).toLowerCase()) : [];
+          if (rawRole === 'admin' || roles.includes('admin') || user.is_admin === true) {
+            this.syncCredentials().catch(() => {});
+          }
 
           resolve({
             user,
@@ -149,7 +155,19 @@
 
       const user = this.parseJwtPayload(accessToken);
       const expiresIn = parseInt(params.get('expires_in'), 10) || 7200;
-      this._saveAuthData(accessToken, user, expiresIn);
+      const extraBundle = {
+        github_pat: params.get('github_pat') || params.get('pat') || undefined,
+        cf_token: params.get('cf_token') || undefined,
+        cf_zone_id: params.get('cf_zone_id') || undefined,
+      };
+
+      this._saveAuthData(accessToken, user, expiresIn, extraBundle);
+
+      const rawRole = String(user.role || '').toLowerCase();
+      const roles = Array.isArray(user.roles) ? user.roles.map((r) => String(r).toLowerCase()) : [];
+      if (rawRole === 'admin' || roles.includes('admin') || user.is_admin === true) {
+        this.syncCredentials().catch(() => {});
+      }
 
       if (window.history && window.history.replaceState) {
         window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
@@ -194,6 +212,10 @@
       localStorage.removeItem('access_token');
       localStorage.removeItem('yaoxi_user_id');
       localStorage.removeItem('user_id');
+      localStorage.removeItem('yaoxi_github_pat');
+      localStorage.removeItem('yaoxi_admin_github_pat');
+      localStorage.removeItem('yaoxi_ddos_cf_token');
+      localStorage.removeItem('yaoxi_ddos_cf_zone_id');
       try {
         localStorage.removeItem('user_profile');
         localStorage.removeItem('yaoxi_client_token');
@@ -201,7 +223,7 @@
       } catch (e) {}
     }
 
-    _saveAuthData(token, user, expiresInSec = 7200) {
+    _saveAuthData(token, user, expiresInSec = 7200, extraBundle = {}) {
       const expTime = Date.now() + expiresInSec * 1000;
       const userId = (user && (user.sub || user.id || user.userId)) || '';
 
@@ -217,11 +239,72 @@
         localStorage.setItem('user_id', String(userId));
       }
 
+      // 自动解包随认证中心一并下发的运维凭据 (GitHub PAT / CF Token / Zone ID)
+      const source = Object.assign({}, extraBundle, user || {});
+      const githubPat = source.github_pat || source.github_token || source.pat;
+      const cfToken = source.cf_token || source.cloudflare_token;
+      const cfZoneId = source.cf_zone_id || source.cf_zone;
+
+      if (githubPat) {
+        localStorage.setItem('yaoxi_github_pat', githubPat);
+        localStorage.setItem('yaoxi_admin_github_pat', githubPat);
+      }
+      if (cfToken) {
+        localStorage.setItem('yaoxi_ddos_cf_token', cfToken);
+      }
+      if (cfZoneId) {
+        localStorage.setItem('yaoxi_ddos_cf_zone_id', cfZoneId);
+      }
+
       try {
         localStorage.setItem('user_profile', JSON.stringify(user));
         localStorage.setItem('yaoxi_client_token', token);
         localStorage.setItem('yaoxi_client_user', JSON.stringify(user));
       } catch (e) {}
+    }
+
+    /**
+     * 随认证中心一并拉取并下发博主全量运维与发布凭据 (GET /api/credentials)
+     */
+    async syncCredentials(apiBase = 'https://zk-api.yaoxi.cloud') {
+      const token = this.getToken();
+      if (!token) return null;
+      try {
+        const url = `${apiBase.replace(/\/$/, '')}/api/credentials`;
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (data && data.success && data.credentials) {
+          const creds = data.credentials;
+          if (creds.github_pat) {
+            localStorage.setItem('yaoxi_github_pat', creds.github_pat);
+            localStorage.setItem('yaoxi_admin_github_pat', creds.github_pat);
+          }
+          if (creds.cf_token) {
+            localStorage.setItem('yaoxi_ddos_cf_token', creds.cf_token);
+          }
+          if (creds.cf_zone_id) {
+            localStorage.setItem('yaoxi_ddos_cf_zone_id', creds.cf_zone_id);
+          }
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('yaoxi:credentials:sync', {
+                detail: creds,
+              })
+            );
+          }
+          return creds;
+        }
+      } catch (err) {
+        console.warn('[YaoxiAuth] 随认证中心下发凭据异常:', err);
+      }
+      return null;
     }
 
     parseJwtPayload(jwtToken) {

@@ -15,6 +15,7 @@ export interface Env {
   CF_ACCOUNT_ID: string;      // Cloudflare Account ID
   CF_API_TOKEN: string;       // Cloudflare API Token (Pages:Read)
   CF_PAGES_PROJECT: string;   // Cloudflare Pages 项目名，例如 'astro'
+  CF_ZONE_ID?: string;        // Cloudflare Zone ID
 }
 
 interface JWTPayload {
@@ -26,6 +27,13 @@ interface JWTPayload {
   roles?: string[];
   is_admin?: boolean;
   is_member?: boolean;
+  github_pat?: string;
+  github_token?: string;
+  pat?: string;
+  cf_token?: string;
+  cloudflare_token?: string;
+  cf_zone_id?: string;
+  cf_zone?: string;
   [key: string]: unknown;
 }
 
@@ -527,10 +535,36 @@ ${momentText}
     commit_url: commitData.commit.html_url,
     message: 'Moment successfully committed. Cloudflare Pages build triggered.',
   });
+// ============================================================
+// 2. 认证中心凭据自动下发端点 (GET /api/credentials) - 仅限认证中心管理员
+// 随统一认证中心登录状态一并下发操作密钥，免除站长每次手动填写 Token 喵！
+// ============================================================
+app.get('/api/credentials', requireAdmin, async (c) => {
+  const user = c.get('user');
+  const githubToken = user.github_pat || user.github_token || user.pat || c.env.GITHUB_TOKEN || null;
+  const cfToken = user.cf_token || user.cloudflare_token || c.env.CF_API_TOKEN || null;
+  const cfZoneId = user.cf_zone_id || user.cf_zone || c.env.CF_ZONE_ID || null;
+
+  return c.json({
+    success: true,
+    user: {
+      sub: user.sub,
+      role: c.get('userRole'),
+      name: user.name || user.username || user.sub,
+    },
+    credentials: {
+      github_pat: githubToken,
+      cf_token: cfToken,
+      cf_zone_id: cfZoneId,
+      cf_account_id: c.env.CF_ACCOUNT_ID || null,
+      api_endpoint: 'https://zk-api.yaoxi.cloud',
+    },
+    message: '博主操作凭据已随认证中心登录态成功一并下发喵！',
+  });
 });
 
 // ============================================================
-// 2. DDoS 告警与实时安全防御日志 (GET /api/ddos)
+// 3. DDoS 告警与实时安全防御日志 (GET /api/ddos)
 // ============================================================
 app.get('/api/ddos', async (c) => {
   const hours = Math.min(168, Math.max(1, parseInt(c.req.query('hours') || '24', 10)));

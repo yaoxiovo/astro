@@ -400,9 +400,17 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
         </div>
 
         <div>
-          <label class="block font-medium text-black/70 dark:text-white/70 mb-1">只读 Cloudflare API Token (可选本地直连)</label>
-          <input type="password" id="setting-cf-token" placeholder="留空则通过 Worker 网关拉取" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 font-mono text-xs outline-none focus:border-[var(--primary)]" />
-          <p class="text-[11px] text-black/40 dark:text-white/40 mt-1">仅保存在当前浏览器的 localStorage 中，绝不上报</p>
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-medium text-black/70 dark:text-white/70">只读 Cloudflare API Token (可选本地直连)</label>
+            <div class="flex items-center gap-1.5">
+              <span id="badge-cf-token-auto" class="hidden text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-medium">✨ 随认证中心自动下发</span>
+              <button type="button" id="btn-sync-ddos-creds" class="text-[10px] px-2 py-0.5 rounded-md bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-all font-medium flex items-center gap-1 cursor-pointer">
+                <span>🔄 重新下发凭据</span>
+              </button>
+            </div>
+          </div>
+          <input type="password" id="setting-cf-token" placeholder="留空则通过 Worker 网关拉取（管理员自动下发）" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 font-mono text-xs outline-none focus:border-[var(--primary)]" />
+          <p class="text-[11px] text-black/40 dark:text-white/40 mt-1">管理员登录态下自动随耀西统一认证中心下发，无需手动填写喵~</p>
         </div>
 
         <div>
@@ -554,13 +562,57 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
     const settingsModal = document.getElementById("settings-modal");
     const saveSettingsBtn = document.getElementById("btn-save-settings");
     const resetSettingsBtn = document.getElementById("btn-reset-settings");
+    const syncCredsBtn = document.getElementById("btn-sync-ddos-creds");
+    const badgeAutoToken = document.getElementById("badge-cf-token-auto");
+
+    function updateSettingBadges() {
+      const hasToken = !!localStorage.getItem(STORAGE_KEY_TOKEN);
+      if (badgeAutoToken) {
+        if (hasToken) badgeAutoToken.classList.remove("hidden");
+        else badgeAutoToken.classList.add("hidden");
+      }
+    }
 
     if (openSettingsBtn && settingsModal) {
       openSettingsBtn.onclick = () => {
         document.getElementById("setting-api-endpoint").value = getDefaultApiEndpoint();
         document.getElementById("setting-cf-token").value = localStorage.getItem(STORAGE_KEY_TOKEN) || "";
         document.getElementById("setting-cf-zone-id").value = localStorage.getItem(STORAGE_KEY_ZONE) || "";
+        updateSettingBadges();
         settingsModal.classList.remove("hidden");
+      };
+    }
+
+    if (syncCredsBtn) {
+      syncCredsBtn.onclick = async () => {
+        if (typeof window.yaoxiSyncCredentials === "function") {
+          syncCredsBtn.disabled = true;
+          syncCredsBtn.innerHTML = "<span>⏳ 下发中...</span>";
+          try {
+            const creds = await window.yaoxiSyncCredentials();
+            if (creds && (creds.cf_token || creds.github_pat)) {
+              if (creds.cf_token) {
+                document.getElementById("setting-cf-token").value = creds.cf_token;
+                localStorage.setItem(STORAGE_KEY_TOKEN, creds.cf_token);
+              }
+              if (creds.cf_zone_id) {
+                document.getElementById("setting-cf-zone-id").value = creds.cf_zone_id;
+                localStorage.setItem(STORAGE_KEY_ZONE, creds.cf_zone_id);
+              }
+              updateSettingBadges();
+              alert("已随统一认证中心成功下发 Cloudflare 运维凭据喵！");
+            } else {
+              alert("未从认证中心拉取到运维凭据，请确认当前账号具备管理员权限喵！");
+            }
+          } catch (e) {
+            alert("同步下发异常: " + e.message);
+          } finally {
+            syncCredsBtn.disabled = false;
+            syncCredsBtn.innerHTML = "<span>🔄 重新下发凭据</span>";
+          }
+        } else {
+          alert("统一认证中心客户端尚未就绪 喵！");
+        }
       };
     }
 
@@ -576,6 +628,7 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
         document.getElementById("setting-api-endpoint").value = "https://blog-api.yaoxi.cloud";
         document.getElementById("setting-cf-token").value = "";
         document.getElementById("setting-cf-zone-id").value = "";
+        updateSettingBadges();
       };
     }
 
@@ -598,6 +651,11 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
         resetCountdown();
         fetchDDoSLogs();
       };
+    }
+
+    // 自动预拉取认证中心凭据（若用户为管理员但未配置）
+    if (!localStorage.getItem(STORAGE_KEY_TOKEN) && typeof window.yaoxiSyncCredentials === "function") {
+      window.yaoxiSyncCredentials().catch(() => {});
     }
   }
 
@@ -1100,6 +1158,23 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
   }
+
+  // 监听随认证中心下发的凭据更新事件
+  window.addEventListener("yaoxi:credentials:sync", (e) => {
+    const creds = e.detail;
+    if (creds && creds.cf_token) {
+      localStorage.setItem(STORAGE_KEY_TOKEN, creds.cf_token);
+      const tokenInput = document.getElementById("setting-cf-token");
+      if (tokenInput) tokenInput.value = creds.cf_token;
+    }
+    if (creds && creds.cf_zone_id) {
+      localStorage.setItem(STORAGE_KEY_ZONE, creds.cf_zone_id);
+      const zoneInput = document.getElementById("setting-cf-zone-id");
+      if (zoneInput) zoneInput.value = creds.cf_zone_id;
+    }
+    const badge = document.getElementById("badge-cf-token-auto");
+    if (badge) badge.classList.remove("hidden");
+  });
 
   // 监听首次加载与 Swup 路由跳转
   if (document.readyState === "loading") {
