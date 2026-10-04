@@ -1961,90 +1961,219 @@ ${content.trim()}
       }
     }
 
-    // 9. 轮询 Cloudflare Pages 部署状态
+    // 9. 智能多通道部署状态探测引擎 (Multi-Engine Deploy Probe)
     function pollDeployStatus(apiBase, token, commitSha, slug, targetType = 'post') {
       if (deployPollTimer) clearInterval(deployPollTimer);
 
+      const githubPat = localStorage.getItem(GITHUB_PAT_KEY) || (inputGithubToken ? inputGithubToken.value.trim() : '');
+      const cleanSlug = String(slug || '').replace(/\.md$/, '').replace(/^\/+/, '');
+      let pollAttempts = 0;
+
       deployPollTimer = setInterval(async () => {
-        try {
-          const activeToken = token || getAdminToken();
-          const res = await fetch(`${apiBase}/api/deploy-status?commit=${commitSha}`, {
-            headers: {
-              'Authorization': `Bearer ${activeToken}`
+        pollAttempts++;
+        let status = null; // 'queued' | 'active' | 'success' | 'failure'
+        let stage = 'build';
+        let previewUrl = '';
+
+        // 通道 1: 若配置了自建 BFF Worker，且不是无效的默认域名，尝试通过 Worker 查询
+        if (apiBase && !apiBase.includes('zk-api.yaoxi.cloud')) {
+          try {
+            const activeToken = token || getAdminToken();
+            const res = await fetch(`${apiBase}/api/deploy-status?commit=${commitSha}`, {
+              headers: { 'Authorization': `Bearer ${activeToken}` }
+            });
+            if (res.ok) {
+              const data = await res.json();
+              status = data.status;
+              stage = data.stage || 'pages';
+              previewUrl = data.preview_url;
             }
-          });
-
-          if (!res.ok) return;
-
-          const data = await res.json();
-          const status = data.status; // 'queued' | 'active' | 'success' | 'failure'
-          const stage = data.stage || 'build';
-
-          if (status === 'queued') {
-            deployProgressBar.style.width = '35%';
-            deployBadge.textContent = 'QUEUED';
-            deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20';
-            deployTitle.textContent = 'Cloudflare Pages 构建排队中...';
-            deployStageInfo.textContent = `阶段: ${stage}`;
-          } else if (status === 'active') {
-            deployProgressBar.style.width = '70%';
-            deployBadge.textContent = 'ACTIVE';
-            deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20 animate-pulse';
-            deployTitle.textContent = 'Cloudflare Pages 正在构建与静态编译中...';
-            deployStageInfo.textContent = `阶段: ${stage}`;
-          } else if (status === 'success') {
-            // 部署成功！
-            clearInterval(deployPollTimer);
-            clearInterval(timerInterval);
-
-            deployProgressBar.style.width = '100%';
-            deployProgressBar.className = 'h-full bg-emerald-500 rounded-full transition-all';
-            deployBadge.textContent = 'SUCCESS';
-            deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
-            deploySubtitle.textContent = `Commit: ${commitSha.substring(0, 7)} · 全球 Anycast CDN 缓存已刷新`;
-            deployStageInfo.textContent = `阶段: 完成 (${stage})`;
-
-            if (targetType === 'moment') {
-              deployTitle.textContent = '🎉 全球边缘发布完成！朋友圈动态已正式上线 喵！';
-              linkLivePost.href = `/moments/`;
-              const liveText = linkLivePost.querySelector('span');
-              if (liveText) liveText.textContent = '前往朋友圈查看动态';
-            } else {
-              deployTitle.textContent = '🎉 全球边缘发布完成！文章已正式上线 喵！';
-              localStorage.removeItem(STORAGE_KEY);
-              draftStatusEl.classList.add('hidden');
-              const cleanSlug = slug.replace(/\.md$/, '').replace(/^\/+/, '');
-              linkLivePost.href = `/posts/${cleanSlug}/`;
-              const liveText = linkLivePost.querySelector('span');
-              if (liveText) liveText.textContent = '在新标签页阅读新文章';
-            }
-
-            linkPreviewUrl.href = data.preview_url || `https://astro.pages.dev`;
-            linkPreviewUrl.textContent = `预览节点 (${(data.preview_url || 'pages.dev').replace('https://', '').substring(0, 18)}...)`;
-            deploySuccessLinks.classList.remove('hidden');
-
-            btnPublish.disabled = false;
-            publishSpinner.classList.add('hidden');
-            publishIcon.classList.remove('hidden');
-            btnPublishText.textContent = '已发布上线';
-          } else if (status === 'failure') {
-            clearInterval(deployPollTimer);
-            clearInterval(timerInterval);
-
-            deployProgressBar.style.width = '100%';
-            deployProgressBar.className = 'h-full bg-red-500 rounded-full';
-            deployBadge.textContent = 'FAILURE';
-            deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-red-500/10 text-red-500 border border-red-500/20';
-            deployTitle.textContent = 'Cloudflare Pages 构建失败 喵！';
-            deploySubtitle.textContent = '请进入 Cloudflare 控制台查看详细构建日志与报错。';
-
-            btnPublish.disabled = false;
-            publishSpinner.classList.add('hidden');
-            publishIcon.classList.remove('hidden');
-            btnPublishText.textContent = '重试发布';
+          } catch (e) {
+            // Worker 离线，静默跳过走后续通道
           }
-        } catch (e) {
-          deployStageInfo.textContent = '探针网络微抖动，继续重试轮询中...';
+        }
+
+        // 通道 2: 客户端 GitHub 官方 Check Runs & Status API 探针 (直连 GitHub，0 中间件)
+        if (!status && githubPat && commitSha) {
+          try {
+            // 2.1 检查 Check Runs (Cloudflare Pages 与 GitHub Actions 标准构建上报接口)
+            const checkRes = await fetch(`https://api.github.com/repos/yaoxiovo/astro/commits/${commitSha}/check-runs`, {
+              headers: {
+                'Authorization': `Bearer ${githubPat}`,
+                'Accept': 'application/vnd.github.v3+json',
+              }
+            });
+
+            if (checkRes.ok) {
+              const checkData = await checkRes.json();
+              const runs = checkData.check_runs || [];
+              if (runs.length > 0) {
+                // 查找 Cloudflare Pages 或主要工作流
+                const pagesRun = runs.find((r) => {
+                  const n = String(r.name || '').toLowerCase();
+                  return n.includes('cloudflare') || n.includes('pages');
+                }) || runs[0];
+
+                if (pagesRun.status === 'completed') {
+                  if (pagesRun.conclusion === 'success') {
+                    status = 'success';
+                    stage = pagesRun.name || 'Cloudflare Pages';
+                    previewUrl = pagesRun.details_url || pagesRun.html_url;
+                  } else if (pagesRun.conclusion === 'failure') {
+                    status = 'failure';
+                    stage = pagesRun.name || 'Cloudflare Pages';
+                  }
+                } else if (pagesRun.status === 'in_progress') {
+                  status = 'active';
+                  stage = pagesRun.name || '构建编译中';
+                } else if (pagesRun.status === 'queued') {
+                  status = 'queued';
+                  stage = '排队准备中';
+                }
+              }
+            }
+
+            // 2.2 若 Check Runs 暂无结果，检查 Combined Status
+            if (!status) {
+              const statusRes = await fetch(`https://api.github.com/repos/yaoxiovo/astro/commits/${commitSha}/status`, {
+                headers: {
+                  'Authorization': `Bearer ${githubPat}`,
+                  'Accept': 'application/vnd.github.v3+json',
+                }
+              });
+              if (statusRes.ok) {
+                const combined = await statusRes.json();
+                if (combined.state === 'success') {
+                  status = 'success';
+                  stage = 'GitHub Status Verified';
+                } else if (combined.state === 'failure' || combined.state === 'error') {
+                  status = 'failure';
+                  stage = 'GitHub Status Failed';
+                } else if (combined.state === 'pending' && combined.total_count > 0) {
+                  status = 'active';
+                  stage = '构建中 (Pending)';
+                }
+              }
+            }
+          } catch (ghErr) {
+            console.warn('[Probe GitHub Check Error]', ghErr);
+          }
+        }
+
+        // 通道 3: 目标页面 HTTP 原生端到端探活 (Live Edge Probe)
+        // 直接向 blog.yaoxi.wiki 发起带时间戳无缓存请求，检测页面是否已在 CDN 边缘生效
+        if (status !== 'success' && status !== 'failure' && cleanSlug && targetType === 'post') {
+          try {
+            const probeTarget = `/posts/${cleanSlug}/?_edge_probe=${Date.now()}`;
+            const liveRes = await fetch(probeTarget, {
+              method: 'GET',
+              cache: 'no-store',
+              headers: { 'Cache-Control': 'no-cache, no-store' }
+            });
+            // 只要返回 200 且不是 404 错误页，证明页面已完成静态编译并发布上线
+            if (liveRes.ok && liveRes.status === 200) {
+              const htmlText = await liveRes.text();
+              if (!htmlText.includes('404') && !htmlText.includes('页面未找到')) {
+                status = 'success';
+                stage = 'CDN Edge Live 200 OK';
+              }
+            }
+          } catch (liveErr) {
+            // ignore
+          }
+        }
+
+        // 朋友圈动态的端到端探活 (通过 /api/moments.json 检查是否收录)
+        if (status !== 'success' && status !== 'failure' && targetType === 'moment' && cleanSlug) {
+          try {
+            const momentsRes = await fetch(`/api/moments.json?_edge_probe=${Date.now()}`, {
+              cache: 'no-store'
+            });
+            if (momentsRes.ok) {
+              const momentsList = await momentsRes.json();
+              if (Array.isArray(momentsList) && momentsList.some((m) => m.slug === cleanSlug)) {
+                status = 'success';
+                stage = 'CDN Moments Live';
+              }
+            }
+          } catch (e) {}
+        }
+
+        // 状态平滑渲染
+        if (status === 'queued') {
+          deployProgressBar.style.width = '35%';
+          deployBadge.textContent = 'QUEUED';
+          deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20';
+          deployTitle.textContent = 'Cloudflare Pages 构建排队中...';
+          deployStageInfo.textContent = `阶段: ${stage} · 探测第 ${pollAttempts} 次`;
+        } else if (status === 'active') {
+          deployProgressBar.style.width = '70%';
+          deployBadge.textContent = 'ACTIVE';
+          deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20 animate-pulse';
+          deployTitle.textContent = 'Cloudflare Pages 正在构建与静态编译中...';
+          deployStageInfo.textContent = `阶段: ${stage} · 持续探测中 (${deploySeconds}s)`;
+        } else if (status === 'success') {
+          // 部署成功！
+          clearInterval(deployPollTimer);
+          clearInterval(timerInterval);
+
+          deployProgressBar.style.width = '100%';
+          deployProgressBar.className = 'h-full bg-emerald-500 rounded-full transition-all';
+          deployBadge.textContent = 'SUCCESS';
+          deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-emerald-500/10 text-emerald-500 border border-emerald-500/20';
+          deploySubtitle.textContent = `Commit: ${commitSha ? commitSha.substring(0, 7) : 'HEAD'} · 全球 Anycast CDN 缓存已就绪 喵！`;
+          deployStageInfo.textContent = `阶段: 验证通过 (${stage})`;
+
+          if (targetType === 'moment') {
+            deployTitle.textContent = '🎉 全球边缘发布完成！朋友圈动态已正式上线 喵！';
+            linkLivePost.href = `/moments/`;
+            const liveText = linkLivePost.querySelector('span');
+            if (liveText) liveText.textContent = '前往朋友圈查看动态';
+          } else {
+            deployTitle.textContent = '🎉 全球边缘发布完成！文章已正式上线 喵！';
+            localStorage.removeItem(STORAGE_KEY);
+            draftStatusEl.classList.add('hidden');
+            linkLivePost.href = `/posts/${cleanSlug}/`;
+            const liveText = linkLivePost.querySelector('span');
+            if (liveText) liveText.textContent = '在新标签页阅读新文章';
+          }
+
+          linkPreviewUrl.href = previewUrl || `https://blog.yaoxi.wiki`;
+          linkPreviewUrl.textContent = previewUrl ? `预览节点 (${previewUrl.replace('https://', '').substring(0, 20)}...)` : '线上正式节点';
+          deploySuccessLinks.classList.remove('hidden');
+
+          btnPublish.disabled = false;
+          publishSpinner.classList.add('hidden');
+          publishIcon.classList.remove('hidden');
+          btnPublishText.textContent = '已发布上线';
+        } else if (status === 'failure') {
+          clearInterval(deployPollTimer);
+          clearInterval(timerInterval);
+
+          deployProgressBar.style.width = '100%';
+          deployProgressBar.className = 'h-full bg-red-500 rounded-full';
+          deployBadge.textContent = 'FAILURE';
+          deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-red-500/10 text-red-500 border border-red-500/20';
+          deployTitle.textContent = 'Cloudflare Pages 构建失败 喵！';
+          deploySubtitle.textContent = '构建管道返回异常状态，请前往 GitHub/Cloudflare 控制台查看详细构建日志。';
+
+          btnPublish.disabled = false;
+          publishSpinner.classList.add('hidden');
+          publishIcon.classList.remove('hidden');
+          btnPublishText.textContent = '重试发布';
+        } else {
+          // 兜底心跳态：逐步动态增加进度条，让用户明确感知探针在积极探活
+          const estimatedProgress = Math.min(85, 30 + Math.floor(pollAttempts * 2));
+          deployProgressBar.style.width = `${estimatedProgress}%`;
+          deployBadge.textContent = 'PROBING';
+          deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20 animate-pulse';
+          deployTitle.textContent = 'GitHub Commit 提交成功，正在探活 Cloudflare Pages 编译状态...';
+          deployStageInfo.textContent = `探针第 ${pollAttempts} 次轮询 (${deploySeconds}s) · 正在多通道验证`;
+
+          // 超时（例如 90s 以上）提供直接验证跳转兜底
+          if (pollAttempts >= 30) {
+            deploySubtitle.innerHTML = `Commit: ${commitSha ? commitSha.substring(0, 7) : 'HEAD'} · Pages 正在后台编译分发中。<br/><a href="${targetType === 'moment' ? '/moments/' : `/posts/${cleanSlug}/`}" target="_blank" class="mt-2 inline-flex items-center gap-1 text-[var(--primary)] font-bold underline hover:opacity-80"><span>🚀 探活超时，点击直接打开目标页面验证 喵</span></a>`;
+          }
         }
       }, 3000);
     }
