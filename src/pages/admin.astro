@@ -840,21 +840,70 @@ import { umamiConfig } from "../config";
       );
     }
 
-    function buildSsoLoginUrl() {
+    const SSO_HANDSHAKE_SECRET = 'yaoxi_sso_handshake_secret_key_v1_auth_guard_2026';
+
+    async function createSignedHandshakeToken(targetDomain) {
+      const timestamp = Date.now().toString();
+      const nonce = Math.random().toString(36).substring(2, 10);
+      const domain = targetDomain || window.location.hostname;
+      const payload = `v1.${timestamp}.${nonce}.${domain}`;
+
+      if (window.crypto && window.crypto.subtle) {
+        try {
+          const enc = new TextEncoder();
+          const key = await crypto.subtle.importKey(
+            'raw',
+            enc.encode(SSO_HANDSHAKE_SECRET),
+            { name: 'HMAC', hash: 'SHA-256' },
+            false,
+            ['sign']
+          );
+          const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(payload));
+          const sigHex = Array.from(new Uint8Array(sigBuf))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('')
+            .substring(0, 32);
+
+          return `crt.v1.${timestamp}.${nonce}.${sigHex}`;
+        } catch (e) {}
+      }
+      return `crt.v1.${timestamp}.${nonce}.sigfallback`;
+    }
+
+    async function buildSsoLoginUrl() {
       const authUrl = 'https://accounts.yaoxi.cloud';
       const clientId = 'yaoxi-blog';
       const targetDomain = window.location.hostname;
-      const redirectUri = window.location.origin + window.location.pathname;
+      const redirectUri = window.location.href.split('#')[0];
+      const clientRequestToken = await createSignedHandshakeToken(targetDomain);
+
+      try {
+        sessionStorage.setItem('yaoxi_auth_pending_token', clientRequestToken);
+      } catch (e) {}
 
       const params = new URLSearchParams({
         client_id: clientId,
         target_domain: targetDomain,
         redirect_uri: redirectUri,
+        client_request_token: clientRequestToken,
         response_type: 'token',
         scope: 'openid profile email admin',
         state: 'st_' + Math.random().toString(36).substring(2, 10),
       });
       return `${authUrl}/accounts-login.html?${params.toString()}`;
+    }
+
+    async function triggerSsoLoginRedirect() {
+      if (window.yaoxiAuth && typeof window.yaoxiAuth.login === 'function') {
+        try {
+          await window.yaoxiAuth.login({ mode: 'redirect' });
+          return;
+        } catch (e) {}
+      }
+      const ssoLoginUrl = await buildSsoLoginUrl();
+      const btnManualLogin = document.getElementById('btn-manual-login');
+      if (btnManualLogin) btnManualLogin.href = ssoLoginUrl;
+      window.location.replace(ssoLoginUrl);
     }
 
     /**
@@ -888,13 +937,15 @@ import { umamiConfig } from "../config";
         if (guardForbidden) guardForbidden.classList.add('hidden');
         if (guardRedirecting) guardRedirecting.classList.remove('hidden');
 
-        const ssoLoginUrl = buildSsoLoginUrl();
-        if (btnManualLogin) btnManualLogin.href = ssoLoginUrl;
+        // 异步签发防伪 token 并预填备用手动登录链接
+        buildSsoLoginUrl().then((ssoLoginUrl) => {
+          if (btnManualLogin) btnManualLogin.href = ssoLoginUrl;
+        });
 
         // 延迟 220ms 执行重定向，保证过渡自然且给用户清晰引导
         setTimeout(() => {
           if (!getAdminToken()) {
-            window.location.replace(ssoLoginUrl);
+            triggerSsoLoginRedirect();
           }
         }, 220);
         return false;
@@ -1864,7 +1915,7 @@ import { umamiConfig } from "../config";
     // 绑定拦截页交互按钮
     const btnForbiddenSwitch = document.getElementById('btn-forbidden-switch');
     if (btnForbiddenSwitch) {
-      btnForbiddenSwitch.addEventListener('click', () => {
+      btnForbiddenSwitch.addEventListener('click', async () => {
         if (window.yaoxiAuth && typeof window.yaoxiAuth.logout === 'function') {
           window.yaoxiAuth.logout();
         } else {
@@ -1873,7 +1924,15 @@ import { umamiConfig } from "../config";
           localStorage.removeItem('user_profile');
           localStorage.removeItem('yaoxi_auth_exp');
         }
-        window.location.replace(buildSsoLoginUrl());
+        await triggerSsoLoginRedirect();
+      });
+    }
+
+    const btnManualLogin = document.getElementById('btn-manual-login');
+    if (btnManualLogin) {
+      btnManualLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        triggerSsoLoginRedirect();
       });
     }
 
