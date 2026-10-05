@@ -38,16 +38,16 @@ const isLatest = currentRevision.sha === latestRevision.sha;
 			<p class="text-amber-900/80 dark:text-amber-200/80 leading-relaxed mb-3">
 				这是由贡献者 <strong class="font-semibold text-amber-950 dark:text-amber-100">{currentRevision.author}</strong> 于 
 				<strong class="font-semibold text-amber-950 dark:text-amber-100">{currentRevision.displayDate}</strong> 提交的修订快照。
-				{#if currentRevision.message}
+				{currentRevision.message && (
 					<span class="block mt-1 text-[11px] text-amber-900/70 dark:text-amber-300/70 italic">
 						编辑摘要：“{currentRevision.message}”
 					</span>
-				{/if}
-				{#if !isLatest}
+				)}
+				{!isLatest && (
 					<span class="inline-block mt-1 font-medium text-amber-700 dark:text-amber-300">
 						⚠️ 注意：此快照可能包含过时或已被更正的信息。
 					</span>
-				{/if}
+				)}
 			</p>
 
 			<!-- 维基百科经典导航快捷链 -->
@@ -68,7 +68,7 @@ const isLatest = currentRevision.sha === latestRevision.sha;
 					<span>查看全部修订历史</span>
 				</a>
 
-				{#if prevRevision}
+				{prevRevision && (
 					<a
 						href={`/posts/${slug}/revision/${prevRevision.shortSha}/`}
 						class="px-2 py-1 rounded-lg hover:underline text-amber-800 dark:text-amber-200"
@@ -76,9 +76,9 @@ const isLatest = currentRevision.sha === latestRevision.sha;
 					>
 						← 更旧的版本
 					</a>
-				{/if}
+				)}
 
-				{#if nextRevision}
+				{nextRevision && (
 					<a
 						href={`/posts/${slug}/revision/${nextRevision.shortSha}/`}
 						class="px-2 py-1 rounded-lg hover:underline text-amber-800 dark:text-amber-200"
@@ -86,9 +86,9 @@ const isLatest = currentRevision.sha === latestRevision.sha;
 					>
 						更新的版本 →
 					</a>
-				{/if}
+				)}
 
-				{#if currentRevision.diffUrl}
+				{currentRevision.diffUrl && (
 					<a
 						href={currentRevision.diffUrl}
 						target="_blank"
@@ -98,7 +98,7 @@ const isLatest = currentRevision.sha === latestRevision.sha;
 						<Icon name="fa6-brands:github" class="text-xs" />
 						<span>GitHub Commit</span>
 					</a>
-				{/if}
+				)}
 			</div>
 		</div>
 	</div>

@@ -68,6 +68,7 @@ let rawPostMarkdown = "";
 let articleTitle = entry.data.title;
 let postId = entry.id;
 let seriesPosts: any[] = [];
+let seriesName: any = undefined;
 let articleImageUrl = "";
 let datePublishedISO = "";
 let dateModifiedISO = "";
@@ -96,7 +97,7 @@ if (mode === "article") {
 
 	// 获取同系列文章
 	const allPosts = await getSortedPosts();
-	const seriesName = entry.data.series;
+	seriesName = entry.data.series;
 	seriesPosts = seriesName
 		? allPosts
 			.filter(p => p.data.series === seriesName)
@@ -537,6 +538,8 @@ if (mode === "article") {
             </div>}
         </a>
     </div>
+    </div>
+</div>
 
 <style>
     .post-container :global(img) {
