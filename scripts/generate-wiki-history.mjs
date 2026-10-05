@@ -61,6 +61,43 @@ function isMinorEdit(message) {
 	);
 }
 
+function ensureFullGitHistory() {
+	try {
+		const isShallow = execSync("git rev-parse --is-shallow-repository", {
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim();
+
+		if (isShallow === "true") {
+			console.log(
+				"⚠️ [Wiki Generator] 检测到当前处于浅克隆（Shallow repository）环境，正在尝试拉取全量 Git 历史..."
+			);
+			try {
+				execSync("git fetch --unshallow", {
+					stdio: "inherit",
+				});
+				console.log("✨ [Wiki Generator] 成功执行 git fetch --unshallow，已补全历史记录！");
+			} catch (fetchErr) {
+				console.warn(
+					"⚠️ [Wiki Generator] git fetch --unshallow 失败，尝试 fallback: git fetch --depth=2000 origin HEAD..."
+				);
+				try {
+					execSync("git fetch --depth=2000 origin HEAD", {
+						stdio: "inherit",
+					});
+					console.log("✨ [Wiki Generator] 成功通过 fallback 拉取深层历史！");
+				} catch (fallbackErr) {
+					console.error("❌ [Wiki Generator] 无法拉取深层历史:", fallbackErr.message);
+				}
+			}
+		}
+	} catch (e) {
+		console.warn("⚠️ [Wiki Generator] 检查浅克隆状态失败:", e.message);
+	}
+}
+
+ensureFullGitHistory();
+
 console.log("🐾 [Wiki Generator] 开始提取文章 Git 修订历史与快照...");
 const startTime = Date.now();
 
@@ -134,16 +171,29 @@ for (const file of postFiles) {
 			// ignore
 		}
 
-		// 提取快照内容
+		// 提取快照内容（优先命中已存在的快照）
 		let snapshotContent = "";
-		try {
-			snapshotContent = execSync(`git show ${sha}:"${gitRelativePath}"`, {
-				encoding: "utf-8",
-				maxBuffer: 10 * 1024 * 1024,
-				stdio: ["ignore", "pipe", "ignore"],
-			});
-		} catch {
-			// fallback to current if failed
+		const cachedSnapPath = path.join(DATA_DIR, "snapshots", slug, `${shortSha}.json`);
+		if (fs.existsSync(cachedSnapPath)) {
+			try {
+				const existingSnap = JSON.parse(fs.readFileSync(cachedSnapPath, "utf-8"));
+				snapshotContent = existingSnap.content || "";
+			} catch {}
+		}
+		if (!snapshotContent) {
+			try {
+				snapshotContent = execSync(`git show ${sha}:"${gitRelativePath}"`, {
+					encoding: "utf-8",
+					maxBuffer: 10 * 1024 * 1024,
+					stdio: ["ignore", "pipe", "ignore"],
+				});
+			} catch {
+				// fallback to current if failed
+			}
+		}
+
+		if (!byteSize && snapshotContent) {
+			byteSize = Buffer.byteLength(snapshotContent, "utf-8");
 		}
 
 		const { section, cleanMessage } = parseSection(message);
@@ -273,6 +323,26 @@ for (const file of postFiles) {
 		path.join(PUBLIC_API_DIR, "history", `${slug}.json`),
 		JSON.stringify(postHistory, null, 2)
 	);
+}
+
+// 安全门禁：检查是否提取出的总提交数异常过少（防止浅克隆无网络时覆盖已提交的全量历史数据）
+const existingHistoryPath = path.join(DATA_DIR, "history.json");
+let existingHistoryCount = 0;
+if (fs.existsSync(existingHistoryPath)) {
+	try {
+		const existingData = JSON.parse(fs.readFileSync(existingHistoryPath, "utf-8"));
+		existingHistoryCount = Object.values(existingData).reduce(
+			(acc, cur) => acc + (cur.totalRevisions || 0),
+			0
+		);
+	} catch {}
+}
+
+if (existingHistoryCount > 0 && totalCommitsExtracted < existingHistoryCount * 0.5) {
+	console.warn(
+		`⚠️ [Wiki Generator] 提取的提交数 (${totalCommitsExtracted}) 远小于已有历史记录 (${existingHistoryCount})，检测到浅克隆未完全解除，为保证数据完整性，放弃覆盖已有 history.json 喵！`
+	);
+	process.exit(0);
 }
 
 // 汇总写入 master json

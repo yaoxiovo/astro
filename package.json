@@ -5,8 +5,9 @@
 	"scripts": {
 		"dev": "node scripts/generate-wiki-history.mjs && astro dev",
 		"start": "node scripts/generate-wiki-history.mjs && astro dev",
-		"prebuild": "node scripts/generate-wiki-history.mjs",
+		"prebuild": "(git rev-parse --is-shallow-repository 2>/dev/null | grep -q true && (git fetch --unshallow || git fetch --depth=2000 origin HEAD) || true) && node scripts/generate-wiki-history.mjs",
 		"build": "astro build",
+		"cf:build": "(git rev-parse --is-shallow-repository 2>/dev/null | grep -q true && (git fetch --unshallow || git fetch --depth=2000 origin HEAD) || true) && pnpm run build",
 		"wiki:history": "node scripts/generate-wiki-history.mjs",
 		"preview": "astro preview",
 		"astro": "astro",
