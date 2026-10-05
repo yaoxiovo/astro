@@ -1,0 +1,287 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+import { getMaintenanceSync } from "@utils/wiki-special-loader";
+
+const report = getMaintenanceSync();
+const stats = report?.stats;
+
+function fmtDate(iso?: string | null): string {
+	if (!iso) return "—";
+	try {
+		return new Date(iso).toLocaleDateString("zh-CN");
+	} catch {
+		return iso;
+	}
+}
+
+const gradeClasses: Record<string, string> = {
+	S: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+	A: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+	B: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+	C: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+	D: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+};
+
+const brokenTypeLabels: Record<string, string> = {
+	broken_anchor: "页内锚点死链",
+	broken_internal_link: "站内死链",
+	broken_relative_asset: "资源缺失",
+};
+
+const pageTitle = "条目维护仪表盘 - Special:Maintenance";
+const pageDescription =
+	"维基百科式全站条目维护巡检：孤立条目、断头路、过时条目、低质条目与死链汇总";
+---
+
+<MainGridLayout title={pageTitle} description={pageDescription} noindex>
+  <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative mb-4">
+    <div class="card-base z-10 px-6 md:px-9 pt-6 pb-6 relative w-full">
+      <!-- 顶部标题与快捷导航 -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-[var(--line-divider)]">
+        <div>
+          <a href="/" class="text-xs text-[var(--primary)] hover:underline inline-flex items-center gap-1 font-medium mb-1.5">
+            <Icon name="material-symbols:arrow-back" class="text-sm" />
+            <span>返回首页</span>
+          </a>
+          <h1 class="text-2xl md:text-3xl font-bold text-black/90 dark:text-white/90 flex items-center gap-2">
+            <span>条目维护仪表盘</span>
+            <span class="text-xs font-mono font-normal text-black/40 dark:text-white/40 mt-1.5">Special:Maintenance</span>
+          </h1>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <a
+            href="/wiki/recent-changes/"
+            class="px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--line-divider)] hover:bg-black/5 dark:hover:bg-white/10 transition-colors inline-flex items-center gap-1.5 text-black/70 dark:text-white/70"
+          >
+            <Icon name="material-symbols:history" class="text-sm" />
+            <span>全站最近更改</span>
+          </a>
+        </div>
+      </div>
+
+      {report && stats ? (
+        <>
+          <!-- 统计卡片矩阵 -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div class="p-4 rounded-xl border border-[var(--line-divider)] bg-black/[0.02] dark:bg-white/[0.02]">
+              <div class="text-2xl font-bold font-mono text-black/85 dark:text-white/85">{stats.totalPosts}</div>
+              <div class="text-[11px] text-black/50 dark:text-white/50 mt-1">收录条目 · {stats.totalRevisions} 次修订</div>
+            </div>
+            <div class="p-4 rounded-xl border border-[var(--line-divider)] bg-black/[0.02] dark:bg-white/[0.02]">
+              <div class="text-2xl font-bold font-mono text-[var(--primary)]">{stats.totalInternalLinks}</div>
+              <div class="text-[11px] text-black/50 dark:text-white/50 mt-1">站内文章链接总数</div>
+            </div>
+            <div class="p-4 rounded-xl border border-[var(--line-divider)] bg-black/[0.02] dark:bg-white/[0.02]">
+              <div class="text-2xl font-bold font-mono text-orange-500">{stats.totalOrphans}</div>
+              <div class="text-[11px] text-black/50 dark:text-white/50 mt-1">孤立条目 · 断头路 {stats.totalDeadEnds}</div>
+            </div>
+            <div class="p-4 rounded-xl border border-[var(--line-divider)] bg-black/[0.02] dark:bg-white/[0.02]">
+              <div class="text-2xl font-bold font-mono {stats.totalBrokenLinks > 0 ? 'text-rose-500' : 'text-emerald-500'}">{stats.totalBrokenLinks}</div>
+              <div class="text-[11px] text-black/50 dark:text-white/50 mt-1">致命死链 · 过时 {stats.totalStale} 篇</div>
+            </div>
+          </div>
+
+          <div class="mb-6 p-3.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 leading-relaxed">
+            <p>
+              本页由构建期静态分析生成（<code class="font-mono">scripts/generate-wiki-special.mjs</code> + 质量门禁联动），
+              用于暴露站内知识库的「维护债务」：孤立条目无从被检索、断头路无法引导读者、过时条目需要更新审阅。
+              <span class="font-mono text-black/40 dark:text-white/40">索引生成于 {new Date(report.generatedAt).toLocaleString("zh-CN")} · 过时阈值 {report.staleThresholdDays} 天</span>
+            </p>
+          </div>
+
+          <!-- 过时条目 -->
+          <section class="mb-6">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-1.5 h-4 rounded-full bg-orange-500"></div>
+              <h2 class="text-sm font-bold text-black/85 dark:text-white/85">过时条目 (Stale Pages)</h2>
+              <span class="px-2 py-0.5 rounded-full text-[10px] bg-black/5 dark:bg-white/10 font-mono text-black/50 dark:text-white/50">{report.stale.length}</span>
+              <span class="text-[11px] text-black/40 dark:text-white/40">超过 {report.staleThresholdDays} 天未更新的条目</span>
+            </div>
+            {report.stale.length > 0 ? (
+              <div class="overflow-x-auto border border-[var(--line-divider)] rounded-xl bg-black/[0.01] dark:bg-white/[0.01]">
+                <table class="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr class="border-b border-[var(--line-divider)] bg-black/[0.03] dark:bg-white/[0.03] text-black/60 dark:text-white/60 font-semibold select-none">
+                      <th class="py-2.5 px-3">条目</th>
+                      <th class="py-2.5 px-3 w-32">最后修订</th>
+                      <th class="py-2.5 px-3 w-32">已滞留</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-[var(--line-divider)]/40">
+                    {report.stale.map((item) => (
+                      <tr class="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                        <td class="py-2.5 px-3">
+                          <a href={`/posts/${item.slug}/`} class="font-medium text-[var(--primary)] hover:underline">{item.title}</a>
+                        </td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-black/50 dark:text-white/50">{fmtDate(item.lastUpdated)}</td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-orange-500 font-semibold">{item.daysSinceUpdate} 天</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div class="p-4 rounded-xl border border-[var(--line-divider)] text-center text-xs text-black/50 dark:text-white/50">当前没有过时条目，知识库保鲜状态良好 喵~</div>
+            )}
+          </section>
+
+          <!-- 孤立条目 -->
+          <section class="mb-6">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-1.5 h-4 rounded-full bg-sky-500"></div>
+              <h2 class="text-sm font-bold text-black/85 dark:text-white/85">孤立条目 (Orphaned Pages)</h2>
+              <span class="px-2 py-0.5 rounded-full text-[10px] bg-black/5 dark:bg-white/10 font-mono text-black/50 dark:text-white/50">{report.orphans.length}</span>
+              <span class="text-[11px] text-black/40 dark:text-white/40">没有任何其他文章通过 /posts/ 链接指向它们</span>
+            </div>
+            {report.orphans.length > 0 ? (
+              <div class="overflow-x-auto border border-[var(--line-divider)] rounded-xl bg-black/[0.01] dark:bg-white/[0.01]">
+                <table class="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr class="border-b border-[var(--line-divider)] bg-black/[0.03] dark:bg-white/[0.03] text-black/60 dark:text-white/60 font-semibold select-none">
+                      <th class="py-2.5 px-3">条目</th>
+                      <th class="py-2.5 px-3 w-32">最后修订</th>
+                      <th class="py-2.5 px-3 w-24">修订数</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-[var(--line-divider)]/40">
+                    {report.orphans.map((item) => (
+                      <tr class="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                        <td class="py-2.5 px-3">
+                          <a href={`/posts/${item.slug}/`} class="font-medium text-[var(--primary)] hover:underline">{item.title}</a>
+                        </td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-black/50 dark:text-white/50">{fmtDate(item.lastUpdated)}</td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-black/50 dark:text-white/50">{item.totalRevisions ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div class="p-4 rounded-xl border border-[var(--line-divider)] text-center text-xs text-black/50 dark:text-white/50">没有孤立条目，所有文章都与其他条目建立了链接 喵~</div>
+            )}
+          </section>
+
+          <!-- 断头路 -->
+          <section class="mb-6">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-1.5 h-4 rounded-full bg-violet-500"></div>
+              <h2 class="text-sm font-bold text-black/85 dark:text-white/85">断头路条目 (Dead-end Pages)</h2>
+              <span class="px-2 py-0.5 rounded-full text-[10px] bg-black/5 dark:bg-white/10 font-mono text-black/50 dark:text-white/50">{report.deadEnds.length}</span>
+              <span class="text-[11px] text-black/40 dark:text-white/40">正文中没有任何指向其他文章的站内链接</span>
+            </div>
+            {report.deadEnds.length > 0 ? (
+              <div class="overflow-x-auto border border-[var(--line-divider)] rounded-xl bg-black/[0.01] dark:bg-white/[0.01]">
+                <table class="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr class="border-b border-[var(--line-divider)] bg-black/[0.03] dark:bg-white/[0.03] text-black/60 dark:text-white/60 font-semibold select-none">
+                      <th class="py-2.5 px-3">条目</th>
+                      <th class="py-2.5 px-3 w-32">最后修订</th>
+                      <th class="py-2.5 px-3 w-24">修订数</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-[var(--line-divider)]/40">
+                    {report.deadEnds.map((item) => (
+                      <tr class="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                        <td class="py-2.5 px-3">
+                          <a href={`/posts/${item.slug}/`} class="font-medium text-[var(--primary)] hover:underline">{item.title}</a>
+                        </td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-black/50 dark:text-white/50">{fmtDate(item.lastUpdated)}</td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-black/50 dark:text-white/50">{item.totalRevisions ?? "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div class="p-4 rounded-xl border border-[var(--line-divider)] text-center text-xs text-black/50 dark:text-white/50">没有断头路条目，所有文章都提供了站内延伸阅读 喵~</div>
+            )}
+          </section>
+
+          <!-- 低质量条目 -->
+          <section class="mb-6">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-1.5 h-4 rounded-full bg-amber-500"></div>
+              <h2 class="text-sm font-bold text-black/85 dark:text-white/85">低质量条目 (Quality Alerts)</h2>
+              <span class="px-2 py-0.5 rounded-full text-[10px] bg-black/5 dark:bg-white/10 font-mono text-black/50 dark:text-white/50">{report.lowQuality.length}</span>
+              <span class="text-[11px] text-black/40 dark:text-white/40">质量门禁评级为 C / D 的条目</span>
+            </div>
+            {report.lowQuality.length > 0 ? (
+              <div class="overflow-x-auto border border-[var(--line-divider)] rounded-xl bg-black/[0.01] dark:bg-white/[0.01]">
+                <table class="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr class="border-b border-[var(--line-divider)] bg-black/[0.03] dark:bg-white/[0.03] text-black/60 dark:text-white/60 font-semibold select-none">
+                      <th class="py-2.5 px-3">条目</th>
+                      <th class="py-2.5 px-3 w-24">评分</th>
+                      <th class="py-2.5 px-3 w-24">等级</th>
+                      <th class="py-2.5 px-3 w-24">问题数</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-[var(--line-divider)]/40">
+                    {report.lowQuality.map((item) => (
+                      <tr class="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                        <td class="py-2.5 px-3">
+                          <a href={`/posts/${item.slug}/`} class="font-medium text-[var(--primary)] hover:underline">{item.title}</a>
+                        </td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-black/60 dark:text-white/60">{item.score} / 100</td>
+                        <td class="py-2.5 px-3">
+                          <span class={`px-1.5 py-0.5 rounded font-mono font-bold text-[11px] ${gradeClasses[item.grade] || "bg-black/5"}`}>{item.grade}</span>
+                        </td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-black/50 dark:text-white/50">{item.issuesCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div class="p-4 rounded-xl border border-[var(--line-divider)] text-center text-xs text-black/50 dark:text-white/50">全部条目评级均在 B 级以上，质量工程状态优秀 喵~</div>
+            )}
+          </section>
+
+          <!-- 死链汇总 -->
+          <section class="mb-2">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-1.5 h-4 rounded-full bg-rose-500"></div>
+              <h2 class="text-sm font-bold text-black/85 dark:text-white/85">死链汇总 (Broken Links)</h2>
+              <span class="px-2 py-0.5 rounded-full text-[10px] bg-black/5 dark:bg-white/10 font-mono text-black/50 dark:text-white/50">{report.brokenLinks.length}</span>
+              <span class="text-[11px] text-black/40 dark:text-white/40">质量门禁拦截到的 error 级链接问题</span>
+            </div>
+            {report.brokenLinks.length > 0 ? (
+              <div class="overflow-x-auto border border-[var(--line-divider)] rounded-xl bg-black/[0.01] dark:bg-white/[0.01]">
+                <table class="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr class="border-b border-[var(--line-divider)] bg-black/[0.03] dark:bg-white/[0.03] text-black/60 dark:text-white/60 font-semibold select-none">
+                      <th class="py-2.5 px-3">来源条目</th>
+                      <th class="py-2.5 px-3 w-32">类型</th>
+                      <th class="py-2.5 px-3 w-20">行号</th>
+                      <th class="py-2.5 px-3">详情</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-[var(--line-divider)]/40">
+                    {report.brokenLinks.map((item) => (
+                      <tr class="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                        <td class="py-2.5 px-3">
+                          <a href={`/posts/${item.slug}/`} class="font-medium text-[var(--primary)] hover:underline">{item.title}</a>
+                        </td>
+                        <td class="py-2.5 px-3 text-[11px] text-rose-500">{brokenTypeLabels[item.type] || item.type}</td>
+                        <td class="py-2.5 px-3 font-mono text-[11px] text-black/50 dark:text-white/50">L{item.line}</td>
+                        <td class="py-2.5 px-3 text-[11px] text-black/60 dark:text-white/60">{item.message}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div class="p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] text-center text-xs text-emerald-600 dark:text-emerald-400">没有拦截到任何致命死链，链接健康度满分 喵~</div>
+            )}
+          </section>
+        </>
+      ) : (
+        <div class="p-8 rounded-2xl border border-[var(--line-divider)] text-center text-xs text-black/50 dark:text-white/50">
+          暂未生成维护巡检数据，请先运行 <code class="font-mono">pnpm wiki:special</code> 喵~
+        </div>
+      )}
+    </div>
+  </div>
+</MainGridLayout>

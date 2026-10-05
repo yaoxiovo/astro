@@ -30,8 +30,22 @@ const pageTitle = `“${entry.data.title}”的修订历史 - 维基百科风格
                     </h1>
                 </div>
 
-                <div class="flex items-center gap-2.5">
+                <div class="flex flex-wrap items-center gap-2.5">
                     <WikiQualityBadge slug={slug} />
+                    <a
+                        href="/wiki/recent-changes/"
+                        class="px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--line-divider)] hover:bg-black/5 dark:hover:bg-white/10 transition-colors inline-flex items-center gap-1.5 text-black/70 dark:text-white/70"
+                    >
+                        <Icon name="material-symbols:history" class="text-sm" />
+                        <span>全站最近更改</span>
+                    </a>
+                    <a
+                        href="/wiki/maintenance/"
+                        class="px-3 py-1.5 rounded-lg text-xs font-medium border border-[var(--line-divider)] hover:bg-black/5 dark:hover:bg-white/10 transition-colors inline-flex items-center gap-1.5 text-black/70 dark:text-white/70"
+                    >
+                        <Icon name="material-symbols:handyman-outline" class="text-sm" />
+                        <span>维护仪表盘</span>
+                    </a>
                     <a
                         href={`https://github.com/yaoxiovo/astro/commits/main/${history?.filePath || `src/content/posts/${entry.id}`}`}
                         target="_blank"
@@ -48,6 +62,10 @@ const pageTitle = `“${entry.data.title}”的修订历史 - 维基百科风格
             <div class="mb-5 p-3.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 leading-relaxed">
                 <p>
                     下方展示了此页面的全部 Git 提交修订记录。您可以通过左右单选按钮（左选旧版，右选新版）选择任意两个版本，并点击<strong>“比较所选版本”</strong>查看行内字符级差异（Word-level Diff）。点击时间戳可直接进入该历史时间点的快照永久链接。
+                </p>
+                <p class="mt-1.5">
+                    对比结果会自动写入地址栏（<code class="font-mono px-1 rounded bg-black/5 dark:bg-white/10">?diff=旧版本..新版本</code>），可直接复制分享；相邻版本对比会命中
+                    <strong>RFC 6902 增量热补丁</strong>（仅需数百字节流量），并可下载标准回滚补丁用于逆向还原 喵~
                 </p>
             </div>
 

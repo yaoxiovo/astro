@@ -1,0 +1,56 @@
+---
+import { Icon } from "astro-icon/components";
+import { getBacklinksSync } from "@utils/wiki-special-loader";
+
+interface Props {
+	slug: string;
+}
+
+const { slug } = Astro.props;
+const backlinks = getBacklinksSync(slug);
+const totalLinks = backlinks.reduce((acc, item) => acc + item.count, 0);
+---
+
+<div class="mb-6 p-5 rounded-2xl border border-[var(--line-divider)] bg-black/[0.02] dark:bg-white/[0.02] shadow-sm onload-animation">
+    <div class="flex items-center justify-between mb-4 pb-3 border-b border-[var(--line-divider)]">
+        <div class="flex items-center gap-2">
+            <Icon name="material-symbols:link" class="text-lg text-[var(--primary)]" />
+            <h3 class="text-sm font-bold text-black/90 dark:text-white/90">链入页面 (What links here)</h3>
+            <span class="px-2 py-0.5 rounded-full text-[10px] bg-black/5 dark:bg-white/10 font-mono text-black/50 dark:text-white/50">
+                {backlinks.length} 个来源 · {totalLinks} 条链接
+            </span>
+        </div>
+        <a href="/wiki/maintenance/" class="text-xs text-[var(--primary)] hover:underline flex items-center gap-1 font-medium">
+            <span>维护仪表盘</span>
+            <Icon name="material-symbols:open-in-new" class="text-xs" />
+        </a>
+    </div>
+
+    {backlinks.length > 0 ? (
+        <ul class="flex flex-col gap-1.5">
+            {backlinks.map((item) => (
+                <li class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-black/[0.02] dark:bg-white/[0.03] text-xs hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors">
+                    <a
+                        href={`/posts/${item.slug}/`}
+                        class="font-medium text-[var(--primary)] hover:underline truncate"
+                        title={item.title || item.slug}
+                    >
+                        {item.title || item.slug}
+                    </a>
+                    <span class="font-mono text-[11px] text-black/40 dark:text-white/40 whitespace-nowrap shrink-0">
+                        链接 {item.count} 次
+                    </span>
+                </li>
+            ))}
+        </ul>
+    ) : (
+        <div class="py-4 text-center text-xs text-black/50 dark:text-white/50 leading-relaxed">
+            <p>暂无其他条目链接到本文（属于「孤立条目」）。</p>
+            <p class="mt-1 text-black/40 dark:text-white/40">
+                若你在其他文章中提到本文，可使用
+                <code class="font-mono px-1 rounded bg-black/5 dark:bg-white/10">/posts/{slug}</code>
+                形式的站内链接，它将在下次构建后显示在这里喵~
+            </p>
+        </div>
+    )}
+</div>

@@ -23,12 +23,25 @@ export let deltaInfo:
 			loadDurationMs?: number;
 	  }
 	| undefined = undefined;
+// 相邻版本时传入逆向回滚补丁地址（新版本 → 旧版本，RFC 6902）
+export let rollbackPatchUrl = "";
 
 let viewMode: "side-by-side" | "inline" = "side-by-side";
 let expandAllContext = false;
+let copiedLink = false;
 
 function toggleViewMode(mode: "side-by-side" | "inline") {
 	viewMode = mode;
+}
+
+async function copyPermalink() {
+	try {
+		await navigator.clipboard.writeText(window.location.href);
+		copiedLink = true;
+		setTimeout(() => (copiedLink = false), 1500);
+	} catch {
+		alert("复制失败，请手动复制地址栏链接 喵~");
+	}
 }
 
 function toggleExpandContext() {
@@ -75,6 +88,26 @@ function toggleExpandContext() {
 					单栏行内 (Inline)
 				</button>
 			</div>
+
+			<button
+				type="button"
+				class="px-2.5 py-1 rounded-lg font-medium border border-[var(--line-divider)] text-black/60 dark:text-white/60 hover:text-[var(--primary)] hover:border-[var(--primary)]/40 transition-colors"
+				title="复制当前对比的深链地址（可直接分享或收藏）"
+				on:click={copyPermalink}
+			>
+				{copiedLink ? "已复制 ✓" : "复制链接"}
+			</button>
+
+			{#if rollbackPatchUrl}
+				<a
+					href={rollbackPatchUrl}
+					download
+					class="px-2.5 py-1 rounded-lg font-medium border border-violet-500/30 text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+					title="下载 RFC 6902 逆向回滚补丁（可将新版本还原为旧版本）"
+				>
+					回滚补丁
+				</a>
+			{/if}
 
 			{#if onClose}
 				<button

@@ -9,6 +9,8 @@ import EncryptedReader from "@components/EncryptedReader.svelte";
 import WikiHistoryPage from "@components/wiki/WikiHistoryPage.astro";
 import WikiRevisionPage from "@components/wiki/WikiRevisionPage.astro";
 import WikiHistoryTable from "@components/wiki/WikiHistoryTable.svelte";
+import BacklinksPanel from "@components/wiki/BacklinksPanel.astro";
+import CiteThisArticle from "@components/wiki/CiteThisArticle.svelte";
 import { getPostWikiHistorySync } from "@utils/wiki-history-loader";
 // KaTeX 样式仅在文章页加载（避免全站阻塞渲染）
 import "katex/dist/katex.css";
@@ -59,6 +61,9 @@ export async function getStaticPaths() {
 
 const { entry, mode = "article", revision, historyData } = Astro.props;
 const slug = entry.id.replace(/\.[^/.]+$/, "");
+const siteUrlBase = (Astro.site ?? new URL("https://blog.yaoxi.wiki")).href.replace(/\/$/, "");
+const latestRevisionShortSha = historyData?.revisions?.[0]?.shortSha || "";
+const latestRevisionDateISO = historyData?.revisions?.[0]?.date || "";
 
 let Content: any = null;
 let headings: any[] = [];
@@ -435,6 +440,20 @@ if (mode === "article") {
 
             {licenseConfig.enable && <License title={entry.data.title} slug={entry.id} pubDate={entry.data.published} class="mb-6 rounded-xl license-container onload-animation"></License>}
 
+            <!-- 引用此文 (Cite this article) -->
+            <CiteThisArticle
+                title={entry.data.title}
+                author={profileConfig.name}
+                siteTitle={siteConfig.title}
+                siteUrl={siteUrlBase}
+                slug={slug}
+                publishedISO={datePublishedISO}
+                updatedISO={dateModifiedISO}
+                revisionShortSha={latestRevisionShortSha}
+                revisionDateISO={latestRevisionDateISO}
+                client:visible
+            />
+
             <!-- 维基百科风格修订历史折叠组件 -->
             <div class="mb-6 p-5 rounded-2xl border border-[var(--line-divider)] bg-black/[0.02] dark:bg-white/[0.02] shadow-sm onload-animation">
                 <div class="flex items-center justify-between mb-4 pb-3 border-b border-[var(--line-divider)]">
@@ -452,9 +471,10 @@ if (mode === "article") {
                 </div>
                 <WikiHistoryTable history={historyData} slug={slug} standalone={false} client:idle />
             </div>
-            
 
-            
+            <!-- 链入页面 (What links here) -->
+            <BacklinksPanel slug={slug} />
+
             <!-- Giscus 评论区 -->
             <div id="giscus-container"></div>
             <script is:inline>

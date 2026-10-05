@@ -1,15 +1,17 @@
 ---
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { Icon } from "astro-icon/components";
+import { profileConfig, siteConfig } from "../../config";
 import type { WikiPostHistory, WikiRevision } from "../../types/wiki";
 import { renderMarkdownToHtml } from "../../utils/simple-markdown";
 import { getPostRevisionSnapshotSync } from "../../utils/wiki-history-loader";
+import CiteThisArticle from "./CiteThisArticle.svelte";
 import WikiRevisionNotice from "./WikiRevisionNotice.astro";
 
 interface Props {
 	entry: Record<string, unknown> & {
 		id: string;
-		data: { title: string };
+		data: { title: string; published?: Date };
 		body?: string;
 	};
 	revision: WikiRevision;
@@ -18,6 +20,9 @@ interface Props {
 
 const { entry, revision, history } = Astro.props;
 const slug = entry.id.replace(/\.[^/.]+$/, "");
+
+const siteUrlBase = (Astro.site ?? new URL("https://blog.yaoxi.wiki")).href.replace(/\/$/, "");
+const publishedISO = entry.data.published?.toISOString() || "";
 
 // 查找上一版本与下一版本（revisions 为倒序）
 const revisions = history?.revisions || [];
@@ -58,6 +63,21 @@ const pageTitle = `《${entry.data.title}》的历史版本 (${revision.displayD
             <!-- 渲染历史 Markdown 内容 -->
             <div class="prose dark:prose-invert prose-base !max-w-none custom-md">
                 <Fragment set:html={renderedContent} />
+            </div>
+
+            <!-- 引用本文（固定到当前历史版本，引文永久稳定） -->
+            <div class="mt-8">
+                <CiteThisArticle
+                    title={entry.data.title}
+                    author={profileConfig.name}
+                    siteTitle={siteConfig.title}
+                    siteUrl={siteUrlBase}
+                    slug={slug}
+                    publishedISO={publishedISO}
+                    revisionShortSha={revision.shortSha}
+                    revisionDateISO={revision.date}
+                    client:visible
+                />
             </div>
 
             <!-- 底部导航 -->

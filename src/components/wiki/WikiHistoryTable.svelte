@@ -1,4 +1,5 @@
 <script lang="ts">
+import { onMount } from "svelte";
 import type {
 	DiffResult,
 	WikiPostHistory,
@@ -159,6 +160,7 @@ async function performDiff(oldIdx: number, newIdx: number) {
 				contextLines: 3,
 			},
 		);
+		syncDiffUrl(oldRev.shortSha, newRev.shortSha);
 
 		// 平滑滚动至比对区
 		setTimeout(() => {
@@ -172,6 +174,62 @@ async function performDiff(oldIdx: number, newIdx: number) {
 		isLoadingDiff = false;
 	}
 }
+
+// 深链对比参数解析：?diff=旧版本SHA..新版本SHA（支持短/全 SHA）
+function findRevisionIndex(token: string): number {
+	return revisions.findIndex(
+		(r) =>
+			r.shortSha === token ||
+			r.sha === token ||
+			r.sha.startsWith(token) ||
+			r.shortSha.startsWith(token),
+	);
+}
+
+function syncDiffUrl(oldShortSha: string, newShortSha: string) {
+	try {
+		const url = new URL(window.location.href);
+		url.searchParams.set("diff", `${oldShortSha}..${newShortSha}`);
+		window.history.replaceState({}, "", url);
+	} catch {
+		// 忽略无法写入地址栏的场景
+	}
+}
+
+function clearDiffUrl() {
+	try {
+		const url = new URL(window.location.href);
+		if (url.searchParams.has("diff")) {
+			url.searchParams.delete("diff");
+			window.history.replaceState({}, "", url);
+		}
+	} catch {
+		// ignore
+	}
+}
+
+onMount(() => {
+	if (revisions.length === 0) return;
+	try {
+		const diffParam = new URLSearchParams(window.location.search).get("diff");
+		if (!diffParam) return;
+		const [shaA, shaB] = diffParam.split("..");
+		if (!shaA || !shaB || shaA === shaB) return;
+
+		const idxA = findRevisionIndex(shaA);
+		const idxB = findRevisionIndex(shaB);
+		if (idxA === -1 || idxB === -1 || idxA === idxB) return;
+
+		// revisions 数组为时间倒序：index 越大版本越旧
+		const oldIdx = Math.max(idxA, idxB);
+		const newIdx = Math.min(idxA, idxB);
+		selectedOldIndex = oldIdx;
+		selectedNewIndex = newIdx;
+		performDiff(oldIdx, newIdx);
+	} catch {
+		// 忽略非法深链参数
+	}
+});
 
 // 点击顶部“比较所选版本”按钮
 function compareSelected() {
@@ -196,6 +254,7 @@ function compareWithPrevious(idx: number) {
 function closeDiff() {
 	isComparing = false;
 	diffResult = null;
+	clearDiffUrl();
 }
 </script>
 
@@ -224,6 +283,9 @@ function closeDiff() {
 				oldSha={revisions[selectedOldIndex]?.sha}
 				newSha={revisions[selectedNewIndex]?.sha}
 				{slug}
+				rollbackPatchUrl={Math.abs(selectedOldIndex - selectedNewIndex) === 1 && revisions[selectedOldIndex] && revisions[selectedNewIndex]
+					? `/api/wiki/deltas/${slug}/${revisions[selectedNewIndex].shortSha}--${revisions[selectedOldIndex].shortSha}.json`
+					: ""}
 				onClose={closeDiff}
 			/>
 		{/if}

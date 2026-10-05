@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-10-05T18:23:44.088Z",
+  "backlinks": {
+    "persistence-and-compound-growth": [
+      {
+        "slug": "geren",
+        "count": 1,
+        "title": "探索与重构：瑶曦个人主页（yaoxi.wiki）设计与技术全解"
+      }
+    ]
+  },
+  "outbound": {
+    "26zhongkao": [],
+    "2cx": [],
+    "Tradition": [],
+    "Youth-Romance-Novel1": [],
+    "acg-goods-and-emotions": [],
+    "ai-integrated-workflow": [],
+    "astro-cdn-hosting": [],
+    "backdrop-filter-performance-guide": [],
+    "blog-api-guide": [],
+    "blog-dev-logs": [],
+    "blog-fullstack-architecture-evolution-2026": [],
+    "cf-worker-reverse-proxy": [],
+    "cfworker": [],
+    "china": [],
+    "countdown-to-zhongkao": [],
+    "diejia": [],
+    "domain-connect-cloudflare": [],
+    "draft": [],
+    "expressive-code": [],
+    "firstone": [],
+    "geren": [
+      {
+        "slug": "persistence-and-compound-growth",
+        "count": 1
+      }
+    ],
+    "guandian": [],
+    "hardware-overheat-and-high-functioning-compensation": [],
+    "heci": [],
+    "homepage-liquid-glass-refactor": [],
+    "jianjie": [],
+    "jieshao": [],
+    "jilu": [],
+    "junior-high-epic-chronicle": [],
+    "markdown-extended": [],
+    "markdown": [],
+    "mothers-day-2026": [],
+    "ncm-converter-intro": [],
+    "neuro1": [],
+    "neurosama": [],
+    "neurosama2": [],
+    "neurosama3": [],
+    "neurosama4": [],
+    "neurosama5": [],
+    "neurosama6": [],
+    "nuerosama": [],
+    "other-sites": [],
+    "our-cloud-services": [],
+    "persistence-and-compound-growth": [],
+    "security-statement": [],
+    "short-video-algorithm-polarization-report": [],
+    "umami": [],
+    "video": [],
+    "zhinan": []
+  }
+}
