@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "slug": "jilu",
+  "fromSha": "a42576fdab41d58b3c042177493995a2e0424399",
+  "toSha": "74022351312cebdf4a7ae5b723640982ea6fdbd5",
+  "fromShortSha": "a42576f",
+  "toShortSha": "7402235",
+  "timestamp": "2026-10-05T17:09:13.341Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "74022351312cebdf4a7ae5b723640982ea6fdbd5"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "7402235"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-10T21:10:31+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 1 file: jilu.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 12,
+      "deleteCount": 1,
+      "lines": [
+        "2. [大陆加速链接](https://r2.yaoxi.xyz/clash.apk)",
+        ""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 382,
+    "targetLength": 413,
+    "patchSize": 621,
+    "compressionRatio": "0.0%",
+    "addedLines": 2,
+    "deletedLines": 1
+  }
+}

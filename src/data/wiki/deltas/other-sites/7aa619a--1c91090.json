@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "slug": "other-sites",
+  "fromSha": "7aa619a4cb137297ca3c4e6862bcd03df24d1103",
+  "toSha": "1c91090d1e3d8c90027cd1575ffd6235624262d9",
+  "fromShortSha": "7aa619a",
+  "toShortSha": "1c91090",
+  "timestamp": "2026-10-05T17:09:55.847Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "1c91090d1e3d8c90027cd1575ffd6235624262d9"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "1c91090"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-02-23T15:50:42+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 1 file: other-sites.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 14,
+      "deleteCount": 0,
+      "lines": [
+        "::url{href=\"https://docs.yaoxi.wiki\"}",
+        "::url{href=\"https://blog.yaoxi.wiki\"}"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 280,
+    "targetLength": 356,
+    "patchSize": 658,
+    "compressionRatio": "0.0%",
+    "addedLines": 2,
+    "deletedLines": 0
+  }
+}

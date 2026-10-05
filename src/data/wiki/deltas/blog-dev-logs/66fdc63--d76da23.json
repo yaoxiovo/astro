@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "66fdc63313c151bc27acfc5d0af0c05252872c8d",
+  "toSha": "d76da239dc2e7f6d48efeea78b594ab48edf15c7",
+  "fromShortSha": "66fdc63",
+  "toShortSha": "d76da23",
+  "timestamp": "2026-10-05T17:08:01.480Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "d76da239dc2e7f6d48efeea78b594ab48edf15c7"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "d76da23"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-21T12:59:13+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 4 files: MomentCard.astro, blog-dev-logs.md, [slug].astro, [...page].astro"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 48,
+      "deleteCount": 5,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 4756,
+    "targetLength": 3740,
+    "patchSize": 629,
+    "compressionRatio": "83.2%",
+    "addedLines": 0,
+    "deletedLines": 5
+  }
+}

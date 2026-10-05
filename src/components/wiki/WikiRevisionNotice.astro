@@ -1,6 +1,7 @@
 ---
 import { Icon } from "astro-icon/components";
 import type { WikiRevision } from "../../types/wiki";
+import WikiQualityBadge from "./WikiQualityBadge.astro";
 
 interface Props {
 	slug: string;
@@ -30,9 +31,12 @@ const isLatest = currentRevision.sha === latestRevision.sha;
 					</span>
 				</h4>
 
-				<span class="text-[11px] text-amber-800/60 dark:text-amber-300/60">
-					MediaWiki 永久链 (Permalink)
-				</span>
+				<div class="flex items-center gap-2">
+					<WikiQualityBadge slug={slug} compact={true} />
+					<span class="text-[11px] text-amber-800/60 dark:text-amber-300/60">
+						MediaWiki 永久链 (Permalink)
+					</span>
+				</div>
 			</div>
 
 			<p class="text-amber-900/80 dark:text-amber-200/80 leading-relaxed mb-3">

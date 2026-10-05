@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "slug": "diejia",
+  "fromSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "toSha": "27d876a4b6fcd087cc5f2dc4bd32451464fd50b0",
+  "fromShortSha": "4825f8a",
+  "toShortSha": "27d876a",
+  "timestamp": "2026-10-05T17:08:37.828Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "27d876a4b6fcd087cc5f2dc4bd32451464fd50b0"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "27d876a"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-02-23T03:47:16+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "yaoxiovo"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 3 files: config.ts, workspace-mobile.json, diejia.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 10,
+      "deleteCount": 0,
+      "lines": [
+        "pinned: true"
+      ]
+    },
+    {
+      "start": 12,
+      "deleteCount": 1,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 6995,
+    "targetLength": 6995,
+    "patchSize": 707,
+    "compressionRatio": "89.9%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

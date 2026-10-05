@@ -21,7 +21,14 @@
       "linesDeleted": 0,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/927619b87609c8d52643533f8f2d081126b990e8"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/927619b87609c8d52643533f8f2d081126b990e8",
+      "deltaPatch": {
+        "fromShortSha": "4825f8a",
+        "toShortSha": "927619b",
+        "patchUrl": "/api/wiki/deltas/neurosama3/4825f8a--927619b.json",
+        "patchSize": 881,
+        "compressionRatio": "85.6%"
+      }
     },
     {
       "sha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
@@ -41,7 +48,14 @@
       "tags": [
         "小修改"
       ],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4825f8ae280af8da9fc95292bd9e932b9a0b09e9"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+      "deltaPatch": {
+        "fromShortSha": "d1790a2",
+        "toShortSha": "4825f8a",
+        "patchUrl": "/api/wiki/deltas/neurosama3/d1790a2--4825f8a.json",
+        "patchSize": 2750,
+        "compressionRatio": "54.6%"
+      }
     },
     {
       "sha": "d1790a21eb89d89ed2bd91f264bbae582f561f7d",
@@ -61,7 +75,14 @@
       "tags": [
         "小修改"
       ],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/d1790a21eb89d89ed2bd91f264bbae582f561f7d"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/d1790a21eb89d89ed2bd91f264bbae582f561f7d",
+      "deltaPatch": {
+        "fromShortSha": "213ce09",
+        "toShortSha": "d1790a2",
+        "patchUrl": "/api/wiki/deltas/neurosama3/213ce09--d1790a2.json",
+        "patchSize": 614,
+        "compressionRatio": "89.5%"
+      }
     },
     {
       "sha": "213ce09c0c437d4941dc5ed732d336600d5c9bce",
@@ -79,7 +100,14 @@
       "linesDeleted": 19,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/213ce09c0c437d4941dc5ed732d336600d5c9bce"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/213ce09c0c437d4941dc5ed732d336600d5c9bce",
+      "deltaPatch": {
+        "fromShortSha": "14f0008",
+        "toShortSha": "213ce09",
+        "patchUrl": "/api/wiki/deltas/neurosama3/14f0008--213ce09.json",
+        "patchSize": 2539,
+        "compressionRatio": "56.7%"
+      }
     },
     {
       "sha": "14f0008887d62d9a2551cad9369717fe54a44a17",

@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "fd5ce297bf92b38152245cefa38b1eb18aa430dc",
+  "toSha": "c3ec4d9e391f782d4ffe0d3491cb2c1ef081d274",
+  "fromShortSha": "fd5ce29",
+  "toShortSha": "c3ec4d9",
+  "timestamp": "2026-10-05T17:08:00.358Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "c3ec4d9e391f782d4ffe0d3491cb2c1ef081d274"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "c3ec4d9"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-27T09:29:04+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 117 files: astro.config.mjs, package.json, submit-urls.js, Footer.astro, blog-dev-logs.md, 22.json, Ad_closeNN_の_Blog.json, AirTouch's_Blog.json, AlexMa's_Blog.json, Aliom的个人博客.json, Arcwolf's_Blog.json, b23kim博客.json, ...omitted 105 file(s)"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 303,
+      "deleteCount": 30,
+      "lines": [
+        "  - **主程序（Git 增量模式）：** 默认主命令 `\"submit-urls\": \"node scripts/submit-urls.js\"` 内置了超智能的 Git 改动判定，只有检测到有实际的 `.md` 文章文件或 Moments 发生发布/更改时，才会启动 API 提交通道，且只把对应的文章与首页附带进行推送。若工作区无任何新文章或动态变更，则直接终止运行，完美做到了“零冗余提交，将 API 额度留给真正的新内容”喵呜~！"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 36075,
+    "targetLength": 33029,
+    "patchSize": 1295,
+    "compressionRatio": "96.1%",
+    "addedLines": 1,
+    "deletedLines": 30
+  }
+}

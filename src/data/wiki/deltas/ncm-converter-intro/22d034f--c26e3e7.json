@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "slug": "ncm-converter-intro",
+  "fromSha": "22d034f57df724bdc154455060db2ccf5c3012f1",
+  "toSha": "c26e3e77d515c73ad3e3fcffc842f60f2e6b89ca",
+  "fromShortSha": "22d034f",
+  "toShortSha": "c26e3e7",
+  "timestamp": "2026-10-05T17:09:28.341Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "c26e3e77d515c73ad3e3fcffc842f60f2e6b89ca"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "c26e3e7"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-05T10:35:36+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "seo: improve NCM converter post metadata"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 15,
+      "deleteCount": 3,
+      "lines": [
+        "开源地址：",
+        "::github{repo=\"yaoxiovo/music\"}"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 5548,
+    "targetLength": 5500,
+    "patchSize": 647,
+    "compressionRatio": "88.2%",
+    "addedLines": 2,
+    "deletedLines": 3
+  }
+}

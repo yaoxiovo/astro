@@ -1,0 +1,111 @@
+{
+  "version": "1.0",
+  "slug": "Tradition",
+  "fromSha": "4320b538992659892a9bc8b9823974ecd48d7da6",
+  "toSha": "56dbc6732a151910d2d068aaaee292bf1e26603d",
+  "fromShortSha": "4320b53",
+  "toShortSha": "56dbc67",
+  "timestamp": "2026-10-05T17:11:03.061Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "56dbc6732a151910d2d068aaaee292bf1e26603d"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "56dbc67"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-10-04T22:38:45+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "docs(post): update 传统代际沟通中的“滑坡谬误”与边界防御 via Admin Studio"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 15,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "start": 16,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "start": 17,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "start": 19,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "start": 20,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "start": 21,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "start": 23,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "start": 24,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "start": 25,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "start": 26,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 2415,
+    "targetLength": 2425,
+    "patchSize": 1017,
+    "compressionRatio": "58.1%",
+    "addedLines": 10,
+    "deletedLines": 0
+  }
+}

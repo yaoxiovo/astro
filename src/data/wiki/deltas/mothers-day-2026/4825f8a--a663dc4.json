@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "slug": "mothers-day-2026",
+  "fromSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "toSha": "a663dc4c05bcc4700b1c6315de669fae2a101e1b",
+  "fromShortSha": "4825f8a",
+  "toShortSha": "a663dc4",
+  "timestamp": "2026-10-05T17:09:24.877Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "a663dc4c05bcc4700b1c6315de669fae2a101e1b"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "a663dc4"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-10T07:15:49Z"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "yaoxiovo"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "docs: add mothers day blessing post"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 11,
+      "deleteCount": 1,
+      "lines": [
+        "lang: zh-CN"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 6418,
+    "targetLength": 6416,
+    "patchSize": 647,
+    "compressionRatio": "89.9%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

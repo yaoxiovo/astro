@@ -1,0 +1,63 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "4d51b4807ad6b3de3f2d4d199f60567b80527e4c",
+  "toSha": "6dfba1eb416c189cf6a3aee0c46a10739fbf2b2f",
+  "fromShortSha": "4d51b48",
+  "toShortSha": "6dfba1e",
+  "timestamp": "2026-10-05T17:08:00.079Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "6dfba1eb416c189cf6a3aee0c46a10739fbf2b2f"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "6dfba1e"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-28T12:48:27+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "refactor: optimize url and github card with localstorage cache and static declarative mode"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 488,
+      "deleteCount": 0,
+      "lines": [
+        "- 成功对 `zcf` 目录下的四个智能体文件完成了模型隔离（Model Isolation）配置喵！"
+      ]
+    },
+    {
+      "start": 489,
+      "deleteCount": 51,
+      "lines": []
+    },
+    {
+      "start": 541,
+      "deleteCount": 18,
+      "lines": []
+    },
+    {
+      "start": 560,
+      "deleteCount": 3,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 68430,
+    "targetLength": 58690,
+    "patchSize": 871,
+    "compressionRatio": "98.5%",
+    "addedLines": 1,
+    "deletedLines": 72
+  }
+}

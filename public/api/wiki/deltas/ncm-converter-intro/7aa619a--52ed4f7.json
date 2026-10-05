@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "slug": "ncm-converter-intro",
+  "fromSha": "7aa619a4cb137297ca3c4e6862bcd03df24d1103",
+  "toSha": "52ed4f72e80f54b1eeb3cde539eaef7e5e7473d1",
+  "fromShortSha": "7aa619a",
+  "toShortSha": "52ed4f7",
+  "timestamp": "2026-10-05T17:09:28.414Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "52ed4f72e80f54b1eeb3cde539eaef7e5e7473d1"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "52ed4f7"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-02T20:44:55+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 2 files: Footer.astro, ncm-converter-intro.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 43,
+      "deleteCount": 1,
+      "lines": [
+        "访问我的网页工具（链接：https://music.yaoxi.xyz），操作超级简单："
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 5414,
+    "targetLength": 5413,
+    "patchSize": 694,
+    "compressionRatio": "87.2%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

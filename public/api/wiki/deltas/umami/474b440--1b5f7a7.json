@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "slug": "umami",
+  "fromSha": "474b440b802d5a9e7aaf6689bd8f983c8d9423a7",
+  "toSha": "1b5f7a7d7c748e3de6228ed695386cfc37fd9fd1",
+  "fromShortSha": "474b440",
+  "toShortSha": "1b5f7a7",
+  "timestamp": "2026-10-05T17:10:06.375Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "1b5f7a7d7c748e3de6228ed695386cfc37fd9fd1"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "1b5f7a7"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-04-03T22:53:57+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "更新文章"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 1,
+      "lines": [
+        "title: 什么umami问题"
+      ]
+    },
+    {
+      "start": 3,
+      "deleteCount": 1,
+      "lines": [
+        "description: umami问题"
+      ]
+    },
+    {
+      "start": 5,
+      "deleteCount": 3,
+      "lines": []
+    },
+    {
+      "start": 9,
+      "deleteCount": 1,
+      "lines": [
+        "category: 成长记录"
+      ]
+    },
+    {
+      "start": 11,
+      "deleteCount": 1,
+      "lines": [
+        "lang: \"\""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 403,
+    "targetLength": 213,
+    "patchSize": 796,
+    "compressionRatio": "0.0%",
+    "addedLines": 4,
+    "deletedLines": 7
+  }
+}

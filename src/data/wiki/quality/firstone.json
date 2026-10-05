@@ -1,0 +1,154 @@
+{
+  "slug": "firstone",
+  "title": "入团申请书模板：初中生共青团申请写作参考",
+  "checkedAt": "2026-10-05T17:12:08.368Z",
+  "score": 87,
+  "grade": "A",
+  "gradeLabel": "生产级就绪 (Production A)",
+  "badgeColor": "emerald",
+  "breakdown": {
+    "typography": {
+      "score": 12,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 25,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 25,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 61,
+    "codeLines": 0,
+    "codePercentage": "0.0%",
+    "cjkChars": 960,
+    "englishWords": 25,
+    "totalEquivalentWords": 985,
+    "lexicalDiversity": "41.4%",
+    "readingMinutes": 3,
+    "headingsCount": 1
+  },
+  "issuesCount": {
+    "total": 13,
+    "errors": 0,
+    "warnings": 13,
+    "infos": 0
+  },
+  "issues": [
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 24,
+      "excerpt": "立100",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"立100\" -> 建议为 \"立 100\"",
+      "suggestion": "立 100"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 24,
+      "excerpt": "2021年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2021年\" -> 建议为 \"2021 年\"",
+      "suggestion": "2021 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 24,
+      "excerpt": "100周",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"100周\" -> 建议为 \"100 周\"",
+      "suggestion": "100 周"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 24,
+      "excerpt": "2022年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2022年\" -> 建议为 \"2022 年\"",
+      "suggestion": "2022 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 24,
+      "excerpt": "2025年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2025年\" -> 建议为 \"2025 年\"",
+      "suggestion": "2025 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 30,
+      "excerpt": "2025学",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2025学\" -> 建议为 \"2025 学\"",
+      "suggestion": "2025 学"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 32,
+      "excerpt": "180小",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"180小\" -> 建议为 \"180 小\"",
+      "suggestion": "180 小"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 33,
+      "excerpt": "2025年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2025年\" -> 建议为 \"2025 年\"",
+      "suggestion": "2025 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 61,
+      "excerpt": "年12",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"年12\" -> 建议为 \"年 12\"",
+      "suggestion": "年 12"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 61,
+      "excerpt": "月27",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"月27\" -> 建议为 \"月 27\"",
+      "suggestion": "月 27"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 61,
+      "excerpt": "2025年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2025年\" -> 建议为 \"2025 年\"",
+      "suggestion": "2025 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 61,
+      "excerpt": "12月",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"12月\" -> 建议为 \"12 月\"",
+      "suggestion": "12 月"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 61,
+      "excerpt": "27日",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"27日\" -> 建议为 \"27 日\"",
+      "suggestion": "27 日"
+    }
+  ]
+}

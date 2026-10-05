@@ -1,0 +1,64 @@
+{
+  "version": "1.0",
+  "slug": "jieshao",
+  "fromSha": "8a6fc4c128b0db0a755cdd1de203dd743f113b53",
+  "toSha": "e7a88f32874f725c2920156326e6fe7cc31104c6",
+  "fromShortSha": "8a6fc4c",
+  "toShortSha": "e7a88f3",
+  "timestamp": "2026-10-05T17:09:09.827Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "e7a88f32874f725c2920156326e6fe7cc31104c6"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "e7a88f3"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-21T21:52:01+08:00"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 0,
+      "deleteCount": 0,
+      "lines": [
+        "---",
+        "title: Cloud云服务",
+        "published: 2026-03-21",
+        "author: Cloud云服务介绍",
+        "description: Protocol-02：非对称对齐（限制类文章）",
+        "tags:",
+        "  - Cloudflare",
+        "  - Tencent",
+        "  - Aliyun",
+        "  - 云服务",
+        "category: 记录",
+        "draft: false",
+        "lang: \"\"",
+        "---"
+      ]
+    },
+    {
+      "start": 2,
+      "deleteCount": 1,
+      "lines": [
+        "",
+        ""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 13,
+    "targetLength": 245,
+    "patchSize": 810,
+    "compressionRatio": "0.0%",
+    "addedLines": 16,
+    "deletedLines": 1
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "slug": "ncm-converter-intro",
+  "fromSha": "7aa619a4cb137297ca3c4e6862bcd03df24d1103",
+  "toSha": "c26e3e77d515c73ad3e3fcffc842f60f2e6b89ca",
+  "fromShortSha": "7aa619a",
+  "toShortSha": "c26e3e7",
+  "timestamp": "2026-10-05T17:09:28.358Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "c26e3e77d515c73ad3e3fcffc842f60f2e6b89ca"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "c26e3e7"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-05T10:35:36+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "seo: improve NCM converter post metadata"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 1,
+      "lines": [
+        "title: 网易云音乐 NCM 转 MP3/FLAC 在线工具介绍"
+      ]
+    },
+    {
+      "start": 3,
+      "deleteCount": 1,
+      "lines": [
+        "description: 介绍一款纯前端网易云音乐 NCM 转换工具，可在浏览器本地将 NCM 文件转换为 MP3 或 FLAC，无需上传，保护隐私。"
+      ]
+    },
+    {
+      "start": 5,
+      "deleteCount": 2,
+      "lines": [
+        "  - NCM转换",
+        "  - 网易云音乐",
+        "  - MP3",
+        "  - FLAC",
+        "  - 前端工具",
+        "category: 工具资源"
+      ]
+    },
+    {
+      "start": 8,
+      "deleteCount": 1,
+      "lines": [
+        "lang: \"zh_CN\""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 5414,
+    "targetLength": 5500,
+    "patchSize": 1050,
+    "compressionRatio": "80.9%",
+    "addedLines": 9,
+    "deletedLines": 5
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "slug": "neurosama2",
+  "fromSha": "6c9af5827328f1173d54d2d484a22910ce4561c8",
+  "toSha": "d1790a21eb89d89ed2bd91f264bbae582f561f7d",
+  "fromShortSha": "6c9af58",
+  "toShortSha": "d1790a2",
+  "timestamp": "2026-10-05T17:09:38.534Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "d1790a21eb89d89ed2bd91f264bbae582f561f7d"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "d1790a2"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-10T04:20:42Z"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "chore: 关闭置顶公告并批量将科幻文章设为草稿"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 12,
+      "deleteCount": 1,
+      "lines": [
+        "draft: true"
+      ]
+    },
+    {
+      "start": 110,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 6010,
+    "targetLength": 6010,
+    "patchSize": 657,
+    "compressionRatio": "89.1%",
+    "addedLines": 2,
+    "deletedLines": 1
+  }
+}

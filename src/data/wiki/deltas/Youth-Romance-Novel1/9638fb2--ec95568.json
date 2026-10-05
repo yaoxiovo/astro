@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "slug": "Youth-Romance-Novel1",
+  "fromSha": "9638fb22114d3e9e814aee5cd38b6c338a0298c6",
+  "toSha": "ec95568e8c098289944c08d8661e498e26dd0da0",
+  "fromShortSha": "9638fb2",
+  "toShortSha": "ec95568",
+  "timestamp": "2026-10-05T17:11:06.510Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "ec95568e8c098289944c08d8661e498e26dd0da0"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "ec95568"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-23T10:50:50+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update Youth-Romance-Novel1.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 1,
+      "lines": [
+        "title: 小说文1"
+      ]
+    },
+    {
+      "start": 3,
+      "deleteCount": 1,
+      "lines": [
+        "description: 青春恋爱小说文第一章"
+      ]
+    },
+    {
+      "start": 9,
+      "deleteCount": 1,
+      "lines": [
+        "lang: \"\""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 2374,
+    "targetLength": 2155,
+    "patchSize": 738,
+    "compressionRatio": "65.8%",
+    "addedLines": 3,
+    "deletedLines": 3
+  }
+}

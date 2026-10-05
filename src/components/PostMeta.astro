@@ -1,5 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
+import WikiQualityBadge from "./wiki/WikiQualityBadge.astro";
 
 import { umamiConfig } from "../config";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
@@ -71,6 +72,11 @@ const className = Astro.props.class;
                       data-umami-share-id={umamiConfig.shareId}
                       data-umami-timezone={umamiConfig.timezone}
                 >0 人</span>
+            </div>
+
+            <!-- 工业级质量工程门禁徽章 -->
+            <div class="flex items-center ml-auto">
+                <WikiQualityBadge slug={slug} />
             </div>
         </>
     )}

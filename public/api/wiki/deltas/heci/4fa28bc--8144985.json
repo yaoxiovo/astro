@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "slug": "heci",
+  "fromSha": "4fa28bcc339ca3518a4d5117f8f3eb366a4c6812",
+  "toSha": "81449857d11f9030cd97bc2ee20ff5d6fa8c9918",
+  "fromShortSha": "4fa28bc",
+  "toShortSha": "8144985",
+  "timestamp": "2026-10-05T17:08:59.589Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "81449857d11f9030cd97bc2ee20ff5d6fa8c9918"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "8144985"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-05T10:32:14+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "seo: improve new year greetings post metadata"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 10,
+      "deleteCount": 1,
+      "lines": [
+        "draft: false "
+      ]
+    },
+    {
+      "start": 43,
+      "deleteCount": 128,
+      "lines": [
+        "多一些真正让你心动的消息。"
+      ]
+    },
+    {
+      "start": 172,
+      "deleteCount": 0,
+      "lines": [
+        "……（正文保持不变）"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 4981,
+    "targetLength": 1257,
+    "patchSize": 755,
+    "compressionRatio": "39.9%",
+    "addedLines": 3,
+    "deletedLines": 129
+  }
+}

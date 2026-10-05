@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "slug": "markdown",
+  "fromSha": "fbda5a973c6675c75fa299214c0e25abbc3d250c",
+  "toSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "fromShortSha": "fbda5a9",
+  "toShortSha": "4825f8a",
+  "timestamp": "2026-10-05T17:09:22.798Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "4825f8a"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-13T14:03:45+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "root"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 10,
+      "deleteCount": 0,
+      "lines": [
+        "lang: \"\""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 3526,
+    "targetLength": 3535,
+    "patchSize": 669,
+    "compressionRatio": "81.1%",
+    "addedLines": 1,
+    "deletedLines": 0
+  }
+}

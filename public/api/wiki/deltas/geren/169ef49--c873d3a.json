@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "slug": "geren",
+  "fromSha": "169ef49fbb022db72799c99359c6d38841fe5406",
+  "toSha": "c873d3afedcfac24c7db325dcf16bf0a347e2b5f",
+  "fromShortSha": "169ef49",
+  "toShortSha": "c873d3a",
+  "timestamp": "2026-10-05T17:08:52.407Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "c873d3afedcfac24c7db325dcf16bf0a347e2b5f"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "c873d3a"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-22T12:49:58+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 1 file: geren.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 5,
+      "deleteCount": 0,
+      "lines": [
+        "  - 个人介绍"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 1863,
+    "targetLength": 1880,
+    "patchSize": 580,
+    "compressionRatio": "69.1%",
+    "addedLines": 1,
+    "deletedLines": 0
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "slug": "2cx",
+  "fromSha": "a4066e0d1ab823ad321ea6be4953706c03787f6a",
+  "toSha": "554e961d95d92eb5214cd28ceeb42a7359c9ebd6",
+  "fromShortSha": "a4066e0",
+  "toShortSha": "554e961",
+  "timestamp": "2026-10-05T17:10:58.922Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "554e961d95d92eb5214cd28ceeb42a7359c9ebd6"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "554e961"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-02-16T00:30:47+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 2 files: workspace-mobile.json, 2cx.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 2,
+      "deleteCount": 1,
+      "lines": [
+        "published: 2026-02-06"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 7492,
+    "targetLength": 7492,
+    "patchSize": 605,
+    "compressionRatio": "91.9%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

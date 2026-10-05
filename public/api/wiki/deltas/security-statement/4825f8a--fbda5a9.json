@@ -1,0 +1,59 @@
+{
+  "version": "1.0",
+  "slug": "security-statement",
+  "fromSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "toSha": "fbda5a973c6675c75fa299214c0e25abbc3d250c",
+  "fromShortSha": "4825f8a",
+  "toShortSha": "fbda5a9",
+  "timestamp": "2026-10-05T17:10:01.882Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "fbda5a973c6675c75fa299214c0e25abbc3d250c"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "fbda5a9"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-26T00:19:19+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "yaoxiovo"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 7 files: workspace-mobile.json, expressive-code.md, jilu.md, markdown-extended.md, markdown.md, security-statement.md, video.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 8,
+      "deleteCount": 2,
+      "lines": []
+    },
+    {
+      "start": 11,
+      "deleteCount": 0,
+      "lines": [
+        "draft: false",
+        "lang: zh-CN"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 3646,
+    "targetLength": 3644,
+    "patchSize": 807,
+    "compressionRatio": "77.9%",
+    "addedLines": 2,
+    "deletedLines": 2
+  }
+}

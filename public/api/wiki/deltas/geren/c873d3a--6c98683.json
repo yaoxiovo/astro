@@ -1,0 +1,63 @@
+{
+  "version": "1.0",
+  "slug": "geren",
+  "fromSha": "c873d3afedcfac24c7db325dcf16bf0a347e2b5f",
+  "toSha": "6c98683d4b16a43f6bdb65bbf3874b0f1546dea7",
+  "fromShortSha": "c873d3a",
+  "toShortSha": "6c98683",
+  "timestamp": "2026-10-05T17:08:52.387Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "6c98683d4b16a43f6bdb65bbf3874b0f1546dea7"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "6c98683"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-26T00:29:03+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 5 files: update-countdown.yml, update-days.js, workspace-mobile.json, countdown-to-zhongkao.md.md, geren.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 7,
+      "deleteCount": 1,
+      "lines": [
+        "draft: false"
+      ]
+    },
+    {
+      "start": 14,
+      "deleteCount": 1,
+      "lines": [
+        "​我是一名正在平衡 “**初三学业**” 与 “**技术探索**” 的终极玩家。在这个被代码和试卷填满的 2026 年，我决定用 Astro 搭建这个空间，记录那些稍纵即逝的思想火花。单推**Neuro-sama**。"
+      ]
+    },
+    {
+      "start": 28,
+      "deleteCount": 0,
+      "lines": [
+        "",
+        "# 冲刺中考"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 1880,
+    "targetLength": 1920,
+    "patchSize": 1017,
+    "compressionRatio": "47.0%",
+    "addedLines": 4,
+    "deletedLines": 2
+  }
+}

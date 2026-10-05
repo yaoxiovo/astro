@@ -21,7 +21,14 @@
       "linesDeleted": 1,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/d58af9cc9f9d2f990d646fe8bb02f65e7242eff4"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/d58af9cc9f9d2f990d646fe8bb02f65e7242eff4",
+      "deltaPatch": {
+        "fromShortSha": "893884c",
+        "toShortSha": "d58af9c",
+        "patchUrl": "/api/wiki/deltas/blog-fullstack-architecture-evolution-2026/893884c--d58af9c.json",
+        "patchSize": 1688,
+        "compressionRatio": "78.4%"
+      }
     },
     {
       "sha": "893884c71a2c8cbb226ed926115c6c5d217cb032",
@@ -39,7 +46,14 @@
       "linesDeleted": 149,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/893884c71a2c8cbb226ed926115c6c5d217cb032"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/893884c71a2c8cbb226ed926115c6c5d217cb032",
+      "deltaPatch": {
+        "fromShortSha": "616edc9",
+        "toShortSha": "893884c",
+        "patchUrl": "/api/wiki/deltas/blog-fullstack-architecture-evolution-2026/616edc9--893884c.json",
+        "patchSize": 8395,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "616edc96ee98c843eaf65735d51060433e10ddab",

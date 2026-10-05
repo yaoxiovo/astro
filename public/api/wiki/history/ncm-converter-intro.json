@@ -21,7 +21,14 @@
       "linesDeleted": 2,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/22d034f57df724bdc154455060db2ccf5c3012f1"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/22d034f57df724bdc154455060db2ccf5c3012f1",
+      "deltaPatch": {
+        "fromShortSha": "c26e3e7",
+        "toShortSha": "22d034f",
+        "patchUrl": "/api/wiki/deltas/ncm-converter-intro/c26e3e7--22d034f.json",
+        "patchSize": 722,
+        "compressionRatio": "87.0%"
+      }
     },
     {
       "sha": "c26e3e77d515c73ad3e3fcffc842f60f2e6b89ca",
@@ -39,7 +46,14 @@
       "linesDeleted": 5,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/c26e3e77d515c73ad3e3fcffc842f60f2e6b89ca"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/c26e3e77d515c73ad3e3fcffc842f60f2e6b89ca",
+      "deltaPatch": {
+        "fromShortSha": "7aa619a",
+        "toShortSha": "c26e3e7",
+        "patchUrl": "/api/wiki/deltas/ncm-converter-intro/7aa619a--c26e3e7.json",
+        "patchSize": 1050,
+        "compressionRatio": "80.9%"
+      }
     },
     {
       "sha": "7aa619a4cb137297ca3c4e6862bcd03df24d1103",
@@ -57,7 +71,14 @@
       "linesDeleted": 1,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/7aa619a4cb137297ca3c4e6862bcd03df24d1103"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/7aa619a4cb137297ca3c4e6862bcd03df24d1103",
+      "deltaPatch": {
+        "fromShortSha": "52ed4f7",
+        "toShortSha": "7aa619a",
+        "patchUrl": "/api/wiki/deltas/ncm-converter-intro/52ed4f7--7aa619a.json",
+        "patchSize": 782,
+        "compressionRatio": "85.6%"
+      }
     },
     {
       "sha": "52ed4f72e80f54b1eeb3cde539eaef7e5e7473d1",
@@ -75,7 +96,14 @@
       "linesDeleted": 8,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/52ed4f72e80f54b1eeb3cde539eaef7e5e7473d1"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/52ed4f72e80f54b1eeb3cde539eaef7e5e7473d1",
+      "deltaPatch": {
+        "fromShortSha": "c731839",
+        "toShortSha": "52ed4f7",
+        "patchUrl": "/api/wiki/deltas/ncm-converter-intro/c731839--52ed4f7.json",
+        "patchSize": 1058,
+        "compressionRatio": "80.5%"
+      }
     },
     {
       "sha": "c731839ef3e32ae19cffa088e23b8e1528ef2d1e",
@@ -93,7 +121,14 @@
       "linesDeleted": 1,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/c731839ef3e32ae19cffa088e23b8e1528ef2d1e"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/c731839ef3e32ae19cffa088e23b8e1528ef2d1e",
+      "deltaPatch": {
+        "fromShortSha": "cb9bae3",
+        "toShortSha": "c731839",
+        "patchUrl": "/api/wiki/deltas/ncm-converter-intro/cb9bae3--c731839.json",
+        "patchSize": 652,
+        "compressionRatio": "88.6%"
+      }
     },
     {
       "sha": "cb9bae3c5255b7101770472058dde1659061d3dd",

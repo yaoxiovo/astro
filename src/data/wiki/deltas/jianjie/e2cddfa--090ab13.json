@@ -1,0 +1,56 @@
+{
+  "version": "1.0",
+  "slug": "jianjie",
+  "fromSha": "e2cddfa467717a47087e80f7b89caf922b38b478",
+  "toSha": "090ab13385f29e6bb9bcacfacf86fd3219ba2cc7",
+  "fromShortSha": "e2cddfa",
+  "toShortSha": "090ab13",
+  "timestamp": "2026-10-05T17:09:05.902Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "090ab13385f29e6bb9bcacfacf86fd3219ba2cc7"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "090ab13"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-25T14:15:51+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "修改文章"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 14,
+      "deleteCount": 2,
+      "lines": [
+        "1. cdn提供商：cloudflare Tencent",
+        "2. dns提供商：cloudflare dnspod"
+      ]
+    },
+    {
+      "start": 17,
+      "deleteCount": 1,
+      "lines": [
+        "优点：零成本建站， eo+cf 天下无敌"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 711,
+    "targetLength": 683,
+    "patchSize": 718,
+    "compressionRatio": "0.0%",
+    "addedLines": 3,
+    "deletedLines": 3
+  }
+}

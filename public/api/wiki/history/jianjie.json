@@ -21,7 +21,14 @@
       "linesDeleted": 2,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/9638fb22114d3e9e814aee5cd38b6c338a0298c6"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/9638fb22114d3e9e814aee5cd38b6c338a0298c6",
+      "deltaPatch": {
+        "fromShortSha": "90074c1",
+        "toShortSha": "9638fb2",
+        "patchUrl": "/api/wiki/deltas/jianjie/90074c1--9638fb2.json",
+        "patchSize": 829,
+        "compressionRatio": "48.6%"
+      }
     },
     {
       "sha": "90074c15570ecdb70316115588705f2d9e0ba2c2",
@@ -39,7 +46,14 @@
       "linesDeleted": 3,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/90074c15570ecdb70316115588705f2d9e0ba2c2"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/90074c15570ecdb70316115588705f2d9e0ba2c2",
+      "deltaPatch": {
+        "fromShortSha": "e2cddfa",
+        "toShortSha": "90074c1",
+        "patchUrl": "/api/wiki/deltas/jianjie/e2cddfa--90074c1.json",
+        "patchSize": 1721,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "e2cddfa467717a47087e80f7b89caf922b38b478",
@@ -57,7 +71,14 @@
       "linesDeleted": 3,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/e2cddfa467717a47087e80f7b89caf922b38b478"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/e2cddfa467717a47087e80f7b89caf922b38b478",
+      "deltaPatch": {
+        "fromShortSha": "090ab13",
+        "toShortSha": "e2cddfa",
+        "patchUrl": "/api/wiki/deltas/jianjie/090ab13--e2cddfa.json",
+        "patchSize": 735,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "090ab13385f29e6bb9bcacfacf86fd3219ba2cc7",
@@ -75,7 +96,14 @@
       "linesDeleted": 2,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/090ab13385f29e6bb9bcacfacf86fd3219ba2cc7"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/090ab13385f29e6bb9bcacfacf86fd3219ba2cc7",
+      "deltaPatch": {
+        "fromShortSha": "5636e28",
+        "toShortSha": "090ab13",
+        "patchUrl": "/api/wiki/deltas/jianjie/5636e28--090ab13.json",
+        "patchSize": 728,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "5636e288539472f04ffd73b0e8710f041eba66d7",

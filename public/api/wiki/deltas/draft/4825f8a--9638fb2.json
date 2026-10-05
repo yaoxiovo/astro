@@ -1,0 +1,60 @@
+{
+  "version": "1.0",
+  "slug": "draft",
+  "fromSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "toSha": "9638fb22114d3e9e814aee5cd38b6c338a0298c6",
+  "fromShortSha": "4825f8a",
+  "toShortSha": "9638fb2",
+  "timestamp": "2026-10-05T17:08:40.927Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "9638fb22114d3e9e814aee5cd38b6c338a0298c6"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "9638fb2"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-09-07T17:15:39+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "yaoxiovo"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "perf(seo): 全站 SEO 第一二阶段优化"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 3,
+      "deleteCount": 0,
+      "lines": [
+        "description: \"A draft example demonstration showing how drafts are configured and excluded from production builds in Astro.\""
+      ]
+    },
+    {
+      "start": 9,
+      "deleteCount": 1,
+      "lines": [
+        "lang: \"en\""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 619,
+    "targetLength": 746,
+    "patchSize": 816,
+    "compressionRatio": "0.0%",
+    "addedLines": 2,
+    "deletedLines": 1
+  }
+}

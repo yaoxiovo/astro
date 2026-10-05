@@ -1,0 +1,49 @@
+{
+  "slug": "acg-goods-and-emotions",
+  "title": "十几块的零食舍不得，十几块的“谷子”果断买：二次元与当代年轻人的“精神资产重构”",
+  "checkedAt": "2026-10-05T17:12:08.148Z",
+  "score": 100,
+  "grade": "S",
+  "gradeLabel": "工业级卓越 (Industrial S)",
+  "badgeColor": "emerald",
+  "breakdown": {
+    "typography": {
+      "score": 25,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 25,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 25,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 136,
+    "codeLines": 0,
+    "codePercentage": "0.0%",
+    "cjkChars": 2711,
+    "englishWords": 21,
+    "totalEquivalentWords": 2732,
+    "lexicalDiversity": "29.4%",
+    "readingMinutes": 8,
+    "headingsCount": 12
+  },
+  "issuesCount": {
+    "total": 0,
+    "errors": 0,
+    "warnings": 0,
+    "infos": 0
+  },
+  "issues": []
+}

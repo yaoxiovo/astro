@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "slug": "jieshao",
+  "fromSha": "e7a88f32874f725c2920156326e6fe7cc31104c6",
+  "toSha": "8a6fc4c128b0db0a755cdd1de203dd743f113b53",
+  "fromShortSha": "e7a88f3",
+  "toShortSha": "8a6fc4c",
+  "timestamp": "2026-10-05T17:09:09.844Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "8a6fc4c128b0db0a755cdd1de203dd743f113b53"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "8a6fc4c"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-21T21:43:37+08:00"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 0,
+      "deleteCount": 16,
+      "lines": []
+    },
+    {
+      "start": 18,
+      "deleteCount": 0,
+      "lines": [
+        "![[1.webp]]"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 245,
+    "targetLength": 13,
+    "patchSize": 549,
+    "compressionRatio": "0.0%",
+    "addedLines": 1,
+    "deletedLines": 16
+  }
+}

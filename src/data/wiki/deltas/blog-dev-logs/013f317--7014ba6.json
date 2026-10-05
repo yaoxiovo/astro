@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "013f317e6d886cc9080d61d9109027f76b8260c6",
+  "toSha": "7014ba687afbab429987973b30b20a105690c424",
+  "fromShortSha": "013f317",
+  "toShortSha": "7014ba6",
+  "timestamp": "2026-10-05T17:08:00.829Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "7014ba687afbab429987973b30b20a105690c424"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "7014ba6"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-21T19:40:59+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 5 files: umami-share.js, PostMeta.astro, blog-dev-logs.md, [slug].astro, [...slug].astro"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 228,
+      "deleteCount": 19,
+      "lines": [
+        "现在不管你怎么疯狂折腾，统计数据都只会显示纯净无瑕的数字，卡片也乖乖撑得满满当当、和头部对齐得整整齐齐了喵呜~！还不快拿小鱼干来犒劳本天才架构师喵！"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 36114,
+    "targetLength": 33446,
+    "patchSize": 867,
+    "compressionRatio": "97.4%",
+    "addedLines": 1,
+    "deletedLines": 19
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "version": "1.0",
+  "slug": "26zhongkao",
+  "fromSha": "081a6a4231eaf293f2a8bd222f8e5423802b951d",
+  "toSha": "8b7c47997f93766b8cd5a29f6a17e4ce236feba8",
+  "fromShortSha": "081a6a4",
+  "toShortSha": "8b7c479",
+  "timestamp": "2026-10-05T17:10:57.109Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "8b7c47997f93766b8cd5a29f6a17e4ce236feba8"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "8b7c479"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-05T10:33:49+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "seo: improve zhongkao countdown metadata"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 1,
+      "lines": [
+        "title: 2026 年中考实时倒计时",
+        "description: 在线查看 2026 年中考首场考试实时倒计时，精确显示剩余天、小时、分钟和秒，适合中考备考冲刺阶段使用。"
+      ]
+    },
+    {
+      "start": 3,
+      "deleteCount": 1,
+      "lines": []
+    },
+    {
+      "start": 5,
+      "deleteCount": 2,
+      "lines": [
+        "  - 2026中考",
+        "  - 中考倒计时",
+        "  - 备考冲刺",
+        "  - 学习规划",
+        "category: 中考备考"
+      ]
+    },
+    {
+      "start": 8,
+      "deleteCount": 1,
+      "lines": [
+        "lang: \"zh_CN\""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 2251,
+    "targetLength": 2437,
+    "patchSize": 1017,
+    "compressionRatio": "58.3%",
+    "addedLines": 8,
+    "deletedLines": 5
+  }
+}

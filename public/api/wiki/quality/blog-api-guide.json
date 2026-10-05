@@ -1,0 +1,66 @@
+{
+  "slug": "blog-api-guide",
+  "title": "博客 API 接口大全与调用教程",
+  "checkedAt": "2026-10-05T17:11:54.409Z",
+  "score": 90,
+  "grade": "A",
+  "gradeLabel": "生产级就绪 (Production A)",
+  "badgeColor": "emerald",
+  "breakdown": {
+    "typography": {
+      "score": 25,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 15,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 25,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 438,
+    "codeLines": 194,
+    "codePercentage": "44.3%",
+    "cjkChars": 1192,
+    "englishWords": 292,
+    "totalEquivalentWords": 1484,
+    "lexicalDiversity": "30.0%",
+    "readingMinutes": 9,
+    "headingsCount": 40
+  },
+  "issuesCount": {
+    "total": 2,
+    "errors": 0,
+    "warnings": 2,
+    "infos": 0
+  },
+  "issues": [
+    {
+      "type": "heading_hierarchy_jump",
+      "severity": "warning",
+      "line": 1,
+      "excerpt": "# 参数化查询：最近 5 条「日常」标签的顶层动态 -> ### JavaScript（浏览器 / Node）",
+      "message": "标题层级突变: 从 H1 直接跳跃至 H3（跳过了 H2），破坏大纲语义树！",
+      "suggestion": "建议将 \"JavaScript（浏览器 / Node）\" 调整为 H2"
+    },
+    {
+      "type": "heading_hierarchy_jump",
+      "severity": "warning",
+      "line": 1,
+      "excerpt": "# 指定日期范围 + 关键词 -> ### 10. API 文档 `GET /`",
+      "message": "标题层级突变: 从 H1 直接跳跃至 H3（跳过了 H2），破坏大纲语义树！",
+      "suggestion": "建议将 \"10. API 文档 `GET /`\" 调整为 H2"
+    }
+  ]
+}

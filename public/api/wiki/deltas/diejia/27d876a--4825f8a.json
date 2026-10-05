@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "slug": "diejia",
+  "fromSha": "27d876a4b6fcd087cc5f2dc4bd32451464fd50b0",
+  "toSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "fromShortSha": "27d876a",
+  "toShortSha": "4825f8a",
+  "timestamp": "2026-10-05T17:08:37.817Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "4825f8a"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-13T14:03:45+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "root"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 10,
+      "deleteCount": 1,
+      "lines": []
+    },
+    {
+      "start": 13,
+      "deleteCount": 0,
+      "lines": [
+        "pinned: true"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 6995,
+    "targetLength": 6995,
+    "patchSize": 709,
+    "compressionRatio": "89.9%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

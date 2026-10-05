@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "slug": "other-sites",
+  "fromSha": "e7a4db9e75ab661760b76080710941107c803f0c",
+  "toSha": "0570818c9f3a859383135fed42d415f44e2027f3",
+  "fromShortSha": "e7a4db9",
+  "toShortSha": "0570818",
+  "timestamp": "2026-10-05T17:09:55.983Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "0570818c9f3a859383135fed42d415f44e2027f3"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "0570818"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-18T13:50:10+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 194 files: del-esa-code.yml-nouse, deploy.yml-nouse, .gitignore, app.json, appearance.json, core-plugins.json, workspace-mobile.json, biome.json, edgeone.json, frontmatter.json, package.json, pnpm-lock.yaml, postcss.config.mjs, ...omitted 181 file(s)"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 9,
+      "deleteCount": 1,
+      "lines": [
+        "",
+        "::url{href=\"https://cover.acofork.com\"}"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 159,
+    "targetLength": 172,
+    "patchSize": 848,
+    "compressionRatio": "0.0%",
+    "addedLines": 2,
+    "deletedLines": 1
+  }
+}

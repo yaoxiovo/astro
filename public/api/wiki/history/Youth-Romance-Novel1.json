@@ -21,7 +21,14 @@
       "linesDeleted": 3,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/9638fb22114d3e9e814aee5cd38b6c338a0298c6"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/9638fb22114d3e9e814aee5cd38b6c338a0298c6",
+      "deltaPatch": {
+        "fromShortSha": "ec95568",
+        "toShortSha": "9638fb2",
+        "patchUrl": "/api/wiki/deltas/Youth-Romance-Novel1/ec95568--9638fb2.json",
+        "patchSize": 972,
+        "compressionRatio": "59.1%"
+      }
     },
     {
       "sha": "ec95568e8c098289944c08d8661e498e26dd0da0",
@@ -39,7 +46,14 @@
       "linesDeleted": 1,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/ec95568e8c098289944c08d8661e498e26dd0da0"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/ec95568e8c098289944c08d8661e498e26dd0da0",
+      "deltaPatch": {
+        "fromShortSha": "131c522",
+        "toShortSha": "ec95568",
+        "patchUrl": "/api/wiki/deltas/Youth-Romance-Novel1/131c522--ec95568.json",
+        "patchSize": 688,
+        "compressionRatio": "68.1%"
+      }
     },
     {
       "sha": "131c522b47cae8e97bc0c5c5de661cadbea258e9",

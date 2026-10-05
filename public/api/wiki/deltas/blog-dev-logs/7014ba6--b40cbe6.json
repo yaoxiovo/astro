@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "7014ba687afbab429987973b30b20a105690c424",
+  "toSha": "b40cbe655a1b651e40c4a3856efbb057cf2c5cb2",
+  "fromShortSha": "7014ba6",
+  "toShortSha": "b40cbe6",
+  "timestamp": "2026-10-05T17:08:00.875Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "b40cbe655a1b651e40c4a3856efbb057cf2c5cb2"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "b40cbe6"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-21T19:34:08+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "root"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Fix: correct umami metrics type to 'path' & force MomentCard w-full"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 201,
+      "deleteCount": 28,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 33446,
+    "targetLength": 29672,
+    "patchSize": 666,
+    "compressionRatio": "97.8%",
+    "addedLines": 0,
+    "deletedLines": 28
+  }
+}

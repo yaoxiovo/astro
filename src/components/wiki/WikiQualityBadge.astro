@@ -1,0 +1,317 @@
+---
+import { Icon } from "astro-icon/components";
+import { getPostQualityReportSync } from "../../utils/wiki-quality-loader";
+
+interface Props {
+	slug: string;
+	class?: string;
+	compact?: boolean;
+}
+
+const { slug, class: className = "", compact = false } = Astro.props;
+
+const report = getPostQualityReportSync(slug);
+if (!report) {
+	// 优雅降级：若未生成质量数据则不打扰渲染
+	return;
+}
+
+const { score, grade, gradeLabel, badgeColor, breakdown, metrics, issuesCount, issues } = report;
+
+const colorMap = {
+	emerald: {
+		bg: "bg-emerald-500/10 dark:bg-emerald-500/15",
+		text: "text-emerald-700 dark:text-emerald-400",
+		border: "border-emerald-500/30",
+		ring: "ring-emerald-500/20",
+		pulse: "bg-emerald-500",
+		badge: "bg-emerald-500/20 text-emerald-800 dark:text-emerald-300",
+		bar: "bg-emerald-500",
+	},
+	amber: {
+		bg: "bg-amber-500/10 dark:bg-amber-500/15",
+		text: "text-amber-700 dark:text-amber-400",
+		border: "border-amber-500/30",
+		ring: "ring-amber-500/20",
+		pulse: "bg-amber-500",
+		badge: "bg-amber-500/20 text-amber-800 dark:text-amber-300",
+		bar: "bg-amber-500",
+	},
+	orange: {
+		bg: "bg-orange-500/10 dark:bg-orange-500/15",
+		text: "text-orange-700 dark:text-orange-400",
+		border: "border-orange-500/30",
+		ring: "ring-orange-500/20",
+		pulse: "bg-orange-500",
+		badge: "bg-orange-500/20 text-orange-800 dark:text-orange-300",
+		bar: "bg-orange-500",
+	},
+	rose: {
+		bg: "bg-rose-500/10 dark:bg-rose-500/15",
+		text: "text-rose-700 dark:text-rose-400",
+		border: "border-rose-500/30",
+		ring: "ring-rose-500/20",
+		pulse: "bg-rose-500",
+		badge: "bg-rose-500/20 text-rose-800 dark:text-rose-300",
+		bar: "bg-rose-500",
+	},
+};
+
+const c = colorMap[badgeColor] || colorMap.emerald;
+const dialogId = `quality-scorecard-${slug.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+---
+
+<div class:list={["wiki-quality-badge-container inline-flex items-center select-none relative", className]}>
+	<!-- 工业级质量徽章胶囊 (Quality Badge Pill) -->
+	<button
+		type="button"
+		class:list={[
+			"group flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all duration-300 text-xs font-mono font-medium shadow-sm hover:shadow hover:scale-[1.02] active:scale-[0.98] cursor-pointer",
+			c.bg,
+			c.border,
+			c.text,
+		]}
+		aria-haspopup="dialog"
+		data-dialog-target={dialogId}
+		title="点击查看工业级静态分析体检卡 (Quality Scorecard)"
+	>
+		<span class="relative flex h-2 w-2">
+			<span class:list={["animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", c.pulse]}></span>
+			<span class:list={["relative inline-flex rounded-full h-2 w-2", c.pulse]}></span>
+		</span>
+
+		<Icon name="material-symbols:verified-outline-rounded" class="text-sm shrink-0" />
+
+		{#if !compact}
+			<span class="text-[11px] font-sans font-semibold tracking-wide uppercase opacity-85">
+				质量门禁
+			</span>
+		{/if}
+
+		<span class:list={["px-1.5 py-0.2 rounded-md font-bold text-[11px]", c.badge]}>
+			{grade}级 · {score}分
+		</span>
+	</button>
+
+	<!-- 弹出式工业级体检明细评分卡 (Modal Dialog) -->
+	<dialog
+		id={dialogId}
+		class="wiki-quality-modal fixed inset-0 z-50 bg-black/50 backdrop-blur-sm p-4 md:p-6 w-full h-full max-w-none max-h-none border-0 m-0 overflow-y-auto hidden items-center justify-center"
+	>
+		<div
+			class="modal-backdrop-close fixed inset-0"
+			data-close-target={dialogId}
+		></div>
+
+		<div class="modal-card relative z-10 w-full max-w-xl mx-auto rounded-3xl bg-[var(--card-bg)] border border-[var(--line-divider)] shadow-2xl overflow-hidden p-6 md:p-8 animate-in fade-in zoom-in-95 duration-200">
+			<!-- 顶部标题与关闭按钮 -->
+			<div class="flex items-center justify-between pb-4 border-b border-[var(--line-divider)] mb-5">
+				<div class="flex items-center gap-2.5">
+					<div class:list={["w-8 h-8 rounded-xl flex items-center justify-center", c.bg, c.text]}>
+						<Icon name="material-symbols:verified-outline-rounded" class="text-xl" />
+					</div>
+					<div>
+						<h3 class="font-bold text-base md:text-lg text-black/90 dark:text-white/90 flex items-center gap-2">
+							<span>内容质量工程体检卡</span>
+							<span class="text-xs font-normal text-black/40 dark:text-white/40 font-mono">AST Linter</span>
+						</h3>
+						<p class="text-xs text-black/50 dark:text-white/50">
+							检测时间: {new Date(report.checkedAt).toLocaleDateString()} · 静态代码门禁矩阵
+						</p>
+					</div>
+				</div>
+
+				<button
+					type="button"
+					class="modal-close-btn p-1.5 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 text-black/40 hover:text-black dark:text-white/40 dark:hover:text-white transition-colors"
+					data-close-target={dialogId}
+					aria-label="关闭"
+				>
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+					</svg>
+				</button>
+			</div>
+
+			<!-- 得分大徽章与等级评定 -->
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+				<!-- 左侧大分数牌 -->
+				<div class:list={["rounded-2xl p-4 flex flex-col justify-center items-center text-center border", c.bg, c.border]}>
+					<div class="text-xs font-mono font-medium uppercase tracking-wider opacity-75 mb-1">综合健康指数</div>
+					<div class:list={["text-4xl md:text-5xl font-extrabold font-mono", c.text]}>
+						{score}
+					</div>
+					<div class:list={["mt-2 px-2.5 py-0.5 rounded-full text-xs font-bold", c.badge]}>
+						{gradeLabel}
+					</div>
+				</div>
+
+				<!-- 右侧四项雷达维度条形图 -->
+				<div class="md:col-span-2 rounded-2xl p-4 bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--line-divider)] flex flex-col justify-between gap-2.5 text-xs">
+					<!-- Typography -->
+					<div>
+						<div class="flex justify-between font-medium mb-1">
+							<span class="text-black/70 dark:text-white/70">{breakdown.typography.label}</span>
+							<span class="font-mono font-bold text-black/80 dark:text-white/80">{breakdown.typography.score} / {breakdown.typography.max}</span>
+						</div>
+						<div class="w-full bg-black/10 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+							<div class:list={["h-full rounded-full transition-all duration-500", c.bar]} style={`width: ${(breakdown.typography.score / breakdown.typography.max) * 100}%`}></div>
+						</div>
+					</div>
+
+					<!-- Links -->
+					<div>
+						<div class="flex justify-between font-medium mb-1">
+							<span class="text-black/70 dark:text-white/70">{breakdown.links.label}</span>
+							<span class="font-mono font-bold text-black/80 dark:text-white/80">{breakdown.links.score} / {breakdown.links.max}</span>
+						</div>
+						<div class="w-full bg-black/10 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+							<div class:list={["h-full rounded-full transition-all duration-500", c.bar]} style={`width: ${(breakdown.links.score / breakdown.links.max) * 100}%`}></div>
+						</div>
+					</div>
+
+					<!-- Structure -->
+					<div>
+						<div class="flex justify-between font-medium mb-1">
+							<span class="text-black/70 dark:text-white/70">{breakdown.structure.label}</span>
+							<span class="font-mono font-bold text-black/80 dark:text-white/80">{breakdown.structure.score} / {breakdown.structure.max}</span>
+						</div>
+						<div class="w-full bg-black/10 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+							<div class:list={["h-full rounded-full transition-all duration-500", c.bar]} style={`width: ${(breakdown.structure.score / breakdown.structure.max) * 100}%`}></div>
+						</div>
+					</div>
+
+					<!-- Readability -->
+					<div>
+						<div class="flex justify-between font-medium mb-1">
+							<span class="text-black/70 dark:text-white/70">{breakdown.readability.label}</span>
+							<span class="font-mono font-bold text-black/80 dark:text-white/80">{breakdown.readability.score} / {breakdown.readability.max}</span>
+						</div>
+						<div class="w-full bg-black/10 dark:bg-white/10 h-1.5 rounded-full overflow-hidden">
+							<div class:list={["h-full rounded-full transition-all duration-500", c.bar]} style={`width: ${(breakdown.readability.score / breakdown.readability.max) * 100}%`}></div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- 关键指标微卡 (Metrics Chips) -->
+			<div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mb-6 text-center">
+				<div class="p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--line-divider)]">
+					<div class="text-[10px] text-black/50 dark:text-white/50 mb-0.5">总字数统计</div>
+					<div class="font-mono font-bold text-sm text-black/90 dark:text-white/90">{metrics.totalEquivalentWords} 字</div>
+				</div>
+				<div class="p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--line-divider)]">
+					<div class="text-[10px] text-black/50 dark:text-white/50 mb-0.5">预估阅读耗时</div>
+					<div class="font-mono font-bold text-sm text-black/90 dark:text-white/90">~{metrics.readingMinutes} 分钟</div>
+				</div>
+				<div class="p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--line-divider)]">
+					<div class="text-[10px] text-black/50 dark:text-white/50 mb-0.5">代码行占比</div>
+					<div class="font-mono font-bold text-sm text-black/90 dark:text-white/90">{metrics.codePercentage}</div>
+				</div>
+				<div class="p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--line-divider)]">
+					<div class="text-[10px] text-black/50 dark:text-white/50 mb-0.5">词汇多样性</div>
+					<div class="font-mono font-bold text-sm text-black/90 dark:text-white/90">{metrics.lexicalDiversity}</div>
+				</div>
+			</div>
+
+			<!-- 巡检发现与优化建议 (Audit Findings) -->
+			<div class="border-t border-[var(--line-divider)] pt-4">
+				<div class="flex items-center justify-between mb-3 text-xs">
+					<span class="font-bold text-black/80 dark:text-white/80 flex items-center gap-1.5">
+						<Icon name="material-symbols:rule-folder-outline-rounded" class="text-sm" />
+						<span>巡检发现与优化建议</span>
+					</span>
+					<span class="font-mono text-[11px] text-black/40 dark:text-white/40">
+						发现 {issuesCount.total} 处项目 (致命: {issuesCount.errors}, 警告: {issuesCount.warnings})
+					</span>
+				</div>
+
+				{#if issues.length === 0}
+					<div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+						🎉 全项指标完美通过，无死链或标点排版瑕疵，符合工业级内容工程规范 喵！
+					</div>
+				{:else}
+					<div class="max-h-48 overflow-y-auto space-y-2 pr-1 text-xs">
+						{issues.slice(0, 8).map((iss) => (
+							<div class="p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--line-divider)] flex items-start gap-2.5">
+								<span class:list={[
+									"shrink-0 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase",
+									iss.severity === "error" ? "bg-red-500/20 text-red-700 dark:text-red-400" :
+									iss.severity === "warning" ? "bg-amber-500/20 text-amber-700 dark:text-amber-400" :
+									"bg-blue-500/20 text-blue-700 dark:text-blue-400"
+								]}>
+									{iss.severity === "error" ? "死链" : iss.severity === "warning" ? "建议" : "提示"}
+								</span>
+								<div class="flex-1 min-w-0">
+									<div class="text-black/80 dark:text-white/80 leading-snug font-medium">
+										{iss.message}
+									</div>
+									{iss.suggestion && (
+										<div class="mt-1 text-[11px] text-black/50 dark:text-white/50 font-mono">
+											建议: <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{iss.suggestion}</span>
+										</div>
+									)}
+								</div>
+								<span class="text-[10px] font-mono text-black/40 dark:text-white/40 shrink-0">
+									第 {iss.line} 行
+								</span>
+							</div>
+						))}
+						{issues.length > 8 && (
+							<div class="text-center text-[11px] text-black/40 dark:text-white/40 py-1">
+								... 剩余 {issues.length - 8} 处排版小建议已在本地报告中归档喵
+							</div>
+						)}
+					</div>
+				{/if}
+			</div>
+
+			<!-- 底部说明与关闭 -->
+			<div class="mt-5 pt-3 border-t border-[var(--line-divider)]/40 flex items-center justify-between text-[11px] text-black/40 dark:text-white/40">
+				<span>静态分析引擎: Content Static Analysis Matrix v1.0</span>
+				<button
+					type="button"
+					class="modal-close-btn text-[var(--primary)] hover:underline font-medium"
+					data-close-target={dialogId}
+				>
+					关闭体检卡
+				</button>
+			</div>
+		</div>
+	</dialog>
+</div>
+
+<script>
+	function setupQualityModals() {
+		// 监听所有打开按钮
+		document.querySelectorAll("[data-dialog-target]").forEach((btn) => {
+			const targetId = btn.getAttribute("data-dialog-target");
+			if (!targetId) return;
+			const dialog = document.getElementById(targetId);
+			if (!dialog) return;
+
+			btn.addEventListener("click", () => {
+				dialog.classList.remove("hidden");
+				dialog.classList.add("flex");
+			});
+		});
+
+		// 监听所有关闭按钮及背景遮罩
+		document.querySelectorAll("[data-close-target]").forEach((btn) => {
+			const targetId = btn.getAttribute("data-close-target");
+			if (!targetId) return;
+			const dialog = document.getElementById(targetId);
+			if (!dialog) return;
+
+			btn.addEventListener("click", () => {
+				dialog.classList.add("hidden");
+				dialog.classList.remove("flex");
+			});
+		});
+	}
+
+	// 初始加载与 Swup 页面无刷换页适配
+	setupQualityModals();
+	document.addEventListener("astro:page-load", setupQualityModals);
+	document.addEventListener("swup:contentReplaced", setupQualityModals);
+</script>

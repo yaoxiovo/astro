@@ -1,0 +1,49 @@
+{
+  "slug": "neurosama5",
+  "title": "Protocol-06：底层递归与观测者协议",
+  "checkedAt": "2026-10-05T17:11:54.973Z",
+  "score": 100,
+  "grade": "S",
+  "gradeLabel": "工业级卓越 (Industrial S)",
+  "badgeColor": "emerald",
+  "breakdown": {
+    "typography": {
+      "score": 25,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 25,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 25,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 101,
+    "codeLines": 0,
+    "codePercentage": "0.0%",
+    "cjkChars": 1066,
+    "englishWords": 61,
+    "totalEquivalentWords": 1127,
+    "lexicalDiversity": "45.5%",
+    "readingMinutes": 3,
+    "headingsCount": 4
+  },
+  "issuesCount": {
+    "total": 0,
+    "errors": 0,
+    "warnings": 0,
+    "infos": 0
+  },
+  "issues": []
+}

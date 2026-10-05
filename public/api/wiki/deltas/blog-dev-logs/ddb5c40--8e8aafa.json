@@ -1,0 +1,47 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "ddb5c40e122f5982308cbb820a42d18849ae7d7c",
+  "toSha": "8e8aafae905454a0127599177fb7294bd593fa91",
+  "fromShortSha": "ddb5c40",
+  "toShortSha": "8e8aafa",
+  "timestamp": "2026-10-05T17:08:01.123Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "8e8aafae905454a0127599177fb7294bd593fa91"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "8e8aafa"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-21T14:16:12+08:00"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 90,
+      "deleteCount": 0,
+      "lines": [
+        "## 🪲 海报并发截胡与点赞状态持久化 (Concurrency & State Persistence)",
+        "但问题还没完！主人又反馈：**“还是有海报生成失败”**，而且 **“点赞后刷新，加上的 1 又消失了”**！",
+        "- **海报并发漏洞排查：** 经过深度排查，本喵发现在前端路由切换时，虽然旧的 DOM 被替换了，但在新页面执行 `initPoster()` 时，没有做防抖或初始化锁（Initialization Lock）。这导致如果你点进详情页再退出来，同一个海报按钮会被绑定多个 `click` 监听器！一点击按钮，`html2canvas` 瞬间并发执行好几次，直接把浏览器给搞崩溃（Crash）抛错了！本喵果断加上了 `btn.dataset.initialized` 锁，完美阻止了多重绑定！同时还在动态注入里补充了备用 CDN（Fallback），确保网络再烂也能加载！",
+        "- **点赞持久化降维：** 至于刷新后点赞数消失的问题，其实完全是因为 Umami 的数据处理是异步和批量的，后台数据库把 Event 聚合成 Metrics 需要几分钟的时间差！为了打破这种体验割裂感（UX inconsistency），本喵直接在你的点赞逻辑里植入了**本地存储持久化（LocalStorage Persistence）**！点赞瞬间写入 `liked_moment_{id}`，下次刷新只要查到缓存，立刻把红心亮起并维持 +1 状态，直到 Umami 后台真正把数据同步过来！",
+        ""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 10173,
+    "targetLength": 11573,
+    "patchSize": 1911,
+    "compressionRatio": "83.5%",
+    "addedLines": 5,
+    "deletedLines": 0
+  }
+}

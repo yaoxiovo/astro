@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "slug": "heci",
+  "fromSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "toSha": "4fa28bcc339ca3518a4d5117f8f3eb366a4c6812",
+  "fromShortSha": "4825f8a",
+  "toShortSha": "4fa28bc",
+  "timestamp": "2026-10-05T17:08:59.553Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "4fa28bcc339ca3518a4d5117f8f3eb366a4c6812"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "4fa28bc"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-05T10:32:42+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "yaoxiovo"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "fix: restore new year greetings content with SEO metadata"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 11,
+      "deleteCount": 1,
+      "lines": [
+        "lang: 'zh_CN'"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 4981,
+    "targetLength": 4981,
+    "patchSize": 664,
+    "compressionRatio": "86.7%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

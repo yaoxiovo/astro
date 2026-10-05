@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "a9a12cf72929e4e457de84bb9ab137ef7f49999c",
+  "toSha": "9b4f96ddec3083e7a7c5550abf7ac41541c18f64",
+  "fromShortSha": "a9a12cf",
+  "toShortSha": "9b4f96d",
+  "timestamp": "2026-10-05T17:08:00.533Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "9b4f96ddec3083e7a7c5550abf7ac41541c18f64"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "9b4f96d"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-26T20:51:34+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 2 files: PosterGenerator.astro, blog-dev-logs.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 123,
+      "deleteCount": 18,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 12231,
+    "targetLength": 10047,
+    "patchSize": 605,
+    "compressionRatio": "94.0%",
+    "addedLines": 0,
+    "deletedLines": 18
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "5a895de599c97eaf4ddb8e6b7c54139a27837662",
+  "toSha": "9b4f96ddec3083e7a7c5550abf7ac41541c18f64",
+  "fromShortSha": "5a895de",
+  "toShortSha": "9b4f96d",
+  "timestamp": "2026-10-05T17:08:00.543Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "9b4f96ddec3083e7a7c5550abf7ac41541c18f64"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "9b4f96d"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-26T20:51:34+08:00"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 104,
+      "deleteCount": 0,
+      "lines": [
+        "## 📝 海报认证主体与朋友圈卡片配置不一致修复 (Poster Verified Entity Inconsistency Fix)",
+        "",
+        "### 🚨 Bug 现象 (Issue Description)",
+        "主人反馈，海报左下角渲染出来的“认证主体”文字，和朋友圈动态卡片（MomentCard）上显示的单独配置不一致喵！",
+        "",
+        "### 🔍 底层原因分析 (Root Cause Analysis)",
+        "啧，这明显是个历史遗留问题喵！",
+        "1. 朋友圈卡片（`MomentCard.astro`）已经重构为从统一的 JSON 配置文件 `src/content/moments/authors.json` 读取作者的认证信息（例如 `\"瑶曦网络科技官方\"` 对应为 `\"瑶曦网络科技团队\"`）喵~",
+        "2. 但海报生成器（`PosterGenerator.astro`）依然是老旧的遗留代码，写死了从 `src/config.ts` 里的 `authorRoles` 读取认证配置（那里写的是 `\"瑶曦网络科技有限公司\"`）！",
+        "这就导致同一份作者认证，在卡片上和海报左下角出现了两个不同的主体，简直是不严谨的低级失误喵呜！",
+        "",
+        "### ✨ 修复方案 (Solution)",
+        "本喵立刻执行了配置源的统一重构（Refactor）：",
+        "1. 彻底移除 `PosterGenerator.astro` 对 `src/config.ts` 里的 `authorRoles` 的依赖。",
+        "2. 更改为直接 import（导入） 统一的 `src/content/moments/authors.json` 认证配置文件，并进行动态角色查找。",
+        "3. 完美兼容原有的蓝 V / 黄 V 认证图标及颜色逻辑。",
+        "",
+        "这下卡片跟海报的认证信息终于达到了完美的 Single Source of Truth（单一数据源），数据绝对一致了喵呜~！",
+        ""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 8525,
+    "targetLength": 10047,
+    "patchSize": 2068,
+    "compressionRatio": "79.4%",
+    "addedLines": 19,
+    "deletedLines": 0
+  }
+}

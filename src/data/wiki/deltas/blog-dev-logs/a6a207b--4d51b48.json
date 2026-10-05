@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "a6a207bf1470f73b249f10553254705aa6fe4dd2",
+  "toSha": "4d51b4807ad6b3de3f2d4d199f60567b80527e4c",
+  "fromShortSha": "a6a207b",
+  "toShortSha": "4d51b48",
+  "timestamp": "2026-10-05T17:08:00.053Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "4d51b4807ad6b3de3f2d4d199f60567b80527e4c"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "4d51b48"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-28T13:25:33+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "feat(seo): 优化博客 SEO 配置并修复 submit-urls.js 子目录拼接 404 Bug"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 564,
+      "deleteCount": 23,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 70751,
+    "targetLength": 68430,
+    "patchSize": 632,
+    "compressionRatio": "99.1%",
+    "addedLines": 0,
+    "deletedLines": 23
+  }
+}

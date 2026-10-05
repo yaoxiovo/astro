@@ -1,0 +1,60 @@
+{
+  "version": "1.0",
+  "slug": "jieshao",
+  "fromSha": "c5648f78da5cc08a3b5ab142120d19d4ac9cd0a3",
+  "toSha": "7464cc12a1d6b0128ac0b42175e924bc73cfccb7",
+  "fromShortSha": "c5648f7",
+  "toShortSha": "7464cc1",
+  "timestamp": "2026-10-05T17:09:09.746Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "7464cc12a1d6b0128ac0b42175e924bc73cfccb7"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "7464cc1"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-21T21:55:44+08:00"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 4,
+      "deleteCount": 1,
+      "lines": [
+        "description: Protocol-02：非对称对齐（限制类文章）"
+      ]
+    },
+    {
+      "start": 13,
+      "deleteCount": 78,
+      "lines": []
+    },
+    {
+      "start": 92,
+      "deleteCount": 34,
+      "lines": []
+    },
+    {
+      "start": 127,
+      "deleteCount": 3,
+      "lines": [
+        "![[1.webp|575]]"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 6388,
+    "targetLength": 258,
+    "patchSize": 700,
+    "compressionRatio": "0.0%",
+    "addedLines": 2,
+    "deletedLines": 116
+  }
+}

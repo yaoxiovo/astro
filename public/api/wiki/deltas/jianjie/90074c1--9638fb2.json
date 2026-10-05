@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "slug": "jianjie",
+  "fromSha": "90074c15570ecdb70316115588705f2d9e0ba2c2",
+  "toSha": "9638fb22114d3e9e814aee5cd38b6c338a0298c6",
+  "fromShortSha": "90074c1",
+  "toShortSha": "9638fb2",
+  "timestamp": "2026-10-05T17:09:05.791Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "9638fb22114d3e9e814aee5cd38b6c338a0298c6"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "9638fb2"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-09-07T17:15:39+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "perf(seo): 全站 SEO 第一二阶段优化"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 3,
+      "deleteCount": 1,
+      "lines": [
+        "description: \"瑶曦博客的技术架构与网站简介：介绍基于 GitHub 托管、Cloudflare 全球边缘加速与腾讯云 EdgeOne 国内分发的高可用静态博客方案。\""
+      ]
+    },
+    {
+      "start": 11,
+      "deleteCount": 1,
+      "lines": [
+        "lang: \"zh_CN\""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 1465,
+    "targetLength": 1614,
+    "patchSize": 829,
+    "compressionRatio": "48.6%",
+    "addedLines": 2,
+    "deletedLines": 2
+  }
+}

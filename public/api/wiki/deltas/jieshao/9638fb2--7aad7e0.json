@@ -1,0 +1,76 @@
+{
+  "version": "1.0",
+  "slug": "jieshao",
+  "fromSha": "9638fb22114d3e9e814aee5cd38b6c338a0298c6",
+  "toSha": "7aad7e0c8922bdb646085c74bd1db6038f89ba29",
+  "fromShortSha": "9638fb2",
+  "toShortSha": "7aad7e0",
+  "timestamp": "2026-10-05T17:09:09.690Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "7aad7e0c8922bdb646085c74bd1db6038f89ba29"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "7aad7e0"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-21T22:26:10+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "1"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 4,
+      "deleteCount": 1,
+      "lines": [
+        "description: 本站用到的Cloud云服务"
+      ]
+    },
+    {
+      "start": 12,
+      "deleteCount": 1,
+      "lines": [
+        "lang: \"\""
+      ]
+    },
+    {
+      "start": 15,
+      "deleteCount": 1,
+      "lines": [
+        "![](../assets/images/1.webp)"
+      ]
+    },
+    {
+      "start": 52,
+      "deleteCount": 1,
+      "lines": [
+        "![](../assets/images/2.webp)"
+      ]
+    },
+    {
+      "start": 92,
+      "deleteCount": 1,
+      "lines": [
+        "![](../assets/images/3.webp)"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 6675,
+    "targetLength": 6386,
+    "patchSize": 848,
+    "compressionRatio": "86.7%",
+    "addedLines": 5,
+    "deletedLines": 5
+  }
+}

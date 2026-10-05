@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "ed10641b28dca14e74166861cadb598ce9b8c99c",
+  "toSha": "2e04f7a6df2cffc83553328c1c6b7df1bd8a41e8",
+  "fromShortSha": "ed10641",
+  "toShortSha": "2e04f7a",
+  "timestamp": "2026-10-05T17:07:59.991Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "2e04f7a6df2cffc83553328c1c6b7df1bd8a41e8"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "2e04f7a"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-28T13:41:37+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "docs: sync dev-logs for multi-branch refactoring and ICP removal"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 606,
+      "deleteCount": 32,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 76417,
+    "targetLength": 72203,
+    "patchSize": 614,
+    "compressionRatio": "99.1%",
+    "addedLines": 0,
+    "deletedLines": 32
+  }
+}

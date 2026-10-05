@@ -1,0 +1,49 @@
+{
+  "slug": "domain-connect-cloudflare",
+  "title": "如何把域名接入 Cloudflare（完整实操版）",
+  "checkedAt": "2026-10-05T17:11:54.540Z",
+  "score": 100,
+  "grade": "S",
+  "gradeLabel": "工业级卓越 (Industrial S)",
+  "badgeColor": "emerald",
+  "breakdown": {
+    "typography": {
+      "score": 25,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 25,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 25,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 128,
+    "codeLines": 3,
+    "codePercentage": "2.3%",
+    "cjkChars": 618,
+    "englishWords": 143,
+    "totalEquivalentWords": 761,
+    "lexicalDiversity": "40.6%",
+    "readingMinutes": 2,
+    "headingsCount": 9
+  },
+  "issuesCount": {
+    "total": 0,
+    "errors": 0,
+    "warnings": 0,
+    "infos": 0
+  },
+  "issues": []
+}

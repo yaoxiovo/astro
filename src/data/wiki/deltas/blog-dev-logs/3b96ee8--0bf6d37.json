@@ -1,0 +1,72 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "3b96ee81aa3e0adc07f1d5cb47afda65a93e7c5e",
+  "toSha": "0bf6d37a4494b095e83562b7df353916e5753efd",
+  "fromShortSha": "3b96ee8",
+  "toShortSha": "0bf6d37",
+  "timestamp": "2026-10-05T17:07:59.831Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "0bf6d37a4494b095e83562b7df353916e5753efd"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "0bf6d37"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-07-06T20:31:23+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "feat(moments): moments media subdomain, auto date folder & video preloads refactor喵"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 808,
+      "deleteCount": 1,
+      "lines": []
+    },
+    {
+      "start": 813,
+      "deleteCount": 1,
+      "lines": []
+    },
+    {
+      "start": 818,
+      "deleteCount": 1,
+      "lines": [
+        "   在 [MusicCard.astro](file:///c:/Users/Yaoxi/Documents/astro/src/components/widget/MusicCard.astro) 的最外层容器中加入 `md:h-[380px]` 限制。在 PC 端下，扣除 padding 后的内部可用高度（约 `332px`）可完美安放左侧唱片及控制器，右侧的歌词容器由此继承到明确的百分比高度，从而完美激活了 `overflow-y-auto`。现在歌词只会精致地在固定高度内平滑滚动，再也不会把卡片拉长了，强迫症瞬间治愈喵呜！"
+      ]
+    },
+    {
+      "start": 824,
+      "deleteCount": 3,
+      "lines": [
+        "   在 [[...slug].astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music/[...slug].astro) 详情页中，将完整的 `MusicCard` 播放器与详细的 markdown 随笔内容统一展示。在随笔底部加入“发布来源与交互按键行”，并移植了原本在首页的点赞（记住 LocalStorage）、分享（复制链接并弹出毛玻璃 Toast 提示）的交互逻辑与 Swup 双重绑定防护（Dataset Bound Check），实现了功能闭环喵！"
+      ]
+    },
+    {
+      "start": 830,
+      "deleteCount": 2,
+      "lines": [
+        "- 音乐馆首页成功转型为优雅精简的“歌曲收藏架”，点击卡片进入详情页后才展示歌词、播放器与详细随笔，加载开销骤降，体验极为丝滑喵呜~！"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 100613,
+    "targetLength": 98890,
+    "patchSize": 1967,
+    "compressionRatio": "98.0%",
+    "addedLines": 3,
+    "deletedLines": 8
+  }
+}

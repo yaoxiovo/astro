@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "slug": "expressive-code",
+  "fromSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "toSha": "fbda5a973c6675c75fa299214c0e25abbc3d250c",
+  "fromShortSha": "4825f8a",
+  "toShortSha": "fbda5a9",
+  "timestamp": "2026-10-05T17:08:42.907Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "fbda5a973c6675c75fa299214c0e25abbc3d250c"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "fbda5a9"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-26T00:19:19+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "yaoxiovo"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 7 files: workspace-mobile.json, expressive-code.md, jilu.md, markdown-extended.md, markdown.md, security-statement.md, video.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 10,
+      "deleteCount": 1,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 7523,
+    "targetLength": 7514,
+    "patchSize": 737,
+    "compressionRatio": "90.2%",
+    "addedLines": 0,
+    "deletedLines": 1
+  }
+}

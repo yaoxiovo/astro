@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "slug": "ncm-converter-intro",
+  "fromSha": "c731839ef3e32ae19cffa088e23b8e1528ef2d1e",
+  "toSha": "cb9bae3c5255b7101770472058dde1659061d3dd",
+  "fromShortSha": "c731839",
+  "toShortSha": "cb9bae3",
+  "timestamp": "2026-10-05T17:09:28.494Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "cb9bae3c5255b7101770472058dde1659061d3dd"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "cb9bae3"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-02T20:27:52+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 2 files: workspace-mobile.json, ncm-converter-intro.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 2,
+      "deleteCount": 1,
+      "lines": [
+        "published: 2025-12-27"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 5695,
+    "targetLength": 5695,
+    "patchSize": 637,
+    "compressionRatio": "88.8%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

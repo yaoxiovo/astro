@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "slug": "nuerosama",
+  "fromSha": "d1790a21eb89d89ed2bd91f264bbae582f561f7d",
+  "toSha": "e68f881ae75238be442c0ac36395e6d3f2c89ec9",
+  "fromShortSha": "d1790a2",
+  "toShortSha": "e68f881",
+  "timestamp": "2026-10-05T17:09:51.881Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "e68f881ae75238be442c0ac36395e6d3f2c89ec9"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "e68f881"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-02-23T14:18:31+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 2 files: workspace-mobile.json, nuerosama.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 12,
+      "deleteCount": 1,
+      "lines": [
+        "draft: false"
+      ]
+    },
+    {
+      "start": 162,
+      "deleteCount": 1,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 8541,
+    "targetLength": 8541,
+    "patchSize": 650,
+    "compressionRatio": "92.4%",
+    "addedLines": 1,
+    "deletedLines": 2
+  }
+}

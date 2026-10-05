@@ -21,7 +21,14 @@
       "linesDeleted": 5,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/ac85d1fd9c08ee8d4f134bab289311ec203cf9f2"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/ac85d1fd9c08ee8d4f134bab289311ec203cf9f2",
+      "deltaPatch": {
+        "fromShortSha": "ff9004a",
+        "toShortSha": "ac85d1f",
+        "patchUrl": "/api/wiki/deltas/zhinan/ff9004a--ac85d1f.json",
+        "patchSize": 957,
+        "compressionRatio": "77.0%"
+      }
     },
     {
       "sha": "ff9004a6151143766312b3af05f439bf131a339e",

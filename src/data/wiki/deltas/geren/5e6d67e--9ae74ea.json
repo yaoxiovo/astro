@@ -1,0 +1,114 @@
+{
+  "version": "1.0",
+  "slug": "geren",
+  "fromSha": "5e6d67e6e19183002fd2aec279d7d8d16c62f0f0",
+  "toSha": "9ae74ea5b66c2b86f249a8e7a8d629cb701bdbd5",
+  "fromShortSha": "5e6d67e",
+  "toShortSha": "9ae74ea",
+  "timestamp": "2026-10-05T17:08:52.319Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "9ae74ea5b66c2b86f249a8e7a8d629cb701bdbd5"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "9ae74ea"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-09-07T17:36:14+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "docs(post): 全面更新个人主页介绍文章 (yaoxi.wiki 技术与设计全解)"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 4,
+      "deleteCount": 1,
+      "lines": [
+        "description: \"深度解析瑶曦个人主页（yaoxi.wiki）的设计哲学与前端工程化落地：包含 WebGL 2.0 全天候环境光引擎、大厂设计语言、六维技术矩阵、WCAG 网页无障碍支持及极致性能重构全记录。\""
+      ]
+    },
+    {
+      "start": 9,
+      "deleteCount": 1,
+      "lines": [
+        "  - WebGL"
+      ]
+    },
+    {
+      "start": 28,
+      "deleteCount": 1,
+      "lines": [
+        "在这里，没有算法推荐的信息流绑架，没有模板化建站的臃肿妥协。从每一行 CSS 动画的贝塞尔曲线，到全屏 WebGL 画布的像素计算，全部遵循我的心意构建。今天这篇文档，就带大家深度拆解 [yaoxi.wiki](https://yaoxi.wiki) 背后的设计美学、技术架构与性能工程。"
+      ]
+    },
+    {
+      "start": 52,
+      "deleteCount": 1,
+      "lines": [
+        "## 02. 底层图形技术：全屏 WebGL 2.0 全天候环境光引擎"
+      ]
+    },
+    {
+      "start": 54,
+      "deleteCount": 1,
+      "lines": [
+        "[yaoxi.wiki](https://yaoxi.wiki) 最具辨识度的技术亮点之一，是其贯穿全屏的底层画布："
+      ]
+    },
+    {
+      "start": 58,
+      "deleteCount": 2,
+      "lines": [
+        "|   WebGL 2.0 Sky Engine (GPU 硬件加速 / 点对点像素渲染)         |",
+        "|   全天候物理光线模拟 + 动态粒子流动 + 环境光自适应             |"
+      ]
+    },
+    {
+      "start": 62,
+      "deleteCount": 1,
+      "lines": [
+        "                     [ 现代图形内核嗅探 ]"
+      ]
+    },
+    {
+      "start": 66,
+      "deleteCount": 1,
+      "lines": [
+        "  [ WebGL 2.0 正常 ]                          [ 硬件/内核不支持 ]"
+      ]
+    },
+    {
+      "start": 68,
+      "deleteCount": 1,
+      "lines": [
+        "  流畅渲染底层环境光                         展示优雅降级提示层"
+      ]
+    },
+    {
+      "start": 71,
+      "deleteCount": 3,
+      "lines": [
+        "- **点对点原生渲染**：采用独立的 `<canvas id=\"webgl-sky-engine\">` 固定在底层视口，完全由 GPU 着色器驱动粒子和光斑流动，与 DOM 内容层完美分离；",
+        "- **内核嗅探与优雅降级**：内置硬件环境检测机制，若设备或老旧浏览器未开启 OpenGL ES 3.0 / WebGL 2.0 加速，会唤起优雅的提示层，保障用户体验的稳定性；",
+        "- **零 CPU 阻塞**：所有光影计算均在 GPU 线程完成，即使在低配设备上滚动，主线程仍然能保持 60fps 丝滑流畅。"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 9712,
+    "targetLength": 9280,
+    "patchSize": 2694,
+    "compressionRatio": "71.0%",
+    "addedLines": 13,
+    "deletedLines": 13
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "d76da239dc2e7f6d48efeea78b594ab48edf15c7",
+  "toSha": "66fdc63313c151bc27acfc5d0af0c05252872c8d",
+  "fromShortSha": "d76da23",
+  "toShortSha": "66fdc63",
+  "timestamp": "2026-10-05T17:08:01.474Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "66fdc63313c151bc27acfc5d0af0c05252872c8d"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "66fdc63"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-21T13:05:32+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 3 files: blog-dev-logs.md, [slug].astro, [...page].astro"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 48,
+      "deleteCount": 0,
+      "lines": [
+        "5. **攻克 Swup 路由缓存导致的“事件侦听器丢失”死局**：",
+        "   在实现整卡点击后，主人立刻反馈了经典的 SPA 路由 Bug：“点了一次能跳转，点第二次就不行了”。",
+        "   - **底层原因 (Root Cause)**：这是因为在初次加载时，本喵直接向 DOM 节点挂载了 `addEventListener` 并加上了 `data-click-processed` 标记。当触发 Swup 的后退或二次跳转时，Swup 会从内部 Cache 中直接读取**包含标记但早已丢失事件绑定的死 DOM 树**并替换进去，导致第二次点击时脚本误以为事件已绑定而直接跳过！",
+        "   - **重构方案 (Refactoring)**：本喵当机立断，彻底抛弃了低效的循环绑定，改用**顶层事件委托机制 (Event Delegation)**！将 click 事件唯一且全局地绑定在 `document` 对象上，并通过 `e.target.closest('.moment-card')` 动态捕获目标。这样一来，无论 Swup 怎么捣鼓缓存，DOM 树如何重绘，卡片点击事件永远不会丢失喵！",
+        ""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 3740,
+    "targetLength": 4756,
+    "patchSize": 1636,
+    "compressionRatio": "65.6%",
+    "addedLines": 5,
+    "deletedLines": 0
+  }
+}

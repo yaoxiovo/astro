@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "c3ec4d9e391f782d4ffe0d3491cb2c1ef081d274",
+  "toSha": "b84534f234889d9a628ab81474eac8e3ff92182c",
+  "fromShortSha": "c3ec4d9",
+  "toShortSha": "b84534f",
+  "timestamp": "2026-10-05T17:08:00.385Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "b84534f234889d9a628ab81474eac8e3ff92182c"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "b84534f"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-27T00:28:11+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "docs: sync dev logs for moments rollback to static markdown"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 227,
+      "deleteCount": 78,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 33029,
+    "targetLength": 23067,
+    "patchSize": 609,
+    "compressionRatio": "97.4%",
+    "addedLines": 0,
+    "deletedLines": 78
+  }
+}

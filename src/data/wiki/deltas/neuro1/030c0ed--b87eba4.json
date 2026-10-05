@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "slug": "neuro1",
+  "fromSha": "030c0ed41de6397c2652e6fe0967f7fbb5093a1a",
+  "toSha": "b87eba4eeeadf5e28e8cd31922bf33df3f67f029",
+  "fromShortSha": "030c0ed",
+  "toShortSha": "b87eba4",
+  "timestamp": "2026-10-05T17:09:33.493Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "b87eba4eeeadf5e28e8cd31922bf33df3f67f029"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "b87eba4"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-21T21:30:38+08:00"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 8,
+      "deleteCount": 1,
+      "lines": [
+        "draft: true"
+      ]
+    },
+    {
+      "start": 11,
+      "deleteCount": 1,
+      "lines": [
+        "![alt文字](图片路径/filename.png)"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 214,
+    "targetLength": 216,
+    "patchSize": 588,
+    "compressionRatio": "0.0%",
+    "addedLines": 2,
+    "deletedLines": 2
+  }
+}

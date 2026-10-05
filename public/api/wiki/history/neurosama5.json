@@ -21,7 +21,14 @@
       "linesDeleted": 0,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/927619b87609c8d52643533f8f2d081126b990e8"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/927619b87609c8d52643533f8f2d081126b990e8",
+      "deltaPatch": {
+        "fromShortSha": "04ef4d3",
+        "toShortSha": "927619b",
+        "patchUrl": "/api/wiki/deltas/neurosama5/04ef4d3--927619b.json",
+        "patchSize": 828,
+        "compressionRatio": "85.1%"
+      }
     },
     {
       "sha": "04ef4d347d7b3427fe4278b47c371f847d8812e4",

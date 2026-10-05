@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "slug": "other-sites",
+  "fromSha": "0570818c9f3a859383135fed42d415f44e2027f3",
+  "toSha": "2c04d233319ca50e846dc82357b98cf2fdc5334e",
+  "fromShortSha": "0570818",
+  "toShortSha": "2c04d23",
+  "timestamp": "2026-10-05T17:09:55.942Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "2c04d233319ca50e846dc82357b98cf2fdc5334e"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "2c04d23"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-18T14:05:22+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 2 files: other-sites.md, [...slug].astro"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 3,
+      "deleteCount": 1,
+      "lines": [
+        "description: 'Yaoxi 的其他网站'"
+      ]
+    },
+    {
+      "start": 10,
+      "deleteCount": 1,
+      "lines": [
+        "::url{href=\"https://yaoxi.xyz\"}",
+        "::url{href=\"https://deepseek.yaoxi.xyz\"}",
+        "::url{href=\"https://gh.yaoxi.xyz\"}",
+        "::url{href=\"https://music.yaoxi.xyz\"}"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 172,
+    "targetLength": 276,
+    "patchSize": 831,
+    "compressionRatio": "0.0%",
+    "addedLines": 5,
+    "deletedLines": 2
+  }
+}

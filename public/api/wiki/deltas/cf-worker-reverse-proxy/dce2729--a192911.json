@@ -1,0 +1,69 @@
+{
+  "version": "1.0",
+  "slug": "cf-worker-reverse-proxy",
+  "fromSha": "dce27296a536be9249f2dc437bf73930bba8b637",
+  "toSha": "a1929118f85f88005aebebf6d8d1553332b49630",
+  "fromShortSha": "dce2729",
+  "toShortSha": "a192911",
+  "timestamp": "2026-10-05T17:08:05.358Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "a1929118f85f88005aebebf6d8d1553332b49630"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "a192911"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-05T10:36:10+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "seo: improve Cloudflare Worker proxy metadata"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 1,
+      "lines": [
+        "title: Cloudflare Worker 反向代理代码：CORS、Cookie 与 302 跳转修复"
+      ]
+    },
+    {
+      "start": 3,
+      "deleteCount": 3,
+      "lines": [
+        "description: 提供可直接部署的 Cloudflare Worker 反向代理代码，支持 CORS、Cookie 重写、路径前缀代理和 301/302 跳转修复。",
+        "tags:",
+        "  - Cloudflare Worker",
+        "  - 反向代理",
+        "  - CORS",
+        "  - Cookie",
+        "  - JavaScript",
+        "category: 代码教程"
+      ]
+    },
+    {
+      "start": 7,
+      "deleteCount": 1,
+      "lines": [
+        "lang: 'zh_CN'"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 12577,
+    "targetLength": 12651,
+    "patchSize": 1048,
+    "compressionRatio": "91.7%",
+    "addedLines": 10,
+    "deletedLines": 5
+  }
+}

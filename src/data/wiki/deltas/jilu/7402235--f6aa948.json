@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "slug": "jilu",
+  "fromSha": "74022351312cebdf4a7ae5b723640982ea6fdbd5",
+  "toSha": "f6aa9488ce220387d38a0329122fd6970a8ecb45",
+  "fromShortSha": "7402235",
+  "toShortSha": "f6aa948",
+  "timestamp": "2026-10-05T17:09:13.301Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "f6aa9488ce220387d38a0329122fd6970a8ecb45"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "f6aa948"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-10T21:34:30+08:00"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 12,
+      "deleteCount": 1,
+      "lines": [
+        "2. [大陆加速链接](https://eo-r2.yaoxi.xyz/clash.app)"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 413,
+    "targetLength": 416,
+    "patchSize": 553,
+    "compressionRatio": "0.0%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

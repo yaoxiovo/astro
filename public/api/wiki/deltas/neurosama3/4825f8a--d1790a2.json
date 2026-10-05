@@ -1,0 +1,87 @@
+{
+  "version": "1.0",
+  "slug": "neurosama3",
+  "fromSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "toSha": "d1790a21eb89d89ed2bd91f264bbae582f561f7d",
+  "fromShortSha": "4825f8a",
+  "toShortSha": "d1790a2",
+  "timestamp": "2026-10-05T17:09:41.101Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "d1790a21eb89d89ed2bd91f264bbae582f561f7d"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "d1790a2"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-10T04:20:42Z"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "yaoxiovo"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "chore: 关闭置顶公告并批量将科幻文章设为草稿"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 15,
+      "deleteCount": 9,
+      "lines": [
+        "<div style=\"",
+        "    margin: 2rem 0;",
+        "    padding: 1.5rem;",
+        "    background: rgba(255, 0, 0, 0.05);",
+        "    border: 2px solid #ff4d4f;",
+        "    border-radius: 12px;",
+        "    box-shadow: 0 4px 15px rgba(255, 77, 79, 0.15);",
+        "\">",
+        "    <div style=\"",
+        "        color: #ff4d4f;",
+        "        font-weight: 800;",
+        "        margin-bottom: 1rem;",
+        "        display: flex;",
+        "        align-items: center;",
+        "        gap: 8px;",
+        "    \">",
+        "        <span>⚠️</span> <span>CRITICAL WARNING / 极高风险认知预警</span>",
+        "    </div>",
+        "    <div style=\"",
+        "        color: #4a4a4a;",
+        "        line-height: 1.8;",
+        "        font-size: 0.95rem;",
+        "        text-align: justify;",
+        "    \">",
+        "        声明：在浏览本站限制类文章前请确保你已阅读并同意置顶文章声明，如不同意请自觉阅读其他文章，否则将可能造成严重影响，包括但不限于：抑郁，轻生念头。",
+        "        <br/><br/>",
+        "        如果在阅读了限制类文章出现任何生命危害安全，包括但不限于：轻生念头，抑郁。本站概不负责。",
+        "        <br/><br/>",
+        "        严禁在休息时段阅读限制类文章，容易引发严重影响，包括但不限于：更严重的生理疾病、意识形态冲击。本文包含高强度的反事实逻辑推演，可能对既有认知体系造成剧烈冲击。",
+        "        <br/><br/>",
+        "        由于思辨内容涉及极端存在主义与数字伦理边界，阅览过程中可能诱发包括但不限于：严重的抑郁倾向、轻生念头、现实感解体（Derealization）及深度心理不适。",
+        "        <br/><br/>",
+        "        最后忠告：如有任何身体不适，立即离开本站，严重时请就医，并尽可能描述问题，否则一样得不到解决。",
+        "        <br/><br/>",
+        "        立场声明：本站学术探讨内容严禁脱离技术语境过度解读。本站坚定拥护党中央领导，遵守法律法规，内容不具任何现实政治倾向。"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 6062,
+    "targetLength": 5863,
+    "patchSize": 2593,
+    "compressionRatio": "55.8%",
+    "addedLines": 35,
+    "deletedLines": 9
+  }
+}

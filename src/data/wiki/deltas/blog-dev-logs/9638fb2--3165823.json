@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "9638fb22114d3e9e814aee5cd38b6c338a0298c6",
+  "toSha": "3165823c6d2f8eafd92a3086ef11295a6f08c931",
+  "fromShortSha": "9638fb2",
+  "toShortSha": "3165823",
+  "timestamp": "2026-10-05T17:07:59.733Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "3165823c6d2f8eafd92a3086ef11295a6f08c931"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "3165823"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-07-06T21:20:06+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "yaoxi"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "docs(devlog): update dev logs with tree-shaking scripts details喵"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 3,
+      "deleteCount": 1,
+      "lines": [
+        "description: \"修复朋友圈海报生成后无法自动复制链接到剪贴板的 Bug。\""
+      ]
+    },
+    {
+      "start": 10,
+      "deleteCount": 1,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 101176,
+    "targetLength": 101061,
+    "patchSize": 798,
+    "compressionRatio": "99.2%",
+    "addedLines": 1,
+    "deletedLines": 2
+  }
+}

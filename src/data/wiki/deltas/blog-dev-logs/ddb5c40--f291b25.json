@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "ddb5c40e122f5982308cbb820a42d18849ae7d7c",
+  "toSha": "f291b259bef0e3c87ad47a1552e8a6e082166d85",
+  "fromShortSha": "ddb5c40",
+  "toShortSha": "f291b25",
+  "timestamp": "2026-10-05T17:08:01.177Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "f291b259bef0e3c87ad47a1552e8a6e082166d85"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "f291b25"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-21T14:04:04+08:00"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 72,
+      "deleteCount": 19,
+      "lines": [
+        "本喵这次可是把从 DOM 到 网络请求（Network Payload）的所有盲点都扫清了！还不快夸夸我喵~！"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 10173,
+    "targetLength": 7122,
+    "patchSize": 626,
+    "compressionRatio": "91.2%",
+    "addedLines": 1,
+    "deletedLines": 19
+  }
+}

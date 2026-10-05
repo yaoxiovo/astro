@@ -1,0 +1,87 @@
+{
+  "version": "1.0",
+  "slug": "heci",
+  "fromSha": "5636e288539472f04ffd73b0e8710f041eba66d7",
+  "toSha": "81449857d11f9030cd97bc2ee20ff5d6fa8c9918",
+  "fromShortSha": "5636e28",
+  "toShortSha": "8144985",
+  "timestamp": "2026-10-05T17:08:59.604Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "81449857d11f9030cd97bc2ee20ff5d6fa8c9918"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "8144985"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-05T10:32:14+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "seo: improve new year greetings post metadata"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 1,
+      "lines": [
+        "title: 2026 新年贺词精选"
+      ]
+    },
+    {
+      "start": 3,
+      "deleteCount": 0,
+      "lines": [
+        "description: 精选 2026 年新年贺词，送给朋友与家人的温暖祝福，带有真挚情感与励志寄语。"
+      ]
+    },
+    {
+      "start": 4,
+      "deleteCount": 2,
+      "lines": [
+        "  - 新年贺词",
+        "  - 祝福",
+        "  - 激励",
+        "  - 节日",
+        "category: 节日祝福",
+        "draft: false ",
+        "lang: 'zh_CN'"
+      ]
+    },
+    {
+      "start": 7,
+      "deleteCount": 2,
+      "lines": []
+    },
+    {
+      "start": 39,
+      "deleteCount": 128,
+      "lines": [
+        "多一些真正让你心动的消息。"
+      ]
+    },
+    {
+      "start": 168,
+      "deleteCount": 0,
+      "lines": [
+        "……（正文保持不变）"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 4788,
+    "targetLength": 1257,
+    "patchSize": 1122,
+    "compressionRatio": "10.7%",
+    "addedLines": 11,
+    "deletedLines": 133
+  }
+}

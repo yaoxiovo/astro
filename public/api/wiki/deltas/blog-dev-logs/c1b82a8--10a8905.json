@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "c1b82a8cf1813f0c8d341c676ca3c5557cdc992e",
+  "toSha": "10a8905c6817712c386091773edae2982727b15e",
+  "fromShortSha": "c1b82a8",
+  "toShortSha": "10a8905",
+  "timestamp": "2026-10-05T17:08:00.437Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "10a8905c6817712c386091773edae2982727b15e"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "10a8905"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-26T23:09:38+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 3 files: GoogleLogin.astro, blog-dev-logs.md, [...page].astro"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 169,
+      "deleteCount": 32,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 19866,
+    "targetLength": 16021,
+    "patchSize": 618,
+    "compressionRatio": "96.1%",
+    "addedLines": 0,
+    "deletedLines": 32
+  }
+}

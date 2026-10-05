@@ -23,7 +23,14 @@
       "tags": [
         "小修改"
       ],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4825f8ae280af8da9fc95292bd9e932b9a0b09e9"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+      "deltaPatch": {
+        "fromShortSha": "5636e28",
+        "toShortSha": "4825f8a",
+        "patchUrl": "/api/wiki/deltas/china/5636e28--4825f8a.json",
+        "patchSize": 818,
+        "compressionRatio": "88.2%"
+      }
     },
     {
       "sha": "5636e288539472f04ffd73b0e8710f041eba66d7",

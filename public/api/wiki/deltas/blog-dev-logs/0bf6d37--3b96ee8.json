@@ -1,0 +1,79 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "0bf6d37a4494b095e83562b7df353916e5753efd",
+  "toSha": "3b96ee81aa3e0adc07f1d5cb47afda65a93e7c5e",
+  "fromShortSha": "0bf6d37",
+  "toShortSha": "3b96ee8",
+  "timestamp": "2026-10-05T17:07:59.811Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "3b96ee81aa3e0adc07f1d5cb47afda65a93e7c5e"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "3b96ee8"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-07-06T21:18:00+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "fix(music): fix player lifecycle loading bug on Swup page navigation & update dev logs喵"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 808,
+      "deleteCount": 0,
+      "lines": [
+        "3. **Swup 异步跳转播放与交互失效**：主人反馈，当直接从首页点击卡片跳转到歌曲详情页时，播放器完全没反应（点击播放无动作），点赞和分享也失效，必须强制刷新一次页面（Reload）才能正常运行喵！"
+      ]
+    },
+    {
+      "start": 812,
+      "deleteCount": 0,
+      "lines": [
+        "3. **Swup 异步脚本生命周期错过 (Script Lifecycle Miss)**：由于首页没有引入 `MusicCard`，首屏加载时 Astro 不会加载其脚本。当 Swup 单页跳转到详情页时，虽然能通过动态加载把 `MusicCard.astro` 和详情页的 script 拉取下来并执行，但由于此时 `DOMContentLoaded` 事件早已在几分钟前派发过，而 `swup:page:view` 等跳转事件在新脚本加载并执行时已经错过，导致所有的事件监听回调（Callbacks）都没有被执行，播放器和点赞分享就变成了木雕喵！"
+      ]
+    },
+    {
+      "start": 816,
+      "deleteCount": 1,
+      "lines": [
+        "   In [MusicCard.astro](file:///c:/Users/Yaoxi/Documents/astro/src/components/widget/MusicCard.astro) 的最外层容器中加入 `md:h-[380px]` 限制。在 PC 端下，扣除 padding 后的内部可用高度（约 `332px`）可完美安放左侧唱片及控制器，右侧的歌词容器由此继承到明确的百分比高度，从而完美激活了 `overflow-y-auto`。现在歌词只会精致地在固定高度内平滑滚动，再也不会把卡片拉长了，强迫症瞬间治愈喵呜！"
+      ]
+    },
+    {
+      "start": 822,
+      "deleteCount": 1,
+      "lines": [
+        "   In [[...slug].astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music/[...slug].astro) 详情页中，将完整的 `MusicCard` 播放器与详细的 markdown 随笔内容统一展示。在随笔底部加入“发布来源与交互按键行”，并移植了原本在首页的点赞（记住 LocalStorage）、分享（复制链接并弹出毛玻璃 Toast 提示）的交互逻辑与 Swup 双重绑定防护（Dataset Bound Check），实现了功能闭环喵！",
+        "4. **异步初始化立即激活 (Immediate Initialization Fallback)：**",
+        "   在 [MusicCard.astro](file:///c:/Users/Yaoxi/Documents/astro/src/components/widget/MusicCard.astro) 和 [[...slug].astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music/[...slug].astro) 对应的客户端脚本的最底端，在注册事件监听之前，加入了一行**立即执行调用**（即直接调用 `initMusicCards()` 和 `initMusicDetails()`）。配合已有的 `dataset.initialized` / `dataset.bound` 单例防御保护，这样无论页面是首次刷新还是单页跳转后按需动态载入，都能确保在脚本被执行的第一时刻自动把所有的 DOM 节点事件绑定就绪，完美解决单页异步加载的顽疾喵呜~！"
+      ]
+    },
+    {
+      "start": 826,
+      "deleteCount": 1,
+      "lines": [
+        "- 成功修复了单页路由（Swup）跳转后的 JS 加载时序滞后问题，播放器和点赞分享跳转即用，无需再次刷新，体验极为丝滑喵呜~！",
+        "- 音乐馆首页成功转型为优雅精简的“歌曲收藏架”，点击卡片进入详情页后才展示歌词、播放器与详细随笔，加载开销骤降喵呜~！"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 98890,
+    "targetLength": 100613,
+    "patchSize": 3702,
+    "compressionRatio": "96.3%",
+    "addedLines": 8,
+    "deletedLines": 3
+  }
+}

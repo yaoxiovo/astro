@@ -1,0 +1,58 @@
+{
+  "slug": "other-sites",
+  "title": "瑶曦的其他网站与项目导航",
+  "checkedAt": "2026-10-05T17:11:54.993Z",
+  "score": 95,
+  "grade": "S",
+  "gradeLabel": "工业级卓越 (Industrial S)",
+  "badgeColor": "emerald",
+  "breakdown": {
+    "typography": {
+      "score": 25,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 25,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 20,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 19,
+    "codeLines": 0,
+    "codePercentage": "0.0%",
+    "cjkChars": 0,
+    "englishWords": 23,
+    "totalEquivalentWords": 23,
+    "lexicalDiversity": "34.8%",
+    "readingMinutes": 1,
+    "headingsCount": 0
+  },
+  "issuesCount": {
+    "total": 1,
+    "errors": 0,
+    "warnings": 1,
+    "infos": 0
+  },
+  "issues": [
+    {
+      "type": "thin_content",
+      "severity": "warning",
+      "line": 1,
+      "excerpt": "总字数仅 23 字",
+      "message": "内容篇幅较为精简，可能属于短篇随笔或未展开草稿",
+      "suggestion": "可适当扩充背景知识或实战示例"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "slug": "cfworker",
+  "title": "Cloudflare Workers 反向代理教程：免费搭建 API 中转与 CORS 代理",
+  "checkedAt": "2026-10-05T17:11:54.503Z",
+  "score": 95,
+  "grade": "S",
+  "gradeLabel": "工业级卓越 (Industrial S)",
+  "badgeColor": "emerald",
+  "breakdown": {
+    "typography": {
+      "score": 25,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 20,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 25,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 238,
+    "codeLines": 49,
+    "codePercentage": "20.6%",
+    "cjkChars": 617,
+    "englishWords": 103,
+    "totalEquivalentWords": 720,
+    "lexicalDiversity": "41.0%",
+    "readingMinutes": 3,
+    "headingsCount": 0
+  },
+  "issuesCount": {
+    "total": 0,
+    "errors": 0,
+    "warnings": 0,
+    "infos": 0
+  },
+  "issues": []
+}

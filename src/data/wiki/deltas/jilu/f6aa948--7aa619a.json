@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "slug": "jilu",
+  "fromSha": "f6aa9488ce220387d38a0329122fd6970a8ecb45",
+  "toSha": "7aa619a4cb137297ca3c4e6862bcd03df24d1103",
+  "fromShortSha": "f6aa948",
+  "toShortSha": "7aa619a",
+  "timestamp": "2026-10-05T17:09:13.216Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "7aa619a4cb137297ca3c4e6862bcd03df24d1103"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "7aa619a"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-02-04T20:23:05+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 7 files: astro.config.mjs, .trashed-1771784764-config_1.ts, config.ts, jilu.md, ncm-converter-intro.md, other-sites.md, Layout.astro"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 12,
+      "deleteCount": 1,
+      "lines": [
+        "2. [大陆加速链接](https://eo-r2.yaoxi.wiki/clash.app)"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 416,
+    "targetLength": 417,
+    "patchSize": 739,
+    "compressionRatio": "0.0%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

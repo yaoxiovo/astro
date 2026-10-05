@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "slug": "markdown",
+  "fromSha": "fbda5a973c6675c75fa299214c0e25abbc3d250c",
+  "toSha": "5636e288539472f04ffd73b0e8710f041eba66d7",
+  "fromShortSha": "fbda5a9",
+  "toShortSha": "5636e28",
+  "timestamp": "2026-10-05T17:09:22.854Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "5636e288539472f04ffd73b0e8710f041eba66d7"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "5636e28"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-01T23:00:39+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 143 files: config.ts, 163-free-domain-email.md, acg-randompic-api.md, across-nat.md, aicode-prompt.md, alist-for-aliyun.md, alist-web.md, anuneko.md, asf.md, astrov3-redirects.md, atpx-fun-blog.md, auto-icp-query.md, ...omitted 131 file(s)"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 4,
+      "deleteCount": 4,
+      "lines": [
+        "tags: [Markdown, Blogging, Demo]"
+      ]
+    },
+    {
+      "start": 9,
+      "deleteCount": 1,
+      "lines": [
+        "draft: false"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 3526,
+    "targetLength": 3519,
+    "patchSize": 875,
+    "compressionRatio": "75.1%",
+    "addedLines": 2,
+    "deletedLines": 5
+  }
+}

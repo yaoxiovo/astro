@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "slug": "cfworker",
+  "fromSha": "eddc7814eeaddca7b24965d6d2ee9cd9a56057d9",
+  "toSha": "95b492df2cd988dffceca193a420c2a635c71dd6",
+  "fromShortSha": "eddc781",
+  "toShortSha": "95b492d",
+  "timestamp": "2026-10-05T17:08:07.689Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "95b492df2cd988dffceca193a420c2a635c71dd6"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "95b492d"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-18T12:46:09+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 4 files: astro.config.mjs, SiteCard.astro, cfworker.md, remark-directive.ts"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 9,
+      "deleteCount": 1,
+      "lines": [
+        "::site{",
+        "  title=\"瑶曦的个人站\"",
+        "  url=\"https://yaoxi.xyz\"",
+        "  description=\"一个偏执于体验与架构的前端实验室\"",
+        "  tech=\"Astro,Cloudflare,AI\"",
+        "}"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 4071,
+    "targetLength": 4229,
+    "patchSize": 802,
+    "compressionRatio": "81.0%",
+    "addedLines": 6,
+    "deletedLines": 1
+  }
+}

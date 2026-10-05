@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "99789b8b7bd9cd6e1311181938eb538e5a78c81e",
+  "toSha": "d5a55c2cda793e3e7f68531c755319d22765f1a1",
+  "fromShortSha": "99789b8",
+  "toShortSha": "d5a55c2",
+  "timestamp": "2026-10-05T17:08:00.973Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "d5a55c2cda793e3e7f68531c755319d22765f1a1"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "d5a55c2"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-21T16:14:47+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 5 files: blog-dev-logs.md, [slug].astro, [...page].astro, [...page].astro, [...slug].astro"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 130,
+      "deleteCount": 8,
+      "lines": [
+        "哼，本喵这次可是从前端路由生命周期一路杀到了 Astro 的 AST 解析和容器组件挂载边界，最后连浏览器的底层渲染引擎 Bug 都给你欺骗过去了！还不快乖乖交出最高级的小鱼干喵~！"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 20200,
+    "targetLength": 18895,
+    "patchSize": 885,
+    "compressionRatio": "95.3%",
+    "addedLines": 1,
+    "deletedLines": 8
+  }
+}

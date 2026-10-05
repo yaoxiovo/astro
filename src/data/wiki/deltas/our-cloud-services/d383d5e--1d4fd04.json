@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "slug": "our-cloud-services",
+  "fromSha": "d383d5e03d64fd06aef195a391945f219520c6da",
+  "toSha": "1d4fd047c622f4e6ddb062a498d1e302bd5b6292",
+  "fromShortSha": "d383d5e",
+  "toShortSha": "1d4fd04",
+  "timestamp": "2026-10-05T17:09:58.217Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "1d4fd047c622f4e6ddb062a498d1e302bd5b6292"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "1d4fd04"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-28T12:51:29+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "feat: add post about our cloud services with cloudflare and tencent edgeone"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 58,
+      "deleteCount": 3,
+      "lines": [
+        "### 1. 国内：腾讯云 EdgeOne 静态托管 🇨🇳",
+        "中国内地的宽带网络被三大运营商（电信、联通、移动）割裂，海外节点直连往往要承受高丢包和高延迟。",
+        "* **为什么用：** 我们将国内流量调度到了 **腾讯云 EdgeOne**（边缘安全加速平台）。它在国内部署了庞大的 Anycast 加速节点，能让国内读者的 TTFB 控制在 **50ms 以内**喵！"
+      ]
+    },
+    {
+      "start": 98,
+      "deleteCount": 18,
+      "lines": []
+    },
+    {
+      "start": 121,
+      "deleteCount": 1,
+      "lines": [
+        "这套结合了 **腾讯云 EdgeOne**、**Cloudflare Pages**、**GitHub Actions**、**Supabase** 以及 **Cloudflare Workers** 的多云联动架构，不仅是本站 PageSpeed 跑分接近 100、实现极致流畅体验的底气，也是现代云原生 Serverless 架构的一次深度实战喵！"
+      ]
+    },
+    {
+      "start": 124,
+      "deleteCount": 1,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 9067,
+    "targetLength": 7170,
+    "patchSize": 1477,
+    "compressionRatio": "79.4%",
+    "addedLines": 4,
+    "deletedLines": 23
+  }
+}

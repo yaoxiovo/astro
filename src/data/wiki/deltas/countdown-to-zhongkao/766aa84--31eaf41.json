@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "slug": "countdown-to-zhongkao",
+  "fromSha": "766aa849a6c1efb561ddab3aedd49be5e869228a",
+  "toSha": "31eaf417e42fd31e9465166e5fa8845f94b28cfb",
+  "fromShortSha": "766aa84",
+  "toShortSha": "31eaf41",
+  "timestamp": "2026-10-05T17:08:33.506Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "31eaf417e42fd31e9465166e5fa8845f94b28cfb"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "31eaf41"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-18T18:31:34Z"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 17,
+      "deleteCount": 1,
+      "lines": [
+        "> **当前剩余：12 天**"
+      ]
+    },
+    {
+      "start": 114,
+      "deleteCount": 1,
+      "lines": [
+        "> **当前剩余：12 天**"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 3402,
+    "targetLength": 3402,
+    "patchSize": 604,
+    "compressionRatio": "82.2%",
+    "addedLines": 2,
+    "deletedLines": 2
+  }
+}

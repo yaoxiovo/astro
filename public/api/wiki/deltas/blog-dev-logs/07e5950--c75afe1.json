@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "07e5950d6706fb6ba6e12fb9c208cc9b21ae278c",
+  "toSha": "c75afe1c9d501b9aa2fd6246145742b05e897011",
+  "fromShortSha": "07e5950",
+  "toShortSha": "c75afe1",
+  "timestamp": "2026-10-05T17:08:00.217Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "c75afe1c9d501b9aa2fd6246145742b05e897011"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "c75afe1"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-27T10:41:18+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "docs: sync cloud-status proxy redirect patch to blog-dev-logs"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 343,
+      "deleteCount": 12,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 42635,
+    "targetLength": 40611,
+    "patchSize": 611,
+    "compressionRatio": "98.5%",
+    "addedLines": 0,
+    "deletedLines": 12
+  }
+}

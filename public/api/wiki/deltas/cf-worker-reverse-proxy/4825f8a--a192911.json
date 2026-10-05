@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "slug": "cf-worker-reverse-proxy",
+  "fromSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "toSha": "a1929118f85f88005aebebf6d8d1553332b49630",
+  "fromShortSha": "4825f8a",
+  "toShortSha": "a192911",
+  "timestamp": "2026-10-05T17:08:05.341Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "a1929118f85f88005aebebf6d8d1553332b49630"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "a192911"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-05T10:36:10+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "yaoxiovo"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "seo: improve Cloudflare Worker proxy metadata"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 12,
+      "deleteCount": 1,
+      "lines": [
+        "lang: 'zh_CN'"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 12651,
+    "targetLength": 12651,
+    "patchSize": 671,
+    "compressionRatio": "94.7%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

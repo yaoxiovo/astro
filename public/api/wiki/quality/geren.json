@@ -1,0 +1,49 @@
+{
+  "slug": "geren",
+  "title": "探索与重构：瑶曦个人主页（yaoxi.wiki）设计与技术全解",
+  "checkedAt": "2026-10-05T17:11:54.580Z",
+  "score": 100,
+  "grade": "S",
+  "gradeLabel": "工业级卓越 (Industrial S)",
+  "badgeColor": "emerald",
+  "breakdown": {
+    "typography": {
+      "score": 25,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 25,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 25,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 154,
+    "codeLines": 14,
+    "codePercentage": "9.1%",
+    "cjkChars": 2224,
+    "englishWords": 240,
+    "totalEquivalentWords": 2464,
+    "lexicalDiversity": "32.1%",
+    "readingMinutes": 7,
+    "headingsCount": 17
+  },
+  "issuesCount": {
+    "total": 0,
+    "errors": 0,
+    "warnings": 0,
+    "infos": 0
+  },
+  "issues": []
+}

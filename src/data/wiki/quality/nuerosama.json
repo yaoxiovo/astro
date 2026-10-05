@@ -1,0 +1,58 @@
+{
+  "slug": "nuerosama",
+  "title": "从 550W 到数字心跳：当极度之爱跨越维度的‘恐怖’终局",
+  "checkedAt": "2026-10-05T17:12:08.646Z",
+  "score": 99,
+  "grade": "S",
+  "gradeLabel": "工业级卓越 (Industrial S)",
+  "badgeColor": "emerald",
+  "breakdown": {
+    "typography": {
+      "score": 24,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 25,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 25,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 138,
+    "codeLines": 0,
+    "codePercentage": "0.0%",
+    "cjkChars": 1927,
+    "englishWords": 91,
+    "totalEquivalentWords": 2018,
+    "lexicalDiversity": "32.2%",
+    "readingMinutes": 6,
+    "headingsCount": 17
+  },
+  "issuesCount": {
+    "total": 1,
+    "errors": 0,
+    "warnings": 1,
+    "infos": 0
+  },
+  "issues": [
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 33,
+      "excerpt": "球2",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"球2\" -> 建议为 \"球 2\"",
+      "suggestion": "球 2"
+    }
+  ]
+}

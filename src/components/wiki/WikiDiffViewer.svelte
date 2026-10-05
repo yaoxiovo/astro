@@ -15,6 +15,14 @@ export let oldSha = "";
 export let newSha = "";
 export let slug = "";
 export let onClose: (() => void) | undefined = undefined;
+export let deltaInfo:
+	| {
+			isDeltaHit?: boolean;
+			patchSize?: number;
+			compressionRatio?: string;
+			loadDurationMs?: number;
+	  }
+	| undefined = undefined;
 
 let viewMode: "side-by-side" | "inline" = "side-by-side";
 let expandAllContext = false;
@@ -31,7 +39,7 @@ function toggleExpandContext() {
 <div class="wiki-diff-viewer rounded-2xl border border-[var(--line-divider)] bg-[var(--card-bg)] shadow-xl overflow-hidden mb-6 transition-all">
 	<!-- 顶部标题与控制栏 -->
 	<div class="px-5 py-4 bg-black/[0.03] dark:bg-white/[0.03] border-b border-[var(--line-divider)] flex flex-wrap items-center justify-between gap-3">
-		<div class="flex items-center gap-2">
+		<div class="flex flex-wrap items-center gap-2">
 			<div class="w-2.5 h-2.5 rounded-full bg-[var(--primary)] animate-pulse"></div>
 			<span class="text-sm font-bold text-black/90 dark:text-white/90">维基版本差异对比 (Wikipedia Diff)</span>
 			<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-semibold">
@@ -40,6 +48,13 @@ function toggleExpandContext() {
 			<span class="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 font-mono font-semibold">
 				-{diffResult.stats.deleted}
 			</span>
+
+			{#if deltaInfo?.isDeltaHit}
+				<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-violet-500/10 text-violet-700 dark:text-violet-300 font-mono text-[11px] font-medium border border-violet-500/20 shadow-sm" title="命中相邻版本增量差分补丁，实现秒级原地热更新">
+					<span class="w-1.5 h-1.5 rounded-full bg-violet-500 animate-ping"></span>
+					<span>⚡ RFC 6902 热补丁 ({deltaInfo.patchSize || 0} B · 节省 {deltaInfo.compressionRatio || '90%'} · {deltaInfo.loadDurationMs}ms)</span>
+				</span>
+			{/if}
 		</div>
 
 		<div class="flex items-center gap-2 text-xs">

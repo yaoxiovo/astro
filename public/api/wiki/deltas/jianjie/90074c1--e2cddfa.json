@@ -1,0 +1,66 @@
+{
+  "version": "1.0",
+  "slug": "jianjie",
+  "fromSha": "90074c15570ecdb70316115588705f2d9e0ba2c2",
+  "toSha": "e2cddfa467717a47087e80f7b89caf922b38b478",
+  "fromShortSha": "90074c1",
+  "toShortSha": "e2cddfa",
+  "timestamp": "2026-10-05T17:09:05.854Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "e2cddfa467717a47087e80f7b89caf922b38b478"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "e2cddfa"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-21T22:35:57+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "1"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 14,
+      "deleteCount": 2,
+      "lines": [
+        "1. cdn提供商：Cloudflare Tencent Alibaba cloud (有时选小众cdn)",
+        "2. dns提供商：Dnspod"
+      ]
+    },
+    {
+      "start": 18,
+      "deleteCount": 1,
+      "lines": []
+    },
+    {
+      "start": 22,
+      "deleteCount": 10,
+      "lines": [
+        "2. 过几年提升速度，按照Tencent政策，如果pages长期免费开放，理论说这网站能开到天荒地老"
+      ]
+    },
+    {
+      "start": 33,
+      "deleteCount": 2,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 1465,
+    "targetLength": 711,
+    "patchSize": 886,
+    "compressionRatio": "0.0%",
+    "addedLines": 3,
+    "deletedLines": 15
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "slug": "26zhongkao",
+  "fromSha": "3cfffa0079a494d8380c472b2545bb8d5c13f062",
+  "toSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "fromShortSha": "3cfffa0",
+  "toShortSha": "4825f8a",
+  "timestamp": "2026-10-05T17:10:57.079Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "4825f8a"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-13T14:03:45+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 10,
+      "deleteCount": 1,
+      "lines": [
+        "draft: false"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 2436,
+    "targetLength": 2437,
+    "patchSize": 624,
+    "compressionRatio": "74.4%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

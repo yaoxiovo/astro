@@ -21,7 +21,14 @@
       "linesDeleted": 3,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/9638fb22114d3e9e814aee5cd38b6c338a0298c6"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/9638fb22114d3e9e814aee5cd38b6c338a0298c6",
+      "deltaPatch": {
+        "fromShortSha": "d1790a2",
+        "toShortSha": "9638fb2",
+        "patchUrl": "/api/wiki/deltas/neuro1/d1790a2--9638fb2.json",
+        "patchSize": 868,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "d1790a21eb89d89ed2bd91f264bbae582f561f7d",
@@ -41,7 +48,14 @@
       "tags": [
         "小修改"
       ],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/d1790a21eb89d89ed2bd91f264bbae582f561f7d"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/d1790a21eb89d89ed2bd91f264bbae582f561f7d",
+      "deltaPatch": {
+        "fromShortSha": "811333a",
+        "toShortSha": "d1790a2",
+        "patchUrl": "/api/wiki/deltas/neuro1/811333a--d1790a2.json",
+        "patchSize": 609,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "811333a92ad856650220e960ba63848455c9c624",
@@ -59,7 +73,14 @@
       "linesDeleted": 2,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/811333a92ad856650220e960ba63848455c9c624"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/811333a92ad856650220e960ba63848455c9c624",
+      "deltaPatch": {
+        "fromShortSha": "de5f5e2",
+        "toShortSha": "811333a",
+        "patchUrl": "/api/wiki/deltas/neuro1/de5f5e2--811333a.json",
+        "patchSize": 687,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "de5f5e2a057485a43bfaca11268a68291b2857a1",
@@ -77,7 +98,14 @@
       "linesDeleted": 1,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/de5f5e2a057485a43bfaca11268a68291b2857a1"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/de5f5e2a057485a43bfaca11268a68291b2857a1",
+      "deltaPatch": {
+        "fromShortSha": "b87eba4",
+        "toShortSha": "de5f5e2",
+        "patchUrl": "/api/wiki/deltas/neuro1/b87eba4--de5f5e2.json",
+        "patchSize": 544,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "b87eba4eeeadf5e28e8cd31922bf33df3f67f029",
@@ -95,7 +123,14 @@
       "linesDeleted": 2,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/b87eba4eeeadf5e28e8cd31922bf33df3f67f029"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/b87eba4eeeadf5e28e8cd31922bf33df3f67f029",
+      "deltaPatch": {
+        "fromShortSha": "030c0ed",
+        "toShortSha": "b87eba4",
+        "patchUrl": "/api/wiki/deltas/neuro1/030c0ed--b87eba4.json",
+        "patchSize": 588,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "030c0ed41de6397c2652e6fe0967f7fbb5093a1a",

@@ -1,0 +1,78 @@
+{
+  "version": "1.0",
+  "slug": "umami",
+  "fromSha": "1b5f7a7d7c748e3de6228ed695386cfc37fd9fd1",
+  "toSha": "474b440b802d5a9e7aaf6689bd8f983c8d9423a7",
+  "fromShortSha": "1b5f7a7",
+  "toShortSha": "474b440",
+  "timestamp": "2026-10-05T17:10:06.356Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "474b440b802d5a9e7aaf6689bd8f983c8d9423a7"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "474b440"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-05T10:36:53+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "seo: improve Umami issue post metadata"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 1,
+      "lines": [
+        "title: Umami 统计显示为 0 的临时记录"
+      ]
+    },
+    {
+      "start": 3,
+      "deleteCount": 1,
+      "lines": [
+        "description: 记录博客 Umami 访问统计暂时显示为 0 的原因，主要与数据库配置相关，后续将继续排查和修复。"
+      ]
+    },
+    {
+      "start": 5,
+      "deleteCount": 0,
+      "lines": [
+        "  - Umami",
+        "  - 网站统计",
+        "  - 数据库配置"
+      ]
+    },
+    {
+      "start": 6,
+      "deleteCount": 1,
+      "lines": [
+        "category: 开发记录"
+      ]
+    },
+    {
+      "start": 8,
+      "deleteCount": 1,
+      "lines": [
+        "lang: \"zh_CN\""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 213,
+    "targetLength": 403,
+    "patchSize": 1016,
+    "compressionRatio": "0.0%",
+    "addedLines": 7,
+    "deletedLines": 4
+  }
+}

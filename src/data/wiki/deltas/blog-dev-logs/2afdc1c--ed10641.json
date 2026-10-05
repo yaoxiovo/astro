@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "2afdc1c66c3f70967b166a9647435406430c03c3",
+  "toSha": "ed10641b28dca14e74166861cadb598ce9b8c99c",
+  "fromShortSha": "2afdc1c",
+  "toShortSha": "ed10641",
+  "timestamp": "2026-10-05T17:07:59.953Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "ed10641b28dca14e74166861cadb598ce9b8c99c"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "ed10641"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-07-03T16:44:40+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "yaoxiovo"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Docs: Sync dev logs for wallpaper gallery refactoring, dual-token authorization system, and wildcard domains"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 637,
+      "deleteCount": 28,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 79816,
+    "targetLength": 76417,
+    "patchSize": 711,
+    "compressionRatio": "99.1%",
+    "addedLines": 0,
+    "deletedLines": 28
+  }
+}

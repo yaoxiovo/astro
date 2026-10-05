@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "48c7b4a4c618f5b3191b77ff0eb127f3ed85b5fb",
+  "toSha": "dfcd7f51f3e2039c774887608a4592b00b350c9d",
+  "fromShortSha": "48c7b4a",
+  "toShortSha": "dfcd7f5",
+  "timestamp": "2026-10-05T17:08:01.336Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "dfcd7f51f3e2039c774887608a4592b00b350c9d"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "dfcd7f5"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-21T13:38:51+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 2 files: PosterGenerator.astro, blog-dev-logs.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 40,
+      "deleteCount": 3,
+      "lines": [
+        "- **Component-Level Mapping:** 既然不能动全站 Config，本喵直接在 `PosterGenerator.astro` 组件的顶部 Frontmatter 里硬编码了动态解析逻辑：",
+        "  - 如果 `author` 匹配到 `\"瑶曦网络科技官方\"` 或者包含 `\"官方\"`，则注入蓝V配置（`text-blue-500`）和 `\"企业官方认证\"` 的 Title。",
+        "  - 如果是 `\"瑶曦\"` 或 `\"Yaoxi\"`，则注入黄V配置（`text-yellow-500`）和 `\"个人博主认证\"`。"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 3473,
+    "targetLength": 3439,
+    "patchSize": 1065,
+    "compressionRatio": "69.0%",
+    "addedLines": 3,
+    "deletedLines": 3
+  }
+}

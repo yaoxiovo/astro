@@ -1,0 +1,70 @@
+{
+  "version": "1.0",
+  "slug": "ncm-converter-intro",
+  "fromSha": "c26e3e77d515c73ad3e3fcffc842f60f2e6b89ca",
+  "toSha": "7aa619a4cb137297ca3c4e6862bcd03df24d1103",
+  "fromShortSha": "c26e3e7",
+  "toShortSha": "7aa619a",
+  "timestamp": "2026-10-05T17:09:28.373Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "7aa619a4cb137297ca3c4e6862bcd03df24d1103"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "7aa619a"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-02-04T20:23:05+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 7 files: astro.config.mjs, .trashed-1771784764-config_1.ts, config.ts, jilu.md, ncm-converter-intro.md, other-sites.md, Layout.astro"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 1,
+      "lines": [
+        "title: 网易云音乐 NCM 格式转换网页工具介绍"
+      ]
+    },
+    {
+      "start": 3,
+      "deleteCount": 1,
+      "lines": [
+        "description: 一款纯前端在线转换网易云音乐 NCM 文件为 MP3/FLAC 的网页工具，本地处理、无需上传，保护隐私。"
+      ]
+    },
+    {
+      "start": 5,
+      "deleteCount": 6,
+      "lines": [
+        "  - 音乐",
+        "category: 记录"
+      ]
+    },
+    {
+      "start": 12,
+      "deleteCount": 1,
+      "lines": [
+        "lang: \"\""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 5500,
+    "targetLength": 5414,
+    "patchSize": 1056,
+    "compressionRatio": "80.5%",
+    "addedLines": 5,
+    "deletedLines": 9
+  }
+}

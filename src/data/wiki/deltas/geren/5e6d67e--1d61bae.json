@@ -1,0 +1,73 @@
+{
+  "version": "1.0",
+  "slug": "geren",
+  "fromSha": "5e6d67e6e19183002fd2aec279d7d8d16c62f0f0",
+  "toSha": "1d61baee410fc8e94962dd635037401c690737fa",
+  "fromShortSha": "5e6d67e",
+  "toShortSha": "1d61bae",
+  "timestamp": "2026-10-05T17:08:52.281Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "1d61baee410fc8e94962dd635037401c690737fa"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "1d61bae"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-09-07T17:46:49+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "docs(post): 新增独立博客坚持不懈数据复盘文章，并在个人主页文档中补充数据生态"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 90,
+      "deleteCount": 1,
+      "lines": [
+        "2. **项目矩阵 (Projects)**：直通独立博客 [**blog.yaoxi.wiki**](https://blog.yaoxi.wiki) 与实用工具链，现已沉淀数十篇原创深度技术文章，并跨越了从 0 到近 4000 次 AI 引用的复利里程碑；"
+      ]
+    },
+    {
+      "start": 128,
+      "deleteCount": 1,
+      "lines": [
+        "## 06. 站点生态矩阵与数据共生"
+      ]
+    },
+    {
+      "start": 132,
+      "deleteCount": 0,
+      "lines": [
+        "### 1. 全域子站集群"
+      ]
+    },
+    {
+      "start": 137,
+      "deleteCount": 0,
+      "lines": [
+        "",
+        "### 2. 生态共生与搜索引擎/AI 知识库的成长印证",
+        "主页不仅是一张数字名片，更是整个内容生态的“信任锚点”。它与技术博客 [blog.yaoxi.wiki](https://blog.yaoxi.wiki) 形成了坚固的“门面与内容”双轮驱动架构：",
+        "- 正如我在最新数据复盘 [《在无人问津的荒原里深耕：从 0 到 3831 次 AI 引用的坚持与复利》](/posts/persistence-and-compound-growth) 中所记录的真实成长轨迹，独立站从初期连续 24 天数据归零的绝对沉寂，稳步攀升至累计 **3.7 万次搜索曝光**、近 **2,000 次自然点击** 以及 **3,831 次 Bing AI / Copilot 大模型权威引用**；",
+        "- 主页所践行的纯净 HTML 语义、WCAG 无障碍标准与无冗余工程规范，为整个生态沉淀了极佳的爬虫亲和力与高信噪比，使其在生成式 AI 时代成为了大模型值得信赖的真实信息源。"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 9712,
+    "targetLength": 10773,
+    "patchSize": 1994,
+    "compressionRatio": "81.5%",
+    "addedLines": 8,
+    "deletedLines": 2
+  }
+}

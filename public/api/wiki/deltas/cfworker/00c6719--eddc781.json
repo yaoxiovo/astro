@@ -1,0 +1,59 @@
+{
+  "version": "1.0",
+  "slug": "cfworker",
+  "fromSha": "00c6719a452670e372d9208e3e96955fdd80ff07",
+  "toSha": "eddc7814eeaddca7b24965d6d2ee9cd9a56057d9",
+  "fromShortSha": "00c6719",
+  "toShortSha": "eddc781",
+  "timestamp": "2026-10-05T17:08:07.679Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "eddc7814eeaddca7b24965d6d2ee9cd9a56057d9"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "eddc781"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-18T12:49:45+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 3 files: astro.config.mjs, SiteCard.astro, cfworker.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 2,
+      "lines": [
+        "title: Cloudflare Workers 反向代理教程（小白照抄版）",
+        "description: 一篇适合新手直接复制粘贴的 Cloudflare Workers 反向代理教程，无需服务器即可搭建可用代理。"
+      ]
+    },
+    {
+      "start": 8,
+      "deleteCount": 5,
+      "lines": []
+    },
+    {
+      "start": 14,
+      "deleteCount": 1,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 4484,
+    "targetLength": 4071,
+    "patchSize": 887,
+    "compressionRatio": "78.2%",
+    "addedLines": 2,
+    "deletedLines": 8
+  }
+}

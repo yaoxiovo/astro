@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "slug": "other-sites",
+  "fromSha": "99562ffc9bd83038acdfa18e096ef969870719f1",
+  "toSha": "e7a4db9e75ab661760b76080710941107c803f0c",
+  "fromShortSha": "99562ff",
+  "toShortSha": "e7a4db9",
+  "timestamp": "2026-10-05T17:09:56.017Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "e7a4db9e75ab661760b76080710941107c803f0c"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "e7a4db9"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-18T13:16:42+08:00"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 9,
+      "deleteCount": 2,
+      "lines": [
+        "::github{repo=\"yaoxi.xyz\"} "
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 164,
+    "targetLength": 159,
+    "patchSize": 530,
+    "compressionRatio": "0.0%",
+    "addedLines": 1,
+    "deletedLines": 2
+  }
+}

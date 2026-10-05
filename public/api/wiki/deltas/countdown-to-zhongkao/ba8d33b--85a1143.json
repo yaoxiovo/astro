@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "slug": "countdown-to-zhongkao",
+  "fromSha": "ba8d33b2f41075b13a0cfb7ef07dd53da30ceabf",
+  "toSha": "85a1143e52910ff52ca66641977b4c11379986d0",
+  "fromShortSha": "ba8d33b",
+  "toShortSha": "85a1143",
+  "timestamp": "2026-10-05T17:08:35.989Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "85a1143e52910ff52ca66641977b4c11379986d0"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "85a1143"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-25T17:17:41Z"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "github-actions[bot]"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "chore: 自动更新中考倒计时"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 12,
+      "deleteCount": 1,
+      "lines": [
+        "<<<<<<< HEAD",
+        "> **当前剩余：97 天**",
+        "=======",
+        "> **当前剩余：97 天**",
+        ">>>>>>> main"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 1506,
+    "targetLength": 1568,
+    "patchSize": 748,
+    "compressionRatio": "52.3%",
+    "addedLines": 5,
+    "deletedLines": 1
+  }
+}

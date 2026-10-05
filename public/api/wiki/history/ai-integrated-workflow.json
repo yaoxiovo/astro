@@ -23,7 +23,14 @@
       "tags": [
         "小修改"
       ],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4825f8ae280af8da9fc95292bd9e932b9a0b09e9"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+      "deltaPatch": {
+        "fromShortSha": "1ffaae8",
+        "toShortSha": "4825f8a",
+        "patchUrl": "/api/wiki/deltas/ai-integrated-workflow/1ffaae8--4825f8a.json",
+        "patchSize": 688,
+        "compressionRatio": "92.3%"
+      }
     },
     {
       "sha": "1ffaae8c4aebdbebafd684af72518a0efee9a5e9",

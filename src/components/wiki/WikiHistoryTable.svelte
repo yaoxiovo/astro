@@ -4,6 +4,7 @@ import type {
 	WikiPostHistory,
 	WikiRevision,
 } from "../../types/wiki";
+import { applyDeltaPatch, fetchDeltaPatch } from "../../utils/delta-patcher";
 import { generateWikiDiff } from "../../utils/wiki-diff";
 import WikiDiffViewer from "./WikiDiffViewer.svelte";
 
@@ -21,6 +22,17 @@ let isComparing = false;
 let isLoadingDiff = false;
 let diffResult: DiffResult | null = null;
 let diffContainerEl: HTMLDivElement | null = null;
+let deltaInfo:
+	| {
+			isDeltaHit?: boolean;
+			patchSize?: number;
+			compressionRatio?: string;
+			loadDurationMs?: number;
+	  }
+	| undefined = undefined;
+
+// 客户端内存快照缓存池 (LRU Snapshot Cache)
+const snapshotCache = new Map<string, any>();
 
 // 处理 Radio A (旧版本，左列) 点击
 function handleOldSelect(idx: number) {
@@ -40,7 +52,7 @@ function handleNewSelect(idx: number) {
 	}
 }
 
-// 异步加载快照并生成差异比对
+// 异步加载快照并生成差异比对（优先尝试 RFC 6902 极小增量补丁）
 async function performDiff(oldIdx: number, newIdx: number) {
 	if (revisions.length === 0) return;
 	const oldRev = revisions[oldIdx];
@@ -49,20 +61,94 @@ async function performDiff(oldIdx: number, newIdx: number) {
 
 	isLoadingDiff = true;
 	isComparing = true;
+	deltaInfo = undefined;
+	const t0 = performance.now();
 
 	try {
-		// 并行获取两个版本的 Markdown 快照
-		const [oldRes, newRes] = await Promise.all([
-			fetch(`/api/wiki/snapshots/${slug}/${oldRev.shortSha}.json`),
-			fetch(`/api/wiki/snapshots/${slug}/${newRev.shortSha}.json`),
-		]);
+		let oldData: any = null;
+		let newData: any = null;
+		let hitDelta = false;
+		let patchSize = 0;
+		let compRatio = "";
 
-		if (!oldRes.ok || !newRes.ok) {
-			throw new Error("无法读取指定快照数据");
+		const isAdjacent = Math.abs(oldIdx - newIdx) === 1;
+
+		// 增量优化路径：相邻版本时优先利用极小的增量补丁 (数百字节)
+		if (isAdjacent) {
+			// 情况 1: 内存命中旧版本快照，拉取极小正向补丁
+			if (snapshotCache.has(oldRev.shortSha)) {
+				const patch = await fetchDeltaPatch(slug, oldRev.shortSha, newRev.shortSha);
+				if (patch) {
+					oldData = snapshotCache.get(oldRev.shortSha);
+					newData = applyDeltaPatch(oldData, patch);
+					snapshotCache.set(newRev.shortSha, newData);
+					hitDelta = true;
+					patchSize = patch.stats.patchSize;
+					compRatio = patch.stats.compressionRatio;
+				}
+			} else if (snapshotCache.has(newRev.shortSha)) {
+				// 情况 2: 内存命中新版本快照，拉取逆向补丁原地热回退
+				const patch = await fetchDeltaPatch(slug, newRev.shortSha, oldRev.shortSha);
+				if (patch) {
+					newData = snapshotCache.get(newRev.shortSha);
+					oldData = applyDeltaPatch(newData, patch);
+					snapshotCache.set(oldRev.shortSha, oldData);
+					hitDelta = true;
+					patchSize = patch.stats.patchSize;
+					compRatio = patch.stats.compressionRatio;
+				}
+			} else {
+				// 情况 3: 首次访问，同时拉取旧版快照与正向增量补丁（免除下载完整新版快照）
+				try {
+					const [oldRes, patch] = await Promise.all([
+						fetch(`/api/wiki/snapshots/${slug}/${oldRev.shortSha}.json`),
+						fetchDeltaPatch(slug, oldRev.shortSha, newRev.shortSha),
+					]);
+					if (oldRes.ok && patch) {
+						oldData = await oldRes.json();
+						snapshotCache.set(oldRev.shortSha, oldData);
+						newData = applyDeltaPatch(oldData, patch);
+						snapshotCache.set(newRev.shortSha, newData);
+						hitDelta = true;
+						patchSize = patch.stats.patchSize;
+						compRatio = patch.stats.compressionRatio;
+					}
+				} catch {
+					// 降级回退
+				}
+			}
 		}
 
-		const oldData = await oldRes.json();
-		const newData = await newRes.json();
+		// 降级全量路径：非相邻或增量热补丁未命中时
+		if (!oldData || !newData) {
+			const fetchOldPromise = snapshotCache.has(oldRev.shortSha)
+				? Promise.resolve({ ok: true, json: async () => snapshotCache.get(oldRev.shortSha) })
+				: fetch(`/api/wiki/snapshots/${slug}/${oldRev.shortSha}.json`);
+
+			const fetchNewPromise = snapshotCache.has(newRev.shortSha)
+				? Promise.resolve({ ok: true, json: async () => snapshotCache.get(newRev.shortSha) })
+				: fetch(`/api/wiki/snapshots/${slug}/${newRev.shortSha}.json`);
+
+			const [oldRes, newRes] = await Promise.all([fetchOldPromise, fetchNewPromise]);
+			if (!oldRes.ok || !newRes.ok) {
+				throw new Error("无法读取指定快照数据");
+			}
+
+			oldData = await oldRes.json();
+			newData = await newRes.json();
+			snapshotCache.set(oldRev.shortSha, oldData);
+			snapshotCache.set(newRev.shortSha, newData);
+		}
+
+		const t1 = performance.now();
+		if (hitDelta) {
+			deltaInfo = {
+				isDeltaHit: true,
+				patchSize,
+				compressionRatio: compRatio,
+				loadDurationMs: Math.max(1, Math.round(t1 - t0)),
+			};
+		}
 
 		diffResult = generateWikiDiff(
 			oldData.content || "",
@@ -126,6 +212,7 @@ function closeDiff() {
 		{:else if diffResult}
 			<WikiDiffViewer
 				{diffResult}
+				{deltaInfo}
 				oldTitle={revisions[selectedOldIndex]?.message}
 				newTitle={revisions[selectedNewIndex]?.message}
 				oldDate={revisions[selectedOldIndex]?.displayDate}

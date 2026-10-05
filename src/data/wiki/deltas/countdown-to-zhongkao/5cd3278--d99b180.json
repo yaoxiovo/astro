@@ -1,0 +1,68 @@
+{
+  "version": "1.0",
+  "slug": "countdown-to-zhongkao",
+  "fromSha": "5cd327880a94ac6c2e1d93f3be611bad423ef60e",
+  "toSha": "d99b180562e1c4df9aa2ecf1bf6923f49ed95987",
+  "fromShortSha": "5cd3278",
+  "toShortSha": "d99b180",
+  "timestamp": "2026-10-05T17:08:35.920Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "d99b180562e1c4df9aa2ecf1bf6923f49ed95987"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "d99b180"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-28T19:42:55+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "更新 countdown-to-zhongkao.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 2,
+      "deleteCount": 6,
+      "lines": [
+        "published: 2026-03-26",
+        "description: 中考倒计时自动更新方案及备考寄语",
+        "tags:",
+        "  - 中考",
+        "  - 开发笔记",
+        "  - 自动更新",
+        "category: 成长记录",
+        "draft: false",
+        "lang: \"\""
+      ]
+    },
+    {
+      "start": 11,
+      "deleteCount": 1,
+      "lines": []
+    },
+    {
+      "start": 13,
+      "deleteCount": 0,
+      "lines": [
+        "> **当前剩余：96 天**"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 1479,
+    "targetLength": 1509,
+    "patchSize": 894,
+    "compressionRatio": "40.8%",
+    "addedLines": 10,
+    "deletedLines": 7
+  }
+}

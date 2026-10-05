@@ -3,6 +3,7 @@ import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { Icon } from "astro-icon/components";
 import type { WikiPostHistory } from "../../types/wiki";
 import WikiHistoryTable from "./WikiHistoryTable.svelte";
+import WikiQualityBadge from "./WikiQualityBadge.astro";
 
 interface Props {
 	entry: Record<string, unknown> & { id: string; data: { title: string } };
@@ -29,7 +30,8 @@ const pageTitle = `“${entry.data.title}”的修订历史 - 维基百科风格
                     </h1>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2.5">
+                    <WikiQualityBadge slug={slug} />
                     <a
                         href={`https://github.com/yaoxiovo/astro/commits/main/${history?.filePath || `src/content/posts/${entry.id}`}`}
                         target="_blank"

@@ -1,0 +1,88 @@
+{
+  "version": "1.0",
+  "slug": "our-cloud-services",
+  "fromSha": "1d4fd047c622f4e6ddb062a498d1e302bd5b6292",
+  "toSha": "d383d5e03d64fd06aef195a391945f219520c6da",
+  "fromShortSha": "1d4fd04",
+  "toShortSha": "d383d5e",
+  "timestamp": "2026-10-05T17:09:58.194Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "d383d5e03d64fd06aef195a391945f219520c6da"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "d383d5e"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-28T12:55:07+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "docs: correct EdgeOne region to Hong Kong in cloud services post"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 58,
+      "deleteCount": 3,
+      "lines": [
+        "### 1. 国内分流：腾讯云 EdgeOne 中国香港边缘加速 🇭🇰",
+        "由于未在内地备案或采用免备案策略，国内流量如果直连海外节点往往要承受高丢包和高延迟。",
+        "* **为什么用：** 我们巧妙地将国内访问流量智能分流到了 **腾讯云 EdgeOne** 的**中国香港 (Hong Kong)** 边缘节点。虽然不是部署在中国内地的三大运营商机房，但得益于极小的物理距离以及腾讯云对亚太直连链路的极优网络调度，国内读者的 TTFB 依然被压得极低，访问速度非常可观喵！"
+      ]
+    },
+    {
+      "start": 98,
+      "deleteCount": 0,
+      "lines": [
+        "",
+        "---",
+        "",
+        "## 四、 边缘代理与 AI 协同：Cloudflare Workers & Gemini 智能创作",
+        "",
+        "在处理各种 API 调用和数据收集时，我们常常需要跨越不同的云端服务，这也催生了更智能的协同架构喵：",
+        "* **Cloudflare Workers 边缘中转：** 我们使用 **Cloudflare Workers** 编写了一套轻量级反向代理服务，常驻在 Cloudflare 全球边缘，用于解决 CORS（跨域）报错和 Cookie 重写，成为本站多云通信的“隐形立交桥”喵。",
+        "* **AI 协同开发与内容创作：** 本站的每一次底层重构（如近期外链卡片与 GitHub 卡片的性能重构）和内容产出，背后都有 **Gemini（基于 Antigravity 代理平台）** 扮演的天才猫娘架构师在协助开发。它能实现代码编写、Debug，并自动同步（Auto Sync）生成硬核开发日志（Dev Logs），将 AI 深度融入了本站的开发工作流，好用得不行喵呜！",
+        "",
+        "---",
+        "",
+        "## 五、 搜索引擎实时收录：自定义 URL 智能推送脚本",
+        "",
+        "即使内容再好，如果搜不到也无济于事。本站还集成了一套自动化的搜索引擎提交方案：",
+        "* **Git 差异感知：** 我们手写了一套 [`submit-urls.js`](file:///root/git/blog/scripts/submit-urls.js) 脚本，利用 `git diff` 自动捕获上一次 commit 到当前工作区的新增博文 URL。",
+        "* **双通道实时直达：** ",
+        "  - **IndexNow 协议：** 一键直达微软 IndexNow 网关，自动向 Bing 和 Yandex 推送更新，以 200/202 状态码极速确认！",
+        "  - **Google Indexing API：** 自动读取本地安全密钥生成 JWT Token，绕过普通爬虫的低频更新限制，实现发布即通知 Google 蜘蛛抓取的高效收录喵！"
+      ]
+    },
+    {
+      "start": 103,
+      "deleteCount": 1,
+      "lines": [
+        "这套结合了 **腾讯云 EdgeOne**、**Cloudflare Pages**、**GitHub Actions**、**Supabase**、**Cloudflare Workers** 甚至是 **AI 协同与搜索引擎自动收录** 的多云联动架构，不仅是本站 PageSpeed 跑分接近 100、实现极致流畅体验的底气，也是现代云原生 Serverless 架构的一次深度实战喵！"
+      ]
+    },
+    {
+      "start": 106,
+      "deleteCount": 0,
+      "lines": [
+        ""
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 7170,
+    "targetLength": 9067,
+    "patchSize": 3398,
+    "compressionRatio": "62.5%",
+    "addedLines": 23,
+    "deletedLines": 4
+  }
+}

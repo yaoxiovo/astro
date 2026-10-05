@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "slug": "nuerosama",
+  "fromSha": "dee8f036cc129219037e62d0984c26fb13dabf01",
+  "toSha": "17f4bb4082a39f184800236cae49c93aeeb790b7",
+  "fromShortSha": "dee8f03",
+  "toShortSha": "17f4bb4",
+  "timestamp": "2026-10-05T17:09:52.036Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "17f4bb4082a39f184800236cae49c93aeeb790b7"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "17f4bb4"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-02-23T02:34:01+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 3 files: config.ts, workspace-mobile.json, nuerosama.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 14,
+      "deleteCount": 1,
+      "lines": [
+        "warning⚠️ 伦理临界点警告：",
+        "    接下来的探讨涉及对“自由意志”的终极挑战。",
+        "    请确保你的理智防火墙已开启。如果你感到不适，请立刻点击“Heart”键回到直播间。"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 6437,
+    "targetLength": 6661,
+    "patchSize": 836,
+    "compressionRatio": "87.4%",
+    "addedLines": 3,
+    "deletedLines": 1
+  }
+}

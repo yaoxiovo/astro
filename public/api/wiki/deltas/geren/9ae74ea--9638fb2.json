@@ -1,0 +1,110 @@
+{
+  "version": "1.0",
+  "slug": "geren",
+  "fromSha": "9ae74ea5b66c2b86f249a8e7a8d629cb701bdbd5",
+  "toSha": "9638fb22114d3e9e814aee5cd38b6c338a0298c6",
+  "fromShortSha": "9ae74ea",
+  "toShortSha": "9638fb2",
+  "timestamp": "2026-10-05T17:08:52.339Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "9638fb22114d3e9e814aee5cd38b6c338a0298c6"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "9638fb2"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-09-07T17:15:39+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "perf(seo): 全站 SEO 第一二阶段优化"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 1,
+      "lines": [
+        "title: 个人主页介绍"
+      ]
+    },
+    {
+      "start": 3,
+      "deleteCount": 2,
+      "lines": [
+        "description: \"你好，我是瑶佳乐（瑶曦）。欢迎来到我的数字花园，记录关于前端开发、Astro 静态站点构建、开源技术折腾与日常学习生活实践。\""
+      ]
+    },
+    {
+      "start": 6,
+      "deleteCount": 6,
+      "lines": [
+        "  - 个人介绍"
+      ]
+    },
+    {
+      "start": 15,
+      "deleteCount": 111,
+      "lines": []
+    },
+    {
+      "start": 127,
+      "deleteCount": 4,
+      "lines": [
+        "# 开篇自我介绍",
+        "![瑶佳乐个人主页介绍图片](../assets/images/5.webp)",
+        "## ​🚀 你好，我是 瑶佳乐",
+        "​欢迎来到我的数字花园。",
+        "​我是一名正在平衡 “**初三学业**” 与 “**技术探索**” 的终极玩家。在这个被代码和试卷填满的 2026 年，我决定用 Astro 搭建这个空间，记录那些稍纵即逝的思想火花。单推**Neuro-sama**。",
+        "## ​🛠 我的技术栈 & 兴趣",
+        "​**前端探索**： 热衷于构建快如闪电的静态网站，将用户的体验不断优化，提供极致的**性能、速度、体验**。这也是我选择 Astro 的原因——追求极致的性能与简洁。",
+        "​**折腾精神**： 喜欢从零开始配置环境，在终端的字符跳动中寻找秩序感。",
+        "​**学习进行时**： 现阶段的“主线任务”是冲刺中考，但在几何题与文言文的间隙，我依然会拿起代码，作为一种理性的解压方式。",
+        "## ​📚 此时此刻",
+        "​目前，我正处于人生中第一个重要的分水岭——**2026 年中考倒计时**。",
+        "对我而言，写代码和解方程本质上是一样的：它们都需要逻辑的严密和对未知的好奇。我在这里分享我的学习笔记、开发心得，或者是对某个开源项目的小改进。",
+        "## ​🌟 愿景",
+        "​我追求的不仅是功能的实现，更是代码的优雅与用户体验的极致。即使在最忙碌的备考季，我也相信 \"Stay hungry, Stay foolish\"。",
+        "​这个博客不仅是我的技术档案，更是我成长的观测站。希望在这里，你能看到一个少年如何在压力中保持热爱，在代码中构建梦想。",
+        "## ​📫 找到我：",
+        "​GitHub: github.com/yaoxiovo",
+        "​Email: dhhetdbee@163.com"
+      ]
+    },
+    {
+      "start": 132,
+      "deleteCount": 5,
+      "lines": [
+        "# 冲刺中考"
+      ]
+    },
+    {
+      "start": 139,
+      "deleteCount": 3,
+      "lines": [
+        "### 我的单独个人主页："
+      ]
+    },
+    {
+      "start": 143,
+      "deleteCount": 5,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 9280,
+    "targetLength": 2122,
+    "patchSize": 2914,
+    "compressionRatio": "0.0%",
+    "addedLines": 23,
+    "deletedLines": 137
+  }
+}

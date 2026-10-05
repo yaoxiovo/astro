@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "slug": "neuro1",
+  "fromSha": "d1790a21eb89d89ed2bd91f264bbae582f561f7d",
+  "toSha": "9638fb22114d3e9e814aee5cd38b6c338a0298c6",
+  "fromShortSha": "d1790a2",
+  "toShortSha": "9638fb2",
+  "timestamp": "2026-10-05T17:09:33.380Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "9638fb22114d3e9e814aee5cd38b6c338a0298c6"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "9638fb2"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-09-07T17:15:39+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "perf(seo): 全站 SEO 第一二阶段优化"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 3,
+      "deleteCount": 1,
+      "lines": [
+        "description: \"Neuro-sama 趣味小剧场第 1 集：记录 AI 主播 Neuro-sama 的精彩直播切片与幽默对话瞬间。\""
+      ]
+    },
+    {
+      "start": 9,
+      "deleteCount": 1,
+      "lines": [
+        "lang: \"zh_CN\""
+      ]
+    },
+    {
+      "start": 11,
+      "deleteCount": 1,
+      "lines": [
+        "![Neuro-sama 精彩切片展示](../assets/images/4.webp)"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 206,
+    "targetLength": 327,
+    "patchSize": 868,
+    "compressionRatio": "0.0%",
+    "addedLines": 3,
+    "deletedLines": 3
+  }
+}

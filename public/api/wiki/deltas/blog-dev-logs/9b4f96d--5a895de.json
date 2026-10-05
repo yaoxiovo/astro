@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "9b4f96ddec3083e7a7c5550abf7ac41541c18f64",
+  "toSha": "5a895de599c97eaf4ddb8e6b7c54139a27837662",
+  "fromShortSha": "9b4f96d",
+  "toShortSha": "5a895de",
+  "timestamp": "2026-10-05T17:08:00.550Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "5a895de599c97eaf4ddb8e6b7c54139a27837662"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "5a895de"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-26T20:38:05+08:00"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 104,
+      "deleteCount": 19,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 10047,
+    "targetLength": 8525,
+    "patchSize": 504,
+    "compressionRatio": "94.1%",
+    "addedLines": 0,
+    "deletedLines": 19
+  }
+}

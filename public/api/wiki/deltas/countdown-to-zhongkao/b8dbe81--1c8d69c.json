@@ -1,0 +1,62 @@
+{
+  "version": "1.0",
+  "slug": "countdown-to-zhongkao",
+  "fromSha": "b8dbe811ee96cfe7ebc98578b5356292102ab794",
+  "toSha": "1c8d69c6fdc773a9056f4e60734148358926c830",
+  "fromShortSha": "b8dbe81",
+  "toShortSha": "1c8d69c",
+  "timestamp": "2026-10-05T17:08:35.842Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "1c8d69c6fdc773a9056f4e60734148358926c830"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "1c8d69c"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-28T16:45:38Z"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "github-actions[bot]"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "chore: 自动更新中考倒计时"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 49,
+      "deleteCount": 3,
+      "lines": [
+        "    content = content.replace(//g, '');",
+        "    content = content.replace(//g, '');",
+        "    content = content.replace(//g, '');"
+      ]
+    },
+    {
+      "start": 112,
+      "deleteCount": 1,
+      "lines": [
+        "> **当前剩余：94 天**"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 3345,
+    "targetLength": 3287,
+    "patchSize": 844,
+    "compressionRatio": "74.3%",
+    "addedLines": 4,
+    "deletedLines": 4
+  }
+}

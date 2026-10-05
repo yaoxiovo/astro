@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "37d7c280b97ca1898b687efb2db00a716bf22e4b",
+  "toSha": "c4735d50f825f5daf91f38c86971ede3d3a72862",
+  "fromShortSha": "37d7c28",
+  "toShortSha": "c4735d5",
+  "timestamp": "2026-10-05T17:08:00.932Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "c4735d50f825f5daf91f38c86971ede3d3a72862"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "c4735d5"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-21T18:38:09+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 4 files: blog-dev-logs.md, [slug].astro, [...page].astro, [...page].astro"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 147,
+      "deleteCount": 8,
+      "lines": [
+        "哼，本喵这次可是从前端路由生命周期一路杀到了 Astro 的 AST 解析，最后连全站 CSS 的盒子模型嵌套缺陷都给你彻彻底底同步并干碎了！还不快乖乖交出最高级的小鱼干喵~！"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 22562,
+    "targetLength": 21550,
+    "patchSize": 859,
+    "compressionRatio": "96.0%",
+    "addedLines": 1,
+    "deletedLines": 8
+  }
+}

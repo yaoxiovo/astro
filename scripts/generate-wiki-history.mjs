@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
+import { createDeltaPatch } from "../src/utils/delta-core.mjs";
 
 const POSTS_DIR = path.resolve("src/content/posts");
 const DATA_DIR = path.resolve("src/data/wiki");
@@ -8,9 +9,11 @@ const PUBLIC_API_DIR = path.resolve("public/api/wiki");
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(path.join(DATA_DIR, "snapshots"), { recursive: true });
+fs.mkdirSync(path.join(DATA_DIR, "deltas"), { recursive: true });
 fs.mkdirSync(PUBLIC_API_DIR, { recursive: true });
 fs.mkdirSync(path.join(PUBLIC_API_DIR, "history"), { recursive: true });
 fs.mkdirSync(path.join(PUBLIC_API_DIR, "snapshots"), { recursive: true });
+fs.mkdirSync(path.join(PUBLIC_API_DIR, "deltas"), { recursive: true });
 
 function formatDisplayDate(isoString) {
 	try {
@@ -70,16 +73,18 @@ function ensureFullGitHistory() {
 
 		if (isShallow === "true") {
 			console.log(
-				"⚠️ [Wiki Generator] 检测到当前处于浅克隆（Shallow repository）环境，正在尝试拉取全量 Git 历史..."
+				"⚠️ [Wiki Generator] 检测到当前处于浅克隆（Shallow repository）环境，正在尝试拉取全量 Git 历史...",
 			);
 			try {
 				execSync("git fetch --unshallow", {
 					stdio: "inherit",
 				});
-				console.log("✨ [Wiki Generator] 成功执行 git fetch --unshallow，已补全历史记录！");
+				console.log(
+					"✨ [Wiki Generator] 成功执行 git fetch --unshallow，已补全历史记录！",
+				);
 			} catch (fetchErr) {
 				console.warn(
-					"⚠️ [Wiki Generator] git fetch --unshallow 失败，尝试 fallback: git fetch --depth=2000 origin HEAD..."
+					"⚠️ [Wiki Generator] git fetch --unshallow 失败，尝试 fallback: git fetch --depth=2000 origin HEAD...",
 				);
 				try {
 					execSync("git fetch --depth=2000 origin HEAD", {
@@ -87,7 +92,10 @@ function ensureFullGitHistory() {
 					});
 					console.log("✨ [Wiki Generator] 成功通过 fallback 拉取深层历史！");
 				} catch (fallbackErr) {
-					console.error("❌ [Wiki Generator] 无法拉取深层历史:", fallbackErr.message);
+					console.error(
+						"❌ [Wiki Generator] 无法拉取深层历史:",
+						fallbackErr.message,
+					);
 				}
 			}
 		}
@@ -128,7 +136,7 @@ for (const file of postFiles) {
 	try {
 		gitLogOutput = execSync(
 			`git log --follow --format="%H|%h|%cI|%an|%ae|%s" -- "${gitRelativePath}"`,
-			{ encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] }
+			{ encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] },
 		).trim();
 	} catch (e) {
 		console.warn(`[Wiki Generator] 无法读取 ${file} 的 git 历史:`, e.message);
@@ -136,23 +144,65 @@ for (const file of postFiles) {
 
 	const rawLines = gitLogOutput ? gitLogOutput.split("\n") : [];
 	const revisions = [];
+	const snapshotsMap = new Map();
 
 	for (let i = 0; i < rawLines.length; i++) {
 		const line = rawLines[i].trim();
 		if (!line) continue;
 
-		const [sha, shortSha, date, author, authorEmail, ...msgParts] = line.split("|");
+		const [sha, shortSha, date, author, authorEmail, ...msgParts] =
+			line.split("|");
 		const message = msgParts.join("|") || "";
 
+		// 提取快照内容（优先命中已存在的快照，避免频繁调用慢速 git 子进程）
+		let snapshotContent = "";
 		let byteSize = 0;
-		try {
-			const sizeStr = execSync(`git cat-file -s ${sha}:"${gitRelativePath}"`, {
-				encoding: "utf-8",
-				stdio: ["ignore", "pipe", "ignore"],
-			}).trim();
-			byteSize = parseInt(sizeStr, 10) || 0;
-		} catch {
-			// fallback
+		const cachedSnapPath = path.join(
+			DATA_DIR,
+			"snapshots",
+			slug,
+			`${shortSha}.json`,
+		);
+		if (fs.existsSync(cachedSnapPath)) {
+			try {
+				const existingSnap = JSON.parse(
+					fs.readFileSync(cachedSnapPath, "utf-8"),
+				);
+				snapshotContent = existingSnap.content || "";
+				if (snapshotContent) {
+					byteSize = Buffer.byteLength(snapshotContent, "utf-8");
+				}
+			} catch {}
+		}
+
+		if (!snapshotContent) {
+			try {
+				snapshotContent = execSync(`git show ${sha}:"${gitRelativePath}"`, {
+					encoding: "utf-8",
+					maxBuffer: 10 * 1024 * 1024,
+					stdio: ["ignore", "pipe", "ignore"],
+				});
+				if (snapshotContent) {
+					byteSize = Buffer.byteLength(snapshotContent, "utf-8");
+				}
+			} catch {
+				// fallback to current if failed
+			}
+		}
+
+		if (!byteSize) {
+			try {
+				const sizeStr = execSync(
+					`git cat-file -s ${sha}:"${gitRelativePath}"`,
+					{
+						encoding: "utf-8",
+						stdio: ["ignore", "pipe", "ignore"],
+					},
+				).trim();
+				byteSize = parseInt(sizeStr, 10) || 0;
+			} catch {
+				// fallback
+			}
 		}
 
 		let linesAdded = 0;
@@ -160,7 +210,7 @@ for (const file of postFiles) {
 		try {
 			const numstat = execSync(
 				`git show --numstat --format="" ${sha} -- "${gitRelativePath}"`,
-				{ encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] }
+				{ encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] },
 			).trim();
 			if (numstat) {
 				const parts = numstat.split(/\s+/);
@@ -169,31 +219,6 @@ for (const file of postFiles) {
 			}
 		} catch {
 			// ignore
-		}
-
-		// 提取快照内容（优先命中已存在的快照）
-		let snapshotContent = "";
-		const cachedSnapPath = path.join(DATA_DIR, "snapshots", slug, `${shortSha}.json`);
-		if (fs.existsSync(cachedSnapPath)) {
-			try {
-				const existingSnap = JSON.parse(fs.readFileSync(cachedSnapPath, "utf-8"));
-				snapshotContent = existingSnap.content || "";
-			} catch {}
-		}
-		if (!snapshotContent) {
-			try {
-				snapshotContent = execSync(`git show ${sha}:"${gitRelativePath}"`, {
-					encoding: "utf-8",
-					maxBuffer: 10 * 1024 * 1024,
-					stdio: ["ignore", "pipe", "ignore"],
-				});
-			} catch {
-				// fallback to current if failed
-			}
-		}
-
-		if (!byteSize && snapshotContent) {
-			byteSize = Buffer.byteLength(snapshotContent, "utf-8");
 		}
 
 		const { section, cleanMessage } = parseSection(message);
@@ -223,27 +248,31 @@ for (const file of postFiles) {
 
 		// 存储快照文件
 		if (snapshotContent) {
-			const snapshotPayload = JSON.stringify(
-				{
-					sha,
-					shortSha,
-					date,
-					author,
-					message,
-					slug,
-					content: snapshotContent,
-				},
-				null,
-				2
-			);
+			const snapshotObj = {
+				sha,
+				shortSha,
+				date,
+				author,
+				message,
+				slug,
+				content: snapshotContent,
+			};
+			snapshotsMap.set(shortSha, snapshotObj);
 
+			const snapshotPayload = JSON.stringify(snapshotObj, null, 2);
 			const dataSnapDir = path.join(DATA_DIR, "snapshots", slug);
 			const publicSnapDir = path.join(PUBLIC_API_DIR, "snapshots", slug);
 			fs.mkdirSync(dataSnapDir, { recursive: true });
 			fs.mkdirSync(publicSnapDir, { recursive: true });
 
-			fs.writeFileSync(path.join(dataSnapDir, `${shortSha}.json`), snapshotPayload);
-			fs.writeFileSync(path.join(publicSnapDir, `${shortSha}.json`), snapshotPayload);
+			fs.writeFileSync(
+				path.join(dataSnapDir, `${shortSha}.json`),
+				snapshotPayload,
+			);
+			fs.writeFileSync(
+				path.join(publicSnapDir, `${shortSha}.json`),
+				snapshotPayload,
+			);
 		}
 	}
 
@@ -257,6 +286,68 @@ for (const file of postFiles) {
 			const currentSize = revisions[j].byteSize;
 			const previousSize = revisions[j + 1].byteSize;
 			revisions[j].byteDelta = currentSize - previousSize;
+		}
+	}
+
+	// 遍历相邻版本时自动计算并输出相邻版本间的增量差分热补丁 (RFC 6902 + Line Deltas)
+	for (let j = 0; j < revisions.length - 1; j++) {
+		const newerRev = revisions[j];
+		const olderRev = revisions[j + 1];
+
+		const newerSnap = snapshotsMap.get(newerRev.shortSha);
+		const olderSnap = snapshotsMap.get(olderRev.shortSha);
+
+		if (newerSnap && olderSnap) {
+			const dataDeltaDir = path.join(DATA_DIR, "deltas", slug);
+			const publicDeltaDir = path.join(PUBLIC_API_DIR, "deltas", slug);
+			fs.mkdirSync(dataDeltaDir, { recursive: true });
+			fs.mkdirSync(publicDeltaDir, { recursive: true });
+
+			// 正向增量补丁: [from]--[to].json，即 older -> newer
+			const forwardPatch = createDeltaPatch(olderSnap, newerSnap, {
+				slug,
+				fromSha: olderRev.sha,
+				toSha: newerRev.sha,
+				fromShortSha: olderRev.shortSha,
+				toShortSha: newerRev.shortSha,
+			});
+			const forwardFileName = `${olderRev.shortSha}--${newerRev.shortSha}.json`;
+			const forwardPayload = JSON.stringify(forwardPatch, null, 2);
+			fs.writeFileSync(
+				path.join(dataDeltaDir, forwardFileName),
+				forwardPayload,
+			);
+			fs.writeFileSync(
+				path.join(publicDeltaDir, forwardFileName),
+				forwardPayload,
+			);
+
+			// 逆向回滚补丁: newer -> older
+			const reversePatch = createDeltaPatch(newerSnap, olderSnap, {
+				slug,
+				fromSha: newerRev.sha,
+				toSha: olderRev.sha,
+				fromShortSha: newerRev.shortSha,
+				toShortSha: olderRev.shortSha,
+			});
+			const reverseFileName = `${newerRev.shortSha}--${olderRev.shortSha}.json`;
+			const reversePayload = JSON.stringify(reversePatch, null, 2);
+			fs.writeFileSync(
+				path.join(dataDeltaDir, reverseFileName),
+				reversePayload,
+			);
+			fs.writeFileSync(
+				path.join(publicDeltaDir, reverseFileName),
+				reversePayload,
+			);
+
+			newerRev.deltaPatch = {
+				fromShortSha: olderRev.shortSha,
+				toShortSha: newerRev.shortSha,
+				patchUrl: `/api/wiki/deltas/${slug}/${forwardFileName}`,
+				patchSize: forwardPatch.stats.patchSize,
+				compressionRatio: forwardPatch.stats.compressionRatio,
+			};
 		}
 	}
 
@@ -321,7 +412,7 @@ for (const file of postFiles) {
 	// 单独写入 public/api/wiki/history/${slug}.json 方便客户端独立轻量按需请求
 	fs.writeFileSync(
 		path.join(PUBLIC_API_DIR, "history", `${slug}.json`),
-		JSON.stringify(postHistory, null, 2)
+		JSON.stringify(postHistory, null, 2),
 	);
 }
 
@@ -330,17 +421,22 @@ const existingHistoryPath = path.join(DATA_DIR, "history.json");
 let existingHistoryCount = 0;
 if (fs.existsSync(existingHistoryPath)) {
 	try {
-		const existingData = JSON.parse(fs.readFileSync(existingHistoryPath, "utf-8"));
+		const existingData = JSON.parse(
+			fs.readFileSync(existingHistoryPath, "utf-8"),
+		);
 		existingHistoryCount = Object.values(existingData).reduce(
 			(acc, cur) => acc + (cur.totalRevisions || 0),
-			0
+			0,
 		);
 	} catch {}
 }
 
-if (existingHistoryCount > 0 && totalCommitsExtracted < existingHistoryCount * 0.5) {
+if (
+	existingHistoryCount > 0 &&
+	totalCommitsExtracted < existingHistoryCount * 0.5
+) {
 	console.warn(
-		`⚠️ [Wiki Generator] 提取的提交数 (${totalCommitsExtracted}) 远小于已有历史记录 (${existingHistoryCount})，检测到浅克隆未完全解除，为保证数据完整性，放弃覆盖已有 history.json 喵！`
+		`⚠️ [Wiki Generator] 提取的提交数 (${totalCommitsExtracted}) 远小于已有历史记录 (${existingHistoryCount})，检测到浅克隆未完全解除，为保证数据完整性，放弃覆盖已有 history.json 喵！`,
 	);
 	process.exit(0);
 }
@@ -348,13 +444,13 @@ if (existingHistoryCount > 0 && totalCommitsExtracted < existingHistoryCount * 0
 // 汇总写入 master json
 fs.writeFileSync(
 	path.join(DATA_DIR, "history.json"),
-	JSON.stringify(historyMap, null, 2)
+	JSON.stringify(historyMap, null, 2),
 );
 fs.writeFileSync(
 	path.join(PUBLIC_API_DIR, "history.json"),
-	JSON.stringify(historyMap, null, 2)
+	JSON.stringify(historyMap, null, 2),
 );
 
 console.log(
-	`✨ [Wiki Generator] 成功生成 ${postFiles.length} 篇文章的历史数据与快照，共提取 ${totalCommitsExtracted} 次修订（耗时 ${Date.now() - startTime}ms）喵！`
+	`✨ [Wiki Generator] 成功生成 ${postFiles.length} 篇文章的历史数据与快照，共提取 ${totalCommitsExtracted} 次修订（耗时 ${Date.now() - startTime}ms）喵！`,
 );

@@ -1,0 +1,69 @@
+{
+  "version": "1.0",
+  "slug": "other-sites",
+  "fromSha": "76dc90eae690fc807b861315ebd0f9a8f9ac0a93",
+  "toSha": "3393497ba78e8d61b52148ff5b0da8f22f18e0c0",
+  "fromShortSha": "76dc90e",
+  "toShortSha": "3393497",
+  "timestamp": "2026-10-05T17:09:55.809Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "3393497ba78e8d61b52148ff5b0da8f22f18e0c0"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "3393497"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-21T22:32:18+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "清退"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 1,
+      "lines": [
+        "title: 其他网站"
+      ]
+    },
+    {
+      "start": 3,
+      "deleteCount": 1,
+      "lines": [
+        "description: 'Yaoxi 的其他网站'"
+      ]
+    },
+    {
+      "start": 5,
+      "deleteCount": 6,
+      "lines": [
+        ""
+      ]
+    },
+    {
+      "start": 12,
+      "deleteCount": 1,
+      "lines": [
+        "lang: ''"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 491,
+    "targetLength": 278,
+    "patchSize": 740,
+    "compressionRatio": "0.0%",
+    "addedLines": 4,
+    "deletedLines": 9
+  }
+}

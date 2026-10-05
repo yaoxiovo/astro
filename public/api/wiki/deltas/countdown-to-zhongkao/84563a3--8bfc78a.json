@@ -1,0 +1,123 @@
+{
+  "version": "1.0",
+  "slug": "countdown-to-zhongkao",
+  "fromSha": "84563a336adefcbee736fe50c93189577be936b1",
+  "toSha": "8bfc78a63d8ae57c36e7cc4bd9c20a12055a3eec",
+  "fromShortSha": "84563a3",
+  "toShortSha": "8bfc78a",
+  "timestamp": "2026-10-05T17:08:35.893Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "8bfc78a63d8ae57c36e7cc4bd9c20a12055a3eec"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "8bfc78a"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-03-28T11:45:41Z"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "github-actions[bot]"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "chore: 自动更新中考倒计时"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 25,
+      "deleteCount": 6,
+      "lines": [
+        "```javascript",
+        "const fs = require('fs');",
+        "const path = require('path');"
+      ]
+    },
+    {
+      "start": 32,
+      "deleteCount": 1,
+      "lines": [
+        "// 目标日期：2026年6月30日"
+      ]
+    },
+    {
+      "start": 35,
+      "deleteCount": 1,
+      "lines": []
+    },
+    {
+      "start": 37,
+      "deleteCount": 2,
+      "lines": [
+        "// 计算天数差",
+        "const diff = TARGET_DATE - today;",
+        "const remainingDays = Math.ceil(diff / (1000 * 60 * 60 * 24));"
+      ]
+    },
+    {
+      "start": 40,
+      "deleteCount": 4,
+      "lines": [
+        "// 目标文件路径",
+        "const postPath = path.join(__dirname, '../src/content/posts/countdown-to-zhongkao.md');"
+      ]
+    },
+    {
+      "start": 45,
+      "deleteCount": 0,
+      "lines": [
+        "try {"
+      ]
+    },
+    {
+      "start": 46,
+      "deleteCount": 11,
+      "lines": [
+        "    // 使用正则匹配“当前剩余：X 天”并替换",
+        "    const updatedContent = content.replace(/> \\*\\*当前剩余：\\d+ 天\\*\\*/g, `> **当前剩余：${remainingDays} 天**`);"
+      ]
+    },
+    {
+      "start": 59,
+      "deleteCount": 1,
+      "lines": [
+        "    console.log(`✅ 倒计时已成功更新为 ${remainingDays} 天`);"
+      ]
+    },
+    {
+      "start": 61,
+      "deleteCount": 2,
+      "lines": [
+        "    console.error('❌ 更新失败:', err);"
+      ]
+    },
+    {
+      "start": 64,
+      "deleteCount": 27,
+      "lines": []
+    },
+    {
+      "start": 92,
+      "deleteCount": 19,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 3319,
+    "targetLength": 1509,
+    "patchSize": 1719,
+    "compressionRatio": "0.0%",
+    "addedLines": 14,
+    "deletedLines": 74
+  }
+}

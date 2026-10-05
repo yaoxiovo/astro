@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "73bfee3d0a4af60ae25b145420367e4fac3be9f6",
+  "toSha": "a9a12cf72929e4e457de84bb9ab137ef7f49999c",
+  "fromShortSha": "73bfee3",
+  "toShortSha": "a9a12cf",
+  "timestamp": "2026-10-05T17:08:00.513Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "a9a12cf72929e4e457de84bb9ab137ef7f49999c"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "a9a12cf"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-26T21:33:47+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 7 files: GoogleLogin.astro, config.ts, blog-dev-logs.md, privacy.md, terms.md, Layout.astro, config.ts"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 137,
+      "deleteCount": 1,
+      "lines": [
+        "3. 在 `Layout.astro` 中完美集成，且顺手兼容了单页应用框架 Swup 的路由跳转钩子（`swup:page:view`），确保用户在站内跳转回首页时也能正常初始化 Google 登录面板喵！"
+      ]
+    },
+    {
+      "start": 140,
+      "deleteCount": 20,
+      "lines": []
+    }
+  ],
+  "stats": {
+    "baseLength": 14873,
+    "targetLength": 12231,
+    "patchSize": 916,
+    "compressionRatio": "92.5%",
+    "addedLines": 1,
+    "deletedLines": 21
+  }
+}

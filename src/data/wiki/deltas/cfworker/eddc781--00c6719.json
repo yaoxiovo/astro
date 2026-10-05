@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "slug": "cfworker",
+  "fromSha": "eddc7814eeaddca7b24965d6d2ee9cd9a56057d9",
+  "toSha": "00c6719a452670e372d9208e3e96955fdd80ff07",
+  "fromShortSha": "eddc781",
+  "toShortSha": "00c6719",
+  "timestamp": "2026-10-05T17:08:07.675Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "00c6719a452670e372d9208e3e96955fdd80ff07"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "00c6719"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-04-25T21:20:19+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update cfworker.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 2,
+      "lines": [
+        "title: 2026 极致指南：Cloudflare Workers 反向代理保姆级教程 | 解决 403 跨域 & API 中转",
+        "description: 零成本搭建反向代理！本文提供 Cloudflare Workers 最新代码，涵盖基础版、解决 403 兼容版及 CORS 跨域版。包含 API 中转、自定义域名绑定等进阶技巧，100% 成功率。"
+      ]
+    },
+    {
+      "start": 8,
+      "deleteCount": 0,
+      "lines": [
+        "为什么使用 Cloudflare Workers 做反向代理？",
+        "",
+        "全球加速：利用 Cloudflare 的边缘节点，全球访问延迟极低。",
+        "",
+        "免费额度高：每天 10 万次免费请求，足以支撑个人项目。"
+      ]
+    },
+    {
+      "start": 9,
+      "deleteCount": 0,
+      "lines": [
+        "无需服务器：真正的 Serverless 架构，省去运维烦恼。"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 4071,
+    "targetLength": 4484,
+    "patchSize": 1266,
+    "compressionRatio": "71.8%",
+    "addedLines": 8,
+    "deletedLines": 2
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "slug": "neurosama",
+  "title": "neuro-sama 生日快乐",
+  "checkedAt": "2026-10-05T17:12:08.570Z",
+  "score": 97,
+  "grade": "S",
+  "gradeLabel": "工业级卓越 (Industrial S)",
+  "badgeColor": "emerald",
+  "breakdown": {
+    "typography": {
+      "score": 22,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 25,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 25,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 28,
+    "codeLines": 0,
+    "codePercentage": "0.0%",
+    "cjkChars": 556,
+    "englishWords": 34,
+    "totalEquivalentWords": 590,
+    "lexicalDiversity": "55.0%",
+    "readingMinutes": 2,
+    "headingsCount": 3
+  },
+  "issuesCount": {
+    "total": 3,
+    "errors": 0,
+    "warnings": 3,
+    "infos": 0
+  },
+  "issues": [
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 26,
+      "excerpt": "月22",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"月22\" -> 建议为 \"月 22\"",
+      "suggestion": "月 22"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 26,
+      "excerpt": "3月",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"3月\" -> 建议为 \"3 月\"",
+      "suggestion": "3 月"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 26,
+      "excerpt": "22日",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"22日\" -> 建议为 \"22 日\"",
+      "suggestion": "22 日"
+    }
+  ]
+}

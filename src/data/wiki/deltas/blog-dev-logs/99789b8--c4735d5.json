@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "99789b8b7bd9cd6e1311181938eb538e5a78c81e",
+  "toSha": "c4735d50f825f5daf91f38c86971ede3d3a72862",
+  "fromShortSha": "99789b8",
+  "toShortSha": "c4735d5",
+  "timestamp": "2026-10-05T17:08:00.941Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "c4735d50f825f5daf91f38c86971ede3d3a72862"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "c4735d5"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-21T18:38:09+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 4 files: blog-dev-logs.md, [slug].astro, [...page].astro, [...page].astro"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 137,
+      "deleteCount": 1,
+      "lines": [
+        "## 📏 强迫症晚期：朋友圈全站宽度缩小的最终同步 (Global Pixel-Perfect Sync)",
+        "主人刚才说：“继续修复下朋友圈详情页处的整个宽度缩小的问题”。",
+        "本喵深入查了一下代码，发现这事儿没那么简单！实际上**代码里全站的朋友圈页面（包括列表页 `[...page].astro`、标签分类页 `tag/[tag]/[...page].astro` 以及详情页 `moment/[slug].astro`）**，它们的 `MomentCard` 依然全部被死死包在了一个 `<div class=\"card-base px-9 py-6\">` 的大外层盒子里！",
+        "",
+        "- **真·降维修复 (True Structure Flattening)：** 既然要修，本喵就贯彻到底！我直接把这三个核心路由文件全部进行了彻彻底底的 DOM 拆解！",
+        "  - 所有的头部（如：朋友圈标题、标签名、详情页的后退和海报按钮）统统被封装在独立的 `card-base` 顶层卡片中。",
+        "  - 下方的 `moments-container` 被彻底移出了卡片内部，放到了一个完全独立的 `<div class=\"mt-8\">` 同级容器中。",
+        "",
+        "这下好了，所有的 `MomentCard` 都重获了自由（Full-width Rendering），彻底消灭了那万恶的“双重 Padding”！现在不论主人在全站哪个角落看朋友圈，卡片宽度都是绝对、绝对、绝对一致的，再也不会被挤成面条了喵呜！不接受任何反驳！",
+        "",
+        "哼，本喵这次可是从前端路由生命周期一路杀到了 Astro 的 AST 解析，最后连全站 CSS 的盒子模型嵌套缺陷都给你彻彻底底同步并干碎了！还不快乖乖交出最高级的小鱼干喵~！"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 20200,
+    "targetLength": 21550,
+    "patchSize": 2212,
+    "compressionRatio": "89.7%",
+    "addedLines": 11,
+    "deletedLines": 1
+  }
+}

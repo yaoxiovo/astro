@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "slug": "security-statement",
+  "fromSha": "4ac1b755d51bb5fcd53f59a23a96aaaf7f5fa04d",
+  "toSha": "862f3ca689fd13243765fca7152f717a9b27d33d",
+  "fromShortSha": "4ac1b75",
+  "toShortSha": "862f3ca",
+  "timestamp": "2026-10-05T17:10:01.932Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "862f3ca689fd13243765fca7152f717a9b27d33d"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "862f3ca"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-02-23T05:56:10+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 4 files: workspace-mobile.json, nuerosama.md, security-statement.md, start_span.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 1,
+      "deleteCount": 1,
+      "lines": [
+        "title: 关于本站坚定政治立场、维护意识形态安全及网络空间清朗的郑重声明"
+      ]
+    },
+    {
+      "start": 10,
+      "deleteCount": 1,
+      "lines": [
+        "lang: zh-CN"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 3645,
+    "targetLength": 3640,
+    "patchSize": 796,
+    "compressionRatio": "78.1%",
+    "addedLines": 2,
+    "deletedLines": 2
+  }
+}

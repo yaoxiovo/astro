@@ -1,0 +1,266 @@
+{
+  "slug": "heci",
+  "title": "2026 新年贺词精选",
+  "checkedAt": "2026-10-05T17:11:54.613Z",
+  "score": 70,
+  "grade": "B",
+  "gradeLabel": "规范合格 (Standard B)",
+  "badgeColor": "amber",
+  "breakdown": {
+    "typography": {
+      "score": 0,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 20,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 25,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 172,
+    "codeLines": 0,
+    "codePercentage": "0.0%",
+    "cjkChars": 1233,
+    "englishWords": 18,
+    "totalEquivalentWords": 1251,
+    "lexicalDiversity": "32.9%",
+    "readingMinutes": 4,
+    "headingsCount": 0
+  },
+  "issuesCount": {
+    "total": 27,
+    "errors": 0,
+    "warnings": 27,
+    "infos": 0
+  },
+  "issues": [
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 15,
+      "excerpt": "当2025",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"当2025\" -> 建议为 \"当 2025\"",
+      "suggestion": "当 2025"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 15,
+      "excerpt": "2025年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2025年\" -> 建议为 \"2025 年\"",
+      "suggestion": "2025 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 17,
+      "excerpt": "了2026",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"了2026\" -> 建议为 \"了 2026\"",
+      "suggestion": "了 2026"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 30,
+      "excerpt": "在2026",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"在2026\" -> 建议为 \"在 2026\"",
+      "suggestion": "在 2026"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 30,
+      "excerpt": "2026年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2026年\" -> 建议为 \"2026 年\"",
+      "suggestion": "2026 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 48,
+      "excerpt": "在2026",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"在2026\" -> 建议为 \"在 2026\"",
+      "suggestion": "在 2026"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 48,
+      "excerpt": "2026年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2026年\" -> 建议为 \"2026 年\"",
+      "suggestion": "2026 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 66,
+      "excerpt": "的2026",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"的2026\" -> 建议为 \"的 2026\"",
+      "suggestion": "的 2026"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 66,
+      "excerpt": "2026年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2026年\" -> 建议为 \"2026 年\"",
+      "suggestion": "2026 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 84,
+      "excerpt": "在2026",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"在2026\" -> 建议为 \"在 2026\"",
+      "suggestion": "在 2026"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 84,
+      "excerpt": "2026年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2026年\" -> 建议为 \"2026 年\"",
+      "suggestion": "2026 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 104,
+      "excerpt": "你2026",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"你2026\" -> 建议为 \"你 2026\"",
+      "suggestion": "你 2026"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 104,
+      "excerpt": "2026年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2026年\" -> 建议为 \"2026 年\"",
+      "suggestion": "2026 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 117,
+      "excerpt": "在2026",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"在2026\" -> 建议为 \"在 2026\"",
+      "suggestion": "在 2026"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 117,
+      "excerpt": "2026年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2026年\" -> 建议为 \"2026 年\"",
+      "suggestion": "2026 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 124,
+      "excerpt": "打call",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"打call\" -> 建议为 \"打 call\"",
+      "suggestion": "打 call"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 129,
+      "excerpt": "的2026",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"的2026\" -> 建议为 \"的 2026\"",
+      "suggestion": "的 2026"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 129,
+      "excerpt": "2026年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2026年\" -> 建议为 \"2026 年\"",
+      "suggestion": "2026 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 141,
+      "excerpt": "愿2026",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"愿2026\" -> 建议为 \"愿 2026\"",
+      "suggestion": "愿 2026"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 141,
+      "excerpt": "2026年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2026年\" -> 建议为 \"2026 年\"",
+      "suggestion": "2026 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 163,
+      "excerpt": "2026年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2026年\" -> 建议为 \"2026 年\"",
+      "suggestion": "2026 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 168,
+      "excerpt": "于2025",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"于2025\" -> 建议为 \"于 2025\"",
+      "suggestion": "于 2025"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 168,
+      "excerpt": "年12",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"年12\" -> 建议为 \"年 12\"",
+      "suggestion": "年 12"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 168,
+      "excerpt": "月31",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"月31\" -> 建议为 \"月 31\"",
+      "suggestion": "月 31"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 168,
+      "excerpt": "2025年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2025年\" -> 建议为 \"2025 年\"",
+      "suggestion": "2025 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 168,
+      "excerpt": "12月",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"12月\" -> 建议为 \"12 月\"",
+      "suggestion": "12 月"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 168,
+      "excerpt": "31日",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"31日\" -> 建议为 \"31 日\"",
+      "suggestion": "31 日"
+    }
+  ]
+}

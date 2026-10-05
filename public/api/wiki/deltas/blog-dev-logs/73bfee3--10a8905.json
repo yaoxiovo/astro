@@ -1,0 +1,56 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "73bfee3d0a4af60ae25b145420367e4fac3be9f6",
+  "toSha": "10a8905c6817712c386091773edae2982727b15e",
+  "fromShortSha": "73bfee3",
+  "toShortSha": "10a8905",
+  "timestamp": "2026-10-05T17:08:00.456Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "10a8905c6817712c386091773edae2982727b15e"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "10a8905"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-26T23:09:38+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 3 files: GoogleLogin.astro, blog-dev-logs.md, [...page].astro"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 159,
+      "deleteCount": 1,
+      "lines": [
+        "### 📱 手机端 & 跨域环境下的手动登录补偿机制 (Manual Login Fallback)",
+        "由于手机端浏览器（如 iOS Safari、手机 Chrome 无痕模式）对第三方 Cookie 和 iframe 跨域跟踪的限制极为严苛，原生的 Google One Tap 极易在移动端被阻断（Cross-origin context blocked）或进入 Skip 冷静期而无法自动弹窗。",
+        "为了不影响主人在手机上优雅地发表动态，本喵设计了**极简的手动登录备用通道**喵：",
+        "1. **小钥匙“彩蛋”按钮 (🔑 Admin Trigger)**：在朋友圈标题右侧放置了一个低调的钥匙按钮。普通读者很难注意到，保障了站点的极简高质感喵。",
+        "2. **登录态智能路由拦截**：",
+        "   - 当检测为**未登录**时，点击小钥匙会展示一个精致的手动登录面板，里面由 GIS SDK 动态渲染出官方原生的 `google.accounts.id.renderButton` (手动登录按钮)。点击该按钮可以直接强行弹出官方授权窗，打破浏览器对 One Tap 的拦截！",
+        "   - 当检测为**已登录**时，小钥匙会智能升级为“退出登录 (Logout)”按钮，点击即可轻松清理 `localStorage` 会话并重载页面喵。",
+        "",
+        "这下子不管是电脑、手机还是无痕测试，绝对都是稳上加稳，天衣无缝了喵呜~！"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 14873,
+    "targetLength": 16021,
+    "patchSize": 1916,
+    "compressionRatio": "88.0%",
+    "addedLines": 9,
+    "deletedLines": 1
+  }
+}

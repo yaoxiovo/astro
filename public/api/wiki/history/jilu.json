@@ -21,7 +21,14 @@
       "linesDeleted": 3,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/ef6e1cffa148044bb300374b86aedd694b77ef39"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/ef6e1cffa148044bb300374b86aedd694b77ef39",
+      "deltaPatch": {
+        "fromShortSha": "fbda5a9",
+        "toShortSha": "ef6e1cf",
+        "patchUrl": "/api/wiki/deltas/jilu/fbda5a9--ef6e1cf.json",
+        "patchSize": 1023,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "fbda5a973c6675c75fa299214c0e25abbc3d250c",
@@ -39,7 +46,14 @@
       "linesDeleted": 0,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/fbda5a973c6675c75fa299214c0e25abbc3d250c"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/fbda5a973c6675c75fa299214c0e25abbc3d250c",
+      "deltaPatch": {
+        "fromShortSha": "7aa619a",
+        "toShortSha": "fbda5a9",
+        "patchUrl": "/api/wiki/deltas/jilu/7aa619a--fbda5a9.json",
+        "patchSize": 685,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "7aa619a4cb137297ca3c4e6862bcd03df24d1103",
@@ -57,7 +71,14 @@
       "linesDeleted": 1,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/7aa619a4cb137297ca3c4e6862bcd03df24d1103"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/7aa619a4cb137297ca3c4e6862bcd03df24d1103",
+      "deltaPatch": {
+        "fromShortSha": "f6aa948",
+        "toShortSha": "7aa619a",
+        "patchUrl": "/api/wiki/deltas/jilu/f6aa948--7aa619a.json",
+        "patchSize": 739,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "f6aa9488ce220387d38a0329122fd6970a8ecb45",
@@ -75,7 +96,14 @@
       "linesDeleted": 1,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/f6aa9488ce220387d38a0329122fd6970a8ecb45"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/f6aa9488ce220387d38a0329122fd6970a8ecb45",
+      "deltaPatch": {
+        "fromShortSha": "7402235",
+        "toShortSha": "f6aa948",
+        "patchUrl": "/api/wiki/deltas/jilu/7402235--f6aa948.json",
+        "patchSize": 553,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "74022351312cebdf4a7ae5b723640982ea6fdbd5",
@@ -93,7 +121,14 @@
       "linesDeleted": 1,
       "isMinor": false,
       "tags": [],
-      "diffUrl": "https://github.com/yaoxiovo/astro/commit/74022351312cebdf4a7ae5b723640982ea6fdbd5"
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/74022351312cebdf4a7ae5b723640982ea6fdbd5",
+      "deltaPatch": {
+        "fromShortSha": "a42576f",
+        "toShortSha": "7402235",
+        "patchUrl": "/api/wiki/deltas/jilu/a42576f--7402235.json",
+        "patchSize": 621,
+        "compressionRatio": "0.0%"
+      }
     },
     {
       "sha": "a42576fdab41d58b3c042177493995a2e0424399",

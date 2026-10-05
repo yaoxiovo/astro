@@ -1,0 +1,698 @@
+{
+  "slug": "china",
+  "title": "中国近代史（1840—1949）核心事件脉络",
+  "checkedAt": "2026-10-05T17:11:54.513Z",
+  "score": 75,
+  "grade": "B",
+  "gradeLabel": "规范合格 (Standard B)",
+  "badgeColor": "amber",
+  "breakdown": {
+    "typography": {
+      "score": 0,
+      "max": 25,
+      "label": "排版与盘古之白"
+    },
+    "links": {
+      "score": 25,
+      "max": 25,
+      "label": "链接与锚点健康度"
+    },
+    "structure": {
+      "score": 25,
+      "max": 25,
+      "label": "大纲与层级语义"
+    },
+    "readability": {
+      "score": 25,
+      "max": 25,
+      "label": "认知负荷与深度"
+    }
+  },
+  "metrics": {
+    "totalLines": 131,
+    "codeLines": 0,
+    "codePercentage": "0.0%",
+    "cjkChars": 1609,
+    "englishWords": 90,
+    "totalEquivalentWords": 1699,
+    "lexicalDiversity": "34.7%",
+    "readingMinutes": 5,
+    "headingsCount": 21
+  },
+  "issuesCount": {
+    "total": 81,
+    "errors": 0,
+    "warnings": 81,
+    "infos": 0
+  },
+  "issues": [
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 19,
+      "excerpt": "指1840",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"指1840\" -> 建议为 \"指 1840\"",
+      "suggestion": "指 1840"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 19,
+      "excerpt": "到1949",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"到1949\" -> 建议为 \"到 1949\"",
+      "suggestion": "到 1949"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 19,
+      "excerpt": "1840年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1840年\" -> 建议为 \"1840 年\"",
+      "suggestion": "1840 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 19,
+      "excerpt": "1949年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1949年\" -> 建议为 \"1949 年\"",
+      "suggestion": "1949 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 25,
+      "excerpt": "1842年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1842年\" -> 建议为 \"1842 年\"",
+      "suggestion": "1842 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 27,
+      "excerpt": "年6",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"年6\" -> 建议为 \"年 6\"",
+      "suggestion": "年 6"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 27,
+      "excerpt": "1839年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1839年\" -> 建议为 \"1839 年\"",
+      "suggestion": "1839 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 27,
+      "excerpt": "6月",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"6月\" -> 建议为 \"6 月\"",
+      "suggestion": "6 月"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 29,
+      "excerpt": "款2100",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"款2100\" -> 建议为 \"款 2100\"",
+      "suggestion": "款 2100"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 29,
+      "excerpt": "1842年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1842年\" -> 建议为 \"1842 年\"",
+      "suggestion": "1842 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 29,
+      "excerpt": "2100万",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2100万\" -> 建议为 \"2100 万\"",
+      "suggestion": "2100 万"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 32,
+      "excerpt": "1844年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1844年\" -> 建议为 \"1844 年\"",
+      "suggestion": "1844 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 38,
+      "excerpt": "1864年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1864年\" -> 建议为 \"1864 年\"",
+      "suggestion": "1864 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 41,
+      "excerpt": "1851年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1851年\" -> 建议为 \"1851 年\"",
+      "suggestion": "1851 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 45,
+      "excerpt": "1860年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1860年\" -> 建议为 \"1860 年\"",
+      "suggestion": "1860 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 48,
+      "excerpt": "开10",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"开10\" -> 建议为 \"开 10\"",
+      "suggestion": "开 10"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 48,
+      "excerpt": "1858年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1858年\" -> 建议为 \"1858 年\"",
+      "suggestion": "1858 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 48,
+      "excerpt": "10口",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"10口\" -> 建议为 \"10 口\"",
+      "suggestion": "10 口"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 48,
+      "excerpt": "1860年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1860年\" -> 建议为 \"1860 年\"",
+      "suggestion": "1860 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 51,
+      "excerpt": "纪60",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"纪60\" -> 建议为 \"纪 60\"",
+      "suggestion": "纪 60"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 51,
+      "excerpt": "19世",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"19世\" -> 建议为 \"19 世\"",
+      "suggestion": "19 世"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 51,
+      "excerpt": "90年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"90年\" -> 建议为 \"90 年\"",
+      "suggestion": "90 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 56,
+      "excerpt": "1895年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1895年\" -> 建议为 \"1895 年\"",
+      "suggestion": "1895 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 61,
+      "excerpt": "1895年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1895年\" -> 建议为 \"1895 年\"",
+      "suggestion": "1895 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 64,
+      "excerpt": "款2",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"款2\" -> 建议为 \"款 2\"",
+      "suggestion": "款 2"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 64,
+      "excerpt": "开4",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"开4\" -> 建议为 \"开 4\"",
+      "suggestion": "开 4"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 64,
+      "excerpt": "1895年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1895年\" -> 建议为 \"1895 年\"",
+      "suggestion": "1895 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 64,
+      "excerpt": "2亿",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2亿\" -> 建议为 \"2 亿\"",
+      "suggestion": "2 亿"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 64,
+      "excerpt": "4口",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"4口\" -> 建议为 \"4 口\"",
+      "suggestion": "4 口"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 67,
+      "excerpt": "1895年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1895年\" -> 建议为 \"1895 年\"",
+      "suggestion": "1895 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 67,
+      "excerpt": "1898年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1898年\" -> 建议为 \"1898 年\"",
+      "suggestion": "1898 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 74,
+      "excerpt": "1901年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1901年\" -> 建议为 \"1901 年\"",
+      "suggestion": "1901 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 77,
+      "excerpt": "款4",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"款4\" -> 建议为 \"款 4\"",
+      "suggestion": "款 4"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 77,
+      "excerpt": "1901年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1901年\" -> 建议为 \"1901 年\"",
+      "suggestion": "1901 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 77,
+      "excerpt": "5亿",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"5亿\" -> 建议为 \"5 亿\"",
+      "suggestion": "5 亿"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 80,
+      "excerpt": "1905年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1905年\" -> 建议为 \"1905 年\"",
+      "suggestion": "1905 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 86,
+      "excerpt": "1911年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1911年\" -> 建议为 \"1911 年\"",
+      "suggestion": "1911 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 88,
+      "excerpt": "月10",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"月10\" -> 建议为 \"月 10\"",
+      "suggestion": "月 10"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 88,
+      "excerpt": "10月",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"10月\" -> 建议为 \"10 月\"",
+      "suggestion": "10 月"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 88,
+      "excerpt": "10日",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"10日\" -> 建议为 \"10 日\"",
+      "suggestion": "10 日"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 89,
+      "excerpt": "年1",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"年1\" -> 建议为 \"年 1\"",
+      "suggestion": "年 1"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 89,
+      "excerpt": "月1",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"月1\" -> 建议为 \"月 1\"",
+      "suggestion": "月 1"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 89,
+      "excerpt": "月12",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"月12\" -> 建议为 \"月 12\"",
+      "suggestion": "月 12"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 89,
+      "excerpt": "束2000",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"束2000\" -> 建议为 \"束 2000\"",
+      "suggestion": "束 2000"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 89,
+      "excerpt": "1912年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1912年\" -> 建议为 \"1912 年\"",
+      "suggestion": "1912 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 89,
+      "excerpt": "1月",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1月\" -> 建议为 \"1 月\"",
+      "suggestion": "1 月"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 89,
+      "excerpt": "1日",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1日\" -> 建议为 \"1 日\"",
+      "suggestion": "1 日"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 89,
+      "excerpt": "2月",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2月\" -> 建议为 \"2 月\"",
+      "suggestion": "2 月"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 89,
+      "excerpt": "12日",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"12日\" -> 建议为 \"12 日\"",
+      "suggestion": "12 日"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 89,
+      "excerpt": "2000多",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"2000多\" -> 建议为 \"2000 多\"",
+      "suggestion": "2000 多"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 94,
+      "excerpt": "1919年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1919年\" -> 建议为 \"1919 年\"",
+      "suggestion": "1919 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 97,
+      "excerpt": "月4",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"月4\" -> 建议为 \"月 4\"",
+      "suggestion": "月 4"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 97,
+      "excerpt": "5月",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"5月\" -> 建议为 \"5 月\"",
+      "suggestion": "5 月"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 97,
+      "excerpt": "4日",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"4日\" -> 建议为 \"4 日\"",
+      "suggestion": "4 日"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 100,
+      "excerpt": "1921年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1921年\" -> 建议为 \"1921 年\"",
+      "suggestion": "1921 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 105,
+      "excerpt": "1927年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1927年\" -> 建议为 \"1927 年\"",
+      "suggestion": "1927 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 107,
+      "excerpt": "1924年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1924年\" -> 建议为 \"1924 年\"",
+      "suggestion": "1924 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 108,
+      "excerpt": "1927年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1927年\" -> 建议为 \"1927 年\"",
+      "suggestion": "1927 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 109,
+      "excerpt": "1927年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1927年\" -> 建议为 \"1927 年\"",
+      "suggestion": "1927 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 111,
+      "excerpt": "1937年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1937年\" -> 建议为 \"1937 年\"",
+      "suggestion": "1937 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 117,
+      "excerpt": "1931年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1931年\" -> 建议为 \"1931 年\"",
+      "suggestion": "1931 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 117,
+      "excerpt": "1937年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1937年\" -> 建议为 \"1937 年\"",
+      "suggestion": "1937 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 120,
+      "excerpt": "1945年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1945年\" -> 建议为 \"1945 年\"",
+      "suggestion": "1945 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 122,
+      "excerpt": "年8",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"年8\" -> 建议为 \"年 8\"",
+      "suggestion": "年 8"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 122,
+      "excerpt": "月15",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"月15\" -> 建议为 \"月 15\"",
+      "suggestion": "月 15"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 122,
+      "excerpt": "1945年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1945年\" -> 建议为 \"1945 年\"",
+      "suggestion": "1945 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 122,
+      "excerpt": "8月",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"8月\" -> 建议为 \"8 月\"",
+      "suggestion": "8 月"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 122,
+      "excerpt": "15日",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"15日\" -> 建议为 \"15 日\"",
+      "suggestion": "15 日"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 124,
+      "excerpt": "1949年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1949年\" -> 建议为 \"1949 年\"",
+      "suggestion": "1949 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 126,
+      "excerpt": "1946年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1946年\" -> 建议为 \"1946 年\"",
+      "suggestion": "1946 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 127,
+      "excerpt": "年4",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"年4\" -> 建议为 \"年 4\"",
+      "suggestion": "年 4"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 127,
+      "excerpt": "月23",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"月23\" -> 建议为 \"月 23\"",
+      "suggestion": "月 23"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 127,
+      "excerpt": "1949年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1949年\" -> 建议为 \"1949 年\"",
+      "suggestion": "1949 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 127,
+      "excerpt": "4月",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"4月\" -> 建议为 \"4 月\"",
+      "suggestion": "4 月"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 127,
+      "excerpt": "23日",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"23日\" -> 建议为 \"23 日\"",
+      "suggestion": "23 日"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 128,
+      "excerpt": "年10",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"年10\" -> 建议为 \"年 10\"",
+      "suggestion": "年 10"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 128,
+      "excerpt": "月1",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"月1\" -> 建议为 \"月 1\"",
+      "suggestion": "月 1"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 128,
+      "excerpt": "1949年",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1949年\" -> 建议为 \"1949 年\"",
+      "suggestion": "1949 年"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 128,
+      "excerpt": "10月",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"10月\" -> 建议为 \"10 月\"",
+      "suggestion": "10 月"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 128,
+      "excerpt": "1日",
+      "message": "西文/数字与中文间缺少盘古之白空格: \"1日\" -> 建议为 \"1 日\"",
+      "suggestion": "1 日"
+    },
+    {
+      "type": "pangu_missing_space",
+      "severity": "warning",
+      "line": 131,
+      "excerpt": "于grok",
+      "message": "中文与西文/数字间缺少盘古之白空格: \"于grok\" -> 建议为 \"于 grok\"",
+      "suggestion": "于 grok"
+    }
+  ]
+}

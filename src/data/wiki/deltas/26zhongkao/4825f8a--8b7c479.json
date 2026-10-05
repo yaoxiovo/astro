@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "slug": "26zhongkao",
+  "fromSha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "toSha": "8b7c47997f93766b8cd5a29f6a17e4ce236feba8",
+  "fromShortSha": "4825f8a",
+  "toShortSha": "8b7c479",
+  "timestamp": "2026-10-05T17:10:57.101Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "8b7c47997f93766b8cd5a29f6a17e4ce236feba8"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "8b7c479"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-05T10:33:49+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/author",
+      "value": "yaoxiovo"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "seo: improve zhongkao countdown metadata"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 2,
+      "deleteCount": 1,
+      "lines": []
+    },
+    {
+      "start": 4,
+      "deleteCount": 0,
+      "lines": [
+        "published: 2026-03-28"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 2437,
+    "targetLength": 2437,
+    "patchSize": 699,
+    "compressionRatio": "71.3%",
+    "addedLines": 1,
+    "deletedLines": 1
+  }
+}

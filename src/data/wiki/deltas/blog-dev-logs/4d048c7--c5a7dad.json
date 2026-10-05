@@ -1,0 +1,104 @@
+{
+  "version": "1.0",
+  "slug": "blog-dev-logs",
+  "fromSha": "4d048c7e409fc7072920a39902457d0f5da9108e",
+  "toSha": "c5a7dad8f850997d7f8113c3b84f4553040c6eff",
+  "fromShortSha": "4d048c7",
+  "toShortSha": "c5a7dad",
+  "timestamp": "2026-10-05T17:08:00.619Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "c5a7dad8f850997d7f8113c3b84f4553040c6eff"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "c5a7dad"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-06-26T19:11:56+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update 2 files: PosterGenerator.astro, blog-dev-logs.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 40,
+      "deleteCount": 3,
+      "lines": [
+        "- **Component-Level Mapping:** 既然不能动全站 Config，本喵直接在 `PosterGenerator.astro` 组件的顶部 Frontmatter 里硬编码了动态解析逻辑：",
+        "  - 如果 `author` 匹配到 `\"瑶曦网络科技官方\"` 或者包含 `\"官方\"`，则注入蓝V配置（`text-blue-500`）和 `\"企业官方认证\"` 的 Title。",
+        "  - 如果是 `\"瑶曦\"` 或 `\"Yaoxi\"`，则注入黄V配置（`text-yellow-500`）和 `\"个人博主认证\"`。"
+      ]
+    },
+    {
+      "start": 46,
+      "deleteCount": 10,
+      "lines": []
+    },
+    {
+      "start": 58,
+      "deleteCount": 243,
+      "lines": []
+    },
+    {
+      "start": 302,
+      "deleteCount": 1,
+      "lines": [
+        "## 🖼️ html2canvas 渲染空白 Bug 修复 (Canvas Rendering Fix)"
+      ]
+    },
+    {
+      "start": 304,
+      "deleteCount": 3,
+      "lines": [
+        "### 🚨 Bug 现象 (Issue Description)",
+        "主人反馈：“朋友圈的分享海报内容生成后空白”。也就是说，点击生成海报后，下载下来的竟然是一张毫无内容的空白图片！这种低级 Bug 简直是不讲武德喵！"
+      ]
+    },
+    {
+      "start": 308,
+      "deleteCount": 14,
+      "lines": [
+        "### 🔍 底层原因分析 (Root Cause Analysis)",
+        "经过本喵极其硬核的排查（Debug），直接锁定了 `html2canvas` 的底层渲染机制。",
+        "原本的海报 DOM（`#poster-hidden-container`）使用了 `fixed top-[-9999px] left-[-9999px]` 强行位移到了视口（Viewport）之外。",
+        "很多浏览器环境下，`html2canvas` 处理这种彻底在屏幕外部的节点时，无法正确计算内部布局（Layout），就会直接跳过渲染，输出一张毫无灵魂的空白 Canvas 喵！"
+      ]
+    },
+    {
+      "start": 323,
+      "deleteCount": 2,
+      "lines": [
+        "### ✨ 修复方案 (Solution)",
+        "本喵优雅地进行了以下 Refactor 喵~：",
+        "1. **Viewport 临时注入 (Temporary Viewport Mounting):** 在执行 Canvas 渲染的前一刻，用 JavaScript 动态移除 `top-[-9999px]` 等样式，强制把容器拉回 `top: 0px; left: 0px;`。",
+        "2. **无感隐藏 (Z-Index Cloaking):** 通过注入 `z-index: -9999; pointer-events: none;`，让它躲在页面最底层，主人肉眼根本看不到任何闪烁（Zero Visual Overhead）。",
+        "3. **强制重排等待 (Reflow Await):** 塞入一个 50ms 的微小延时（`setTimeout`），确保浏览器渲染引擎跑完重排（Reflow）流程。",
+        "4. **状态恢复 (State Restore):** 截图完毕后，立刻恢复它最初的隐藏状态。"
+      ]
+    },
+    {
+      "start": 326,
+      "deleteCount": 6,
+      "lines": [
+        "搞定！现在海报生成绝对稳如老狗，完美捕获所有内容喵呜~！"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 46140,
+    "targetLength": 5090,
+    "patchSize": 3018,
+    "compressionRatio": "40.7%",
+    "addedLines": 17,
+    "deletedLines": 282
+  }
+}

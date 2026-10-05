@@ -1,0 +1,44 @@
+{
+  "version": "1.0",
+  "slug": "other-sites",
+  "fromSha": "e7a4db9e75ab661760b76080710941107c803f0c",
+  "toSha": "99562ffc9bd83038acdfa18e096ef969870719f1",
+  "fromShortSha": "e7a4db9",
+  "toShortSha": "99562ff",
+  "timestamp": "2026-10-05T17:09:56.038Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "99562ffc9bd83038acdfa18e096ef969870719f1"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "99562ff"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-01-18T12:59:08+08:00"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 9,
+      "deleteCount": 1,
+      "lines": [
+        "",
+        "::url{href=\"https://yaoxi.xyz\"}"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 159,
+    "targetLength": 164,
+    "patchSize": 537,
+    "compressionRatio": "0.0%",
+    "addedLines": 2,
+    "deletedLines": 1
+  }
+}

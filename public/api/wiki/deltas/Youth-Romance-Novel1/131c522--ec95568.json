@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "slug": "Youth-Romance-Novel1",
+  "fromSha": "131c522b47cae8e97bc0c5c5de661cadbea258e9",
+  "toSha": "ec95568e8c098289944c08d8661e498e26dd0da0",
+  "fromShortSha": "131c522",
+  "toShortSha": "ec95568",
+  "timestamp": "2026-10-05T17:11:06.520Z",
+  "rfc6902": [
+    {
+      "op": "replace",
+      "path": "/sha",
+      "value": "ec95568e8c098289944c08d8661e498e26dd0da0"
+    },
+    {
+      "op": "replace",
+      "path": "/shortSha",
+      "value": "ec95568"
+    },
+    {
+      "op": "replace",
+      "path": "/date",
+      "value": "2026-05-23T10:50:50+08:00"
+    },
+    {
+      "op": "replace",
+      "path": "/message",
+      "value": "Update Youth-Romance-Novel1.md"
+    }
+  ],
+  "lineDeltas": [
+    {
+      "start": 25,
+      "deleteCount": 0,
+      "lines": [
+        "",
+        "详情请访问小说主站",
+        "::url{href=\"https://novel.yaoxi.wiki/posts/youth-romance-novel1/\"}"
+      ]
+    }
+  ],
+  "stats": {
+    "baseLength": 2059,
+    "targetLength": 2155,
+    "patchSize": 688,
+    "compressionRatio": "68.1%",
+    "addedLines": 3,
+    "deletedLines": 0
+  }
+}
