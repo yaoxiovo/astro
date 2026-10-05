@@ -1,0 +1,9 @@
+{
+  "sha": "5cd327880a94ac6c2e1d93f3be611bad423ef60e",
+  "shortSha": "5cd3278",
+  "date": "2026-03-28T19:38:49+08:00",
+  "author": "yaoxiovo",
+  "message": "修复",
+  "slug": "countdown-to-zhongkao",
+  "content": "---\ntitle: 冲刺中考：在压力中保持热爱，在代码中构建梦想\npublished: 2025-03-26\ndescription: '中考倒计时自动更新方案及备考寄语'\ntags: [中考, 开发笔记, 自动更新]\ncategory: '成长记录'\ndraft: false \nlang: ''\n---\n\n## 📅 冲刺时刻：2026 中考倒计时\n\n\n\n---\n\n### 💻 技术实现：让倒计时自动起来\n\n为了让博客能够自动更新这个数字，而不是每天手动修改 `.md`，你可以使用以下 **Node.js 自动化脚本**。这非常适合集成在你的 Astro 构建流程或 GitHub Actions 中。\n\n#### 1. 创建自动化脚本 `scripts/update-days.js`\n\n```javascript\nconst fs = require('fs');\nconst path = require('path');\n\n// 目标日期：2026年6月30日\nconst TARGET_DATE = new Date('2026-06-30T00:00:00');\nconst today = new Date();\n\n// 计算天数差\nconst diff = TARGET_DATE - today;\nconst remainingDays = Math.ceil(diff / (1000 * 60 * 60 * 24));\n\n// 目标文件路径\nconst postPath = path.join(__dirname, '../src/content/posts/countdown-to-zhongkao.md');\n\ntry {\n    let content = fs.readFileSync(postPath, 'utf8');\n    // 使用正则匹配“当前剩余：X 天”并替换\n    const updatedContent = content.replace(/> \\*\\*当前剩余：\\d+ 天\\*\\*/g, `> **当前剩余：${remainingDays} 天**`);\n    \n    fs.writeFileSync(postPath, updatedContent);\n    console.log(`✅ 倒计时已成功更新为 ${remainingDays} 天`);\n} catch (err) {\n    console.error('❌ 更新失败:', err);\n}\n"
+}

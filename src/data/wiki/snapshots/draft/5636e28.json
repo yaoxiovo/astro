@@ -1,0 +1,9 @@
+{
+  "sha": "5636e288539472f04ffd73b0e8710f041eba66d7",
+  "shortSha": "5636e28",
+  "date": "2026-01-01T23:00:39+08:00",
+  "author": "yaoxiovo",
+  "message": "Update 143 files: config.ts, 163-free-domain-email.md, acg-randompic-api.md, across-nat.md, aicode-prompt.md, alist-for-aliyun.md, alist-web.md, anuneko.md, asf.md, astrov3-redirects.md, atpx-fun-blog.md, auto-icp-query.md, ...omitted 131 file(s)",
+  "slug": "draft",
+  "content": "---\ntitle: Draft Example\npublished: 2022-07-01\ntags: [Markdown, Blogging, Demo]\ncategory: Examples\ndraft: true\n---\n\n# This Article is a Draft\n\nThis article is currently in a draft state and is not published. Therefore, it will not be visible to the general audience. The content is still a work in progress and may require further editing and review.\n\nWhen the article is ready for publication, you can update the \"draft\" field to \"false\" in the Frontmatter:\n\n```markdown\n---\ntitle: Draft Example\npublished: 2024-01-11T04:40:26.381Z\ntags: [Markdown, Blogging, Demo]\ncategory: Examples\ndraft: false\n---\n"
+}

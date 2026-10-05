@@ -1,0 +1,47 @@
+{
+  "slug": "our-cloud-services",
+  "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
+  "filePath": "src/content/posts/our-cloud-services.md",
+  "totalRevisions": 2,
+  "lastUpdated": "2026-06-28T12:55:07+08:00",
+  "revisions": [
+    {
+      "sha": "d383d5e03d64fd06aef195a391945f219520c6da",
+      "shortSha": "d383d5e",
+      "date": "2026-06-28T12:55:07+08:00",
+      "displayDate": "2026年06月28日 (日) 04:55",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "docs: correct EdgeOne region to Hong Kong in cloud services post",
+      "section": null,
+      "cleanMessage": "docs: correct EdgeOne region to Hong Kong in cloud services post",
+      "byteSize": 9067,
+      "byteDelta": 1897,
+      "linesAdded": 23,
+      "linesDeleted": 4,
+      "isMinor": false,
+      "tags": [],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/d383d5e03d64fd06aef195a391945f219520c6da"
+    },
+    {
+      "sha": "1d4fd047c622f4e6ddb062a498d1e302bd5b6292",
+      "shortSha": "1d4fd04",
+      "date": "2026-06-28T12:51:29+08:00",
+      "displayDate": "2026年06月28日 (日) 04:51",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "feat: add post about our cloud services with cloudflare and tencent edgeone",
+      "section": null,
+      "cleanMessage": "feat: add post about our cloud services with cloudflare and tencent edgeone",
+      "byteSize": 7170,
+      "byteDelta": 7170,
+      "linesAdded": 106,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [
+        "初始版本"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/1d4fd047c622f4e6ddb062a498d1e302bd5b6292"
+    }
+  ]
+}

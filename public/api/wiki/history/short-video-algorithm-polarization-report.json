@@ -1,0 +1,47 @@
+{
+  "slug": "short-video-algorithm-polarization-report",
+  "title": "短视频平台的算法推荐与舆论极化：\"两边站队\"现象的技术根源与治理路径",
+  "filePath": "src/content/posts/short-video-algorithm-polarization-report.md",
+  "totalRevisions": 2,
+  "lastUpdated": "2026-08-17T20:31:22+08:00",
+  "revisions": [
+    {
+      "sha": "a5d2cc1b1646fcd60a72373c4052ee541947681e",
+      "shortSha": "a5d2cc1",
+      "date": "2026-08-17T20:31:22+08:00",
+      "displayDate": "2026年08月17日 (一) 12:31",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "fix(blog): 移动算法报告到内容集合并更新发布日期",
+      "section": "blog",
+      "cleanMessage": "移动算法报告到内容集合并更新发布日期",
+      "byteSize": 32221,
+      "byteDelta": 32221,
+      "linesAdded": 466,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/a5d2cc1b1646fcd60a72373c4052ee541947681e"
+    },
+    {
+      "sha": "c3c41c2c24a6610556f40ed77d8dc998b4ebcf0e",
+      "shortSha": "c3c41c2",
+      "date": "2026-08-17T20:19:18+08:00",
+      "displayDate": "2026年08月17日 (一) 12:19",
+      "author": "yaoxi",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "feat: 添加短视频平台算法推荐与舆论极化报告论文",
+      "section": null,
+      "cleanMessage": "feat: 添加短视频平台算法推荐与舆论极化报告论文",
+      "byteSize": 0,
+      "byteDelta": 0,
+      "linesAdded": 0,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [
+        "初始版本"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/c3c41c2c24a6610556f40ed77d8dc998b4ebcf0e"
+    }
+  ]
+}

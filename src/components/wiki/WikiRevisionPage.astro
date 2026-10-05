@@ -1,0 +1,75 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+import type { WikiPostHistory, WikiRevision } from "../../types/wiki";
+import { renderMarkdownToHtml } from "../../utils/simple-markdown";
+import { getPostRevisionSnapshotSync } from "../../utils/wiki-history-loader";
+import WikiRevisionNotice from "./WikiRevisionNotice.astro";
+
+interface Props {
+	entry: Record<string, unknown> & {
+		id: string;
+		data: { title: string };
+		body?: string;
+	};
+	revision: WikiRevision;
+	history: WikiPostHistory;
+}
+
+const { entry, revision, history } = Astro.props;
+const slug = entry.id.replace(/\.[^/.]+$/, "");
+
+// 查找上一版本与下一版本（revisions 为倒序）
+const revisions = history?.revisions || [];
+const currentIdx = revisions.findIndex((r) => r.shortSha === revision.shortSha);
+const latestRevision = revisions[0] || revision;
+const nextRevision = currentIdx > 0 ? revisions[currentIdx - 1] : undefined; // 时间更新的
+const prevRevision =
+	currentIdx < revisions.length - 1 ? revisions[currentIdx + 1] : undefined; // 时间更旧的
+
+// 获取快照内容并渲染
+const rawSnapshot =
+	getPostRevisionSnapshotSync(slug, revision.shortSha) || entry.body || "";
+const renderedContent = await renderMarkdownToHtml(rawSnapshot);
+
+const pageTitle = `《${entry.data.title}》的历史版本 (${revision.displayDate}) - 维基百科快照`;
+---
+
+<MainGridLayout title={pageTitle} description={`查看《${entry.data.title}》在 ${revision.displayDate} 的历史修订快照`}>
+    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative mb-4">
+        <div class="card-base z-10 px-6 md:px-9 pt-6 pb-6 relative w-full">
+            <!-- 维基百科经典黄色过时告警条 -->
+            <WikiRevisionNotice
+                slug={slug}
+                currentRevision={revision}
+                latestRevision={latestRevision}
+                prevRevision={prevRevision}
+                nextRevision={nextRevision}
+            />
+
+            <!-- 历史文章标题 -->
+            <h1 class="text-3xl font-bold mb-6 text-black/90 dark:text-white/90 border-b border-[var(--line-divider)] pb-4">
+                <span>{entry.data.title}</span>
+                <span class="text-sm font-normal text-black/40 dark:text-white/40 block mt-1">
+                    历史修订快照 · 版本号 {revision.shortSha}
+                </span>
+            </h1>
+
+            <!-- 渲染历史 Markdown 内容 -->
+            <div class="prose dark:prose-invert prose-base !max-w-none custom-md">
+                <Fragment set:html={renderedContent} />
+            </div>
+
+            <!-- 底部导航 -->
+            <div class="mt-8 pt-4 border-t border-[var(--line-divider)] flex items-center justify-between text-xs">
+                <a href={`/posts/${slug}/history/`} class="text-[var(--primary)] hover:underline flex items-center gap-1 font-medium">
+                    <Icon name="material-symbols:arrow-back" class="text-sm" />
+                    <span>返回全部修订历史列表</span>
+                </a>
+                <a href={`/posts/${slug}/`} class="text-[var(--primary)] hover:underline flex items-center gap-1 font-medium">
+                    <span>前往当前最新文章 →</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</MainGridLayout>

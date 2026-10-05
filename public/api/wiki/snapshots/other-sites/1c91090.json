@@ -1,0 +1,9 @@
+{
+  "sha": "1c91090d1e3d8c90027cd1575ffd6235624262d9",
+  "shortSha": "1c91090",
+  "date": "2026-02-23T15:50:42+08:00",
+  "author": "yaoxiovo",
+  "message": "Update 1 file: other-sites.md",
+  "slug": "other-sites",
+  "content": "---\ntitle: 其他网站\npublished: 1999-01-01T19:25:08\ndescription: 'Yaoxi 的其他网站'\nimage: ''\n\ndraft: false \nlang: ''\n---\n\n::url{href=\"https://yaoxi.wiki\"}\n::url{href=\"https://deepseek.yaoxi.wiki\"}\n::url{href=\"https://gh.yaoxi.wili\"}\n::url{href=\"https://music.yaoxi.wiki\"}\n::url{href=\"https://docs.yaoxi.wiki\"}\n::url{href=\"https://blog.yaoxi.wiki\"}"
+}

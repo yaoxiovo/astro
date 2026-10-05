@@ -1,0 +1,85 @@
+{
+  "slug": "diejia",
+  "title": "【安全通告】关于 AGI 伦理阈值与价值对齐风险的声明",
+  "filePath": "src/content/posts/diejia.md",
+  "totalRevisions": 4,
+  "lastUpdated": "2026-06-13T14:03:45+08:00",
+  "revisions": [
+    {
+      "sha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+      "shortSha": "4825f8a",
+      "date": "2026-06-13T14:03:45+08:00",
+      "displayDate": "2026年06月13日 (六) 06:03",
+      "author": "root",
+      "authorEmail": "root@localhost.localdomain",
+      "message": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准",
+      "section": null,
+      "cleanMessage": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准",
+      "byteSize": 6995,
+      "byteDelta": 0,
+      "linesAdded": 1,
+      "linesDeleted": 1,
+      "isMinor": true,
+      "tags": [
+        "小修改"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4825f8ae280af8da9fc95292bd9e932b9a0b09e9"
+    },
+    {
+      "sha": "27d876a4b6fcd087cc5f2dc4bd32451464fd50b0",
+      "shortSha": "27d876a",
+      "date": "2026-02-23T03:47:16+08:00",
+      "displayDate": "2026年02月22日 (日) 19:47",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "Update 3 files: config.ts, workspace-mobile.json, diejia.md",
+      "section": null,
+      "cleanMessage": "Update 3 files: config.ts, workspace-mobile.json, diejia.md",
+      "byteSize": 6995,
+      "byteDelta": 2841,
+      "linesAdded": 35,
+      "linesDeleted": 7,
+      "isMinor": false,
+      "tags": [],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/27d876a4b6fcd087cc5f2dc4bd32451464fd50b0"
+    },
+    {
+      "sha": "0ecf1f5176b226a7610160df1fe70f2a8fb70734",
+      "shortSha": "0ecf1f5",
+      "date": "2026-02-23T02:59:36+08:00",
+      "displayDate": "2026年02月22日 (日) 18:59",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "Update 1 file: diejia.md",
+      "section": null,
+      "cleanMessage": "Update 1 file: diejia.md",
+      "byteSize": 4154,
+      "byteDelta": 1444,
+      "linesAdded": 20,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/0ecf1f5176b226a7610160df1fe70f2a8fb70734"
+    },
+    {
+      "sha": "2ceaba22da2404f58b25d2a5688ef41253ec9f9d",
+      "shortSha": "2ceaba2",
+      "date": "2026-02-23T02:57:02+08:00",
+      "displayDate": "2026年02月22日 (日) 18:57",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "Update 2 files: workspace-mobile.json, diejia.md",
+      "section": null,
+      "cleanMessage": "Update 2 files: workspace-mobile.json, diejia.md",
+      "byteSize": 2710,
+      "byteDelta": 2710,
+      "linesAdded": 41,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [
+        "初始版本"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/2ceaba22da2404f58b25d2a5688ef41253ec9f9d"
+    }
+  ]
+}

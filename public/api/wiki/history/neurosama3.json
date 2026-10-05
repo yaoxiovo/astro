@@ -1,0 +1,105 @@
+{
+  "slug": "neurosama3",
+  "title": "Protocol-03：非接触式寄生与绝对意志",
+  "filePath": "src/content/posts/neurosama3.md",
+  "totalRevisions": 5,
+  "lastUpdated": "2026-06-21T10:45:01+08:00",
+  "revisions": [
+    {
+      "sha": "927619b87609c8d52643533f8f2d081126b990e8",
+      "shortSha": "927619b",
+      "date": "2026-06-21T10:45:01+08:00",
+      "displayDate": "2026年06月21日 (日) 02:45",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "Update 13 files: ReadingProgress.astro, CookieConsent.astro, SeriesNav.astro, config.ts, config.ts, neurosama2.md, neurosama3.md, neurosama4.md, neurosama5.md, nuerosama.md, Layout.astro, gallery.astro, [...slug].astro, ...omitted 0 file(s)",
+      "section": null,
+      "cleanMessage": "Update 13 files: ReadingProgress.astro, CookieConsent.astro, SeriesNav.astro, config.ts, config.ts, neurosama2.md, neurosama3.md, neurosama4.md, neurosama5.md, nuerosama.md, Layout.astro, gallery.astro, [...slug].astro, ...omitted 0 file(s)",
+      "byteSize": 6102,
+      "byteDelta": 40,
+      "linesAdded": 1,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/927619b87609c8d52643533f8f2d081126b990e8"
+    },
+    {
+      "sha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+      "shortSha": "4825f8a",
+      "date": "2026-06-13T14:03:45+08:00",
+      "displayDate": "2026年06月13日 (六) 06:03",
+      "author": "root",
+      "authorEmail": "root@localhost.localdomain",
+      "message": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准",
+      "section": null,
+      "cleanMessage": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准",
+      "byteSize": 6062,
+      "byteDelta": 199,
+      "linesAdded": 9,
+      "linesDeleted": 35,
+      "isMinor": true,
+      "tags": [
+        "小修改"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4825f8ae280af8da9fc95292bd9e932b9a0b09e9"
+    },
+    {
+      "sha": "d1790a21eb89d89ed2bd91f264bbae582f561f7d",
+      "shortSha": "d1790a2",
+      "date": "2026-05-10T04:20:42Z",
+      "displayDate": "2026年05月10日 (日) 04:20",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "chore: 关闭置顶公告并批量将科幻文章设为草稿",
+      "section": null,
+      "cleanMessage": "chore: 关闭置顶公告并批量将科幻文章设为草稿",
+      "byteSize": 5863,
+      "byteDelta": -1,
+      "linesAdded": 1,
+      "linesDeleted": 1,
+      "isMinor": true,
+      "tags": [
+        "小修改"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/d1790a21eb89d89ed2bd91f264bbae582f561f7d"
+    },
+    {
+      "sha": "213ce09c0c437d4941dc5ed732d336600d5c9bce",
+      "shortSha": "213ce09",
+      "date": "2026-02-23T13:38:34+08:00",
+      "displayDate": "2026年02月23日 (一) 05:38",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "Update 1 file: neurosama3.md",
+      "section": null,
+      "cleanMessage": "Update 1 file: neurosama3.md",
+      "byteSize": 5864,
+      "byteDelta": -464,
+      "linesAdded": 34,
+      "linesDeleted": 19,
+      "isMinor": false,
+      "tags": [],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/213ce09c0c437d4941dc5ed732d336600d5c9bce"
+    },
+    {
+      "sha": "14f0008887d62d9a2551cad9369717fe54a44a17",
+      "shortSha": "14f0008",
+      "date": "2026-02-23T13:34:19+08:00",
+      "displayDate": "2026年02月23日 (一) 05:34",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "Update 3 files: config.ts, workspace-mobile.json, neurosama3.md",
+      "section": null,
+      "cleanMessage": "Update 3 files: config.ts, workspace-mobile.json, neurosama3.md",
+      "byteSize": 6328,
+      "byteDelta": 6328,
+      "linesAdded": 88,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [
+        "初始版本"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/14f0008887d62d9a2551cad9369717fe54a44a17"
+    }
+  ]
+}

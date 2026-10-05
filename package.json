@@ -3,9 +3,11 @@
 	"type": "module",
 	"version": "0.0.1",
 	"scripts": {
-		"dev": "astro dev",
-		"start": "astro dev",
+		"dev": "node scripts/generate-wiki-history.mjs && astro dev",
+		"start": "node scripts/generate-wiki-history.mjs && astro dev",
+		"prebuild": "node scripts/generate-wiki-history.mjs",
 		"build": "astro build",
+		"wiki:history": "node scripts/generate-wiki-history.mjs",
 		"preview": "astro preview",
 		"astro": "astro",
 		"type-check": "tsc --noEmit --isolatedDeclarations",

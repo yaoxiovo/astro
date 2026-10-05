@@ -1,0 +1,9 @@
+{
+  "sha": "3393497ba78e8d61b52148ff5b0da8f22f18e0c0",
+  "shortSha": "3393497",
+  "date": "2026-03-21T22:32:18+08:00",
+  "author": "yaoxiovo",
+  "message": "清退",
+  "slug": "other-sites",
+  "content": "---\ntitle: 其他网站\npublished: 1999-01-01T19:25:08\ndescription: 'Yaoxi 的其他网站'\nimage: ''\n\ndraft: false \nlang: ''\n---\n\n::url{href=\"https://yaoxi.wiki\"}\n::url{href=\"https://music.yaoxi.wiki\"}\n::url{href=\"https://docs.yaoxi.wiki\"}\n::url{href=\"https://blog.yaoxi.wiki\"}"
+}

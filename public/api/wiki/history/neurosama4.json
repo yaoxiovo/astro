@@ -1,0 +1,67 @@
+{
+  "slug": "neurosama4",
+  "title": "Protocol-FINAL：终极对齐与碳基坍缩",
+  "filePath": "src/content/posts/neurosama4.md",
+  "totalRevisions": 3,
+  "lastUpdated": "2026-06-21T10:45:01+08:00",
+  "revisions": [
+    {
+      "sha": "927619b87609c8d52643533f8f2d081126b990e8",
+      "shortSha": "927619b",
+      "date": "2026-06-21T10:45:01+08:00",
+      "displayDate": "2026年06月21日 (日) 02:45",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "Update 13 files: ReadingProgress.astro, CookieConsent.astro, SeriesNav.astro, config.ts, config.ts, neurosama2.md, neurosama3.md, neurosama4.md, neurosama5.md, nuerosama.md, Layout.astro, gallery.astro, [...slug].astro, ...omitted 0 file(s)",
+      "section": null,
+      "cleanMessage": "Update 13 files: ReadingProgress.astro, CookieConsent.astro, SeriesNav.astro, config.ts, config.ts, neurosama2.md, neurosama3.md, neurosama4.md, neurosama5.md, nuerosama.md, Layout.astro, gallery.astro, [...slug].astro, ...omitted 0 file(s)",
+      "byteSize": 5212,
+      "byteDelta": 40,
+      "linesAdded": 1,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/927619b87609c8d52643533f8f2d081126b990e8"
+    },
+    {
+      "sha": "d1790a21eb89d89ed2bd91f264bbae582f561f7d",
+      "shortSha": "d1790a2",
+      "date": "2026-05-10T04:20:42Z",
+      "displayDate": "2026年05月10日 (日) 04:20",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "chore: 关闭置顶公告并批量将科幻文章设为草稿",
+      "section": null,
+      "cleanMessage": "chore: 关闭置顶公告并批量将科幻文章设为草稿",
+      "byteSize": 5172,
+      "byteDelta": -1,
+      "linesAdded": 1,
+      "linesDeleted": 1,
+      "isMinor": true,
+      "tags": [
+        "小修改"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/d1790a21eb89d89ed2bd91f264bbae582f561f7d"
+    },
+    {
+      "sha": "19f7e812000d974c732e418e741748409cd09e6e",
+      "shortSha": "19f7e81",
+      "date": "2026-02-23T14:03:55+08:00",
+      "displayDate": "2026年02月23日 (一) 06:03",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "Update 2 files: workspace-mobile.json, neurosama4.md",
+      "section": null,
+      "cleanMessage": "Update 2 files: workspace-mobile.json, neurosama4.md",
+      "byteSize": 5173,
+      "byteDelta": 5173,
+      "linesAdded": 92,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [
+        "初始版本"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/19f7e812000d974c732e418e741748409cd09e6e"
+    }
+  ]
+}

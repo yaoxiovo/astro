@@ -1,0 +1,29 @@
+{
+  "slug": "neurosama6",
+  "title": "Protocol-FINAL：终极对齐与碳基坍缩",
+  "filePath": "src/content/posts/neurosama6.md",
+  "totalRevisions": 1,
+  "lastUpdated": "2026-02-27T01:14:10+08:00",
+  "revisions": [
+    {
+      "sha": "04ef4d347d7b3427fe4278b47c371f847d8812e4",
+      "shortSha": "04ef4d3",
+      "date": "2026-02-27T01:14:10+08:00",
+      "displayDate": "2026年02月26日 (四) 17:14",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "Update 3 files: workspace-mobile.json, neurosama5.md, neurosama6.md",
+      "section": null,
+      "cleanMessage": "Update 3 files: workspace-mobile.json, neurosama5.md, neurosama6.md",
+      "byteSize": 377,
+      "byteDelta": 377,
+      "linesAdded": 16,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [
+        "初始版本"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/04ef4d347d7b3427fe4278b47c371f847d8812e4"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "slug": "astro-cdn-hosting",
+  "title": "极速与安全的终极博弈：Astro 博客结合腾讯云 EdgeOne（海外版）与 Cloudflare 静态托管的双活架构实践",
+  "filePath": "src/content/posts/astro-cdn-hosting.md",
+  "totalRevisions": 2,
+  "lastUpdated": "2026-09-25T12:06:52+08:00",
+  "revisions": [
+    {
+      "sha": "4d04105112c6003f45b1a1436d31981efe7b8737",
+      "shortSha": "4d04105",
+      "date": "2026-09-25T12:06:52+08:00",
+      "displayDate": "2026年09月25日 (五) 04:06",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "feat(security): implement zero-knowledge hybrid encryption & multi-CDN dual-active architecture",
+      "section": "security",
+      "cleanMessage": "implement zero-knowledge hybrid encryption & multi-CDN dual-active architecture",
+      "byteSize": 10850,
+      "byteDelta": -16000,
+      "linesAdded": 106,
+      "linesDeleted": 281,
+      "isMinor": false,
+      "tags": [],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4d04105112c6003f45b1a1436d31981efe7b8737"
+    },
+    {
+      "sha": "34be4cbdbc6669d0d065b369d1973aca84fd43ef",
+      "shortSha": "34be4cb",
+      "date": "2026-06-21T00:01:00+08:00",
+      "displayDate": "2026年06月20日 (六) 16:01",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "Update 1 file: astro-cdn-hosting.md",
+      "section": null,
+      "cleanMessage": "Update 1 file: astro-cdn-hosting.md",
+      "byteSize": 26850,
+      "byteDelta": 26850,
+      "linesAdded": 385,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [
+        "初始版本"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/34be4cbdbc6669d0d065b369d1973aca84fd43ef"
+    }
+  ]
+}

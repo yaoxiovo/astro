@@ -1,0 +1,9 @@
+{
+  "sha": "e7a4db9e75ab661760b76080710941107c803f0c",
+  "shortSha": "e7a4db9",
+  "date": "2026-01-18T13:16:42+08:00",
+  "author": "yaoxiovo",
+  "message": "Update 1 file: other-sites.md",
+  "slug": "other-sites",
+  "content": "---\ntitle: 其他网站\npublished: 1999-01-01T19:25:08\ndescription: 'AcoFork 的其他网站'\nimage: ''\n\ndraft: false \nlang: ''\n---\n::github{repo=\"yaoxi.xyz\"} "
+}

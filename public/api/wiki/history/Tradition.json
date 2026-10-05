@@ -1,0 +1,47 @@
+{
+  "slug": "Tradition",
+  "title": "传统代际沟通中的“滑坡谬误”与边界防御",
+  "filePath": "src/content/posts/Tradition.md",
+  "totalRevisions": 2,
+  "lastUpdated": "2026-10-04T22:38:45+08:00",
+  "revisions": [
+    {
+      "sha": "56dbc6732a151910d2d068aaaee292bf1e26603d",
+      "shortSha": "56dbc67",
+      "date": "2026-10-04T22:38:45+08:00",
+      "displayDate": "2026年10月04日 (日) 14:38",
+      "author": "yaoxi",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "docs(post): update 传统代际沟通中的“滑坡谬误”与边界防御 via Admin Studio",
+      "section": "post",
+      "cleanMessage": "update 传统代际沟通中的“滑坡谬误”与边界防御 via Admin Studio",
+      "byteSize": 2425,
+      "byteDelta": 10,
+      "linesAdded": 10,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/56dbc6732a151910d2d068aaaee292bf1e26603d"
+    },
+    {
+      "sha": "4320b538992659892a9bc8b9823974ecd48d7da6",
+      "shortSha": "4320b53",
+      "date": "2026-10-04T22:35:25+08:00",
+      "displayDate": "2026年10月04日 (日) 14:35",
+      "author": "yaoxi",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "docs(post): publish 传统代际沟通中的“滑坡谬误”与边界防御 via Admin Studio",
+      "section": "post",
+      "cleanMessage": "publish 传统代际沟通中的“滑坡谬误”与边界防御 via Admin Studio",
+      "byteSize": 2415,
+      "byteDelta": 2415,
+      "linesAdded": 27,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [
+        "初始版本"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4320b538992659892a9bc8b9823974ecd48d7da6"
+    }
+  ]
+}

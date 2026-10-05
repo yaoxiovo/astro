@@ -1,0 +1,85 @@
+{
+  "slug": "26zhongkao",
+  "title": "2026 年中考实时倒计时",
+  "filePath": "src/content/posts/26zhongkao.md",
+  "totalRevisions": 4,
+  "lastUpdated": "2026-07-31T12:16:53Z",
+  "revisions": [
+    {
+      "sha": "3cfffa0079a494d8380c472b2545bb8d5c13f062",
+      "shortSha": "3cfffa0",
+      "date": "2026-07-31T12:16:53Z",
+      "displayDate": "2026年07月31日 (五) 12:16",
+      "author": "root",
+      "authorEmail": "root@localhost.localdomain",
+      "message": "fix(graph): 修复星空图谱 SPA 跳转加载 Bug 并下架中考倒计时文章喵",
+      "section": "graph",
+      "cleanMessage": "修复星空图谱 SPA 跳转加载 Bug 并下架中考倒计时文章喵",
+      "byteSize": 2436,
+      "byteDelta": -1,
+      "linesAdded": 1,
+      "linesDeleted": 1,
+      "isMinor": false,
+      "tags": [],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/3cfffa0079a494d8380c472b2545bb8d5c13f062"
+    },
+    {
+      "sha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+      "shortSha": "4825f8a",
+      "date": "2026-06-13T14:03:45+08:00",
+      "displayDate": "2026年06月13日 (六) 06:03",
+      "author": "root",
+      "authorEmail": "root@localhost.localdomain",
+      "message": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准",
+      "section": null,
+      "cleanMessage": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准",
+      "byteSize": 2437,
+      "byteDelta": 0,
+      "linesAdded": 1,
+      "linesDeleted": 1,
+      "isMinor": true,
+      "tags": [
+        "小修改"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4825f8ae280af8da9fc95292bd9e932b9a0b09e9"
+    },
+    {
+      "sha": "8b7c47997f93766b8cd5a29f6a17e4ce236feba8",
+      "shortSha": "8b7c479",
+      "date": "2026-05-05T10:33:49+08:00",
+      "displayDate": "2026年05月05日 (二) 02:33",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "seo: improve zhongkao countdown metadata",
+      "section": null,
+      "cleanMessage": "seo: improve zhongkao countdown metadata",
+      "byteSize": 2437,
+      "byteDelta": 186,
+      "linesAdded": 8,
+      "linesDeleted": 5,
+      "isMinor": false,
+      "tags": [],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/8b7c47997f93766b8cd5a29f6a17e4ce236feba8"
+    },
+    {
+      "sha": "081a6a4231eaf293f2a8bd222f8e5423802b951d",
+      "shortSha": "081a6a4",
+      "date": "2026-03-28T22:07:24+08:00",
+      "displayDate": "2026年03月28日 (六) 14:07",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "正式上线26中考倒计时",
+      "section": null,
+      "cleanMessage": "正式上线26中考倒计时",
+      "byteSize": 2251,
+      "byteDelta": 2251,
+      "linesAdded": 84,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [
+        "初始版本"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/081a6a4231eaf293f2a8bd222f8e5423802b951d"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "sha": "2c04d233319ca50e846dc82357b98cf2fdc5334e",
+  "shortSha": "2c04d23",
+  "date": "2026-01-18T14:05:22+08:00",
+  "author": "yaoxiovo",
+  "message": "Update 2 files: other-sites.md, [...slug].astro",
+  "slug": "other-sites",
+  "content": "---\ntitle: 其他网站\npublished: 1999-01-01T19:25:08\ndescription: 'Yaoxi 的其他网站'\nimage: ''\n\ndraft: false \nlang: ''\n---\n\n::url{href=\"https://yaoxi.xyz\"}\n::url{href=\"https://deepseek.yaoxi.xyz\"}\n::url{href=\"https://gh.yaoxi.xyz\"}\n::url{href=\"https://music.yaoxi.xyz\"}"
+}

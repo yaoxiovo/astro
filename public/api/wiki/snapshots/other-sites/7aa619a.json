@@ -1,0 +1,9 @@
+{
+  "sha": "7aa619a4cb137297ca3c4e6862bcd03df24d1103",
+  "shortSha": "7aa619a",
+  "date": "2026-02-04T20:23:05+08:00",
+  "author": "yaoxiovo",
+  "message": "Update 7 files: astro.config.mjs, .trashed-1771784764-config_1.ts, config.ts, jilu.md, ncm-converter-intro.md, other-sites.md, Layout.astro",
+  "slug": "other-sites",
+  "content": "---\ntitle: 其他网站\npublished: 1999-01-01T19:25:08\ndescription: 'Yaoxi 的其他网站'\nimage: ''\n\ndraft: false \nlang: ''\n---\n\n::url{href=\"https://yaoxi.wiki\"}\n::url{href=\"https://deepseek.yaoxi.wiki\"}\n::url{href=\"https://gh.yaoxi.wili\"}\n::url{href=\"https://music.yaoxi.wiki\"}"
+}

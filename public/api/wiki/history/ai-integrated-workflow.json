@@ -1,0 +1,50 @@
+{
+  "slug": "ai-integrated-workflow",
+  "title": "我如何把 AI 工具无缝衔接进我的日常工作流",
+  "filePath": "src/content/posts/ai-integrated-workflow.md",
+  "totalRevisions": 2,
+  "lastUpdated": "2026-06-13T14:03:45+08:00",
+  "revisions": [
+    {
+      "sha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+      "shortSha": "4825f8a",
+      "date": "2026-06-13T14:03:45+08:00",
+      "displayDate": "2026年06月13日 (六) 06:03",
+      "author": "root",
+      "authorEmail": "root@localhost.localdomain",
+      "message": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准",
+      "section": null,
+      "cleanMessage": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准",
+      "byteSize": 8930,
+      "byteDelta": 2,
+      "linesAdded": 1,
+      "linesDeleted": 1,
+      "isMinor": true,
+      "tags": [
+        "小修改"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/4825f8ae280af8da9fc95292bd9e932b9a0b09e9"
+    },
+    {
+      "sha": "1ffaae8c4aebdbebafd684af72518a0efee9a5e9",
+      "shortSha": "1ffaae8",
+      "date": "2026-05-10T04:41:10Z",
+      "displayDate": "2026年05月10日 (日) 04:41",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "chore: 更新文章与移动端工作区配置",
+      "section": null,
+      "cleanMessage": "chore: 更新文章与移动端工作区配置",
+      "byteSize": 8928,
+      "byteDelta": 8928,
+      "linesAdded": 645,
+      "linesDeleted": 0,
+      "isMinor": true,
+      "tags": [
+        "小修改",
+        "初始版本"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/1ffaae8c4aebdbebafd684af72518a0efee9a5e9"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "sha": "4825f8ae280af8da9fc95292bd9e932b9a0b09e9",
+  "shortSha": "4825f8a",
+  "date": "2026-06-13T14:03:45+08:00",
+  "author": "root",
+  "message": "style: 统一所有文章 frontmatter 格式至 neurosama4 标准",
+  "slug": "other-sites",
+  "content": "---\ntitle: 瑶曦的其他网站与项目导航\npublished: 1999-01-01T19:25:08\ndescription: 汇总 Yaoxi 的个人主页、音乐站、文档站与博客入口，方便快速访问瑶曦相关网站与公开项目。\ntags:\n  - Yaoxi\n  - 个人网站\n  - 项目导航\n  - 博客\ncategory: 站点导航\ndraft: false\nlang: \"zh_CN\"\nimage: ''\n---\n\n::url{href=\"https://yaoxi.wiki\"}\n::url{href=\"https://music.yaoxi.wiki\"}\n::url{href=\"https://docs.yaoxi.wiki\"}\n::url{href=\"https://blog.yaoxi.wiki\"}"
+}

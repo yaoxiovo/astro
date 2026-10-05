@@ -1,0 +1,9 @@
+{
+  "sha": "ef6e1cffa148044bb300374b86aedd694b77ef39",
+  "shortSha": "ef6e1cf",
+  "date": "2026-05-05T10:26:02+08:00",
+  "author": "yaoxiovo",
+  "message": "seo: improve Android tools post metadata",
+  "slug": "jilu",
+  "content": "---\ntitle: Android 实用工具下载：Clash Meta for Android\npublished: 2026-01-09\ndescription: 汇总 Clash Meta for Android 下载入口，提供 GitHub 官方直链与备用加速链接，方便 Android 用户快速获取代理工具。\ntags:\n  - Android\n  - Clash Meta\n  - 代理工具\n  - 实用工具\ncategory: 工具资源\ndraft: true\nlang: \"zh_CN\"\n---\nclash meta for Android\n强大的安卓代理软件，配合机场订阅链接使用，看墙外新鲜事用\n链接：\n\n1. [官网github直下](https://github.com/MetaCubeX/ClashMetaForAndroid/releases/download/v2.11.21/cmfa-2.11.21-meta-arm64-v8a-release.apk)\n2. [大陆加速链接](https://eo-r2.yaoxi.wiki/clash.app)\n\n\n\n\n"
+}

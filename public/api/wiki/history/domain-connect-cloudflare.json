@@ -1,0 +1,29 @@
+{
+  "slug": "domain-connect-cloudflare",
+  "title": "如何把域名接入 Cloudflare（完整实操版）",
+  "filePath": "src/content/posts/domain-connect-cloudflare.md",
+  "totalRevisions": 1,
+  "lastUpdated": "2026-05-10T10:03:37Z",
+  "revisions": [
+    {
+      "sha": "a976daae9c08cd3765780113a77fd5615ed8f671",
+      "shortSha": "a976daa",
+      "date": "2026-05-10T10:03:37Z",
+      "displayDate": "2026年05月10日 (日) 10:03",
+      "author": "yaoxiovo",
+      "authorEmail": "yaoxiovo@gmail.com",
+      "message": "add cloudflare domain guide and import yaoxi-ovo workflow",
+      "section": null,
+      "cleanMessage": "add cloudflare domain guide and import yaoxi-ovo workflow",
+      "byteSize": 3647,
+      "byteDelta": 3647,
+      "linesAdded": 127,
+      "linesDeleted": 0,
+      "isMinor": false,
+      "tags": [
+        "初始版本"
+      ],
+      "diffUrl": "https://github.com/yaoxiovo/astro/commit/a976daae9c08cd3765780113a77fd5615ed8f671"
+    }
+  ]
+}
