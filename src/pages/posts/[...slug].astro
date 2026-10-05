@@ -11,6 +11,7 @@ import WikiRevisionPage from "@components/wiki/WikiRevisionPage.astro";
 import WikiHistoryTable from "@components/wiki/WikiHistoryTable.svelte";
 import BacklinksPanel from "@components/wiki/BacklinksPanel.astro";
 import CiteThisArticle from "@components/wiki/CiteThisArticle.svelte";
+import LongPressTextMenu from "@components/widget/LongPressTextMenu.astro";
 import { getPostWikiHistorySync } from "@utils/wiki-history-loader";
 // KaTeX 样式仅在文章页加载（避免全站阻塞渲染）
 import "katex/dist/katex.css";
@@ -474,6 +475,14 @@ if (mode === "article") {
 
             <!-- 链入页面 (What links here) -->
             <BacklinksPanel slug={slug} />
+
+            <!-- 移动端长按自定义菜单（拦截原生 callout，接管为自绘悬浮窗） -->
+            <LongPressTextMenu
+                slug={slug}
+                title={entry.data.title}
+                author={profileConfig.name}
+                date={formatDateToYYYYMMDD(entry.data.published)}
+            />
 
             <!-- Giscus 评论区 -->
             <div id="giscus-container"></div>

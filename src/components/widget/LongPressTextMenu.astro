@@ -1,0 +1,711 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	slug: string;
+	title: string;
+	author?: string;
+	date?: string;
+}
+
+const { slug, title, author = "", date = "" } = Astro.props;
+---
+
+<div
+	id="lp-menu-root"
+	data-slug={slug}
+	data-title={title}
+	data-author={author}
+	data-date={date}
+>
+	<div
+		id="lp-text-menu"
+		role="menu"
+		aria-hidden="true"
+		aria-label="选中文本操作"
+		class="fixed z-[150] rounded-xl border border-[var(--line-divider)] bg-[var(--card-bg)] shadow-[0_12px_32px_rgb(0_0_0/0.18)] px-2 pt-1.5 pb-2"
+	>
+		<div
+			id="lp-preview"
+			class="lp-preview max-w-[300px] px-1 pb-1.5 mb-1.5 text-[11px] leading-snug text-black/55 dark:text-white/55 border-b border-dashed border-[var(--line-divider)]"
+		></div>
+		<div class="flex items-stretch gap-0.5">
+			<button
+				type="button"
+				data-action="copy"
+				aria-label="复制此句"
+				class="lp-act flex flex-col items-center gap-px px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-black/70 dark:text-white/70 transition-colors active:bg-black/[0.06] dark:active:bg-white/10"
+			>
+				<Icon name="material-symbols:content-copy-outline" class="text-[1.05rem]" />
+				<span>复制</span>
+			</button>
+			<button
+				type="button"
+				data-action="highlight"
+				aria-label="高亮标记此句"
+				class="lp-act flex flex-col items-center gap-px px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-black/70 dark:text-white/70 transition-colors active:bg-black/[0.06] dark:active:bg-white/10"
+			>
+				<Icon name="material-symbols:format-ink-highlighter" class="text-[1.05rem]" />
+				<span>高亮</span>
+			</button>
+			<button
+				type="button"
+				data-action="cite"
+				aria-label="生成引文并复制"
+				class="lp-act flex flex-col items-center gap-px px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-black/70 dark:text-white/70 transition-colors active:bg-black/[0.06] dark:active:bg-white/10"
+			>
+				<Icon name="material-symbols:format-quote" class="text-[1.05rem]" />
+				<span>引用</span>
+			</button>
+			<button
+				type="button"
+				data-action="share"
+				aria-label="分享此句"
+				class="lp-act flex flex-col items-center gap-px px-2.5 py-1.5 rounded-lg text-[10px] font-semibold text-black/70 dark:text-white/70 transition-colors active:bg-black/[0.06] dark:active:bg-white/10"
+			>
+				<Icon name="material-symbols:share" class="text-[1.05rem]" />
+				<span>分享</span>
+			</button>
+		</div>
+	</div>
+</div>
+
+<style>
+	#lp-text-menu {
+		display: none;
+		opacity: 0;
+		transform: scale(0.94) translateY(4px);
+		transition:
+			opacity 0.16s ease-out,
+			transform 0.16s ease-out;
+		-webkit-user-select: none;
+		user-select: none;
+	}
+	#lp-text-menu.lp-open {
+		display: block;
+	}
+	#lp-text-menu.lp-visible {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+	.lp-act.lp-done {
+		color: var(--primary);
+	}
+	.lp-act[disabled] {
+		opacity: 0.3;
+		pointer-events: none;
+	}
+</style>
+
+<style is:global>
+	/* 仅触摸设备接管正文选择；html.lp-enabled 由脚本在存在菜单的页面挂载 */
+	@media (hover: none) and (pointer: coarse) {
+		html.lp-enabled .markdown-content,
+		html.lp-enabled .custom-md {
+			-webkit-touch-callout: none;
+			-webkit-user-select: none;
+			user-select: none;
+		}
+		html.lp-enabled .markdown-content a,
+		html.lp-enabled .markdown-content img,
+		html.lp-enabled .custom-md a,
+		html.lp-enabled .custom-md img {
+			-webkit-touch-callout: default;
+		}
+	}
+	mark.lp-highlight {
+		background: oklch(0.85 0.14 var(--hue) / 0.5);
+		color: inherit;
+		border-radius: 3px;
+		padding: 0 1px;
+		box-decoration-break: clone;
+		-webkit-box-decoration-break: clone;
+	}
+	html.dark mark.lp-highlight {
+		background: oklch(0.5 0.12 var(--hue) / 0.45);
+	}
+</style>
+
+<script>
+	const LP_LONG_PRESS_MS = 520;
+	const LP_MOVE_TOLERANCE = 10;
+	const LP_MAX_QUOTE = 500;
+	const LP_SELECTOR = ".markdown-content, .custom-md";
+
+	interface LpTextEntry {
+		node: Text;
+		start: number;
+		end: number;
+	}
+	interface LpTextIndex {
+		text: string;
+		nodes: LpTextEntry[];
+	}
+	interface LpContext {
+		quote: string;
+		offsets: { start: number; end: number } | null;
+		isCode: boolean;
+		highlightMark: HTMLElement | null;
+		container: HTMLElement;
+	}
+
+	let lpOpen = false;
+	let lpCtx: LpContext | null = null;
+	let lpTimer: number | null = null;
+	let lpStartX = 0;
+	let lpStartY = 0;
+	let lpSuppressUntil = 0;
+	let lpParked: HTMLElement | null = null;
+
+	function lpRoot(): HTMLElement | null {
+		return document.getElementById("lp-menu-root");
+	}
+	// 正文卡片残留 transform（onload-animation fill-mode: forwards）会把 fixed 降级为相对定位，
+	// 因此菜单首次打开时会被停泊（park）到 document.body，并以 root epoch 标识归属
+	function lpMenu(): HTMLElement | null {
+		const root = lpRoot();
+		if (!root) return null;
+		const epoch = root.dataset.lpEpoch;
+		if (lpParked?.isConnected && epoch && lpParked.dataset.owner === epoch) {
+			return lpParked;
+		}
+		lpParked = null;
+		return root.querySelector<HTMLElement>("#lp-text-menu");
+	}
+	function lpIsMobile(): boolean {
+		return window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+	}
+
+	// ---------- 文本索引与范围工具 ----------
+	function lpBuildTextIndex(container: HTMLElement): LpTextIndex {
+		const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+		const nodes: LpTextEntry[] = [];
+		let text = "";
+		let n: Node | null = walker.nextNode();
+		while (n) {
+			const t = n as Text;
+			const parent = t.parentElement;
+			if (!parent?.closest(".katex-mathml")) {
+				nodes.push({ node: t, start: text.length, end: text.length + t.data.length });
+				text += t.data;
+			}
+			n = walker.nextNode();
+		}
+		return { text, nodes };
+	}
+
+	function lpOffsetOf(index: LpTextIndex, node: Node, offset: number): number | null {
+		for (const entry of index.nodes) {
+			if (entry.node === node) return entry.start + offset;
+		}
+		return null;
+	}
+
+	function lpNodeAt(index: LpTextIndex, offset: number): { node: Text; offset: number } | null {
+		for (const entry of index.nodes) {
+			if (offset >= entry.start && offset <= entry.end) {
+				return { node: entry.node, offset: offset - entry.start };
+			}
+		}
+		return null;
+	}
+
+	function lpRangeFromOffsets(index: LpTextIndex, start: number, end: number): Range | null {
+		const s = lpNodeAt(index, start);
+		const e = lpNodeAt(index, end);
+		if (!s || !e) return null;
+		const range = document.createRange();
+		range.setStart(s.node, s.offset);
+		range.setEnd(e.node, e.offset);
+		return range;
+	}
+
+	function lpExtractSentence(index: LpTextIndex, pos: number): { start: number; end: number } | null {
+		const text = index.text;
+		if (!text) return null;
+		const p = Math.min(Math.max(pos, 0), text.length - 1);
+		let start = 0;
+		let end = text.length;
+		let segmented = false;
+		try {
+			const seg = new Intl.Segmenter("zh-Hans", { granularity: "sentence" });
+			for (const s of seg.segment(text)) {
+				if (p >= s.index && p < s.index + s.segment.length) {
+					start = s.index;
+					end = s.index + s.segment.length;
+					segmented = true;
+					break;
+				}
+			}
+		} catch {
+			segmented = false;
+		}
+		if (!segmented) {
+			const delims = "。！？!?.\n";
+			start = p;
+			while (start > 0 && delims.indexOf(text[start - 1]) === -1) start--;
+			end = p;
+			while (end < text.length && delims.indexOf(text[end]) === -1) end++;
+			if (end < text.length) end++;
+		}
+		if (end - start > LP_MAX_QUOTE) {
+			start = Math.max(start, p - Math.floor(LP_MAX_QUOTE / 2));
+			end = Math.min(end, start + LP_MAX_QUOTE);
+		}
+		while (start < end && /\s/.test(text[start])) start++;
+		while (end > start && /\s/.test(text[end - 1])) end--;
+		if (end <= start) {
+			start = p;
+			end = Math.min(text.length, p + 1);
+		}
+		return { start, end };
+	}
+
+	// ---------- 高亮标记与持久化 ----------
+	function lpWrapRange(range: Range): HTMLElement | null {
+		try {
+			const frag = range.extractContents();
+			const mark = document.createElement("mark");
+			mark.className = "lp-highlight";
+			mark.appendChild(frag);
+			range.insertNode(mark);
+			return mark;
+		} catch {
+			return null;
+		}
+	}
+
+	function lpUnwrapMark(mark: HTMLElement, container: HTMLElement) {
+		const parent = mark.parentNode;
+		if (!parent) return;
+		while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+		parent.removeChild(mark);
+		container.normalize();
+	}
+
+	function lpStorageKey(slug: string): string {
+		return `lp:highlights:${slug}`;
+	}
+	function lpLoadHighlights(slug: string): string[] {
+		try {
+			const raw = localStorage.getItem(lpStorageKey(slug));
+			const arr = raw ? JSON.parse(raw) : [];
+			return Array.isArray(arr) ? arr.filter((q) => typeof q === "string" && q) : [];
+		} catch {
+			return [];
+		}
+	}
+	function lpSaveHighlights(slug: string, list: string[]) {
+		try {
+			if (list.length) localStorage.setItem(lpStorageKey(slug), JSON.stringify(list.slice(-200)));
+			else localStorage.removeItem(lpStorageKey(slug));
+		} catch {
+			// 存储不可用时静默降级为会话内高亮
+		}
+	}
+	function lpAddHighlight(slug: string, quote: string) {
+		if (!slug || !quote) return;
+		const list = lpLoadHighlights(slug);
+		if (!list.includes(quote)) {
+			list.push(quote);
+			lpSaveHighlights(slug, list);
+		}
+	}
+	function lpRemoveHighlight(slug: string, quote: string) {
+		if (!slug || !quote) return;
+		const list = lpLoadHighlights(slug);
+		const i = list.indexOf(quote);
+		if (i !== -1) {
+			list.splice(i, 1);
+			lpSaveHighlights(slug, list);
+		}
+	}
+
+	function lpApplyHighlights(container: HTMLElement, slug: string) {
+		const quotes = lpLoadHighlights(slug);
+		if (!quotes.length) return;
+		for (const quote of quotes) {
+			const index = lpBuildTextIndex(container);
+			const i = index.text.indexOf(quote);
+			if (i === -1) continue;
+			const at = lpNodeAt(index, i);
+			if (!at || at.node.parentElement?.closest("mark.lp-highlight")) continue;
+			const range = lpRangeFromOffsets(index, i, i + quote.length);
+			if (range) lpWrapRange(range);
+		}
+	}
+
+	// ---------- 菜单控制 ----------
+	function lpClose() {
+		lpOpen = false;
+		lpCtx = null;
+		lpCancelTimer();
+		const menu = lpMenu();
+		if (menu) {
+			menu.classList.remove("lp-visible");
+			menu.setAttribute("aria-hidden", "true");
+			window.setTimeout(() => {
+				if (!lpOpen) menu.classList.remove("lp-open");
+			}, 180);
+		}
+	}
+
+	function lpPosition(menu: HTMLElement, x: number, y: number) {
+		const vw = window.innerWidth;
+		const vh = window.innerHeight;
+		menu.style.left = "0px";
+		menu.style.top = "0px";
+		const rect = menu.getBoundingClientRect();
+		let left = x - rect.width / 2;
+		left = Math.max(8, Math.min(left, vw - rect.width - 8));
+		let top = y - rect.height - 14;
+		if (top < 8) top = Math.min(y + 22, vh - rect.height - 8);
+		menu.style.left = `${Math.round(left)}px`;
+		menu.style.top = `${Math.round(top)}px`;
+	}
+
+	function lpFlash(btn: HTMLButtonElement | null, text: string) {
+		if (!btn) return;
+		const label = btn.querySelector("span");
+		if (!label) return;
+		const prev = label.textContent;
+		label.textContent = text;
+		btn.classList.add("lp-done");
+		window.setTimeout(() => {
+			label.textContent = prev;
+			btn.classList.remove("lp-done");
+		}, 900);
+	}
+
+	// ---------- 手势与触发 ----------
+	function lpCancelTimer() {
+		if (lpTimer !== null) {
+			window.clearTimeout(lpTimer);
+			lpTimer = null;
+		}
+	}
+
+	function lpTrigger(x: number, y: number, container: HTMLElement) {
+		const root = lpRoot();
+		const menu = lpMenu();
+		if (!root || !menu) return;
+
+		// 停泊到 body，摆脱残留 transform 构成的包含块
+		if (menu.parentElement !== document.body) {
+			menu.dataset.owner = root.dataset.lpEpoch || "";
+			lpParked = menu;
+			document.body.appendChild(menu);
+		}
+
+		const hit = document.elementFromPoint(x, y) as Element | null;
+		if (hit && (hit.closest("a") || hit.tagName === "IMG")) return;
+
+		let ctx: LpContext | null = null;
+		const pre = hit?.closest("pre");
+
+		if (pre && container.contains(pre)) {
+			const codeEl = pre.querySelector("code");
+			const code = codeEl
+				? Array.from(codeEl.querySelectorAll(".code:not(summary *)"))
+						.map((el) => el.textContent)
+						.map((t) => (t === "\n" ? "" : t))
+						.join("\n")
+				: pre.textContent || "";
+			const quote = code.trim();
+			if (!quote) return;
+			ctx = { quote, offsets: null, isCode: true, highlightMark: null, container };
+		} else {
+			const docAny = document as any;
+			let caret: { node: Node; offset: number } | null = null;
+			if (typeof docAny.caretRangeFromPoint === "function") {
+				const r = docAny.caretRangeFromPoint(x, y) as Range | null;
+				if (r && r.startContainer.nodeType === Node.TEXT_NODE) {
+					caret = { node: r.startContainer, offset: r.startOffset };
+				}
+			} else if (typeof docAny.caretPositionFromPoint === "function") {
+				const p = docAny.caretPositionFromPoint(x, y);
+				if (p && p.offsetNode.nodeType === Node.TEXT_NODE) {
+					caret = { node: p.offsetNode, offset: p.offset };
+				}
+			}
+			if (!caret) return;
+			const index = lpBuildTextIndex(container);
+			const pos = lpOffsetOf(index, caret.node, caret.offset);
+			if (pos === null) return;
+			const sent = lpExtractSentence(index, pos);
+			if (!sent) return;
+			const quote = index.text.slice(sent.start, sent.end).trim();
+			if (!quote) return;
+			const markEl =
+				(caret.node.parentElement?.closest("mark.lp-highlight") as HTMLElement | null) || null;
+			ctx = { quote, offsets: sent, isCode: false, highlightMark: markEl, container };
+		}
+
+		lpCtx = ctx;
+		lpOpen = true;
+		lpSuppressUntil = performance.now() + 800;
+
+		if (navigator.vibrate) {
+			try {
+				navigator.vibrate(8);
+			} catch {
+				// 部分浏览器不支持震动
+			}
+		}
+
+		const preview = document.getElementById("lp-preview");
+		if (preview) {
+			preview.textContent = ctx.isCode
+				? `代码块 · ${ctx.quote.split("\n").length} 行 · ${ctx.quote.length} 字符`
+				: ctx.quote;
+		}
+		const hlBtn = menu.querySelector('[data-action="highlight"]') as HTMLButtonElement | null;
+		if (hlBtn) {
+			hlBtn.disabled = ctx.isCode;
+			const label = hlBtn.querySelector("span");
+			if (label) label.textContent = ctx.highlightMark ? "取消高亮" : "高亮";
+		}
+		const citeBtn = menu.querySelector('[data-action="cite"]') as HTMLButtonElement | null;
+		if (citeBtn) citeBtn.disabled = ctx.isCode;
+		const copyBtn = menu.querySelector('[data-action="copy"]') as HTMLButtonElement | null;
+		if (copyBtn) {
+			copyBtn.disabled = false;
+			const label = copyBtn.querySelector("span");
+			if (label) label.textContent = "复制";
+		}
+
+		menu.classList.add("lp-open");
+		menu.setAttribute("aria-hidden", "false");
+		lpPosition(menu, x, y);
+		requestAnimationFrame(() => {
+			if (lpOpen) menu.classList.add("lp-visible");
+		});
+	}
+
+	function lpBind() {
+		const w = window as any;
+		if (w.__lpMenuBound) return;
+		w.__lpMenuBound = true;
+
+		document.addEventListener(
+			"touchstart",
+			(e: TouchEvent) => {
+				const root = lpRoot();
+				if (!root) {
+					lpCancelTimer();
+					return;
+				}
+				const menu = lpMenu();
+				const target = e.target as Element | null;
+				// 点按菜单外部 → 关闭
+				if (
+					menu?.classList.contains("lp-open") &&
+					!target?.closest?.("#lp-text-menu")
+				) {
+					lpClose();
+				}
+				if (!lpIsMobile()) return;
+				lpSuppressUntil = 0;
+				if (e.touches.length !== 1) {
+					lpCancelTimer();
+					return;
+				}
+				const container = target?.closest?.(LP_SELECTOR) as HTMLElement | null;
+				if (!container) {
+					lpCancelTimer();
+					return;
+				}
+				// 链接与图片保留原生长按行为（新标签打开 / 存图）
+				if (target?.closest("a") || target?.tagName === "IMG") {
+					lpCancelTimer();
+					return;
+				}
+				const touch = e.touches[0];
+				lpStartX = touch.clientX;
+				lpStartY = touch.clientY;
+				lpCancelTimer();
+				lpTimer = window.setTimeout(() => {
+					lpTimer = null;
+					lpTrigger(lpStartX, lpStartY, container);
+				}, LP_LONG_PRESS_MS);
+			},
+			{ passive: true },
+		);
+
+		document.addEventListener(
+			"touchmove",
+			(e: TouchEvent) => {
+				if (e.touches.length !== 1) {
+					lpCancelTimer();
+					return;
+				}
+				const touch = e.touches[0];
+				const moved = Math.hypot(touch.clientX - lpStartX, touch.clientY - lpStartY);
+				if (lpOpen) {
+					if (moved > 24) lpClose();
+					return;
+				}
+				if (moved > LP_MOVE_TOLERANCE) lpCancelTimer();
+			},
+			{ passive: true },
+		);
+
+		document.addEventListener(
+			"touchend",
+			(e: TouchEvent) => {
+				if (lpTimer !== null) {
+					lpCancelTimer();
+					return;
+				}
+				// 长按触发后的抬手：吞掉合成 click，避免误触链接
+				if (lpOpen && performance.now() < lpSuppressUntil && e.cancelable) {
+					e.preventDefault();
+				}
+			},
+			{ passive: false },
+		);
+		document.addEventListener("touchcancel", lpCancelTimer);
+
+		// 桌面 contextmenu 不拦截；移动端拦截正文原生菜单
+		document.addEventListener("contextmenu", (e: Event) => {
+			if (!lpIsMobile() || !lpRoot()) return;
+			const target = e.target as Element | null;
+			if (target?.closest?.("#lp-text-menu")) {
+				e.preventDefault();
+				return;
+			}
+			if (target?.closest?.(LP_SELECTOR) && !target.closest("a, img")) {
+				e.preventDefault();
+			}
+		});
+
+		window.addEventListener(
+			"scroll",
+			() => {
+				if (lpOpen) lpClose();
+			},
+			{ passive: true, capture: true },
+		);
+		window.addEventListener("resize", () => {
+			if (lpOpen) lpClose();
+		});
+	}
+
+	async function lpAct(action: string) {
+		const ctx = lpCtx;
+		const root = lpRoot();
+		const menu = lpMenu();
+		if (!ctx || !root || !menu) return;
+		const btn = menu.querySelector(`[data-action="${action}"]`) as HTMLButtonElement | null;
+		const slug = root.dataset.slug || "";
+
+		if (action === "copy") {
+			try {
+				await navigator.clipboard.writeText(ctx.quote);
+				lpFlash(btn, "已复制");
+			} catch {
+				lpFlash(btn, "复制失败");
+			}
+			window.setTimeout(lpClose, 320);
+		} else if (action === "highlight") {
+			if (ctx.highlightMark) {
+				const text = ctx.highlightMark.textContent || "";
+				lpUnwrapMark(ctx.highlightMark, ctx.container);
+				lpRemoveHighlight(slug, text);
+				lpFlash(btn, "已取消");
+				window.setTimeout(lpClose, 320);
+			} else if (ctx.offsets) {
+				const index = lpBuildTextIndex(ctx.container);
+				const range = lpRangeFromOffsets(index, ctx.offsets.start, ctx.offsets.end);
+				const mark = range ? lpWrapRange(range) : null;
+				if (mark) {
+					lpAddHighlight(slug, mark.textContent || ctx.quote);
+					lpFlash(btn, "已高亮");
+				}
+				window.setTimeout(lpClose, 320);
+			}
+		} else if (action === "cite") {
+			const ymd = (root.dataset.date || "").slice(0, 10);
+			const cite = `“${ctx.quote}” —— ${root.dataset.author || ""}：《${root.dataset.title || ""}》，${ymd}。${window.location.href}`;
+			try {
+				await navigator.clipboard.writeText(cite);
+				lpFlash(btn, "已复制");
+			} catch {
+				lpFlash(btn, "复制失败");
+			}
+			window.setTimeout(lpClose, 320);
+		} else if (action === "share") {
+			const payload = {
+				title: root.dataset.title || document.title,
+				text: ctx.quote,
+				url: window.location.href,
+			};
+			lpClose();
+			try {
+				await navigator.share(payload);
+			} catch {
+				// 用户取消分享或环境不支持，静默
+			}
+		}
+	}
+
+	function lpRefreshHighlights() {
+		const root = lpRoot();
+		if (!root) return;
+		const slug = root.dataset.slug || "";
+		if (!slug) return;
+		document.querySelectorAll(LP_SELECTOR).forEach((el) => {
+			lpApplyHighlights(el as HTMLElement, slug);
+		});
+	}
+
+	function lpSetup() {
+		const root = lpRoot();
+		if (!root) {
+			document.documentElement.classList.remove("lp-enabled");
+			lpParked = null;
+			document.querySelectorAll<HTMLElement>("#lp-text-menu").forEach((m) => m.remove());
+			if (lpOpen) lpClose();
+			return;
+		}
+		document.documentElement.classList.add("lp-enabled");
+		if (!root.dataset.lpEpoch) {
+			root.dataset.lpEpoch = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+		}
+		// 清理 Swup 换页遗留的孤儿菜单（不属于当前 root epoch 的实例）
+		const epoch = root.dataset.lpEpoch;
+		document.querySelectorAll<HTMLElement>("#lp-text-menu").forEach((m) => {
+			const owner = m.dataset.owner;
+			if (owner) {
+				if (owner !== epoch) m.remove();
+			} else if (m.closest("#lp-menu-root") !== root) {
+				m.remove();
+			}
+		});
+
+		if (root.dataset.bound !== "1") {
+			root.dataset.bound = "1";
+			if (lpIsMobile()) {
+				const menu = lpMenu();
+				if (menu) {
+					const shareBtn = menu.querySelector('[data-action="share"]') as HTMLButtonElement | null;
+					if (shareBtn && !navigator.share) shareBtn.hidden = true;
+					menu.querySelectorAll(".lp-act").forEach((btn) => {
+						btn.addEventListener("click", () => {
+							lpAct((btn as HTMLElement).dataset.action || "");
+						});
+					});
+				}
+				lpBind();
+			}
+		}
+		lpRefreshHighlights();
+	}
+
+	if (!(window as any).__lpMenuBooted) {
+		(window as any).__lpMenuBooted = true;
+		document.addEventListener("DOMContentLoaded", lpSetup);
+		document.addEventListener("swup:page:view", lpSetup);
+		if (document.readyState !== "loading") lpSetup();
+	}
+</script>
