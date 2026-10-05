@@ -82,11 +82,11 @@ const dialogId = `quality-scorecard-${slug.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 
 		<Icon name="material-symbols:verified-outline-rounded" class="text-sm shrink-0" />
 
-		{#if !compact}
+		{!compact && (
 			<span class="text-[11px] font-sans font-semibold tracking-wide uppercase opacity-85">
 				质量门禁
 			</span>
-		{/if}
+		)}
 
 		<span class:list={["px-1.5 py-0.2 rounded-md font-bold text-[11px]", c.badge]}>
 			{grade}级 · {score}分
@@ -226,11 +226,11 @@ const dialogId = `quality-scorecard-${slug.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 					</span>
 				</div>
 
-				{#if issues.length === 0}
+				{issues.length === 0 ? (
 					<div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center text-xs text-emerald-700 dark:text-emerald-300 font-medium">
 						🎉 全项指标完美通过，无死链或标点排版瑕疵，符合工业级内容工程规范 喵！
 					</div>
-				{:else}
+				) : (
 					<div class="max-h-48 overflow-y-auto space-y-2 pr-1 text-xs">
 						{issues.slice(0, 8).map((iss) => (
 							<div class="p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--line-divider)] flex items-start gap-2.5">
@@ -263,7 +263,7 @@ const dialogId = `quality-scorecard-${slug.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 							</div>
 						)}
 					</div>
-				{/if}
+				)}
 			</div>
 
 			<!-- 底部说明与关闭 -->
