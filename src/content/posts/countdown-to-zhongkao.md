@@ -11,6 +11,7 @@ tags:
 category: 中考备考
 draft: true
 lang: "zh_CN"
+related: ["26zhongkao", "junior-high-epic-chronicle"]
 ---
 
 ## 📅 冲刺时刻：2026 中考倒计时

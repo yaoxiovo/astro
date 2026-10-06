@@ -1,7 +1,7 @@
 {
   "slug": "26zhongkao",
   "title": "2026 年中考实时倒计时",
-  "checkedAt": "2026-10-06T02:45:17.726Z",
+  "checkedAt": "2026-10-06T06:47:46.794Z",
   "score": 100,
   "grade": "S",
   "gradeLabel": "工业级卓越 (Industrial S)",
@@ -29,7 +29,7 @@
     }
   },
   "metrics": {
-    "totalLines": 88,
+    "totalLines": 89,
     "codeLines": 0,
     "codePercentage": "0.0%",
     "cjkChars": 60,

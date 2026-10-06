@@ -7,10 +7,13 @@ import {
 
 interface Props {
 	slug: string;
+	/** 已在「延伸阅读」中展示的编排指引，避免重复推荐 */
+	exclude?: string[];
 }
 
-const { slug } = Astro.props;
-const related = getRelatedArticlesSync(slug);
+const { slug, exclude = [] } = Astro.props;
+const excludeSet = new Set(exclude.map((item) => item.replace(/\.md$/i, "")));
+const related = getRelatedArticlesSync(slug).filter((item) => !excludeSet.has(item.slug));
 
 function hintText(item: RelatedArticleEntry): string {
 	const parts: string[] = [];

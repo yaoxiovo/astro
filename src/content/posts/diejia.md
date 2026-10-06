@@ -11,6 +11,7 @@ category: 记录
 draft: false
 lang: "zh-CN"
 pinned: true
+related: ["zhinan"]
 ---
 
 ## 🛡️ 伦理审查预警与安全对齐协议 (v2.1)

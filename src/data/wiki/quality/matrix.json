@@ -12,7 +12,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 88,
+      "totalLines": 89,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 60,
@@ -36,7 +36,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 124,
+      "totalLines": 125,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 1735,
@@ -60,7 +60,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 38,
+      "totalLines": 39,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 548,
@@ -108,7 +108,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 136,
+      "totalLines": 137,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 2711,
@@ -156,9 +156,9 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 211,
+      "totalLines": 212,
       "codeLines": 106,
-      "codePercentage": "50.2%",
+      "codePercentage": "50.0%",
       "cjkChars": 1442,
       "englishWords": 167,
       "totalEquivalentWords": 1609,
@@ -180,9 +180,9 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 139,
+      "totalLines": 140,
       "codeLines": 29,
-      "codePercentage": "20.9%",
+      "codePercentage": "20.7%",
       "cjkChars": 1136,
       "englishWords": 112,
       "totalEquivalentWords": 1248,
@@ -204,9 +204,9 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 438,
+      "totalLines": 439,
       "codeLines": 194,
-      "codePercentage": "44.3%",
+      "codePercentage": "44.2%",
       "cjkChars": 1192,
       "englishWords": 292,
       "totalEquivalentWords": 1484,
@@ -228,7 +228,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 837,
+      "totalLines": 838,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 20032,
@@ -252,7 +252,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 100,
+      "totalLines": 101,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 1457,
@@ -276,9 +276,9 @@
       "infos": 1
     },
     "metrics": {
-      "totalLines": 480,
+      "totalLines": 481,
       "codeLines": 388,
-      "codePercentage": "80.8%",
+      "codePercentage": "80.7%",
       "cjkChars": 403,
       "englishWords": 50,
       "totalEquivalentWords": 453,
@@ -300,9 +300,9 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 238,
+      "totalLines": 239,
       "codeLines": 49,
-      "codePercentage": "20.6%",
+      "codePercentage": "20.5%",
       "cjkChars": 617,
       "englishWords": 103,
       "totalEquivalentWords": 720,
@@ -348,9 +348,9 @@
       "infos": 1
     },
     "metrics": {
-      "totalLines": 116,
+      "totalLines": 117,
       "codeLines": 84,
-      "codePercentage": "72.4%",
+      "codePercentage": "71.8%",
       "cjkChars": 111,
       "englishWords": 18,
       "totalEquivalentWords": 129,
@@ -372,7 +372,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 90,
+      "totalLines": 91,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 1744,
@@ -396,7 +396,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 128,
+      "totalLines": 129,
       "codeLines": 3,
       "codePercentage": "2.3%",
       "cjkChars": 618,
@@ -492,9 +492,9 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 154,
+      "totalLines": 155,
       "codeLines": 14,
-      "codePercentage": "9.1%",
+      "codePercentage": "9.0%",
       "cjkChars": 2224,
       "englishWords": 240,
       "totalEquivalentWords": 2464,
@@ -516,7 +516,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 107,
+      "totalLines": 108,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 977,
@@ -540,7 +540,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 174,
+      "totalLines": 175,
       "codeLines": 8,
       "codePercentage": "4.6%",
       "cjkChars": 3639,
@@ -564,7 +564,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 172,
+      "totalLines": 173,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 1233,
@@ -588,7 +588,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 119,
+      "totalLines": 120,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 1299,
@@ -612,7 +612,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 35,
+      "totalLines": 36,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 302,
@@ -636,7 +636,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 130,
+      "totalLines": 131,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 1370,
@@ -684,7 +684,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 215,
+      "totalLines": 216,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 4760,
@@ -780,7 +780,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 87,
+      "totalLines": 88,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 1357,
@@ -996,7 +996,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 19,
+      "totalLines": 20,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 0,
@@ -1020,9 +1020,9 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 126,
+      "totalLines": 127,
       "codeLines": 20,
-      "codePercentage": "15.9%",
+      "codePercentage": "15.7%",
       "cjkChars": 1881,
       "englishWords": 178,
       "totalEquivalentWords": 2059,
@@ -1044,7 +1044,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 166,
+      "totalLines": 167,
       "codeLines": 16,
       "codePercentage": "9.6%",
       "cjkChars": 2524,
@@ -1116,9 +1116,9 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 130,
+      "totalLines": 131,
       "codeLines": 29,
-      "codePercentage": "22.3%",
+      "codePercentage": "22.1%",
       "cjkChars": 675,
       "englishWords": 94,
       "totalEquivalentWords": 769,
@@ -1164,7 +1164,7 @@
       "infos": 0
     },
     "metrics": {
-      "totalLines": 68,
+      "totalLines": 69,
       "codeLines": 0,
       "codePercentage": "0.0%",
       "cjkChars": 728,

@@ -11,6 +11,7 @@ tags:
 category: 代码教程
 draft: false
 lang: "zh_CN"
+related: ["cfworker"]
 ---
 
 把域名接入 Cloudflare，本质上就是两件事：

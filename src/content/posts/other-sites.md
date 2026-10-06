@@ -11,6 +11,7 @@ category: 站点导航
 draft: false
 lang: "zh_CN"
 image: ''
+related: ["geren", "ncm-converter-intro"]
 ---
 
 ::url{href="https://yaoxi.wiki"}

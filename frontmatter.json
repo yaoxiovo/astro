@@ -47,6 +47,11 @@
 					"type": "list"
 				},
 				{
+					"title": "related",
+					"name": "related",
+					"type": "list"
+				},
+				{
 					"title": "draft",
 					"name": "draft",
 					"type": "boolean"

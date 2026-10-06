@@ -1,7 +1,7 @@
 {
   "slug": "junior-high-epic-chronicle",
   "title": "凡人、火种与未央的长夜：初中三年毕业纪事",
-  "checkedAt": "2026-10-06T02:45:18.277Z",
+  "checkedAt": "2026-10-06T06:47:47.235Z",
   "score": 100,
   "grade": "S",
   "gradeLabel": "工业级卓越 (Industrial S)",
@@ -29,7 +29,7 @@
     }
   },
   "metrics": {
-    "totalLines": 215,
+    "totalLines": 216,
     "codeLines": 0,
     "codePercentage": "0.0%",
     "cjkChars": 4760,

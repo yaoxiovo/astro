@@ -11,6 +11,7 @@ tags:
 category: 忆海拾光
 draft: false
 lang: "zh_CN"
+related: ["hardware-overheat-and-high-functioning-compensation", "26zhongkao", "countdown-to-zhongkao"]
 ---
 
 > *“倘若命运的织机早已编定沉沦的黄昏，凡人为何还要向群星投掷长矛？”*  

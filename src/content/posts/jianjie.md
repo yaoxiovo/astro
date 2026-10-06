@@ -10,6 +10,7 @@ tags:
 category: 记录
 draft: false
 lang: "zh_CN"
+related: ["astro-cdn-hosting"]
 ---
 # 搭建：
 1. cdn提供商：Cloudflare（海外） Tencent（大陆） Alibaba cloud （备用）(有时选小众cdn)

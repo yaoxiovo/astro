@@ -11,6 +11,7 @@ tags:
 category: 记录
 draft: false
 lang: "zh_CN"
+related: ["astro-cdn-hosting", "our-cloud-services"]
 ---
 
 ![腾讯云 Tencent Cloud 架构概览](../assets/images/1.webp)

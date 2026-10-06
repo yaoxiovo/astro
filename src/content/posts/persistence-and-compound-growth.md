@@ -13,6 +13,7 @@ tags:
 category: 记录
 draft: false
 lang: "zh_CN"
+related: ["geren"]
 ---
 
 # 在无人问津的荒原里深耕：从 0 到 3831 次 AI 引用的坚持与复利

@@ -7,6 +7,7 @@ tags:
 category: "心理学"
 draft: false
 lang: "zh_CN"
+related: ["hardware-overheat-and-high-functioning-compensation"]
 ---
 
 ## ​1. 核心心理机制：灾难化与滑坡谬误（Slippery Slope）

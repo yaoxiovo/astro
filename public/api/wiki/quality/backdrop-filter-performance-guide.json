@@ -1,7 +1,7 @@
 {
   "slug": "backdrop-filter-performance-guide",
   "title": "移动端液态玻璃 UI 性能调优完全指南：backdrop-filter 的陷阱与降级策略",
-  "checkedAt": "2026-10-06T02:45:17.957Z",
+  "checkedAt": "2026-10-06T06:47:46.943Z",
   "score": 100,
   "grade": "S",
   "gradeLabel": "工业级卓越 (Industrial S)",
@@ -29,9 +29,9 @@
     }
   },
   "metrics": {
-    "totalLines": 139,
+    "totalLines": 140,
     "codeLines": 29,
-    "codePercentage": "20.9%",
+    "codePercentage": "20.7%",
     "cjkChars": 1136,
     "englishWords": 112,
     "totalEquivalentWords": 1248,

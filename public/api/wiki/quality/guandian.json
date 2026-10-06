@@ -1,7 +1,7 @@
 {
   "slug": "guandian",
   "title": "个人看法",
-  "checkedAt": "2026-10-06T02:45:18.182Z",
+  "checkedAt": "2026-10-06T06:47:47.162Z",
   "score": 100,
   "grade": "S",
   "gradeLabel": "工业级卓越 (Industrial S)",
@@ -29,7 +29,7 @@
     }
   },
   "metrics": {
-    "totalLines": 107,
+    "totalLines": 108,
     "codeLines": 0,
     "codePercentage": "0.0%",
     "cjkChars": 977,

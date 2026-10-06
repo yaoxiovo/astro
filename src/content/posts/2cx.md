@@ -7,6 +7,7 @@ tags:
 category: 记录
 draft: false
 lang: ""
+related: ["heci"]
 ---
 
 ## 引言：当终端遇上灯笼

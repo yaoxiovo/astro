@@ -10,6 +10,7 @@ tags:
 category: 记录
 draft: false
 lang: ""
+related: ["Youth-Romance-Novel1"]
 ---
 
 ## 序章：两个货架前的双面人生

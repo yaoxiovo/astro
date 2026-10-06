@@ -31,6 +31,8 @@ export interface BacklinkEntry {
 	slug: string;
 	title?: string;
 	count: number;
+	/** "seealso" 表示来自 frontmatter related 的编辑编排指引，缺省为正文内链 */
+	kind?: "seealso";
 }
 
 export interface BacklinksData {

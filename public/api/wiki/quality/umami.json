@@ -1,7 +1,7 @@
 {
   "slug": "umami",
   "title": "Umami 统计修复日志",
-  "checkedAt": "2026-10-06T02:45:18.533Z",
+  "checkedAt": "2026-10-06T06:47:47.538Z",
   "score": 100,
   "grade": "S",
   "gradeLabel": "工业级卓越 (Industrial S)",
@@ -29,9 +29,9 @@
     }
   },
   "metrics": {
-    "totalLines": 130,
+    "totalLines": 131,
     "codeLines": 29,
-    "codePercentage": "22.3%",
+    "codePercentage": "22.1%",
     "cjkChars": 675,
     "englishWords": 94,
     "totalEquivalentWords": 769,

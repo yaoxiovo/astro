@@ -10,6 +10,7 @@ tags:
 category: 记录
 draft: false
 lang: ""
+related: ["diejia", "hardware-overheat-and-high-functioning-compensation"]
 ---
 
 <div style="font-family: 'Inter', 'Noto Sans SC', sans-serif; display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">

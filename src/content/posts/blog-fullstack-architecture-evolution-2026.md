@@ -12,6 +12,7 @@ category: 技术分享
 lang: "zh_CN"
 pinned: true
 draft: false
+related: ["blog-api-guide"]
 ---
 
 # 博客系统重大架构升级与全栈重构报告 喵~

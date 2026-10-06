@@ -11,6 +11,7 @@ tags:
 category: 架构设计
 draft: false
 lang: "zh_CN"
+related: ["astro-cdn-hosting", "umami"]
 ---
 
 # 探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践 喵~

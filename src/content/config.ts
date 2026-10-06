@@ -14,6 +14,7 @@ const postsCollection = defineCollection({
 		pinned: z.boolean().optional().default(false),
 		encrypted: z.boolean().optional().default(false),
 		series: z.string().optional().default(""),
+		related: z.array(z.string()).optional().default([]),
 
 		/* For internal use */
 		prevTitle: z.string().default(""),

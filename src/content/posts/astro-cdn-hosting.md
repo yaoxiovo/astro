@@ -14,6 +14,7 @@ tags:
 category: 架构设计
 draft: false
 lang: "zh_CN"
+related: ["our-cloud-services"]
 ---
 
 # Astro 博客海内外双活分发架构实践 喵~

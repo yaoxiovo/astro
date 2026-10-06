@@ -1,7 +1,7 @@
 {
   "slug": "diejia",
   "title": "【安全通告】关于 AGI 伦理阈值与价值对齐风险的声明",
-  "checkedAt": "2026-10-06T02:45:18.113Z",
+  "checkedAt": "2026-10-06T06:47:47.096Z",
   "score": 95,
   "grade": "S",
   "gradeLabel": "工业级卓越 (Industrial S)",
@@ -29,7 +29,7 @@
     }
   },
   "metrics": {
-    "totalLines": 90,
+    "totalLines": 91,
     "codeLines": 0,
     "codePercentage": "0.0%",
     "cjkChars": 1744,
@@ -49,7 +49,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 39,
+      "line": 40,
       "excerpt": "年2",
       "message": "中文与西文/数字间缺少盘古之白空格: \"年2\" -> 建议为 \"年 2\"",
       "suggestion": "年 2"
@@ -57,7 +57,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 39,
+      "line": 40,
       "excerpt": "月23",
       "message": "中文与西文/数字间缺少盘古之白空格: \"月23\" -> 建议为 \"月 23\"",
       "suggestion": "月 23"
@@ -65,7 +65,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 39,
+      "line": 40,
       "excerpt": "2026年",
       "message": "西文/数字与中文间缺少盘古之白空格: \"2026年\" -> 建议为 \"2026 年\"",
       "suggestion": "2026 年"
@@ -73,7 +73,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 39,
+      "line": 40,
       "excerpt": "2月",
       "message": "西文/数字与中文间缺少盘古之白空格: \"2月\" -> 建议为 \"2 月\"",
       "suggestion": "2 月"
@@ -81,7 +81,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 39,
+      "line": 40,
       "excerpt": "23日",
       "message": "西文/数字与中文间缺少盘古之白空格: \"23日\" -> 建议为 \"23 日\"",
       "suggestion": "23 日"

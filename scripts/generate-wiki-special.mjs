@@ -71,14 +71,68 @@ export function extractInternalLinks(markdown, selfSlug, siteHost = SITE_HOST) {
 }
 
 /**
- * 反转出链映射为反链索引：{ targetSlug: [{slug: sourceSlug, count}] }
+ * 提取 frontmatter 中编辑手工编排的 related 指引（内联/块列表均可），
+ * 归一化 slug：URI 解码、剥离 .md 后缀与尾斜杠，剔除自引用
+ */
+export function extractRelatedSlugs(raw, selfSlug) {
+	const frontmatter = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] || "";
+	return parseFrontmatterList(frontmatter, "related")
+		.map((slug) => safeDecode(slug).replace(/\.md$/i, "").replace(/\/+$/, ""))
+		.filter((slug) => slug && slug !== selfSlug);
+}
+
+/**
+ * 将编排的 related 指引并入出链映射（kind: "seealso"）。
+ * 与正文内链去重：同一目标已有正文链接时保留正文语义（不重复计入）。
+ */
+export function mergeSeeAlsoLinks(outboundMap, relatedBySlug) {
+	for (const [sourceSlug, relatedSlugs] of Object.entries(relatedBySlug)) {
+		const outbound = outboundMap[sourceSlug] || [];
+		for (const targetSlug of relatedSlugs) {
+			if (outbound.some((entry) => entry.slug === targetSlug)) continue;
+			outbound.push({ slug: targetSlug, count: 1, kind: "seealso" });
+		}
+		outboundMap[sourceSlug] = outbound;
+	}
+	return outboundMap;
+}
+
+/**
+ * related 编排健壮性校验：
+ * - 目标条目不存在（拼写错误/已删文）
+ * - 已发布条目指向 draft 目标（生产构建不渲染 draft，仅 dev 预览可见）
+ */
+export function validateRelatedLinks({ posts, relatedBySlug }) {
+	const known = new Set(posts.map((post) => post.slug));
+	const drafts = new Set(posts.filter((post) => post.draft).map((post) => post.slug));
+	const warnings = [];
+	for (const [sourceSlug, targets] of Object.entries(relatedBySlug)) {
+		const source = posts.find((post) => post.slug === sourceSlug);
+		for (const targetSlug of targets) {
+			if (!known.has(targetSlug)) {
+				warnings.push({ type: "unknown", source: sourceSlug, target: targetSlug });
+			} else if (source && !source.draft && drafts.has(targetSlug)) {
+				warnings.push({ type: "draft-target", source: sourceSlug, target: targetSlug });
+			}
+		}
+	}
+	return warnings;
+}
+
+/**
+ * 反转出链映射为反链索引：{ targetSlug: [{slug: sourceSlug, count, kind?}] }
  */
 export function invertBacklinks(linkMap) {
 	const backlinks = {};
 	for (const [sourceSlug, targets] of Object.entries(linkMap)) {
-		for (const { slug: target, count } of targets) {
+		for (const entry of targets) {
+			const target = entry.slug;
 			if (!backlinks[target]) backlinks[target] = [];
-			backlinks[target].push({ slug: sourceSlug, count });
+			backlinks[target].push({
+				slug: sourceSlug,
+				count: entry.count,
+				...(entry.kind ? { kind: entry.kind } : {}),
+			});
 		}
 	}
 	for (const list of Object.values(backlinks)) {
@@ -501,7 +555,7 @@ export function computeRelatedArticles({
 }
 
 function parseFrontmatterList(frontmatter, key) {
-	const lineMatch = frontmatter.match(new RegExp(`^${key}:\\s*(.*)$`, "m"));
+	const lineMatch = frontmatter.match(new RegExp(`^${key}:[ \\t]*(.*)$`, "m"));
 	if (!lineMatch) return [];
 	const inline = lineMatch[1].trim();
 	if (inline.startsWith("[")) {
@@ -539,6 +593,7 @@ function loadPosts() {
 			slug,
 			title,
 			tags: parseFrontmatterList(frontmatter, "tags"),
+			related: extractRelatedSlugs(raw, slug),
 			draft: /^draft:\s*true\s*$/m.test(frontmatter),
 			encrypted: /^encrypted:\s*true\s*$/m.test(frontmatter),
 			raw,
@@ -594,11 +649,17 @@ export function runWikiSpecialGeneration(options = {}) {
 		entries: allEntries,
 	};
 
-	// 2. 反链索引
+	// 2. 反链索引（正文内链 + frontmatter 编排指引合并图谱）
 	const outboundMap = {};
 	for (const post of posts) {
 		outboundMap[post.slug] = extractInternalLinks(post.raw, post.slug);
 	}
+	const relatedBySlug = {};
+	for (const post of posts) {
+		if (post.related.length) relatedBySlug[post.slug] = post.related;
+	}
+	const relatedWarnings = validateRelatedLinks({ posts, relatedBySlug });
+	mergeSeeAlsoLinks(outboundMap, relatedBySlug);
 	const backlinkIndex = invertBacklinks(outboundMap);
 	for (const list of Object.values(backlinkIndex)) {
 		for (const entry of list) {
@@ -646,11 +707,23 @@ export function runWikiSpecialGeneration(options = {}) {
 			`\n✨ [Wiki Special] 特殊页面索引生成完毕！耗时 ${Date.now() - startTime}ms 喵！` +
 				`\n📡 最近更改流: ${recentChanges.totalEntries} 条修订 / ${Object.keys(articles).length} 篇条目` +
 				`\n🔗 反链索引: ${Object.keys(backlinkIndex).length} 篇条目存在链入` +
+				`\n🧩 编排指引: ${Object.keys(relatedBySlug).length} 篇条目存在 related 指引` +
 				`\n🛠️ 维护巡检: 孤立 ${s.totalOrphans} · 断头路 ${s.totalDeadEnds} · 过时 ${s.totalStale} · 低质 ${s.totalLowQuality} · 死链 ${s.totalBrokenLinks}` +
 				`\n🧭 相关文章: ${Object.keys(related.related).length} 篇条目存在相关推荐` +
 				`\n🪄 补链雷达: ${linkSuggestions.stats.totalArticles} 篇存在可补链接 · ${linkSuggestions.stats.totalSuggestions} 个目标 · ${linkSuggestions.stats.totalMentions} 处未链接提及` +
 				`\n📦 数据已沉淀至 src/data/wiki/ 与 public/api/wiki/ 喵呜~\n`,
 		);
+		if (relatedWarnings.length) {
+			for (const w of relatedWarnings) {
+				console.warn(
+					`⚠️  [Wiki Special] related 校验: ${w.source} → ${w.target}（${
+						w.type === "unknown"
+							? "目标条目不存在"
+							: "目标为 draft，生产不渲染，仅 dev 预览可见"
+					}）`,
+				);
+			}
+		}
 	}
 
 	return { recentChanges, backlinks, maintenance, related, linkSuggestions };

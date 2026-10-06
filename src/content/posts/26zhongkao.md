@@ -11,6 +11,7 @@ category: 中考备考
 draft: true
 lang: "zh_CN"
 pinned: true
+related: ["countdown-to-zhongkao"]
 ---
 
 ---

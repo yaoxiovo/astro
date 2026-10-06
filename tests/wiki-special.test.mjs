@@ -4,6 +4,9 @@ import {
 	SITE_HOST,
 	STALE_THRESHOLD_DAYS,
 	extractInternalLinks,
+	extractRelatedSlugs,
+	mergeSeeAlsoLinks,
+	validateRelatedLinks,
 	invertBacklinks,
 	flattenRecentChanges,
 	buildMaintenanceReport,
@@ -534,6 +537,80 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 			// 「开发日志」歧义弃用；「构建提速」仍唯一指向 target-a
 			assert.ok(list.some((item) => item.slug === "target-a"));
 			assert.ok(!list.some((item) => item.slug === "target-b"));
+		});
+	});
+
+	describe("7. 编排互链 (related) 解析、合并与校验", () => {
+		it("extractRelatedSlugs 应解析内联数组并归一化 .md 后缀与尾斜杠", () => {
+			const raw = [
+				"---",
+				"title: 示例",
+				'related: ["hello-world", "second.md"]',
+				"---",
+				"",
+				"正文",
+			].join("\n");
+			assert.deepEqual(extractRelatedSlugs(raw, "self-slug"), [
+				"hello-world",
+				"second",
+			]);
+		});
+
+		it("extractRelatedSlugs 应解析块列表、剔除自引用并容忍缺省 frontmatter", () => {
+			const raw = [
+				"---",
+				"related:",
+				"  - alpha",
+				"  - beta/",
+				"  - self-slug",
+				"---",
+				"",
+				"正文",
+			].join("\n");
+			assert.deepEqual(extractRelatedSlugs(raw, "self-slug"), ["alpha", "beta"]);
+			assert.deepEqual(extractRelatedSlugs("无 frontmatter 正文", "self-slug"), []);
+		});
+
+		it("mergeSeeAlsoLinks 应以 kind:seealso 并入出链，并避免与正文内链重复", () => {
+			const outbound = {
+				alpha: [{ slug: "beta", count: 2 }],
+				gamma: [],
+			};
+			mergeSeeAlsoLinks(outbound, { alpha: ["beta", "delta"], gamma: ["alpha"] });
+			assert.deepEqual(outbound.alpha, [
+				{ slug: "beta", count: 2 },
+				{ slug: "delta", count: 1, kind: "seealso" },
+			]);
+			assert.deepEqual(outbound.gamma, [{ slug: "alpha", count: 1, kind: "seealso" }]);
+		});
+
+		it("validateRelatedLinks 应告警未知名目与已发布→draft 目标，draft 源不受限", () => {
+			const posts = [
+				{ slug: "pub", title: "P" },
+				{ slug: "draft-a", title: "D", draft: true },
+			];
+			const warnings = validateRelatedLinks({
+				posts,
+				relatedBySlug: {
+					pub: ["draft-a", "ghost"],
+					"draft-a": ["pub"],
+				},
+			});
+			assert.deepEqual(warnings, [
+				{ type: "draft-target", source: "pub", target: "draft-a" },
+				{ type: "unknown", source: "pub", target: "ghost" },
+			]);
+		});
+
+		it("反链索引应透传 seealso 标记，原有无标记条目不引入新字段", () => {
+			const backlinks = invertBacklinks({
+				a: [{ slug: "t", count: 1, kind: "seealso" }],
+				b: [{ slug: "t", count: 2 }],
+			});
+			assert.deepEqual(backlinks.t, [
+				{ slug: "b", count: 2 },
+				{ slug: "a", count: 1, kind: "seealso" },
+			]);
 		});
 	});
 });

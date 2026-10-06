@@ -1,7 +1,7 @@
 {
   "slug": "domain-connect-cloudflare",
   "title": "如何把域名接入 Cloudflare（完整实操版）",
-  "checkedAt": "2026-10-06T02:45:18.129Z",
+  "checkedAt": "2026-10-06T06:47:47.104Z",
   "score": 100,
   "grade": "S",
   "gradeLabel": "工业级卓越 (Industrial S)",
@@ -29,7 +29,7 @@
     }
   },
   "metrics": {
-    "totalLines": 128,
+    "totalLines": 129,
     "codeLines": 3,
     "codePercentage": "2.3%",
     "cjkChars": 618,

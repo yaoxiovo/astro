@@ -1,7 +1,7 @@
 {
   "slug": "jianjie",
   "title": "网站简介",
-  "checkedAt": "2026-10-06T02:45:18.236Z",
+  "checkedAt": "2026-10-06T06:47:47.193Z",
   "score": 75,
   "grade": "B",
   "gradeLabel": "规范合格 (Standard B)",
@@ -29,7 +29,7 @@
     }
   },
   "metrics": {
-    "totalLines": 35,
+    "totalLines": 36,
     "codeLines": 0,
     "codePercentage": "0.0%",
     "cjkChars": 302,
@@ -49,7 +49,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 15,
+      "line": 16,
       "excerpt": "众cdn",
       "message": "中文与西文/数字间缺少盘古之白空格: \"众cdn\" -> 建议为 \"众 cdn\"",
       "suggestion": "众 cdn"
@@ -57,7 +57,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 15,
+      "line": 16,
       "excerpt": "cdn提",
       "message": "西文/数字与中文间缺少盘古之白空格: \"cdn提\" -> 建议为 \"cdn 提\"",
       "suggestion": "cdn 提"
@@ -65,7 +65,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 16,
+      "line": 17,
       "excerpt": "dns提",
       "message": "西文/数字与中文间缺少盘古之白空格: \"dns提\" -> 建议为 \"dns 提\"",
       "suggestion": "dns 提"
@@ -73,7 +73,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 17,
+      "line": 18,
       "excerpt": "台eo",
       "message": "中文与西文/数字间缺少盘古之白空格: \"台eo\" -> 建议为 \"台 eo\"",
       "suggestion": "台 eo"
@@ -81,7 +81,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 17,
+      "line": 18,
       "excerpt": "供pages",
       "message": "中文与西文/数字间缺少盘古之白空格: \"供pages\" -> 建议为 \"供 pages\"",
       "suggestion": "供 pages"
@@ -89,7 +89,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 17,
+      "line": 18,
       "excerpt": "和cloudflare",
       "message": "中文与西文/数字间缺少盘古之白空格: \"和cloudflare\" -> 建议为 \"和 cloudflare\"",
       "suggestion": "和 cloudflare"
@@ -97,7 +97,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 17,
+      "line": 18,
       "excerpt": "球worker",
       "message": "中文与西文/数字间缺少盘古之白空格: \"球worker\" -> 建议为 \"球 worker\"",
       "suggestion": "球 worker"
@@ -105,7 +105,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 17,
+      "line": 18,
       "excerpt": "GitHub作",
       "message": "西文/数字与中文间缺少盘古之白空格: \"GitHub作\" -> 建议为 \"GitHub 作\"",
       "suggestion": "GitHub 作"
@@ -113,7 +113,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 17,
+      "line": 18,
       "excerpt": "eo提",
       "message": "西文/数字与中文间缺少盘古之白空格: \"eo提\" -> 建议为 \"eo 提\"",
       "suggestion": "eo 提"
@@ -121,7 +121,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 17,
+      "line": 18,
       "excerpt": "pages托",
       "message": "西文/数字与中文间缺少盘古之白空格: \"pages托\" -> 建议为 \"pages 托\"",
       "suggestion": "pages 托"
@@ -129,7 +129,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 17,
+      "line": 18,
       "excerpt": "cloudflare全",
       "message": "西文/数字与中文间缺少盘古之白空格: \"cloudflare全\" -> 建议为 \"cloudflare 全\"",
       "suggestion": "cloudflare 全"
@@ -137,7 +137,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 17,
+      "line": 18,
       "excerpt": "worker提",
       "message": "西文/数字与中文间缺少盘古之白空格: \"worker提\" -> 建议为 \"worker 提\"",
       "suggestion": "worker 提"
@@ -145,7 +145,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 19,
+      "line": 20,
       "excerpt": "么567",
       "message": "中文与西文/数字间缺少盘古之白空格: \"么567\" -> 建议为 \"么 567\"",
       "suggestion": "么 567"
@@ -153,7 +153,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 19,
+      "line": 20,
       "excerpt": "567啊",
       "message": "西文/数字与中文间缺少盘古之白空格: \"567啊\" -> 建议为 \"567 啊\"",
       "suggestion": "567 啊"
@@ -161,7 +161,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 23,
+      "line": 24,
       "excerpt": "照Tencent",
       "message": "中文与西文/数字间缺少盘古之白空格: \"照Tencent\" -> 建议为 \"照 Tencent\"",
       "suggestion": "照 Tencent"
@@ -169,7 +169,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 23,
+      "line": 24,
       "excerpt": "果pages",
       "message": "中文与西文/数字间缺少盘古之白空格: \"果pages\" -> 建议为 \"果 pages\"",
       "suggestion": "果 pages"
@@ -177,7 +177,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 23,
+      "line": 24,
       "excerpt": "到Tencent",
       "message": "中文与西文/数字间缺少盘古之白空格: \"到Tencent\" -> 建议为 \"到 Tencent\"",
       "suggestion": "到 Tencent"
@@ -185,7 +185,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 23,
+      "line": 24,
       "excerpt": "Tencent政",
       "message": "西文/数字与中文间缺少盘古之白空格: \"Tencent政\" -> 建议为 \"Tencent 政\"",
       "suggestion": "Tencent 政"
@@ -193,7 +193,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 23,
+      "line": 24,
       "excerpt": "pages长",
       "message": "西文/数字与中文间缺少盘古之白空格: \"pages长\" -> 建议为 \"pages 长\"",
       "suggestion": "pages 长"
@@ -201,7 +201,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 23,
+      "line": 24,
       "excerpt": "Tencent关",
       "message": "西文/数字与中文间缺少盘古之白空格: \"Tencent关\" -> 建议为 \"Tencent 关\"",
       "suggestion": "Tencent 关"
@@ -209,7 +209,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 24,
+      "line": 25,
       "excerpt": "择Tencent",
       "message": "中文与西文/数字间缺少盘古之白空格: \"择Tencent\" -> 建议为 \"择 Tencent\"",
       "suggestion": "择 Tencent"
@@ -217,7 +217,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 24,
+      "line": 25,
       "excerpt": "Edgeone原",
       "message": "西文/数字与中文间缺少盘古之白空格: \"Edgeone原\" -> 建议为 \"Edgeone 原\"",
       "suggestion": "Edgeone 原"
@@ -225,7 +225,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 25,
+      "line": 26,
       "excerpt": "DDOS防",
       "message": "西文/数字与中文间缺少盘古之白空格: \"DDOS防\" -> 建议为 \"DDOS 防\"",
       "suggestion": "DDOS 防"
@@ -233,7 +233,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 27,
+      "line": 28,
       "excerpt": "择cloudflare",
       "message": "中文与西文/数字间缺少盘古之白空格: \"择cloudflare\" -> 建议为 \"择 cloudflare\"",
       "suggestion": "择 cloudflare"
@@ -241,7 +241,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 27,
+      "line": 28,
       "excerpt": "cloudflare原",
       "message": "西文/数字与中文间缺少盘古之白空格: \"cloudflare原\" -> 建议为 \"cloudflare 原\"",
       "suggestion": "cloudflare 原"
@@ -249,7 +249,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 28,
+      "line": 29,
       "excerpt": "总400Tb",
       "message": "中文与西文/数字间缺少盘古之白空格: \"总400Tb\" -> 建议为 \"总 400Tb\"",
       "suggestion": "总 400Tb"
@@ -257,7 +257,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 28,
+      "line": 29,
       "excerpt": "400Tb左",
       "message": "西文/数字与中文间缺少盘古之白空格: \"400Tb左\" -> 建议为 \"400Tb 左\"",
       "suggestion": "400Tb 左"
@@ -265,7 +265,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 31,
+      "line": 32,
       "excerpt": "择Alibaba",
       "message": "中文与西文/数字间缺少盘古之白空格: \"择Alibaba\" -> 建议为 \"择 Alibaba\"",
       "suggestion": "择 Alibaba"
@@ -273,7 +273,7 @@
     {
       "type": "pangu_missing_space",
       "severity": "warning",
-      "line": 32,
+      "line": 33,
       "excerpt": "选aliyun",
       "message": "中文与西文/数字间缺少盘古之白空格: \"选aliyun\" -> 建议为 \"选 aliyun\"",
       "suggestion": "选 aliyun"

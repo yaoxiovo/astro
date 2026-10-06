@@ -1,70 +1,22 @@
 {
-  "generatedAt": "2026-10-06T01:46:35.123Z",
+  "generatedAt": "2026-10-06T06:47:50.861Z",
   "staleThresholdDays": 180,
   "stats": {
     "totalPosts": 49,
     "totalRevisions": 345,
-    "totalInternalLinks": 1,
-    "totalOrphans": 48,
-    "totalDeadEnds": 48,
+    "totalInternalLinks": 40,
+    "totalOrphans": 24,
+    "totalDeadEnds": 21,
     "totalStale": 4,
     "totalLowQuality": 0,
     "totalBrokenLinks": 0
   },
   "orphans": [
     {
-      "slug": "Tradition",
-      "title": "传统代际沟通中的“滑坡谬误”与边界防御",
-      "lastUpdated": "2026-10-04T22:38:45+08:00",
-      "totalRevisions": 2
-    },
-    {
-      "slug": "blog-fullstack-architecture-evolution-2026",
-      "title": "博客系统重大架构升级与全栈重构报告：零知识 BFF、即时发布流与极致交互实践",
-      "lastUpdated": "2026-10-03T18:43:27Z",
-      "totalRevisions": 3
-    },
-    {
-      "slug": "junior-high-epic-chronicle",
-      "title": "凡人、火种与未央的长夜：初中三年毕业纪事",
-      "lastUpdated": "2026-09-26T01:56:55+08:00",
-      "totalRevisions": 1
-    },
-    {
-      "slug": "astro-cdn-hosting",
-      "title": "极速与安全的终极博弈：Astro 博客结合腾讯云 EdgeOne（海外版）与 Cloudflare 静态托管的双活架构实践",
-      "lastUpdated": "2026-09-25T12:06:52+08:00",
-      "totalRevisions": 2
-    },
-    {
       "slug": "acg-goods-and-emotions",
       "title": "十几块的零食舍不得，十几块的“谷子”果断买：二次元与当代年轻人的“精神资产重构”",
       "lastUpdated": "2026-09-12T12:08:16+08:00",
       "totalRevisions": 1
-    },
-    {
-      "slug": "geren",
-      "title": "探索与重构：瑶曦个人主页（yaoxi.wiki）设计与技术全解",
-      "lastUpdated": "2026-09-07T17:46:49+08:00",
-      "totalRevisions": 7
-    },
-    {
-      "slug": "ncm-converter-intro",
-      "title": "网易云音乐 NCM 转 MP3/FLAC 在线工具介绍",
-      "lastUpdated": "2026-09-07T17:23:13+08:00",
-      "totalRevisions": 6
-    },
-    {
-      "slug": "Youth-Romance-Novel1",
-      "title": "概率之外的变量：青春小说第一章",
-      "lastUpdated": "2026-09-07T17:15:39+08:00",
-      "totalRevisions": 3
-    },
-    {
-      "slug": "blog-dev-logs",
-      "title": "开发日志：海报分享组件的剪贴板修复",
-      "lastUpdated": "2026-09-07T17:15:39+08:00",
-      "totalRevisions": 54
     },
     {
       "slug": "draft",
@@ -91,51 +43,9 @@
       "totalRevisions": 8
     },
     {
-      "slug": "hardware-overheat-and-high-functioning-compensation",
-      "title": "当软件依然积极，而硬件开始报警：一个“高功能代偿者”的身心检修手记",
-      "lastUpdated": "2026-09-07T17:03:46+08:00",
-      "totalRevisions": 1
-    },
-    {
       "slug": "short-video-algorithm-polarization-report",
       "title": "短视频平台的算法推荐与舆论极化：\"两边站队\"现象的技术根源与治理路径",
       "lastUpdated": "2026-08-17T20:31:22+08:00",
-      "totalRevisions": 2
-    },
-    {
-      "slug": "blog-api-guide",
-      "title": "博客 API 接口大全与调用教程",
-      "lastUpdated": "2026-08-17T00:01:03+08:00",
-      "totalRevisions": 2
-    },
-    {
-      "slug": "backdrop-filter-performance-guide",
-      "title": "移动端液态玻璃 UI 性能调优完全指南：backdrop-filter 的陷阱与降级策略",
-      "lastUpdated": "2026-08-10T02:02:12+08:00",
-      "totalRevisions": 1
-    },
-    {
-      "slug": "homepage-liquid-glass-refactor",
-      "title": "开发日志：主页液态玻璃重构——闪频歼灭战与性能审计报告",
-      "lastUpdated": "2026-08-10T02:02:12+08:00",
-      "totalRevisions": 1
-    },
-    {
-      "slug": "26zhongkao",
-      "title": "2026 年中考实时倒计时",
-      "lastUpdated": "2026-07-31T12:16:53Z",
-      "totalRevisions": 4
-    },
-    {
-      "slug": "countdown-to-zhongkao",
-      "title": "冲刺中考：倒计时自动更新方案与备考寄语",
-      "lastUpdated": "2026-07-31T12:16:53Z",
-      "totalRevisions": 106
-    },
-    {
-      "slug": "our-cloud-services",
-      "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
-      "lastUpdated": "2026-06-28T12:55:07+08:00",
       "totalRevisions": 2
     },
     {
@@ -175,20 +85,8 @@
       "totalRevisions": 2
     },
     {
-      "slug": "cf-worker-reverse-proxy",
-      "title": "Cloudflare Worker 反向代理代码：CORS、Cookie 与 302 跳转修复",
-      "lastUpdated": "2026-06-13T14:03:45+08:00",
-      "totalRevisions": 3
-    },
-    {
       "slug": "china",
       "title": "中国近代史（1840—1949）核心事件脉络",
-      "lastUpdated": "2026-06-13T14:03:45+08:00",
-      "totalRevisions": 4
-    },
-    {
-      "slug": "diejia",
-      "title": "【安全通告】关于 AGI 伦理阈值与价值对齐风险的声明",
       "lastUpdated": "2026-06-13T14:03:45+08:00",
       "totalRevisions": 4
     },
@@ -203,12 +101,6 @@
       "title": "入团申请书模板：初中生共青团申请写作参考",
       "lastUpdated": "2026-06-13T14:03:45+08:00",
       "totalRevisions": 5
-    },
-    {
-      "slug": "heci",
-      "title": "2026 新年贺词精选",
-      "lastUpdated": "2026-06-13T14:03:45+08:00",
-      "totalRevisions": 6
     },
     {
       "slug": "markdown-extended",
@@ -229,12 +121,6 @@
       "totalRevisions": 2
     },
     {
-      "slug": "other-sites",
-      "title": "瑶曦的其他网站与项目导航",
-      "lastUpdated": "2026-06-13T14:03:45+08:00",
-      "totalRevisions": 9
-    },
-    {
       "slug": "security-statement",
       "title": "关于本站坚定政治立场、维护意识形态安全及网络空间清朗的郑重声明。",
       "lastUpdated": "2026-06-13T14:03:45+08:00",
@@ -247,28 +133,10 @@
       "totalRevisions": 5
     },
     {
-      "slug": "umami",
-      "title": "Umami 统计修复日志",
-      "lastUpdated": "2026-05-23T10:20:43+08:00",
-      "totalRevisions": 7
-    },
-    {
-      "slug": "domain-connect-cloudflare",
-      "title": "如何把域名接入 Cloudflare（完整实操版）",
-      "lastUpdated": "2026-05-10T10:03:37Z",
-      "totalRevisions": 1
-    },
-    {
       "slug": "neurosama",
       "title": "neuro-sama 生日快乐",
       "lastUpdated": "2026-05-10T04:20:42Z",
       "totalRevisions": 2
-    },
-    {
-      "slug": "cfworker",
-      "title": "Cloudflare Workers 反向代理教程：免费搭建 API 中转与 CORS 代理",
-      "lastUpdated": "2026-05-05T10:36:34+08:00",
-      "totalRevisions": 7
     },
     {
       "slug": "jilu",
@@ -283,78 +151,18 @@
       "totalRevisions": 1
     },
     {
-      "slug": "zhinan",
-      "title": "Archive-REF：叙事侵染后的现实锚定指南",
-      "lastUpdated": "2026-02-23T16:05:06+08:00",
-      "totalRevisions": 3
-    },
-    {
       "slug": "guandian",
       "title": "个人看法",
       "lastUpdated": "2026-02-23T03:10:27+08:00",
       "totalRevisions": 2
-    },
-    {
-      "slug": "2cx",
-      "title": "除夕漫谈：在 0 与 1 之间，重构生活的最优解",
-      "lastUpdated": "2026-02-16T00:41:23+08:00",
-      "totalRevisions": 5
     }
   ],
   "deadEnds": [
     {
-      "slug": "Tradition",
-      "title": "传统代际沟通中的“滑坡谬误”与边界防御",
-      "lastUpdated": "2026-10-04T22:38:45+08:00",
-      "totalRevisions": 2
-    },
-    {
-      "slug": "blog-fullstack-architecture-evolution-2026",
-      "title": "博客系统重大架构升级与全栈重构报告：零知识 BFF、即时发布流与极致交互实践",
-      "lastUpdated": "2026-10-03T18:43:27Z",
-      "totalRevisions": 3
-    },
-    {
-      "slug": "junior-high-epic-chronicle",
-      "title": "凡人、火种与未央的长夜：初中三年毕业纪事",
-      "lastUpdated": "2026-09-26T01:56:55+08:00",
-      "totalRevisions": 1
-    },
-    {
-      "slug": "astro-cdn-hosting",
-      "title": "极速与安全的终极博弈：Astro 博客结合腾讯云 EdgeOne（海外版）与 Cloudflare 静态托管的双活架构实践",
-      "lastUpdated": "2026-09-25T12:06:52+08:00",
-      "totalRevisions": 2
-    },
-    {
-      "slug": "acg-goods-and-emotions",
-      "title": "十几块的零食舍不得，十几块的“谷子”果断买：二次元与当代年轻人的“精神资产重构”",
-      "lastUpdated": "2026-09-12T12:08:16+08:00",
-      "totalRevisions": 1
-    },
-    {
-      "slug": "persistence-and-compound-growth",
-      "title": "在无人问津的荒原里深耕：从 0 到 3831 次 AI 引用的坚持与复利",
-      "lastUpdated": "2026-09-07T17:46:49+08:00",
-      "totalRevisions": 1
-    },
-    {
-      "slug": "ncm-converter-intro",
-      "title": "网易云音乐 NCM 转 MP3/FLAC 在线工具介绍",
-      "lastUpdated": "2026-09-07T17:23:13+08:00",
-      "totalRevisions": 6
-    },
-    {
       "slug": "Youth-Romance-Novel1",
       "title": "概率之外的变量：青春小说第一章",
       "lastUpdated": "2026-09-07T17:15:39+08:00",
       "totalRevisions": 3
-    },
-    {
-      "slug": "blog-dev-logs",
-      "title": "开发日志：海报分享组件的剪贴板修复",
-      "lastUpdated": "2026-09-07T17:15:39+08:00",
-      "totalRevisions": 54
     },
     {
       "slug": "draft",
@@ -363,69 +171,15 @@
       "totalRevisions": 5
     },
     {
-      "slug": "jianjie",
-      "title": "网站简介",
-      "lastUpdated": "2026-09-07T17:15:39+08:00",
-      "totalRevisions": 7
-    },
-    {
-      "slug": "jieshao",
-      "title": "Cloud云服务",
-      "lastUpdated": "2026-09-07T17:15:39+08:00",
-      "totalRevisions": 7
-    },
-    {
       "slug": "neuro1",
       "title": "neuro-sama小剧场第1集",
       "lastUpdated": "2026-09-07T17:15:39+08:00",
       "totalRevisions": 8
     },
     {
-      "slug": "hardware-overheat-and-high-functioning-compensation",
-      "title": "当软件依然积极，而硬件开始报警：一个“高功能代偿者”的身心检修手记",
-      "lastUpdated": "2026-09-07T17:03:46+08:00",
-      "totalRevisions": 1
-    },
-    {
       "slug": "short-video-algorithm-polarization-report",
       "title": "短视频平台的算法推荐与舆论极化：\"两边站队\"现象的技术根源与治理路径",
       "lastUpdated": "2026-08-17T20:31:22+08:00",
-      "totalRevisions": 2
-    },
-    {
-      "slug": "blog-api-guide",
-      "title": "博客 API 接口大全与调用教程",
-      "lastUpdated": "2026-08-17T00:01:03+08:00",
-      "totalRevisions": 2
-    },
-    {
-      "slug": "backdrop-filter-performance-guide",
-      "title": "移动端液态玻璃 UI 性能调优完全指南：backdrop-filter 的陷阱与降级策略",
-      "lastUpdated": "2026-08-10T02:02:12+08:00",
-      "totalRevisions": 1
-    },
-    {
-      "slug": "homepage-liquid-glass-refactor",
-      "title": "开发日志：主页液态玻璃重构——闪频歼灭战与性能审计报告",
-      "lastUpdated": "2026-08-10T02:02:12+08:00",
-      "totalRevisions": 1
-    },
-    {
-      "slug": "26zhongkao",
-      "title": "2026 年中考实时倒计时",
-      "lastUpdated": "2026-07-31T12:16:53Z",
-      "totalRevisions": 4
-    },
-    {
-      "slug": "countdown-to-zhongkao",
-      "title": "冲刺中考：倒计时自动更新方案与备考寄语",
-      "lastUpdated": "2026-07-31T12:16:53Z",
-      "totalRevisions": 106
-    },
-    {
-      "slug": "our-cloud-services",
-      "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
-      "lastUpdated": "2026-06-28T12:55:07+08:00",
       "totalRevisions": 2
     },
     {
@@ -465,20 +219,8 @@
       "totalRevisions": 2
     },
     {
-      "slug": "cf-worker-reverse-proxy",
-      "title": "Cloudflare Worker 反向代理代码：CORS、Cookie 与 302 跳转修复",
-      "lastUpdated": "2026-06-13T14:03:45+08:00",
-      "totalRevisions": 3
-    },
-    {
       "slug": "china",
       "title": "中国近代史（1840—1949）核心事件脉络",
-      "lastUpdated": "2026-06-13T14:03:45+08:00",
-      "totalRevisions": 4
-    },
-    {
-      "slug": "diejia",
-      "title": "【安全通告】关于 AGI 伦理阈值与价值对齐风险的声明",
       "lastUpdated": "2026-06-13T14:03:45+08:00",
       "totalRevisions": 4
     },
@@ -493,12 +235,6 @@
       "title": "入团申请书模板：初中生共青团申请写作参考",
       "lastUpdated": "2026-06-13T14:03:45+08:00",
       "totalRevisions": 5
-    },
-    {
-      "slug": "heci",
-      "title": "2026 新年贺词精选",
-      "lastUpdated": "2026-06-13T14:03:45+08:00",
-      "totalRevisions": 6
     },
     {
       "slug": "markdown-extended",
@@ -519,12 +255,6 @@
       "totalRevisions": 2
     },
     {
-      "slug": "other-sites",
-      "title": "瑶曦的其他网站与项目导航",
-      "lastUpdated": "2026-06-13T14:03:45+08:00",
-      "totalRevisions": 9
-    },
-    {
       "slug": "security-statement",
       "title": "关于本站坚定政治立场、维护意识形态安全及网络空间清朗的郑重声明。",
       "lastUpdated": "2026-06-13T14:03:45+08:00",
@@ -537,28 +267,10 @@
       "totalRevisions": 5
     },
     {
-      "slug": "umami",
-      "title": "Umami 统计修复日志",
-      "lastUpdated": "2026-05-23T10:20:43+08:00",
-      "totalRevisions": 7
-    },
-    {
-      "slug": "domain-connect-cloudflare",
-      "title": "如何把域名接入 Cloudflare（完整实操版）",
-      "lastUpdated": "2026-05-10T10:03:37Z",
-      "totalRevisions": 1
-    },
-    {
       "slug": "neurosama",
       "title": "neuro-sama 生日快乐",
       "lastUpdated": "2026-05-10T04:20:42Z",
       "totalRevisions": 2
-    },
-    {
-      "slug": "cfworker",
-      "title": "Cloudflare Workers 反向代理教程：免费搭建 API 中转与 CORS 代理",
-      "lastUpdated": "2026-05-05T10:36:34+08:00",
-      "totalRevisions": 7
     },
     {
       "slug": "jilu",
@@ -571,24 +283,6 @@
       "title": "Protocol-FINAL：终极对齐与碳基坍缩",
       "lastUpdated": "2026-02-27T01:14:10+08:00",
       "totalRevisions": 1
-    },
-    {
-      "slug": "zhinan",
-      "title": "Archive-REF：叙事侵染后的现实锚定指南",
-      "lastUpdated": "2026-02-23T16:05:06+08:00",
-      "totalRevisions": 3
-    },
-    {
-      "slug": "guandian",
-      "title": "个人看法",
-      "lastUpdated": "2026-02-23T03:10:27+08:00",
-      "totalRevisions": 2
-    },
-    {
-      "slug": "2cx",
-      "title": "除夕漫谈：在 0 与 1 之间，重构生活的最优解",
-      "lastUpdated": "2026-02-16T00:41:23+08:00",
-      "totalRevisions": 5
     }
   ],
   "stale": [

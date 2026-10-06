@@ -1,7 +1,7 @@
 {
   "slug": "cf-worker-reverse-proxy",
   "title": "Cloudflare Worker 反向代理代码：CORS、Cookie 与 302 跳转修复",
-  "checkedAt": "2026-10-06T02:45:18.055Z",
+  "checkedAt": "2026-10-06T06:47:47.049Z",
   "score": 100,
   "grade": "S",
   "gradeLabel": "工业级卓越 (Industrial S)",
@@ -29,9 +29,9 @@
     }
   },
   "metrics": {
-    "totalLines": 480,
+    "totalLines": 481,
     "codeLines": 388,
-    "codePercentage": "80.8%",
+    "codePercentage": "80.7%",
     "cjkChars": 403,
     "englishWords": 50,
     "totalEquivalentWords": 453,
@@ -50,8 +50,8 @@
       "type": "high_code_density",
       "severity": "info",
       "line": 1,
-      "excerpt": "代码行占比 80.8%",
-      "message": "代码行占比高达 80.8%，建议补充更多上下文原理解析喵~",
+      "excerpt": "代码行占比 80.7%",
+      "message": "代码行占比高达 80.7%，建议补充更多上下文原理解析喵~",
       "suggestion": "增加对关键代码段的设计动机与技术要点阐述"
     }
   ]

@@ -13,6 +13,7 @@ tags:
 category: 生活
 draft: false
 lang: "zh_CN"
+related: ["zhinan", "Tradition", "junior-high-epic-chronicle"]
 ---
 
 # 当软件依然积极，而硬件开始报警：一个“高功能代偿者”的身心检修手记

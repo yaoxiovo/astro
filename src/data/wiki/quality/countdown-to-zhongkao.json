@@ -1,7 +1,7 @@
 {
   "slug": "countdown-to-zhongkao",
   "title": "冲刺中考：倒计时自动更新方案与备考寄语",
-  "checkedAt": "2026-10-06T02:45:18.100Z",
+  "checkedAt": "2026-10-06T06:47:47.086Z",
   "score": 100,
   "grade": "S",
   "gradeLabel": "工业级卓越 (Industrial S)",
@@ -29,9 +29,9 @@
     }
   },
   "metrics": {
-    "totalLines": 116,
+    "totalLines": 117,
     "codeLines": 84,
-    "codePercentage": "72.4%",
+    "codePercentage": "71.8%",
     "cjkChars": 111,
     "englishWords": 18,
     "totalEquivalentWords": 129,
@@ -50,8 +50,8 @@
       "type": "high_code_density",
       "severity": "info",
       "line": 1,
-      "excerpt": "代码行占比 72.4%",
-      "message": "代码行占比高达 72.4%，建议补充更多上下文原理解析喵~",
+      "excerpt": "代码行占比 71.8%",
+      "message": "代码行占比高达 71.8%，建议补充更多上下文原理解析喵~",
       "suggestion": "增加对关键代码段的设计动机与技术要点阐述"
     }
   ]

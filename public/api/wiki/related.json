@@ -1,116 +1,501 @@
 {
-  "generatedAt": "2026-10-06T01:46:35.142Z",
+  "generatedAt": "2026-10-06T06:47:50.865Z",
   "topN": 5,
   "minScore": 0.05,
   "related": {
-    "blog-dev-logs": [
+    "Tradition": [
+      {
+        "slug": "zhinan",
+        "title": "Archive-REF：叙事侵染后的现实锚定指南",
+        "score": 0.857,
+        "sharedPosts": 1,
+        "sharedTags": 1
+      },
+      {
+        "slug": "junior-high-epic-chronicle",
+        "title": "凡人、火种与未央的长夜：初中三年毕业纪事",
+        "score": 0.577,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      }
+    ],
+    "acg-goods-and-emotions": [
+      {
+        "slug": "junior-high-epic-chronicle",
+        "title": "凡人、火种与未央的长夜：初中三年毕业纪事",
+        "score": 0.067,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "ai-integrated-workflow": [
+      {
+        "slug": "backdrop-filter-performance-guide",
+        "title": "移动端液态玻璃 UI 性能调优完全指南：backdrop-filter 的陷阱与降级策略",
+        "score": 0.055,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "astro-cdn-hosting": [
+      {
+        "slug": "umami",
+        "title": "Umami 统计修复日志",
+        "score": 0.577,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      },
+      {
+        "slug": "our-cloud-services",
+        "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
+        "score": 0.476,
+        "sharedPosts": 1,
+        "sharedTags": 3
+      },
+      {
+        "slug": "jieshao",
+        "title": "Cloud云服务",
+        "score": 0.461,
+        "sharedPosts": 1,
+        "sharedTags": 1
+      },
+      {
+        "slug": "jianjie",
+        "title": "网站简介",
+        "score": 0.106,
+        "sharedPosts": 0,
+        "sharedTags": 2
+      },
+      {
+        "slug": "blog-dev-logs",
+        "title": "开发日志：海报分享组件的剪贴板修复",
+        "score": 0.061,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "backdrop-filter-performance-guide": [
+      {
+        "slug": "blog-dev-logs",
+        "title": "开发日志：海报分享组件的剪贴板修复",
+        "score": 1,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      },
       {
         "slug": "homepage-liquid-glass-refactor",
         "title": "开发日志：主页液态玻璃重构——闪频歼灭战与性能审计报告",
-        "score": 0.3,
+        "score": 0.12,
+        "sharedPosts": 0,
+        "sharedTags": 2
+      },
+      {
+        "slug": "ai-integrated-workflow",
+        "title": "我如何把 AI 工具无缝衔接进我的日常工作流",
+        "score": 0.055,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "blog-api-guide": [
+      {
+        "slug": "cfworker",
+        "title": "Cloudflare Workers 反向代理教程：免费搭建 API 中转与 CORS 代理",
+        "score": 0.067,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "domain-connect-cloudflare",
+        "title": "如何把域名接入 Cloudflare（完整实操版）",
+        "score": 0.067,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "blog-dev-logs": [
+      {
+        "slug": "backdrop-filter-performance-guide",
+        "title": "移动端液态玻璃 UI 性能调优完全指南：backdrop-filter 的陷阱与降级策略",
+        "score": 1,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      },
+      {
+        "slug": "blog-fullstack-architecture-evolution-2026",
+        "title": "博客系统重大架构升级与全栈重构报告：零知识 BFF、即时发布流与极致交互实践",
+        "score": 0.077,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "homepage-liquid-glass-refactor",
+        "title": "开发日志：主页液态玻璃重构——闪频歼灭战与性能审计报告",
+        "score": 0.077,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "astro-cdn-hosting",
+        "title": "极速与安全的终极博弈：Astro 博客结合腾讯云 EdgeOne（海外版）与 Cloudflare 静态托管的双活架构实践",
+        "score": 0.061,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "blog-fullstack-architecture-evolution-2026": [
+      {
+        "slug": "blog-dev-logs",
+        "title": "开发日志：海报分享组件的剪贴板修复",
+        "score": 0.077,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "cf-worker-reverse-proxy": [
+      {
+        "slug": "domain-connect-cloudflare",
+        "title": "如何把域名接入 Cloudflare（完整实操版）",
+        "score": 1,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      },
+      {
+        "slug": "cfworker",
+        "title": "Cloudflare Workers 反向代理教程：免费搭建 API 中转与 CORS 代理",
+        "score": 0.12,
+        "sharedPosts": 0,
+        "sharedTags": 2
+      }
+    ],
+    "cfworker": [
+      {
+        "slug": "cf-worker-reverse-proxy",
+        "title": "Cloudflare Worker 反向代理代码：CORS、Cookie 与 302 跳转修复",
+        "score": 0.12,
+        "sharedPosts": 0,
+        "sharedTags": 2
+      },
+      {
+        "slug": "blog-api-guide",
+        "title": "博客 API 接口大全与调用教程",
+        "score": 0.067,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "domain-connect-cloudflare",
+        "title": "如何把域名接入 Cloudflare（完整实操版）",
+        "score": 0.06,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "diejia": [
+      {
+        "slug": "hardware-overheat-and-high-functioning-compensation",
+        "title": "当软件依然积极，而硬件开始报警：一个“高功能代偿者”的身心检修手记",
+        "score": 0.577,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      },
+      {
+        "slug": "security-statement",
+        "title": "关于本站坚定政治立场、维护意识形态安全及网络空间清朗的郑重声明。",
+        "score": 0.122,
         "sharedPosts": 0,
         "sharedTags": 1
       }
     ],
     "domain-connect-cloudflare": [
       {
+        "slug": "cf-worker-reverse-proxy",
+        "title": "Cloudflare Worker 反向代理代码：CORS、Cookie 与 302 跳转修复",
+        "score": 1,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      },
+      {
+        "slug": "blog-api-guide",
+        "title": "博客 API 接口大全与调用教程",
+        "score": 0.067,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
         "slug": "jianjie",
         "title": "网站简介",
-        "score": 0.3,
+        "score": 0.067,
         "sharedPosts": 0,
         "sharedTags": 1
       },
       {
         "slug": "jieshao",
         "title": "Cloud云服务",
-        "score": 0.3,
+        "score": 0.067,
         "sharedPosts": 0,
         "sharedTags": 1
       },
       {
-        "slug": "our-cloud-services",
-        "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
-        "score": 0.3,
+        "slug": "cfworker",
+        "title": "Cloudflare Workers 反向代理教程：免费搭建 API 中转与 CORS 代理",
+        "score": 0.06,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "geren": [
+      {
+        "slug": "ncm-converter-intro",
+        "title": "网易云音乐 NCM 转 MP3/FLAC 在线工具介绍",
+        "score": 0.707,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      }
+    ],
+    "hardware-overheat-and-high-functioning-compensation": [
+      {
+        "slug": "diejia",
+        "title": "【安全通告】关于 AGI 伦理阈值与价值对齐风险的声明",
+        "score": 0.577,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      }
+    ],
+    "heci": [
+      {
+        "slug": "mothers-day-2026",
+        "title": "今天，愿所有母亲都被温柔以待",
+        "score": 0.075,
         "sharedPosts": 0,
         "sharedTags": 1
       }
     ],
     "homepage-liquid-glass-refactor": [
       {
+        "slug": "backdrop-filter-performance-guide",
+        "title": "移动端液态玻璃 UI 性能调优完全指南：backdrop-filter 的陷阱与降级策略",
+        "score": 0.12,
+        "sharedPosts": 0,
+        "sharedTags": 2
+      },
+      {
         "slug": "blog-dev-logs",
         "title": "开发日志：海报分享组件的剪贴板修复",
-        "score": 0.3,
+        "score": 0.077,
         "sharedPosts": 0,
         "sharedTags": 1
       }
     ],
     "jianjie": [
       {
-        "slug": "domain-connect-cloudflare",
-        "title": "如何把域名接入 Cloudflare（完整实操版）",
-        "score": 0.3,
-        "sharedPosts": 0,
-        "sharedTags": 1
-      },
-      {
         "slug": "jieshao",
         "title": "Cloud云服务",
-        "score": 0.3,
-        "sharedPosts": 0,
+        "score": 0.782,
+        "sharedPosts": 1,
         "sharedTags": 1
       },
       {
         "slug": "our-cloud-services",
         "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
-        "score": 0.3,
+        "score": 0.644,
+        "sharedPosts": 1,
+        "sharedTags": 1
+      },
+      {
+        "slug": "astro-cdn-hosting",
+        "title": "极速与安全的终极博弈：Astro 博客结合腾讯云 EdgeOne（海外版）与 Cloudflare 静态托管的双活架构实践",
+        "score": 0.106,
+        "sharedPosts": 0,
+        "sharedTags": 2
+      },
+      {
+        "slug": "domain-connect-cloudflare",
+        "title": "如何把域名接入 Cloudflare（完整实操版）",
+        "score": 0.067,
         "sharedPosts": 0,
         "sharedTags": 1
       }
     ],
     "jieshao": [
       {
-        "slug": "domain-connect-cloudflare",
-        "title": "如何把域名接入 Cloudflare（完整实操版）",
-        "score": 0.3,
-        "sharedPosts": 0,
+        "slug": "jianjie",
+        "title": "网站简介",
+        "score": 0.782,
+        "sharedPosts": 1,
         "sharedTags": 1
       },
       {
-        "slug": "jianjie",
-        "title": "网站简介",
-        "score": 0.3,
-        "sharedPosts": 0,
-        "sharedTags": 1
+        "slug": "umami",
+        "title": "Umami 统计修复日志",
+        "score": 0.707,
+        "sharedPosts": 1,
+        "sharedTags": 0
       },
       {
         "slug": "our-cloud-services",
         "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
-        "score": 0.3,
+        "score": 0.475,
+        "sharedPosts": 1,
+        "sharedTags": 1
+      },
+      {
+        "slug": "astro-cdn-hosting",
+        "title": "极速与安全的终极博弈：Astro 博客结合腾讯云 EdgeOne（海外版）与 Cloudflare 静态托管的双活架构实践",
+        "score": 0.461,
+        "sharedPosts": 1,
+        "sharedTags": 1
+      },
+      {
+        "slug": "domain-connect-cloudflare",
+        "title": "如何把域名接入 Cloudflare（完整实操版）",
+        "score": 0.067,
         "sharedPosts": 0,
         "sharedTags": 1
       }
     ],
-    "our-cloud-services": [
+    "junior-high-epic-chronicle": [
       {
-        "slug": "domain-connect-cloudflare",
-        "title": "如何把域名接入 Cloudflare（完整实操版）",
-        "score": 0.3,
+        "slug": "Tradition",
+        "title": "传统代际沟通中的“滑坡谬误”与边界防御",
+        "score": 0.577,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      },
+      {
+        "slug": "zhinan",
+        "title": "Archive-REF：叙事侵染后的现实锚定指南",
+        "score": 0.408,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      },
+      {
+        "slug": "acg-goods-and-emotions",
+        "title": "十几块的零食舍不得，十几块的“谷子”果断买：二次元与当代年轻人的“精神资产重构”",
+        "score": 0.067,
         "sharedPosts": 0,
         "sharedTags": 1
-      },
+      }
+    ],
+    "mothers-day-2026": [
+      {
+        "slug": "heci",
+        "title": "2026 新年贺词精选",
+        "score": 0.075,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "ncm-converter-intro": [
+      {
+        "slug": "geren",
+        "title": "探索与重构：瑶曦个人主页（yaoxi.wiki）设计与技术全解",
+        "score": 0.707,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      }
+    ],
+    "other-sites": [
+      {
+        "slug": "persistence-and-compound-growth",
+        "title": "在无人问津的荒原里深耕：从 0 到 3831 次 AI 引用的坚持与复利",
+        "score": 0.707,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      }
+    ],
+    "our-cloud-services": [
       {
         "slug": "jianjie",
         "title": "网站简介",
-        "score": 0.3,
-        "sharedPosts": 0,
+        "score": 0.644,
+        "sharedPosts": 1,
         "sharedTags": 1
+      },
+      {
+        "slug": "astro-cdn-hosting",
+        "title": "极速与安全的终极博弈：Astro 博客结合腾讯云 EdgeOne（海外版）与 Cloudflare 静态托管的双活架构实践",
+        "score": 0.476,
+        "sharedPosts": 1,
+        "sharedTags": 3
       },
       {
         "slug": "jieshao",
         "title": "Cloud云服务",
-        "score": 0.3,
+        "score": 0.475,
+        "sharedPosts": 1,
+        "sharedTags": 1
+      },
+      {
+        "slug": "umami",
+        "title": "Umami 统计修复日志",
+        "score": 0.067,
         "sharedPosts": 0,
         "sharedTags": 1
+      },
+      {
+        "slug": "domain-connect-cloudflare",
+        "title": "如何把域名接入 Cloudflare（完整实操版）",
+        "score": 0.06,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "persistence-and-compound-growth": [
+      {
+        "slug": "other-sites",
+        "title": "瑶曦的其他网站与项目导航",
+        "score": 0.707,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      }
+    ],
+    "security-statement": [
+      {
+        "slug": "diejia",
+        "title": "【安全通告】关于 AGI 伦理阈值与价值对齐风险的声明",
+        "score": 0.122,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "umami": [
+      {
+        "slug": "jieshao",
+        "title": "Cloud云服务",
+        "score": 0.707,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      },
+      {
+        "slug": "astro-cdn-hosting",
+        "title": "极速与安全的终极博弈：Astro 博客结合腾讯云 EdgeOne（海外版）与 Cloudflare 静态托管的双活架构实践",
+        "score": 0.577,
+        "sharedPosts": 1,
+        "sharedTags": 0
+      },
+      {
+        "slug": "our-cloud-services",
+        "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
+        "score": 0.067,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "zhinan": [
+      {
+        "slug": "Tradition",
+        "title": "传统代际沟通中的“滑坡谬误”与边界防御",
+        "score": 0.857,
+        "sharedPosts": 1,
+        "sharedTags": 1
+      },
+      {
+        "slug": "junior-high-epic-chronicle",
+        "title": "凡人、火种与未央的长夜：初中三年毕业纪事",
+        "score": 0.408,
+        "sharedPosts": 1,
+        "sharedTags": 0
       }
     ]
   }

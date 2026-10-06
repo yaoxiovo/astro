@@ -13,6 +13,7 @@ tags:
 category: 记录
 draft: false
 lang: "zh_CN"
+related: ["other-sites", "persistence-and-compound-growth"]
 ---
 
 # 探索与重构：瑶曦个人主页（yaoxi.wiki）设计与技术全解

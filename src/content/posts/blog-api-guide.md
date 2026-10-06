@@ -10,6 +10,7 @@ tags:
 category: 技术分享
 draft: false
 lang: "zh_CN"
+related: ["blog-fullstack-architecture-evolution-2026"]
 ---
 
 本博客（Yaoxi Blog）对外提供两类 API 接口，本篇文章一次性讲清楚**全部端点、参数、响应结构与调用方法**。

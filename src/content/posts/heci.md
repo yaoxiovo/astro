@@ -10,6 +10,7 @@ tags:
 category: 节日祝福
 draft: false
 lang: "zh_CN"
+related: ["2cx"]
 ---
 
 当2025年的最后一秒钟声敲响，  

@@ -1,7 +1,7 @@
 {
   "slug": "cfworker",
   "title": "Cloudflare Workers 反向代理教程：免费搭建 API 中转与 CORS 代理",
-  "checkedAt": "2026-10-06T02:45:18.067Z",
+  "checkedAt": "2026-10-06T06:47:47.060Z",
   "score": 95,
   "grade": "S",
   "gradeLabel": "工业级卓越 (Industrial S)",
@@ -29,9 +29,9 @@
     }
   },
   "metrics": {
-    "totalLines": 238,
+    "totalLines": 239,
     "codeLines": 49,
-    "codePercentage": "20.6%",
+    "codePercentage": "20.5%",
     "cjkChars": 617,
     "englishWords": 103,
     "totalEquivalentWords": 720,

@@ -37,9 +37,18 @@ const totalLinks = backlinks.reduce((acc, item) => acc + item.count, 0);
                     >
                         {item.title || item.slug}
                     </a>
-                    <span class="font-mono text-[11px] text-black/40 dark:text-white/40 whitespace-nowrap shrink-0">
-                        链接 {item.count} 次
-                    </span>
+                    {item.kind === "seealso" ? (
+                        <span
+                            class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[var(--primary)]/10 text-[var(--primary)] whitespace-nowrap shrink-0"
+                            title="该条目在 frontmatter related 中编排了本文（延伸阅读指引）"
+                        >
+                            延伸指引
+                        </span>
+                    ) : (
+                        <span class="font-mono text-[11px] text-black/40 dark:text-white/40 whitespace-nowrap shrink-0">
+                            链接 {item.count} 次
+                        </span>
+                    )}
                 </li>
             ))}
         </ul>
