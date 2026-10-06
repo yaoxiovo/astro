@@ -1,0 +1,34 @@
+{
+  "generatedAt": "2026-10-06T01:46:35.171Z",
+  "stats": {
+    "totalArticles": 2,
+    "totalSuggestions": 2,
+    "totalMentions": 2
+  },
+  "articles": {
+    "backdrop-filter-performance-guide": "移动端液态玻璃 UI 性能调优完全指南：backdrop-filter 的陷阱与降级策略",
+    "our-cloud-services": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践"
+  },
+  "suggestions": {
+    "backdrop-filter-performance-guide": [
+      {
+        "slug": "homepage-liquid-glass-refactor",
+        "title": "开发日志：主页液态玻璃重构——闪频歼灭战与性能审计报告",
+        "count": 1,
+        "samples": [
+          "…移动端液态玻璃 UI 性能调优完全指南 喵~ > 前言：本文是上一篇《主页液态玻璃重构》的姊妹篇。上一篇是\"战斗报告\"，这一篇是\"战术手册\"——把本次重构中沉…"
+        ]
+      }
+    ],
+    "our-cloud-services": [
+      {
+        "slug": "astro-cdn-hosting",
+        "title": "极速与安全的终极博弈：Astro 博客结合腾讯云 EdgeOne（海外版）与 Cloudflare 静态托管的双活架构实践",
+        "count": 1,
+        "samples": [
+          "…（Cloud Infrastructure）** 选型上，同样进行了一场极速与安全的终极博弈喵！ 今天，本猫娘就带大家扒开本站的底层架构，看看我们是如何利用各大云…"
+        ]
+      }
+    ]
+  }
+}

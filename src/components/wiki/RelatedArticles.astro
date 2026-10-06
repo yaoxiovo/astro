@@ -1,0 +1,53 @@
+---
+import { Icon } from "astro-icon/components";
+import {
+	getRelatedArticlesSync,
+	type RelatedArticleEntry,
+} from "@utils/wiki-special-loader";
+
+interface Props {
+	slug: string;
+}
+
+const { slug } = Astro.props;
+const related = getRelatedArticlesSync(slug);
+
+function hintText(item: RelatedArticleEntry): string {
+	const parts: string[] = [];
+	if (item.sharedPosts > 0) parts.push(`共同链接 ${item.sharedPosts}`);
+	if (item.sharedTags > 0) parts.push(`共同标签 ${item.sharedTags}`);
+	return parts.join(" · ");
+}
+---
+
+{related.length > 0 && (
+	<div class="mb-6 p-5 rounded-2xl border border-[var(--line-divider)] bg-black/[0.02] dark:bg-white/[0.02] shadow-sm onload-animation">
+		<div class="flex items-center justify-between mb-4 pb-3 border-b border-[var(--line-divider)]">
+			<div class="flex items-center gap-2">
+				<Icon name="material-symbols:explore" class="text-lg text-[var(--primary)]" />
+				<h3 class="text-sm font-bold text-black/90 dark:text-white/90">相关文章 (Related Pages)</h3>
+				<span class="px-2 py-0.5 rounded-full text-[10px] bg-black/5 dark:bg-white/10 font-mono text-black/50 dark:text-white/50">
+					{related.length} 篇
+				</span>
+			</div>
+			<span class="text-[11px] text-black/40 dark:text-white/40">基于内链与标签相似度</span>
+		</div>
+
+		<ul class="flex flex-col gap-1.5">
+			{related.map((item) => (
+				<li class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-black/[0.02] dark:bg-white/[0.03] text-xs hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors">
+					<a
+						href={`/posts/${item.slug}/`}
+						class="font-medium text-[var(--primary)] hover:underline truncate"
+						title={item.title}
+					>
+						{item.title}
+					</a>
+					<span class="font-mono text-[11px] text-black/40 dark:text-white/40 whitespace-nowrap shrink-0">
+						{hintText(item)}
+					</span>
+				</li>
+			))}
+		</ul>
+	</div>
+)}

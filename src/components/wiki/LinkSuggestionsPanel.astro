@@ -1,0 +1,52 @@
+---
+import { Icon } from "astro-icon/components";
+import { getLinkSuggestionsSync } from "@utils/wiki-special-loader";
+
+interface Props {
+	slug: string;
+}
+
+const { slug } = Astro.props;
+const suggestions = getLinkSuggestionsSync(slug);
+const totalMentions = suggestions.reduce((acc, item) => acc + item.count, 0);
+---
+
+{suggestions.length > 0 && (
+	<details class="mb-6 rounded-2xl border border-dashed border-teal-500/40 bg-teal-500/[0.03] overflow-hidden onload-animation">
+		<summary class="flex flex-wrap items-center gap-2 px-5 py-3.5 cursor-pointer select-none hover:bg-teal-500/[0.05] transition-colors list-none [&::-webkit-details-marker]:hidden">
+			<Icon name="material-symbols:edit-note" class="text-lg text-teal-600 dark:text-teal-400" />
+			<h3 class="text-sm font-bold text-black/90 dark:text-white/90">编辑工具：可补链接 (Link Suggestions)</h3>
+			<span class="px-2 py-0.5 rounded-full text-[10px] bg-teal-500/10 font-mono text-teal-600 dark:text-teal-400">
+				{suggestions.length} 个目标 · {totalMentions} 处提及
+			</span>
+		</summary>
+		<div class="px-5 pb-4">
+			<p class="text-[11px] text-black/40 dark:text-white/40 leading-relaxed mb-3">
+				正文提到以下条目标题但尚未建立站内链接，补齐 <code class="font-mono">/posts/</code> 链接后下次构建生效喵~
+			</p>
+			<ul class="flex flex-col gap-2">
+				{suggestions.map((item) => (
+					<li class="px-3 py-2.5 rounded-lg bg-black/[0.02] dark:bg-white/[0.03]">
+						<div class="flex items-center justify-between gap-3">
+							<a
+								href={`/posts/${item.slug}/`}
+								class="text-xs font-medium text-[var(--primary)] hover:underline truncate"
+								title={item.title}
+							>
+								{item.title}
+							</a>
+							<span class="font-mono text-[11px] text-black/40 dark:text-white/40 whitespace-nowrap shrink-0">
+								提及 {item.count} 次
+							</span>
+						</div>
+						{item.samples.map((sample) => (
+							<p class="mt-1.5 text-[11px] font-mono text-black/50 dark:text-white/50 leading-relaxed break-all">
+								「{sample}」
+							</p>
+						))}
+					</li>
+				))}
+			</ul>
+		</div>
+	</details>
+)}

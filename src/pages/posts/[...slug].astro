@@ -10,6 +10,8 @@ import WikiHistoryPage from "@components/wiki/WikiHistoryPage.astro";
 import WikiRevisionPage from "@components/wiki/WikiRevisionPage.astro";
 import WikiHistoryTable from "@components/wiki/WikiHistoryTable.svelte";
 import BacklinksPanel from "@components/wiki/BacklinksPanel.astro";
+import RelatedArticles from "@components/wiki/RelatedArticles.astro";
+import LinkSuggestionsPanel from "@components/wiki/LinkSuggestionsPanel.astro";
 import CiteThisArticle from "@components/wiki/CiteThisArticle.svelte";
 import LongPressTextMenu from "@components/widget/LongPressTextMenu.astro";
 import { getPostWikiHistorySync } from "@utils/wiki-history-loader";
@@ -475,6 +477,12 @@ if (mode === "article") {
 
             <!-- 链入页面 (What links here) -->
             <BacklinksPanel slug={slug} />
+
+            <!-- 相关文章推荐 (Related pages) -->
+            <RelatedArticles slug={slug} />
+
+            <!-- 编辑工具：可补链接雷达（无建议时自动隐藏） -->
+            <LinkSuggestionsPanel slug={slug} />
 
             <!-- 移动端长按自定义菜单（拦截原生 callout，接管为自绘悬浮窗） -->
             <LongPressTextMenu

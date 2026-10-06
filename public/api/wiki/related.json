@@ -1,0 +1,117 @@
+{
+  "generatedAt": "2026-10-06T01:46:35.142Z",
+  "topN": 5,
+  "minScore": 0.05,
+  "related": {
+    "blog-dev-logs": [
+      {
+        "slug": "homepage-liquid-glass-refactor",
+        "title": "开发日志：主页液态玻璃重构——闪频歼灭战与性能审计报告",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "domain-connect-cloudflare": [
+      {
+        "slug": "jianjie",
+        "title": "网站简介",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "jieshao",
+        "title": "Cloud云服务",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "our-cloud-services",
+        "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "homepage-liquid-glass-refactor": [
+      {
+        "slug": "blog-dev-logs",
+        "title": "开发日志：海报分享组件的剪贴板修复",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "jianjie": [
+      {
+        "slug": "domain-connect-cloudflare",
+        "title": "如何把域名接入 Cloudflare（完整实操版）",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "jieshao",
+        "title": "Cloud云服务",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "our-cloud-services",
+        "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "jieshao": [
+      {
+        "slug": "domain-connect-cloudflare",
+        "title": "如何把域名接入 Cloudflare（完整实操版）",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "jianjie",
+        "title": "网站简介",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "our-cloud-services",
+        "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ],
+    "our-cloud-services": [
+      {
+        "slug": "domain-connect-cloudflare",
+        "title": "如何把域名接入 Cloudflare（完整实操版）",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "jianjie",
+        "title": "网站简介",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      },
+      {
+        "slug": "jieshao",
+        "title": "Cloud云服务",
+        "score": 0.3,
+        "sharedPosts": 0,
+        "sharedTags": 1
+      }
+    ]
+  }
+}

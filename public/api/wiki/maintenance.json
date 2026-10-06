@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-05T18:23:44.089Z",
+  "generatedAt": "2026-10-06T01:46:35.123Z",
   "staleThresholdDays": 180,
   "stats": {
     "totalPosts": 49,
@@ -602,7 +602,7 @@
       "slug": "guandian",
       "title": "个人看法",
       "lastUpdated": "2026-02-23T03:10:27+08:00",
-      "daysSinceUpdate": 224
+      "daysSinceUpdate": 225
     },
     {
       "slug": "zhinan",

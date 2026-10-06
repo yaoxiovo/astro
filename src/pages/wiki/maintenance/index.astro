@@ -1,10 +1,25 @@
 ---
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { Icon } from "astro-icon/components";
-import { getMaintenanceSync } from "@utils/wiki-special-loader";
+import {
+	getMaintenanceSync,
+	getLinkSuggestionsReportSync,
+} from "@utils/wiki-special-loader";
 
 const report = getMaintenanceSync();
 const stats = report?.stats;
+const suggestionsReport = getLinkSuggestionsReportSync();
+
+const suggestionGroups = suggestionsReport
+	? Object.entries(suggestionsReport.suggestions)
+			.map(([slug, entries]) => ({
+				slug,
+				title: suggestionsReport.articles[slug] || slug,
+				entries,
+				total: entries.reduce((acc, item) => acc + item.count, 0),
+			}))
+			.sort((a, b) => b.total - a.total || a.slug.localeCompare(b.slug))
+	: [];
 
 function fmtDate(iso?: string | null): string {
 	if (!iso) return "—";
@@ -31,7 +46,7 @@ const brokenTypeLabels: Record<string, string> = {
 
 const pageTitle = "条目维护仪表盘 - Special:Maintenance";
 const pageDescription =
-	"维基百科式全站条目维护巡检：孤立条目、断头路、过时条目、低质条目与死链汇总";
+	"维基百科式全站条目维护巡检：孤立条目、断头路、可补链接、过时条目、低质条目与死链汇总";
 ---
 
 <MainGridLayout title={pageTitle} description={pageDescription} noindex>
@@ -86,7 +101,7 @@ const pageDescription =
           <div class="mb-6 p-3.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.02] border border-[var(--line-divider)] text-xs text-black/60 dark:text-white/60 leading-relaxed">
             <p>
               本页由构建期静态分析生成（<code class="font-mono">scripts/generate-wiki-special.mjs</code> + 质量门禁联动），
-              用于暴露站内知识库的「维护债务」：孤立条目无从被检索、断头路无法引导读者、过时条目需要更新审阅。
+              用于暴露站内知识库的「维护债务」：孤立条目无从被检索、断头路无法引导读者、未链接提及等待补齐为链、过时条目需要更新审阅。
               <span class="font-mono text-black/40 dark:text-white/40">索引生成于 {new Date(report.generatedAt).toLocaleString("zh-CN")} · 过时阈值 {report.staleThresholdDays} 天</span>
             </p>
           </div>
@@ -196,6 +211,67 @@ const pageDescription =
               </div>
             ) : (
               <div class="p-4 rounded-xl border border-[var(--line-divider)] text-center text-xs text-black/50 dark:text-white/50">没有断头路条目，所有文章都提供了站内延伸阅读 喵~</div>
+            )}
+          </section>
+
+          <!-- 可补链接雷达 -->
+          <section class="mb-6">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-1.5 h-4 rounded-full bg-teal-500"></div>
+              <h2 class="text-sm font-bold text-black/85 dark:text-white/85">可补链接 (Link Suggestions)</h2>
+              <span class="px-2 py-0.5 rounded-full text-[10px] bg-black/5 dark:bg-white/10 font-mono text-black/50 dark:text-white/50">
+                {suggestionsReport?.stats.totalArticles ?? 0} 篇 · {suggestionsReport?.stats.totalMentions ?? 0} 处提及
+              </span>
+              <span class="text-[11px] text-black/40 dark:text-white/40">正文提及其他条目标题但尚未建立站内链接</span>
+            </div>
+            {suggestionGroups.length > 0 ? (
+              <div class="flex flex-col gap-2">
+                {suggestionGroups.map((group) => (
+                  <details class="border border-[var(--line-divider)] rounded-xl bg-black/[0.01] dark:bg-white/[0.01] overflow-hidden">
+                    <summary class="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 cursor-pointer select-none hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors list-none [&::-webkit-details-marker]:hidden">
+                      <span class="text-xs font-semibold text-black/80 dark:text-white/80 truncate">{group.title}</span>
+                      <span class="font-mono text-[11px] text-black/40 dark:text-white/40 shrink-0">
+                        {group.entries.length} 个目标 · {group.total} 处提及
+                      </span>
+                    </summary>
+                    <div class="px-3.5 pb-3">
+                      <a
+                        href={`/posts/${group.slug}/`}
+                        class="inline-flex items-center gap-1 text-[11px] text-[var(--primary)] hover:underline font-medium mb-2"
+                      >
+                        <Icon name="material-symbols:open-in-new" class="text-xs" />
+                        <span>打开来源条目</span>
+                      </a>
+                      <ul class="flex flex-col gap-1.5">
+                        {group.entries.map((item) => (
+                          <li class="px-3 py-2 rounded-lg bg-black/[0.02] dark:bg-white/[0.03] text-xs flex flex-col gap-1">
+                            <div class="flex items-center justify-between gap-3">
+                              <a
+                                href={`/posts/${item.slug}/`}
+                                class="font-medium text-[var(--primary)] hover:underline truncate"
+                              >
+                                {item.title}
+                              </a>
+                              <span class="font-mono text-[11px] text-black/40 dark:text-white/40 whitespace-nowrap shrink-0">
+                                提及 {item.count} 次
+                              </span>
+                            </div>
+                            {item.samples[0] && (
+                              <p class="text-[11px] font-mono text-black/50 dark:text-white/50 leading-relaxed break-all">
+                                「{item.samples[0]}」
+                              </p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            ) : (
+              <div class="p-4 rounded-xl border border-[var(--line-divider)] text-center text-xs text-black/50 dark:text-white/50">
+                没有检测到未链接的标题提及，内链网络已编织完整 喵~
+              </div>
             )}
           </section>
 

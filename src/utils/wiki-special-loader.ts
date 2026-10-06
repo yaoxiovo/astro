@@ -84,6 +84,39 @@ export interface MaintenanceReport {
 	brokenLinks: MaintenanceBrokenLinkItem[];
 }
 
+export interface RelatedArticleEntry {
+	slug: string;
+	title: string;
+	score: number;
+	sharedPosts: number;
+	sharedTags: number;
+}
+
+export interface RelatedData {
+	generatedAt: string;
+	topN: number;
+	minScore: number;
+	related: Record<string, RelatedArticleEntry[]>;
+}
+
+export interface LinkSuggestionEntry {
+	slug: string;
+	title: string;
+	count: number;
+	samples: string[];
+}
+
+export interface LinkSuggestionsData {
+	generatedAt: string;
+	stats: {
+		totalArticles: number;
+		totalSuggestions: number;
+		totalMentions: number;
+	};
+	articles: Record<string, string>;
+	suggestions: Record<string, LinkSuggestionEntry[]>;
+}
+
 function readJsonSafe<T>(filePath: string): T | null {
 	try {
 		if (fs.existsSync(filePath)) {
@@ -133,4 +166,42 @@ export function getMaintenanceSync(): MaintenanceReport | null {
 		);
 	}
 	return maintenanceCache;
+}
+
+let relatedCache: RelatedData | null | undefined;
+let linkSuggestionsCache: LinkSuggestionsData | null | undefined;
+
+function loadLinkSuggestions(): LinkSuggestionsData | null {
+	if (linkSuggestionsCache === undefined) {
+		linkSuggestionsCache = readJsonSafe<LinkSuggestionsData>(
+			path.resolve("src/data/wiki/link-suggestions.json"),
+		);
+	}
+	return linkSuggestionsCache;
+}
+
+/**
+ * 构建期读取指定条目的相关文章推荐
+ */
+export function getRelatedArticlesSync(slug: string): RelatedArticleEntry[] {
+	if (relatedCache === undefined) {
+		relatedCache = readJsonSafe<RelatedData>(
+			path.resolve("src/data/wiki/related.json"),
+		);
+	}
+	return relatedCache?.related?.[slug] || [];
+}
+
+/**
+ * 构建期读取指定条目的可补链接建议
+ */
+export function getLinkSuggestionsSync(slug: string): LinkSuggestionEntry[] {
+	return loadLinkSuggestions()?.suggestions?.[slug] || [];
+}
+
+/**
+ * 构建期读取全站补链雷达报告
+ */
+export function getLinkSuggestionsReportSync(): LinkSuggestionsData | null {
+	return loadLinkSuggestions();
 }
