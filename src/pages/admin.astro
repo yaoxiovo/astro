@@ -307,6 +307,15 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
             <div class="text-black/40 dark:text-white/40">文本行数</div>
           </div>
         </div>
+
+        <!-- 条目维护状态卡 (编辑既有文章时加载 wiki 数据) -->
+        <div id="editing-insight-card" class="hidden p-4 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)] text-xs">
+          <div class="font-bold text-black/75 dark:text-white/75 mb-2.5 flex items-center gap-1.5">
+            <span>📊</span>
+            <span>条目维护状态 (Wiki Insight)</span>
+          </div>
+          <div id="editing-insight-body" class="space-y-1 text-black/55 dark:text-white/55 leading-relaxed"></div>
+        </div>
       </div>
 
       <!-- 右侧：宽屏 Markdown 编辑器 (2 列) -->
@@ -327,10 +336,19 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
             <button type="button" class="toolbar-btn" data-wrap="[标题](" data-wrap-end=")" title="链接">链接</button>
             <button type="button" class="toolbar-btn" data-wrap="![" data-wrap-end="](url)" title="图片">图片</button>
             <button type="button" class="toolbar-btn" data-insert="\n---\n" title="水平分割线">分割线</button>
+            <div class="h-4 w-[1px] bg-[var(--line-divider)] mx-1"></div>
+            <button type="button" id="btn-upload-image" class="toolbar-btn" title="上传图片 (相册/拍照/粘贴，直传 GitHub)">📷 上传图</button>
+            <button type="button" id="btn-toggle-preview" class="toolbar-btn" title="切换 编辑 / 预览">👁 预览</button>
           </div>
 
           <!-- 正文编辑区 -->
           <textarea id="post-content" rows="22" placeholder="# 在此开始书写正文...\n\n支持标准的 GitHub Flavored Markdown 语法，随时输入即时自动保存草稿..." class="w-full flex-1 p-5 bg-transparent text-sm font-mono outline-none leading-relaxed resize-y min-h-[500px]"></textarea>
+
+          <!-- Markdown 实时预览渲染容器 (与编辑区互斥切换) -->
+          <div id="post-preview" class="hidden w-full flex-1 p-5 overflow-y-auto min-h-[500px] text-sm text-black/85 dark:text-white/85 leading-relaxed"></div>
+
+          <!-- 图片上传隐藏文件选择器 -->
+          <input type="file" id="image-upload-input" accept="image/*" class="hidden" />
         </div>
       </div>
     </div>
@@ -681,6 +699,41 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
       </div>
     </div>
 
+    <!-- 发布前质量预检弹窗 (Pre-flight Quality Check) -->
+    <div id="modal-preflight" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+      <div class="w-full max-w-lg max-h-[85vh] flex flex-col rounded-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)] shadow-2xl p-6">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-[var(--line-divider)]">
+          <h3 class="text-base font-bold text-black/90 dark:text-white/90 flex items-center gap-2">
+            <span>🧪</span>
+            <span>发布前质量预检 (Pre-flight)</span>
+          </h3>
+          <span class="text-[10px] font-mono text-black/30 dark:text-white/30">quality gate</span>
+        </div>
+        <div id="preflight-summary" class="text-xs text-black/60 dark:text-white/60 leading-relaxed mb-3"></div>
+        <ul id="preflight-list" class="flex-1 overflow-y-auto space-y-2 pr-1 mb-4"></ul>
+        <div class="flex justify-end gap-2 shrink-0">
+          <button type="button" id="btn-preflight-cancel" class="px-4 py-2 rounded-xl bg-black/5 dark:bg-white/10 text-xs font-medium text-black/70 dark:text-white/70 hover:bg-black/10 dark:hover:bg-white/15 transition-all cursor-pointer">返回编辑修复</button>
+          <button type="button" id="btn-preflight-continue" class="px-4 py-2 rounded-xl bg-[var(--primary)] text-white dark:text-black font-semibold text-xs shadow-sm hover:opacity-90 transition-all cursor-pointer">继续发布</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 文章历史版本回滚弹窗 (Revision Rollback) -->
+    <div id="modal-history" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in">
+      <div class="w-full max-w-lg max-h-[85vh] flex flex-col rounded-2xl bg-white dark:bg-neutral-900 border border-[var(--line-divider)] shadow-2xl p-6">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-[var(--line-divider)]">
+          <h3 class="text-base font-bold text-black/90 dark:text-white/90 flex items-center gap-2 min-w-0">
+            <span>🕘</span>
+            <span class="shrink-0">历史版本回滚</span>
+            <span id="history-modal-slug" class="text-[11px] font-mono font-normal text-black/40 dark:text-white/40 truncate"></span>
+          </h3>
+          <button id="btn-close-history" class="text-black/40 dark:text-white/40 hover:text-black/80 dark:hover:text-white/80 cursor-pointer">✕</button>
+        </div>
+        <div id="history-list" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+        <p class="text-[10px] text-black/40 dark:text-white/40 mt-3 leading-relaxed shrink-0">回滚将把旧版本内容以新提交写回 main 分支，Cloudflare Pages 自动重新构建；操作可随时通过再次回滚撤销喵。</p>
+      </div>
+    </div>
+
   </div>
 </Layout>
 
@@ -700,6 +753,106 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
   }
   :global(.dark) .toolbar-btn:hover {
     background-color: rgba(255, 255, 255, 0.12);
+  }
+
+  /* 管理台背景模糊化：压低全局壁纸干扰，保证界面文字可读性 */
+  :global(#bg-box) {
+    filter: blur(18px) brightness(0.8) saturate(0.9);
+    transform: scale(1.06);
+  }
+
+  /* Markdown 实时预览排版 (近似博客正文观感) */
+  #post-preview :global(h1),
+  #post-preview :global(h2),
+  #post-preview :global(h3),
+  #post-preview :global(h4) {
+    font-weight: 700;
+    margin: 1.2em 0 0.6em;
+    line-height: 1.35;
+  }
+  #post-preview :global(h1) {
+    font-size: 1.5rem;
+  }
+  #post-preview :global(h2) {
+    font-size: 1.25rem;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid var(--line-divider);
+  }
+  #post-preview :global(h3) {
+    font-size: 1.1rem;
+  }
+  #post-preview :global(p) {
+    margin: 0.75em 0;
+  }
+  #post-preview :global(a) {
+    color: var(--primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  #post-preview :global(ul),
+  #post-preview :global(ol) {
+    padding-left: 1.5em;
+    margin: 0.75em 0;
+  }
+  #post-preview :global(ul) {
+    list-style: disc;
+  }
+  #post-preview :global(ol) {
+    list-style: decimal;
+  }
+  #post-preview :global(li) {
+    margin: 0.25em 0;
+  }
+  #post-preview :global(blockquote) {
+    border-left: 3px solid var(--primary);
+    padding: 0.25em 0 0.25em 1em;
+    margin: 1em 0;
+    opacity: 0.85;
+  }
+  #post-preview :global(code) {
+    font-family: ui-monospace, monospace;
+    font-size: 0.85em;
+    background: rgba(0, 0, 0, 0.08);
+    padding: 0.15em 0.4em;
+    border-radius: 0.375rem;
+  }
+  :global(.dark) #post-preview :global(code) {
+    background: rgba(255, 255, 255, 0.12);
+  }
+  #post-preview :global(pre) {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 1em;
+    border-radius: 0.75rem;
+    overflow-x: auto;
+    margin: 1em 0;
+  }
+  :global(.dark) #post-preview :global(pre) {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  #post-preview :global(pre code) {
+    background: transparent;
+    padding: 0;
+  }
+  #post-preview :global(img) {
+    max-width: 100%;
+    border-radius: 0.75rem;
+    margin: 1em 0;
+  }
+  #post-preview :global(hr) {
+    border: none;
+    border-top: 1px solid var(--line-divider);
+    margin: 1.5em 0;
+  }
+  #post-preview :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+    font-size: 0.85em;
+  }
+  #post-preview :global(th),
+  #post-preview :global(td) {
+    border: 1px solid var(--line-divider);
+    padding: 0.4em 0.6em;
   }
 </style>
 
@@ -1317,6 +1470,9 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
         const wrapEnd = btn.getAttribute('data-wrap-end');
         const insert = btn.getAttribute('data-insert');
 
+        // 无格式化指令的按钮（如上传图/预览切换）由各自专属处理器接管，跳过通用插入逻辑
+        if (!syntax && !prefix && !wrapStart && !insert) return;
+
         const start = contentEl.selectionStart;
         const end = contentEl.selectionEnd;
         const selected = contentEl.value.substring(start, end);
@@ -1650,6 +1806,17 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi
         return;
       }
 
+      // 发布前质量预检（可跳过的软门禁：错误/警告列出后由作者最终确认）
+      try {
+        const preflight = runPreflight({ title, slug, description, content });
+        if (preflight.errors.length || preflight.warnings.length) {
+          const proceed = await showPreflightModal(preflight);
+          if (!proceed) return;
+        }
+      } catch (pfErr) {
+        console.warn('[Admin] Pre-flight 检查异常，已跳过:', pfErr);
+      }
+
       const token = getAdminToken();
       if (!token) {
         alert('尚未获取到有效认证 Token！请先一键登录或在“鉴权凭据”中填入 Token 喵！');
@@ -1953,6 +2120,9 @@ ${content.trim()}
               <a href="/posts/${encodeURIComponent(post.slug)}/" target="_blank" class="px-2.5 py-1.5 rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 text-xs font-medium text-black/70 dark:text-white/70 transition-all flex items-center gap-1 cursor-pointer">
                 <span>🌐 查看</span>
               </a>
+              <button type="button" class="btn-history-post px-3 py-1.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer" data-slug="${safeSlug}">
+                <span>🕘 历史</span>
+              </button>
               <button type="button" class="btn-edit-post px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer" data-slug="${safeSlug}">
                 <span>✏️ 编辑</span>
               </button>
@@ -1996,6 +2166,7 @@ ${content.trim()}
 
       updateStats();
       updateLivePreview();
+      loadEditInsight(post.slug);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -2006,6 +2177,7 @@ ${content.trim()}
       if (editingModeBanner) {
         editingModeBanner.classList.add('hidden');
       }
+      hideEditInsight();
       btnPublishText.textContent = '发布文章并构建';
     }
 
@@ -2259,6 +2431,7 @@ ${content.trim()}
       tagsEl.value = '';
       categoryEl.value = '技术分享';
       isAutoSlug = true;
+      setPreviewMode(false);
       updateStats();
       updateLivePreview();
       setEditorMode('post');
@@ -2278,6 +2451,7 @@ ${content.trim()}
         contentEl.value = '';
         tagsEl.value = '';
         isAutoSlug = true;
+        setPreviewMode(false);
         updateStats();
         updateLivePreview();
       }
@@ -3088,6 +3262,514 @@ ${content.trim()}
       }
     });
 
+    // =====================================================================
+    // ▓▓ 视觉工坊扩展模块：预览 / 图片直传 / 质量预检 / 版本回滚 / Wiki 洞察 ▓▓
+    // =====================================================================
+
+    // ---------- [A] Markdown 实时预览 (Live Preview) ----------
+    const previewPane = document.getElementById('post-preview');
+    const btnTogglePreview = document.getElementById('btn-toggle-preview');
+    let isPreviewMode = false;
+
+    // 补全历史遗留调用点：内容变化时若处于预览模式则刷新渲染
+    function updateLivePreview() {
+      if (isPreviewMode) renderPostPreview();
+    }
+
+    function renderPostPreview() {
+      if (!previewPane) return;
+      const source = contentEl.value;
+      if (!source.trim()) {
+        previewPane.innerHTML = '<p class="opacity-40 italic">正文还是空白的喵~ 先在编辑区写点什么吧！</p>';
+        return;
+      }
+      if (typeof window.__adminMdRender === 'function') {
+        previewPane.innerHTML = window.__adminMdRender(source);
+      } else {
+        const pre = document.createElement('pre');
+        pre.className = 'whitespace-pre-wrap font-mono text-xs opacity-70';
+        pre.textContent = source;
+        previewPane.replaceChildren(pre);
+      }
+    }
+
+    function setPreviewMode(enabled) {
+      isPreviewMode = enabled;
+      if (!previewPane) return;
+      if (enabled) {
+        previewPane.classList.remove('hidden');
+        contentEl.classList.add('hidden');
+        if (btnTogglePreview) {
+          btnTogglePreview.textContent = '✍️ 编辑';
+          btnTogglePreview.classList.add('bg-[var(--primary)]/10');
+        }
+        renderPostPreview();
+      } else {
+        previewPane.classList.add('hidden');
+        contentEl.classList.remove('hidden');
+        if (btnTogglePreview) {
+          btnTogglePreview.textContent = '👁 预览';
+          btnTogglePreview.classList.remove('bg-[var(--primary)]/10');
+        }
+      }
+    }
+
+    btnTogglePreview?.addEventListener('click', () => setPreviewMode(!isPreviewMode));
+
+    // ---------- [B] GitHub 图片直传通道 (Image Pipeline) ----------
+    const btnUploadImage = document.getElementById('btn-upload-image');
+    const imageUploadInput = document.getElementById('image-upload-input');
+    let isImageUploading = false;
+
+    // 二进制安全：直接取 dataURL 的原始 base64（不可复用文本版 toBase64Utf8）
+    function blobToBase64Raw(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+        reader.onerror = () => reject(new Error('文件读取失败 喵！'));
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    // 长边压缩至 1920px 内并转 WebP；GIF 原样直传保留动画
+    async function compressImageFile(file) {
+      if (file.type === 'image/gif') return { blob: file, ext: 'gif' };
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error('图片读取失败 喵！'));
+        reader.readAsDataURL(file);
+      });
+      const img = await new Promise((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = () => reject(new Error('图片解码失败，可能不是有效图片 喵！'));
+        el.src = dataUrl;
+      });
+      const MAX_DIM = 1920;
+      const scale = Math.min(1, MAX_DIM / Math.max(img.width || 1, img.height || 1));
+      const width = Math.max(1, Math.round((img.width || 1) * scale));
+      const height = Math.max(1, Math.round((img.height || 1) * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      const toBlob = (mime) => new Promise((resolve) => canvas.toBlob(resolve, mime, 0.85));
+      let blob = await toBlob('image/webp');
+      let ext = 'webp';
+      if (!blob) { blob = await toBlob('image/jpeg'); ext = 'jpg'; }
+      if (!blob) throw new Error('图片压缩失败 喵！');
+      return { blob, ext };
+    }
+
+    async function uploadImageToGitHub(blob, ext) {
+      const pat = resolveGithubPat();
+      if (!pat) {
+        alert('缺少 GitHub PAT！请先在右上角“鉴权凭据”中填入具备 contents:write 权限的 Token 喵！');
+        modalAuth.classList.remove('hidden');
+        return null;
+      }
+      const now = new Date();
+      const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+      const fileName = `admin-${stamp}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const filePath = `src/content/assets/images/${fileName}`;
+      const res = await fetch(`https://api.github.com/repos/yaoxiovo/astro/contents/${filePath}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${pat}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `assets: upload ${fileName} via Admin Studio`,
+          content: await blobToBase64Raw(blob),
+          branch: 'main',
+        }),
+      });
+      if (!res.ok) {
+        let msg = `HTTP ${res.status}`;
+        try { const j = await res.json(); if (j && j.message) msg = j.message; } catch (e) {}
+        throw new Error(`图片上传失败 (${res.status})：${msg}`);
+      }
+      return fileName;
+    }
+
+    function insertImageSyntax(fileName) {
+      const snippet = `\n![图片](../assets/images/${fileName})\n`;
+      const start = contentEl.selectionStart;
+      const end = contentEl.selectionEnd;
+      contentEl.setRangeText(snippet, start, end, 'end');
+      contentEl.focus();
+      updateStats();
+      updateLivePreview();
+    }
+
+    async function handleImageUpload(file) {
+      if (!file || !file.type || !file.type.startsWith('image/')) {
+        alert('请选择图片文件喵！');
+        return;
+      }
+      if (isImageUploading) return;
+      isImageUploading = true;
+      const btnOriginalText = btnUploadImage ? btnUploadImage.textContent : '';
+      if (btnUploadImage) {
+        btnUploadImage.textContent = '⏳ 上传中…';
+        btnUploadImage.disabled = true;
+      }
+      try {
+        const { blob, ext } = await compressImageFile(file);
+        const fileName = await uploadImageToGitHub(blob, ext);
+        if (fileName) insertImageSyntax(fileName);
+      } catch (err) {
+        console.error('[Admin] 图片上传失败:', err);
+        alert(`图片上传失败：${err && err.message ? err.message : err}`);
+      } finally {
+        isImageUploading = false;
+        if (btnUploadImage) {
+          btnUploadImage.textContent = btnOriginalText;
+          btnUploadImage.disabled = false;
+        }
+        if (imageUploadInput) imageUploadInput.value = '';
+      }
+    }
+
+    btnUploadImage?.addEventListener('click', () => imageUploadInput?.click());
+    imageUploadInput?.addEventListener('change', () => {
+      const file = imageUploadInput.files && imageUploadInput.files[0];
+      if (file) handleImageUpload(file);
+    });
+
+    // 截图直接 Ctrl+V 粘贴进编辑区即可上传
+    contentEl.addEventListener('paste', (e) => {
+      const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
+      const imageItem = items.find((item) => item.kind === 'file' && item.type && item.type.startsWith('image/'));
+      if (!imageItem) return;
+      e.preventDefault();
+      const file = imageItem.getAsFile();
+      if (file) handleImageUpload(file);
+    });
+
+    // ---------- [C] 发布前质量预检 (Pre-flight Quality Check) ----------
+    const modalPreflight = document.getElementById('modal-preflight');
+    const preflightSummary = document.getElementById('preflight-summary');
+    const preflightList = document.getElementById('preflight-list');
+    const btnPreflightCancel = document.getElementById('btn-preflight-cancel');
+    const btnPreflightContinue = document.getElementById('btn-preflight-continue');
+
+    // 与补链雷达同款思路：遮蔽代码块/行内代码/链接语法，防止未链提及误报
+    function maskPreflightAreas(md) {
+      let masked = String(md || '');
+      masked = masked.replace(/```[\s\S]*?```/g, (m) => m.replace(/[^\n]/g, ' '));
+      masked = masked.replace(/`[^`\n]*`/g, (m) => ' '.repeat(m.length));
+      masked = masked.replace(/!?\[[^\]]*\]\([^)\s]*\)/g, (m) => ' '.repeat(m.length));
+      masked = masked.replace(/!?\[[^\]]*\]\[[^\]]*\]/g, (m) => ' '.repeat(m.length));
+      return masked;
+    }
+
+    function runPreflight({ slug, description, content }) {
+      const errors = [];
+      const warnings = [];
+
+      // 1) 站内死链：链接目标必须在现有文章索引中
+      const knownSlugs = new Set(postsData.map((p) => p.slug));
+      const brokenLinks = new Set();
+      const linkRe = /\]\(\s*(\/posts\/([^)\s#?]+)|https?:\/\/blog\.yaoxi\.wiki\/posts\/([^)\s#?]+))/g;
+      let m;
+      while ((m = linkRe.exec(content)) !== null) {
+        let target = m[2] || m[3] || '';
+        try { target = decodeURIComponent(target); } catch (e) {}
+        target = target.replace(/\/+$/, '');
+        if (target && !knownSlugs.has(target)) brokenLinks.add(target);
+      }
+      brokenLinks.forEach((target) => {
+        errors.push({ level: 'error', icon: '🔗', text: `站内链接指向不存在的条目：/posts/${target}/` });
+      });
+
+      // 2) Slug 规范与占用
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) {
+        warnings.push({ level: 'warning', icon: '🧭', text: `Slug「${slug}」含大写字母或特殊字符，建议只用小写字母、数字与连字符` });
+      }
+      const slugTaken = postsData.find((p) => p.slug === slug && !(isEditingMode && slug === editingSlug));
+      if (slugTaken) {
+        errors.push({ level: 'error', icon: '🚧', text: `Slug「${slug}」已被《${slugTaken.title}》占用，继续发布会覆盖该文（如需更新请使用编辑模式）` });
+      }
+
+      // 3) 摘要健康度
+      if (!description) {
+        warnings.push({ level: 'warning', icon: '📝', text: '缺少摘要（description）：列表页与社交分享卡片将没有预览文案' });
+      } else if (description.length < 20) {
+        warnings.push({ level: 'warning', icon: '📝', text: `摘要仅 ${description.length} 字符，建议扩充到 20 字以上` });
+      } else if (description.length > 200) {
+        warnings.push({ level: 'warning', icon: '📝', text: `摘要 ${description.length} 字符偏长，建议压缩至 200 字以内` });
+      }
+
+      // 4) 图片路径约定
+      const badImages = new Set();
+      const imgRe = /!\[[^\]]*\]\(\s*([^)\s]+)/g;
+      let im;
+      while ((im = imgRe.exec(content)) !== null) {
+        const src = im[1];
+        if (/^https?:\/\//.test(src) || src.startsWith('data:')) continue;
+        if (!src.startsWith('../assets/images/')) badImages.add(src);
+      }
+      badImages.forEach((src) => {
+        warnings.push({ level: 'warning', icon: '🖼️', text: `图片路径「${src}」不在 ../assets/images/ 约定目录下，构建时可能解析失败` });
+      });
+
+      // 5) 正文健康度
+      if (content.length < 300) {
+        warnings.push({ level: 'warning', icon: '📄', text: `正文仅 ${content.length} 字符，内容偏单薄，确认不是误发半成品？` });
+      }
+      if (content.length > 800 && !/^#{1,6}\s+\S/m.test(content)) {
+        warnings.push({ level: 'warning', icon: '🏷️', text: '长文没有任何标题层级（#/##），建议补充分节标题提升可读性' });
+      }
+      if (/TODO|FIXME|待补充|待完善|占位/.test(content)) {
+        warnings.push({ level: 'warning', icon: '🚧', text: '正文残留 TODO / 待补充 / 占位标记，发布前记得清理' });
+      }
+
+      // 6) 未链接标题提及（轻量补链雷达）
+      const masked = maskPreflightAreas(content);
+      const titleOwners = new Map();
+      for (const p of postsData) {
+        if (p.slug === slug || p.encrypted || p.draft) continue;
+        const t = String(p.title || '').trim();
+        if (t.length < 2 || /^\d+$/.test(t)) continue;
+        if (titleOwners.has(t)) {
+          titleOwners.set(t, null); // 同名标题存在歧义，整体弃用
+        } else {
+          titleOwners.set(t, p.slug);
+        }
+      }
+      const unlinkedMentions = [];
+      for (const [t, ownerSlug] of titleOwners) {
+        if (!ownerSlug) continue;
+        if (masked.includes(t)) unlinkedMentions.push(t);
+      }
+      if (unlinkedMentions.length) {
+        warnings.push({
+          level: 'info',
+          icon: '🧲',
+          text: `正文提及 ${unlinkedMentions.length} 个未建立链接的条目：${unlinkedMentions.slice(0, 5).map((t) => `《${t}》`).join('、')}${unlinkedMentions.length > 5 ? ' 等' : ''}，可前往 /wiki/ 补链雷达查看详情`,
+        });
+      }
+
+      return { errors, warnings };
+    }
+
+    function renderPreflightRow(item) {
+      const tone = item.level === 'error'
+        ? 'border-red-500/40 bg-red-500/[0.06] text-red-600 dark:text-red-400'
+        : item.level === 'info'
+          ? 'border-sky-500/40 bg-sky-500/[0.06] text-sky-600 dark:text-sky-400'
+          : 'border-amber-500/40 bg-amber-500/[0.06] text-amber-600 dark:text-amber-400';
+      return `<li class="px-3 py-2.5 rounded-xl border ${tone} text-xs leading-relaxed">`
+        + `<span class="mr-1.5">${item.icon || '•'}</span>${escapeHtml(item.text)}</li>`;
+    }
+
+    function showPreflightModal({ errors, warnings }) {
+      if (!modalPreflight || !preflightList) return Promise.resolve(true);
+      return new Promise((resolve) => {
+        if (preflightSummary) {
+          preflightSummary.innerHTML = errors.length
+            ? `<span class="text-red-500 font-bold">${errors.length} 个阻断级问题</span> · <span class="text-amber-500 font-bold">${warnings.length} 条建议</span> — 仍可强制发布，但强烈建议先修复喵`
+            : `未发现阻断级问题 · ${warnings.length} 条优化建议（不强制修正，确认无误即可继续）`;
+        }
+        preflightList.innerHTML = errors.concat(warnings).map(renderPreflightRow).join('');
+
+        function finish(proceed) {
+          modalPreflight.classList.add('hidden');
+          btnPreflightCancel?.removeEventListener('click', onCancel);
+          btnPreflightContinue?.removeEventListener('click', onContinue);
+          resolve(proceed);
+        }
+        const onCancel = () => finish(false);
+        const onContinue = () => finish(true);
+        btnPreflightCancel?.addEventListener('click', onCancel);
+        btnPreflightContinue?.addEventListener('click', onContinue);
+        modalPreflight.classList.remove('hidden');
+      });
+    }
+
+    // ---------- [D] 历史版本回滚 (Revision Rollback) ----------
+    const modalHistory = document.getElementById('modal-history');
+    const historyModalSlug = document.getElementById('history-modal-slug');
+    const historyList = document.getElementById('history-list');
+    const btnCloseHistory = document.getElementById('btn-close-history');
+    let historyCurrentSlug = '';
+
+    function decodeBase64Utf8(b64) {
+      const binary = atob(String(b64 || '').replace(/\s+/g, ''));
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return new TextDecoder('utf-8').decode(bytes);
+    }
+
+    async function githubApiFetch(pat, url) {
+      const res = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${pat}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      });
+      if (!res.ok) {
+        let msg = `HTTP ${res.status}`;
+        try { const j = await res.json(); if (j && j.message) msg = j.message; } catch (e) {}
+        throw new Error(`GitHub 查询失败 (${res.status})：${msg}`);
+      }
+      return res.json();
+    }
+
+    async function openPostHistory(slug) {
+      const pat = resolveGithubPat();
+      if (!pat) {
+        alert('查看历史版本需要 GitHub PAT！请先在右上角“鉴权凭据”中配置 喵！');
+        modalAuth.classList.remove('hidden');
+        return;
+      }
+      historyCurrentSlug = slug;
+      if (historyModalSlug) historyModalSlug.textContent = `/posts/${slug}/`;
+      if (!modalHistory || !historyList) return;
+      modalHistory.classList.remove('hidden');
+      historyList.innerHTML = '<li class="text-xs text-black/50 dark:text-white/50 py-6 text-center animate-pulse">正在拉取 GitHub 提交历史…</li>';
+      try {
+        const commits = await githubApiFetch(pat, `https://api.github.com/repos/yaoxiovo/astro/commits?path=src/content/posts/${encodeURIComponent(slug)}.md&per_page=20`);
+        if (!Array.isArray(commits) || !commits.length) {
+          historyList.innerHTML = '<li class="text-xs text-black/50 dark:text-white/50 py-6 text-center">该条目暂无提交历史喵？</li>';
+          return;
+        }
+        historyList.innerHTML = commits.map((c) => {
+          const raw = c.commit || {};
+          const msg = escapeHtml(String((raw.message || '').split('\n')[0] || '(无提交信息)'));
+          const author = escapeHtml((raw.author && raw.author.name) || 'unknown');
+          const dateText = raw.author && raw.author.date ? new Date(raw.author.date).toLocaleString('zh-CN', { hour12: false }) : '';
+          const sha = String(c.sha || '');
+          return `<li class="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-[var(--line-divider)]">`
+            + `<div class="min-w-0">`
+            + `<p class="text-xs font-medium text-black/80 dark:text-white/80 truncate" title="${msg}">${msg}</p>`
+            + `<p class="text-[10px] font-mono text-black/40 dark:text-white/40 mt-0.5">${sha.slice(0, 7)} · ${author} · ${dateText}</p>`
+            + `</div>`
+            + `<button type="button" class="btn-revert-commit shrink-0 px-3 py-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[11px] font-semibold transition-all cursor-pointer" data-sha="${sha}">回滚到此版</button>`
+            + `</li>`;
+        }).join('');
+      } catch (err) {
+        historyList.innerHTML = `<li class="text-xs text-red-500 py-6 text-center">${escapeHtml(err && err.message ? err.message : String(err))}</li>`;
+      }
+    }
+
+    async function revertPostToCommit(slug, sha) {
+      const pat = resolveGithubPat();
+      if (!pat) {
+        alert('回滚操作需要 GitHub PAT，请先在“鉴权凭据”中配置 喵！');
+        return;
+      }
+      const confirmed = window.confirm(`⚠️ 回滚确认：\n\n将 /posts/${slug}/ 的正文恢复到提交 ${sha.slice(0, 7)} 的状态，并以一条新 Commit 写回 main 分支。\n\n当前内容不会丢失（同样保存在提交历史中），确定继续喵？`);
+      if (!confirmed) return;
+      try {
+        const fileData = await githubApiFetch(pat, `https://api.github.com/repos/yaoxiovo/astro/contents/src/content/posts/${encodeURIComponent(slug)}.md?ref=${sha}`);
+        const content = decodeBase64Utf8(fileData.content || '');
+        await commitDirectToGitHub(pat, `src/content/posts/${slug}.md`, content, `revert: /posts/${slug}/ 回滚至 ${sha.slice(0, 7)} via Admin Studio`);
+        const target = postsData.find((p) => p.slug === slug);
+        if (target) target.body = content;
+        modalHistory?.classList.add('hidden');
+        alert(`回滚提交完成喵！Cloudflare Pages 正在重新构建，稍后线上即可回到 ${sha.slice(0, 7)} 版本的内容。`);
+      } catch (err) {
+        alert(`回滚失败：${err && err.message ? err.message : err}`);
+      }
+    }
+
+    historyList?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-revert-commit');
+      if (!btn) return;
+      const sha = btn.getAttribute('data-sha');
+      if (sha && historyCurrentSlug) revertPostToCommit(historyCurrentSlug, sha);
+    });
+
+    // 管理列表“历史”按钮（独立事件委托，与现有操作按钮互不干扰）
+    managePostsList?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-history-post');
+      if (!btn) return;
+      const slug = btn.getAttribute('data-slug');
+      if (slug) openPostHistory(slug);
+    });
+
+    btnCloseHistory?.addEventListener('click', () => modalHistory?.classList.add('hidden'));
+    modalHistory?.addEventListener('click', (e) => {
+      if (e.target === modalHistory) modalHistory.classList.add('hidden');
+    });
+
+    // ---------- [E] 条目维护状态卡 (Wiki Insight，编辑既有文章时展示) ----------
+    const editingInsightCard = document.getElementById('editing-insight-card');
+    const editingInsightBody = document.getElementById('editing-insight-body');
+    let wikiBaselineCache = null;
+
+    function hideEditInsight() {
+      editingInsightCard?.classList.add('hidden');
+    }
+
+    async function fetchWikiBaseline() {
+      if (wikiBaselineCache) return wikiBaselineCache;
+      const safeJson = (url) => fetch(url).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      const [maintenance, backlinks, suggestions] = await Promise.all([
+        safeJson('/api/wiki/maintenance.json'),
+        safeJson('/api/wiki/backlinks.json'),
+        safeJson('/api/wiki/link-suggestions.json'),
+      ]);
+      wikiBaselineCache = { maintenance, backlinks, suggestions };
+      return wikiBaselineCache;
+    }
+
+    async function loadEditInsight(slug) {
+      if (!editingInsightCard || !editingInsightBody) return;
+      editingInsightCard.classList.add('hidden');
+      const safeJson = (url) => fetch(url).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      try {
+        const [baseline, quality] = await Promise.all([
+          fetchWikiBaseline(),
+          safeJson(`/api/wiki/quality/${encodeURIComponent(slug)}.json`),
+        ]);
+        // 用户可能已切换/退出编辑，防止过期数据写入
+        if (!isEditingMode || editingSlug !== slug) return;
+        const rows = [];
+
+        if (quality && typeof quality.score === 'number') {
+          rows.push(`📈 质量评分 <span class="font-mono font-bold text-[var(--primary)]">${quality.score}</span>/100 · ${escapeHtml(quality.gradeLabel || quality.grade || '')} <span class="opacity-50">(${escapeHtml(String(quality.checkedAt || '').slice(0, 10))})</span>`);
+        }
+
+        const m = baseline.maintenance;
+        if (m) {
+          const inList = (arr) => Array.isArray(arr) && arr.some((item) => item && item.slug === slug);
+          const flags = [];
+          if (inList(m.orphans)) flags.push('🕸️ 孤儿页（无任何入链）');
+          if (inList(m.deadEnds)) flags.push('🚪 死胡同（无任何出链）');
+          const staleEntry = Array.isArray(m.stale) ? m.stale.find((item) => item && item.slug === slug) : null;
+          if (staleEntry) flags.push(`⏳ 长期未更新（${staleEntry.daysSinceUpdate || '?'} 天）`);
+          if (inList(m.lowQuality)) flags.push('📉 低质量标记');
+          if (!flags.length) flags.push('✅ 健康度良好，未命中任何维护预警');
+          rows.push(`🛡️ 维护状态：${flags.join('；')}`);
+        }
+
+        const backlinks = baseline.backlinks && baseline.backlinks.backlinks ? baseline.backlinks.backlinks[slug] : null;
+        if (Array.isArray(backlinks) && backlinks.length) {
+          const titles = backlinks.slice(0, 3).map((b) => `《${escapeHtml(b.title || b.slug)}》`).join('、');
+          rows.push(`🔗 被引用 <span class="font-mono font-bold">${backlinks.length}</span> 处：${titles}${backlinks.length > 3 ? ' 等' : ''}`);
+        } else if (baseline.backlinks) {
+          rows.push('🔗 暂无其他文章链接到本条目（可考虑在相关文中补链）');
+        }
+
+        const sugg = baseline.suggestions && baseline.suggestions.suggestions ? baseline.suggestions.suggestions[slug] : null;
+        if (Array.isArray(sugg) && sugg.length) {
+          const items = sugg.slice(0, 3).map((s) => `《${escapeHtml(s.title || s.slug)}》×${s.count}`).join('、');
+          rows.push(`🧲 补链机会 <span class="font-mono font-bold">${sugg.length}</span> 项：${items}${sugg.length > 3 ? ' 等' : ''}`);
+        }
+
+        if (!rows.length) return;
+        editingInsightBody.innerHTML = rows.map((r) => `<div>${r}</div>`).join('');
+        editingInsightCard.classList.remove('hidden');
+      } catch (err) {
+        console.warn('[Admin] Wiki 洞察加载失败:', err);
+      }
+    }
+
     // 页面启动时执行门禁校验
     function runInitialGuard() {
       if (enforceAdminAuthGuard()) {
@@ -3101,4 +3783,13 @@ ${content.trim()}
     setTimeout(runInitialGuard, 300);
     setTimeout(runInitialGuard, 800);
   })();
+</script>
+
+<!-- 预览渲染引擎：构建期由 Vite 打包 markdown-it，向管理台内联逻辑暴露渲染入口 -->
+<script>
+  import MarkdownIt from "markdown-it";
+
+  // html: true 与线上正文渲染保持一致（正文为作者本人内容，预览仅存在于本机管理台）
+  const mdPreviewEngine = new MarkdownIt({ html: true, linkify: true, breaks: false });
+  window.__adminMdRender = (src) => mdPreviewEngine.render(String(src || ""));
 </script>
