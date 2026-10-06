@@ -131,7 +131,7 @@ const bannerOffset =
 ---
 
 <!DOCTYPE html>
- <html lang={siteLang} class="bg-[var(--page-bg)] transition text-[12px] md:text-[16px]"  
+ <html lang={siteLang} class="bg-[var(--page-bg)] transition text-[12px] md:text-[16px] bg-lock-pause"  
 	  data-overlayscrollbars-initialize>  <!-- 手机端适配 -->
 
 	<head>
@@ -237,8 +237,8 @@ const bannerOffset =
 				const urlMatch = bgUrl.match(/url\(["']?([^"')]+)["']?\)/);
 				if (urlMatch) {
 					window.__bgRawUrl = urlMatch[1];
-					// 先暂停直链渲染：随机图 API 经 ?json 锁定具体地址后再显示，保证"看到的 == 能保存的"
-					document.documentElement.style.setProperty('--bg-url', 'none');
+					// 直链渲染已由 html.bg-lock-pause 规则暂停：随机图经 ?json 锁定具体地址后再显示，
+					// 保证"看到的 == 能保存的"
 					initBackgroundLoad();
 				}
 			}
@@ -265,6 +265,21 @@ const bannerOffset =
 				});
 			}
 
+			// Astro define:vars 会把 --bg-url 内联写死到每个元素上，#bg-box 自带的内联值优先级
+			// 高于 html/body 继承，直接改 documentElement 无效——必须落在 #bg-box 自身的内联样式上
+			function commitBgUrl(src) {
+				function apply() {
+					const val = 'url(' + src + ')';
+					document.documentElement.style.setProperty('--bg-url', val);
+					if (document.body) document.body.style.setProperty('--bg-url', val);
+					const bgBox = document.getElementById('bg-box');
+					if (bgBox) bgBox.style.setProperty('--bg-url', val);
+					document.documentElement.classList.remove('bg-lock-pause');
+				}
+				if (document.getElementById('bg-box')) { apply(); return; }
+				document.addEventListener('DOMContentLoaded', apply, { once: true });
+			}
+
 			function startBackgroundLoad(src, allowFallback) {
 				const img = new Image();
 				img.onload = function () {
@@ -279,7 +294,7 @@ const bannerOffset =
 					if (allowFallback && window.__bgRawUrl) {
 						// 锁定图失效时回退原始直链：保证背景仍能显示（放弃本次保存能力）
 						window.__bgImageUrl = null;
-						document.documentElement.style.setProperty('--bg-url', 'url(' + window.__bgRawUrl + ')');
+						commitBgUrl(window.__bgRawUrl);
 						startBackgroundLoad(window.__bgRawUrl, false);
 					}
 				};
@@ -295,7 +310,7 @@ const bannerOffset =
 				const locked = isFixedFile ? null : await tryLockRandomImage(rawSrc);
 				window.__bgImageUrl = locked || null;
 				const finalSrc = locked || rawSrc;
-				document.documentElement.style.setProperty('--bg-url', 'url(' + finalSrc + ')');
+				commitBgUrl(finalSrc);
 				startBackgroundLoad(finalSrc, Boolean(locked));
 			}
 		</script>
@@ -357,6 +372,10 @@ const bannerOffset =
 			} */
 		</style>
 
+		<!-- 暂停背景直链渲染：Astro define:vars 把原始随机直链内联写死在 #bg-box 自身，
+		     若不停用会抢先渲染出一张与锁定地址不同的随机图（保存就对不上）；用 html 类名开关而非移除元素（Swup head-plugin 会按 outerHTML 差异把被移除的静态 style 在翻页时克隆复活） -->
+		<style is:inline>html.bg-lock-pause #bg-box{background-image:none !important}</style>
+
 		{!setOGTypeArticle && (
 			<script type="application/ld+json" set:html={JSON.stringify(defaultJsonLd)}></script>
 		)}
@@ -401,7 +420,8 @@ const bannerOffset =
 		<div id="bg-saver-toast" role="status"
 			class="fixed right-4 bottom-20 z-40 max-w-[82vw] px-3.5 py-2 rounded-xl bg-black/75 text-white text-xs leading-relaxed shadow-lg backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300"></div>
 
-		<script is:inline>
+		<!-- data-swup-ignore-script：Swup 每次翻页重跑内联脚本，本脚本只随整页加载跑一次（避免重复绑定事件） -->
+		<script is:inline data-swup-ignore-script>
 			(function () {
 				var btn = document.getElementById('bg-saver-btn');
 				var toastEl = document.getElementById('bg-saver-toast');
@@ -454,20 +474,12 @@ const bannerOffset =
 					setTimeout(function () { URL.revokeObjectURL(objUrl); }, 10000);
 				}
 
-				async function resolveCurrentBgUrl() {
-					if (window.__bgImageUrl) return window.__bgImageUrl;      // 常规路径：加载期已锁定
+				// 只信「加载期已锁定」的地址（== 当前显示的图）；固定直链则直链即所见图
+				function resolveCurrentBgUrl() {
+					if (window.__bgImageUrl) return window.__bgImageUrl;
 					var raw = window.__bgRawUrl;
-					if (!raw || !isAlcyUrl(raw)) return null;
-					if (looksLikeImageFile(raw)) return raw;                   // 配置为固定直链壁纸的情况
-					try {
-						// 罕见兜底：加载期锁定失败，点击时再尝试一次
-						var sep = raw.indexOf('?') === -1 ? '?' : '&';
-						var res = await fetch(raw + sep + 'json', { cache: 'no-store' });
-						if (res.ok) {
-							var t = (await res.text()).trim();
-							if (/^https?:\/\//i.test(t) && isAlcyUrl(t)) return t;
-						}
-					} catch (e) {}
+					if (raw && looksLikeImageFile(raw)) return raw;
+					// 随机图未锁定：屏幕上这张无法复原，宁可拒绝也不保存另一张随机图
 					return null;
 				}
 
@@ -476,12 +488,13 @@ const bannerOffset =
 					btn.dataset.busy = '1';
 					btn.classList.add('opacity-60');
 					try {
-						var url = await resolveCurrentBgUrl();
+						var url = resolveCurrentBgUrl();
 						if (!url) {
-							showBgToast('没能锁定当前壁纸地址，稍后刷新再试喵');
+							showBgToast('当前壁纸无法锁定保存地址，刷新页面再试喵');
 							return;
 						}
-						var res = await fetch(withCacheBuster(url), { cache: 'no-store' });
+						var fetchUrl = isAlcyUrl(url) ? withCacheBuster(url) : url;
+						var res = await fetch(fetchUrl, { cache: 'no-store' });
 						if (!res.ok) throw new Error('HTTP ' + res.status);
 						var blob = await res.blob();
 						if (!blob.size) throw new Error('empty blob');
@@ -489,9 +502,9 @@ const bannerOffset =
 						showBgToast('壁纸已保存喵~');
 					} catch (err) {
 						console.warn('[BgSaver] 保存失败，回退为打开原图:', err);
-						var fallbackUrl = window.__bgImageUrl || window.__bgRawUrl;
+						var fallbackUrl = resolveCurrentBgUrl();
 						if (fallbackUrl) {
-							window.open(withCacheBuster(fallbackUrl), '_blank', 'noopener');
+							window.open(isAlcyUrl(fallbackUrl) ? withCacheBuster(fallbackUrl) : fallbackUrl, '_blank', 'noopener');
 							showBgToast('已打开原图新页签，长按 / 右键保存即可喵');
 						} else {
 							showBgToast('保存失败，请稍后再试喵');

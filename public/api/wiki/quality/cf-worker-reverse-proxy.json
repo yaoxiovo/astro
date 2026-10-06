@@ -1,7 +1,7 @@
 {
   "slug": "cf-worker-reverse-proxy",
   "title": "Cloudflare Worker 反向代理代码：CORS、Cookie 与 302 跳转修复",
-  "checkedAt": "2026-10-06T02:27:43.809Z",
+  "checkedAt": "2026-10-06T02:45:18.055Z",
   "score": 100,
   "grade": "S",
   "gradeLabel": "工业级卓越 (Industrial S)",
