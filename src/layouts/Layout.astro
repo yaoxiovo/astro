@@ -9,6 +9,7 @@ import ConfigCarrier from "@components/ConfigCarrier.astro";
 import ReadingProgress from "@components/control/ReadingProgress.astro";
 import CookieConsent from "@components/CookieConsent.astro";
 import YaoxiAuth from "@components/YaoxiAuth.astro";
+import { Icon } from "astro-icon/components";
 import {
 	AUTO_MODE,
 	BANNER_HEIGHT,
@@ -228,26 +229,74 @@ const bannerOffset =
 			offset = offset - offset % 4;
 			document.documentElement.style.setProperty('--banner-height-extend', `${offset}px`);
 			
-			// Background image loading detection
+			// Background image loading detection + 随机图锁定（供「保存当前壁纸」获取精确地址）
 			const bgUrl = getComputedStyle(document.documentElement).getPropertyValue('--bg-url').trim();
 			const bgEnable = getComputedStyle(document.documentElement).getPropertyValue('--bg-enable').trim();
-			
+
 			if (bgUrl && bgUrl !== 'none' && bgEnable === '1') {
-				const img = new Image();
 				const urlMatch = bgUrl.match(/url\(["']?([^"')]+)["']?\)/);
 				if (urlMatch) {
-					img.onload = function() {
-						// 背景图片完全加载后，显示背景并启用卡片透明效果
-						document.body.classList.add('bg-loaded');
-						document.documentElement.style.setProperty('--card-bg', 'var(--card-bg-transparent)');
-						document.documentElement.style.setProperty('--float-panel-bg', 'var(--float-panel-bg-transparent)');
-					};
-					img.onerror = function() {
-						// Keep cards opaque if background image fails to load
-						console.warn('Background image failed to load, keeping cards opaque');
-					};
-					img.src = urlMatch[1];
+					window.__bgRawUrl = urlMatch[1];
+					// 先暂停直链渲染：随机图 API 经 ?json 锁定具体地址后再显示，保证"看到的 == 能保存的"
+					document.documentElement.style.setProperty('--bg-url', 'none');
+					initBackgroundLoad();
 				}
+			}
+
+			// 随机图 API 每次请求都会换图，只有先取到具体图片地址才能保存当前这张
+			function tryLockRandomImage(src) {
+				return new Promise(function (resolve) {
+					let host = '';
+					try { host = new URL(src, location.href).hostname; } catch (e) { resolve(null); return; }
+					if (!/(^|\.)t\.alcy\.cc$/i.test(host)) { resolve(null); return; }
+					const ctrl = new AbortController();
+					const timer = setTimeout(function () { ctrl.abort(); }, 3500);
+					const sep = src.indexOf('?') === -1 ? '?' : '&';
+					fetch(src + sep + 'json', { signal: ctrl.signal, cache: 'no-store' })
+						.then(function (res) { return res.ok ? res.text() : null; })
+						.then(function (text) {
+							clearTimeout(timer);
+							const locked = String(text || '').trim();
+							let valid = false;
+							try { valid = /^https?:\/\//i.test(locked) && /(^|\.)t\.alcy\.cc$/i.test(new URL(locked).hostname); } catch (e) {}
+							resolve(valid ? locked : null);
+						})
+						.catch(function () { clearTimeout(timer); resolve(null); });
+				});
+			}
+
+			function startBackgroundLoad(src, allowFallback) {
+				const img = new Image();
+				img.onload = function () {
+					// 背景图片完全加载后，显示背景并启用卡片透明效果
+					document.body.classList.add('bg-loaded');
+					document.documentElement.style.setProperty('--card-bg', 'var(--card-bg-transparent)');
+					document.documentElement.style.setProperty('--float-panel-bg', 'var(--float-panel-bg-transparent)');
+				};
+				img.onerror = function () {
+					// Keep cards opaque if background image fails to load
+					console.warn('Background image failed to load, keeping cards opaque');
+					if (allowFallback && window.__bgRawUrl) {
+						// 锁定图失效时回退原始直链：保证背景仍能显示（放弃本次保存能力）
+						window.__bgImageUrl = null;
+						document.documentElement.style.setProperty('--bg-url', 'url(' + window.__bgRawUrl + ')');
+						startBackgroundLoad(window.__bgRawUrl, false);
+					}
+				};
+				img.src = src;
+			}
+
+			async function initBackgroundLoad() {
+				const rawSrc = window.__bgRawUrl;
+				if (!rawSrc) return;
+				// 配置为固定图片直链时无需锁定（直链即最终地址）
+				let isFixedFile = false;
+				try { isFixedFile = /\.[a-z0-9]{2,5}$/i.test(new URL(rawSrc, location.href).pathname); } catch (e) {}
+				const locked = isFixedFile ? null : await tryLockRandomImage(rawSrc);
+				window.__bgImageUrl = locked || null;
+				const finalSrc = locked || rawSrc;
+				document.documentElement.style.setProperty('--bg-url', 'url(' + finalSrc + ')');
+				startBackgroundLoad(finalSrc, Boolean(locked));
 			}
 		</script>
 		<style define:vars={{
@@ -343,6 +392,118 @@ const bannerOffset =
 		  data-overlayscrollbars-initialize
 	>
 		<div id="bg-box"></div>
+
+		<!-- 背景壁纸一键保存：全站悬浮按钮（随机图在加载期锁定后，保存的就是当前显示的这一张） -->
+		<button id="bg-saver-btn" type="button" aria-label="保存当前背景图" title="保存当前背景图 (Save wallpaper)"
+			class="hidden flex fixed right-4 bottom-6 z-40 h-10 w-10 items-center justify-center rounded-full border border-[var(--line-divider)] bg-[var(--float-panel-bg)] text-black/50 dark:text-white/50 shadow-lg backdrop-blur-md transition-all duration-200 select-none hover:scale-110 hover:text-[var(--primary)] cursor-pointer">
+			<Icon name="material-symbols:download-rounded" class="text-xl" />
+		</button>
+		<div id="bg-saver-toast" role="status"
+			class="fixed right-4 bottom-20 z-40 max-w-[82vw] px-3.5 py-2 rounded-xl bg-black/75 text-white text-xs leading-relaxed shadow-lg backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+		<script is:inline>
+			(function () {
+				var btn = document.getElementById('bg-saver-btn');
+				var toastEl = document.getElementById('bg-saver-toast');
+				if (!btn || !toastEl) return;
+
+				// 仅在启用背景图的页面显示按钮
+				var bgEnable = getComputedStyle(document.documentElement).getPropertyValue('--bg-enable').trim();
+				if (bgEnable !== '1') return;
+				btn.classList.remove('hidden');
+
+				var toastTimer = null;
+				function showBgToast(msg, ms) {
+					toastEl.textContent = msg;
+					toastEl.classList.remove('opacity-0', 'pointer-events-none');
+					clearTimeout(toastTimer);
+					toastTimer = setTimeout(function () {
+						toastEl.classList.add('opacity-0', 'pointer-events-none');
+					}, ms || 2600);
+				}
+
+				function isAlcyUrl(u) {
+					try { return /(^|\.)t\.alcy\.cc$/i.test(new URL(u, location.href).hostname); } catch (e) { return false; }
+				}
+
+				function looksLikeImageFile(u) {
+					try { return /\.[a-z0-9]{2,5}$/i.test(new URL(u, location.href).pathname); } catch (e) { return false; }
+				}
+
+				// 关键：带查询串才能命中 EdgeOne 的 CORS 规则（无查询的缓存副本会丢失 ACAO 头导致 fetch 被拦）
+				function withCacheBuster(u) {
+					return u + (u.indexOf('?') === -1 ? '?' : '&') + 'dl=' + Date.now();
+				}
+
+				function triggerBlobDownload(blob, refUrl) {
+					var ext = 'webp';
+					try {
+						var m = new URL(refUrl, location.href).pathname.match(/\.([a-z0-9]{2,5})$/i);
+						if (m) ext = m[1].toLowerCase();
+					} catch (e) {}
+					var d = new Date();
+					var stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0')
+						+ '-' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + String(d.getSeconds()).padStart(2, '0');
+					var a = document.createElement('a');
+					var objUrl = URL.createObjectURL(blob);
+					a.href = objUrl;
+					a.download = 'yaoxi-wallpaper-' + stamp + '.' + ext;
+					document.body.appendChild(a);
+					a.click();
+					a.remove();
+					setTimeout(function () { URL.revokeObjectURL(objUrl); }, 10000);
+				}
+
+				async function resolveCurrentBgUrl() {
+					if (window.__bgImageUrl) return window.__bgImageUrl;      // 常规路径：加载期已锁定
+					var raw = window.__bgRawUrl;
+					if (!raw || !isAlcyUrl(raw)) return null;
+					if (looksLikeImageFile(raw)) return raw;                   // 配置为固定直链壁纸的情况
+					try {
+						// 罕见兜底：加载期锁定失败，点击时再尝试一次
+						var sep = raw.indexOf('?') === -1 ? '?' : '&';
+						var res = await fetch(raw + sep + 'json', { cache: 'no-store' });
+						if (res.ok) {
+							var t = (await res.text()).trim();
+							if (/^https?:\/\//i.test(t) && isAlcyUrl(t)) return t;
+						}
+					} catch (e) {}
+					return null;
+				}
+
+				btn.addEventListener('click', async function () {
+					if (btn.dataset.busy === '1') return;
+					btn.dataset.busy = '1';
+					btn.classList.add('opacity-60');
+					try {
+						var url = await resolveCurrentBgUrl();
+						if (!url) {
+							showBgToast('没能锁定当前壁纸地址，稍后刷新再试喵');
+							return;
+						}
+						var res = await fetch(withCacheBuster(url), { cache: 'no-store' });
+						if (!res.ok) throw new Error('HTTP ' + res.status);
+						var blob = await res.blob();
+						if (!blob.size) throw new Error('empty blob');
+						triggerBlobDownload(blob, url);
+						showBgToast('壁纸已保存喵~');
+					} catch (err) {
+						console.warn('[BgSaver] 保存失败，回退为打开原图:', err);
+						var fallbackUrl = window.__bgImageUrl || window.__bgRawUrl;
+						if (fallbackUrl) {
+							window.open(withCacheBuster(fallbackUrl), '_blank', 'noopener');
+							showBgToast('已打开原图新页签，长按 / 右键保存即可喵');
+						} else {
+							showBgToast('保存失败，请稍后再试喵');
+						}
+					} finally {
+						btn.dataset.busy = '0';
+						btn.classList.remove('opacity-60');
+					}
+				});
+			})();
+		</script>
+
 		<!-- 快猫星云状态横幅：fixed 顶部，无故障/维护时自动隐藏 -->
 		<flashduty-status-widget
 			page="https://status.yaoxi.wiki"
