@@ -1,0 +1,414 @@
+---
+/**
+ * 实时共读（Durable Objects Presence）
+ * - 悬浮药丸「此刻 N 人与你同读」：WebSocket 长连（断线指数退避重连 + 心跳保活）
+ * - 段落热度：与弹幕一致的段落索引空间（#post-container .markdown-content 下 p/h2/h3/h4/blockquote）
+ * - 阅读位置 25s 心跳上报，服务端聚合广播，正文左侧绿点标记此刻被阅读的段落
+ * - 生命周期：bundled 模块脚本单次执行；DOMContentLoaded / swup:page:view 双钩子自恢复，
+ *   晚于 page:view 执行时走 readyState 兜底自检（与站点既有脚本契约一致）；离开文章页自动销毁
+ */
+interface Props {
+	slug: string;
+	api?: string;
+}
+const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
+---
+
+<div id="yaoxi-presence-root" data-slug={slug} data-api={api} class="hidden">
+	<button
+		id="yaoxi-pr-pill"
+		type="button"
+		aria-label="实时共读状态"
+		class="fixed bottom-6 left-4 lg:left-8 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full border border-[var(--line-divider)] bg-[var(--float-panel-bg)] backdrop-blur-md shadow-lg text-xs text-75 select-none transition-transform duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+	>
+		<span class="yaoxi-pr-dot" aria-hidden="true"></span>
+		<span id="yaoxi-pr-text">实时共读</span>
+	</button>
+
+	<div
+		id="yaoxi-pr-pop"
+		role="dialog"
+		aria-label="实时共读详情"
+		class="hidden fixed bottom-16 left-4 lg:left-8 z-40 w-64 card-base shadow-xl rounded-xl p-3"
+	>
+		<div class="flex items-center justify-between mb-2">
+			<span class="text-xs font-bold text-90">⚡ 实时共读</span>
+			<button id="yaoxi-pr-close" type="button" aria-label="关闭" class="text-50 hover:text-90 text-xs cursor-pointer">✕</button>
+		</div>
+		<div id="yaoxi-pr-status" class="text-xs text-50 mb-2">连接中…</div>
+		<div id="yaoxi-pr-list" class="space-y-1 text-xs"></div>
+		<div class="mt-2 pt-2 border-t border-[var(--line-divider)] text-[10px] text-50 leading-relaxed">
+			左侧绿点 = 此刻被阅读的段落，点条目可跳转喵~
+		</div>
+	</div>
+</div>
+
+<style is:global>
+	.yaoxi-pr-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 9999px;
+		background: #34d399;
+		box-shadow: 0 0 8px rgba(52, 211, 153, 0.8);
+		animation: yaoxi-pr-pulse 2s ease-in-out infinite;
+	}
+	@keyframes yaoxi-pr-pulse {
+		0%,
+		100% {
+			opacity: 0.55;
+			transform: scale(0.85);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1.15);
+		}
+	}
+	.yaoxi-pr-hot {
+		position: relative;
+	}
+	.yaoxi-pr-hot::before {
+		content: "";
+		position: absolute;
+		left: -14px;
+		top: 0.62em;
+		width: 6px;
+		height: 6px;
+		border-radius: 9999px;
+		background: #34d399;
+		box-shadow: 0 0 8px rgba(52, 211, 153, 0.75);
+		opacity: calc(0.35 + var(--yaoxi-pr-n, 1) * 0.2);
+		transform: scale(calc(1 + (var(--yaoxi-pr-n, 1) - 1) * 0.18));
+		transition: opacity 0.4s ease, transform 0.4s ease;
+		pointer-events: none;
+	}
+	.yaoxi-pr-jump {
+		display: block;
+		width: 100%;
+		text-align: left;
+		padding: 4px 6px;
+		border-radius: 6px;
+		cursor: pointer;
+		background: transparent;
+		color: inherit;
+		transition: background 0.15s ease;
+	}
+	.yaoxi-pr-jump:hover {
+		background: rgba(52, 211, 153, 0.12);
+	}
+	.yaoxi-pr-flash {
+		animation: yaoxi-pr-flash 1.3s ease-out 1;
+		border-radius: 6px;
+	}
+	@keyframes yaoxi-pr-flash {
+		0% {
+			box-shadow: 0 0 0 6px rgba(52, 211, 153, 0.28);
+		}
+		100% {
+			box-shadow: 0 0 0 6px rgba(52, 211, 153, 0);
+		}
+	}
+	@media (max-width: 640px) {
+		.yaoxi-pr-hot::before {
+			left: -9px;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.yaoxi-pr-dot {
+			animation: none;
+		}
+		.yaoxi-pr-hot::before {
+			transition: none;
+		}
+	}
+</style>
+
+<script>
+	type PrHeat = Record<string, number>;
+
+	interface PrState {
+		slug: string;
+		api: string;
+		ws: WebSocket | null;
+		paras: HTMLElement[];
+		curP: number;
+		lastSentP: number;
+		lastSendAt: number;
+		retry: number;
+		destroyed: boolean;
+		reconnectTimer: number;
+		hbTimer: number;
+		scrollTimer: number;
+		onScroll?: () => void;
+		onVis?: () => void;
+	}
+
+	const PR_SELECTOR = "p, h2, h3, h4, blockquote";
+	const PR_CONTENT = "#post-container .markdown-content";
+	const PR_SEND_GAP_MS = 2500;
+	const PR_HB_MS = 25000;
+	const PR_REF_LINE = 140; // 视口参考线：其下方第一个段落视作「正在读」
+
+	let pr: PrState | null = null;
+	const w = window as any;
+
+	function prNormText(el: HTMLElement): string {
+		return (el.textContent || "").replace(/\s+/g, " ").trim();
+	}
+
+	function prParas(): HTMLElement[] {
+		const content = document.querySelector(PR_CONTENT) as HTMLElement | null;
+		if (!content) return [];
+		return Array.from(content.querySelectorAll<HTMLElement>(PR_SELECTOR)).filter((el) => prNormText(el).length > 0);
+	}
+
+	function prComputePos(): number {
+		if (!pr || !pr.paras.length) return -1;
+		for (let i = 0; i < pr.paras.length; i++) {
+			const r = pr.paras[i].getBoundingClientRect();
+			if (r.bottom > PR_REF_LINE) return i;
+		}
+		return pr.paras.length - 1;
+	}
+
+	function prSetStatus(s: string): void {
+		const el = document.getElementById("yaoxi-pr-status");
+		if (el) el.textContent = s;
+	}
+
+	function prSend(force: boolean): void {
+		if (!pr || !pr.ws || pr.ws.readyState !== WebSocket.OPEN) return;
+		const now = Date.now();
+		if (!force && now - pr.lastSendAt < PR_SEND_GAP_MS) return;
+		if (!force && pr.curP === pr.lastSentP) return;
+		pr.lastSendAt = now;
+		pr.lastSentP = pr.curP;
+		try {
+			pr.ws.send(JSON.stringify({ t: "pos", p: pr.curP }));
+		} catch {}
+	}
+
+	function prTogglePop(open?: boolean): void {
+		const pop = document.getElementById("yaoxi-pr-pop");
+		if (!pop) return;
+		const show = typeof open === "boolean" ? open : pop.classList.contains("hidden");
+		pop.classList.toggle("hidden", !show);
+	}
+
+	function prJumpTo(idx: number): void {
+		if (!pr) return;
+		const el = pr.paras[idx];
+		if (!el) return;
+		el.scrollIntoView({ behavior: "smooth", block: "center" });
+		el.classList.remove("yaoxi-pr-flash");
+		void el.offsetWidth; // 重启动画
+		el.classList.add("yaoxi-pr-flash");
+		window.setTimeout(() => el.classList.remove("yaoxi-pr-flash"), 1500);
+		prTogglePop(false);
+	}
+
+	function prRenderList(h: PrHeat): void {
+		const box = document.getElementById("yaoxi-pr-list");
+		if (!box) return;
+		const entries: Array<[number, number]> = [];
+		for (const k of Object.keys(h)) {
+			const idx = Number.parseInt(k, 10);
+			if (Number.isFinite(idx)) entries.push([idx, Math.max(1, Number(h[k]) || 1)]);
+		}
+		entries.sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+		box.textContent = "";
+		if (!entries.length) {
+			const tip = document.createElement("div");
+			tip.className = "text-50";
+			tip.textContent = "暂时只有你在阅读，沉淀一会儿吧喵~";
+			box.appendChild(tip);
+			return;
+		}
+		for (const [idx, cnt] of entries.slice(0, 6)) {
+			const btn = document.createElement("button");
+			btn.type = "button";
+			btn.className = "yaoxi-pr-jump";
+			btn.textContent = `第 ${idx + 1} 段 · ${cnt} 人`;
+			btn.addEventListener("click", () => prJumpTo(idx));
+			box.appendChild(btn);
+		}
+	}
+
+	function prRender(n: number, h: PrHeat): void {
+		const text = document.getElementById("yaoxi-pr-text");
+		if (text) text.textContent = n <= 1 ? "此刻只有你在读" : `此刻 ${n} 人与你同读`;
+		prSetStatus(`已连接 · ${n} 人在线`);
+		if (pr) {
+			const marked = new Set<number>();
+			for (const k of Object.keys(h)) {
+				const idx = Number.parseInt(k, 10);
+				const el = Number.isFinite(idx) ? pr.paras[idx] : null;
+				if (!el) continue;
+				const cnt = Math.max(1, Number(h[k]) || 1);
+				el.classList.add("yaoxi-pr-hot");
+				el.style.setProperty("--yaoxi-pr-n", String(cnt));
+				marked.add(idx);
+			}
+			for (let i = 0; i < pr.paras.length; i++) {
+				if (!marked.has(i) && pr.paras[i].classList.contains("yaoxi-pr-hot")) {
+					pr.paras[i].classList.remove("yaoxi-pr-hot");
+					pr.paras[i].style.removeProperty("--yaoxi-pr-n");
+				}
+			}
+		}
+		prRenderList(h);
+	}
+
+	function prScheduleReconnect(): void {
+		if (!pr || pr.destroyed) return;
+		const delay = Math.min(1000 * 2 ** pr.retry, 30000) + Math.floor(Math.random() * 600);
+		pr.retry++;
+		prSetStatus("连接中断，重连中…");
+		window.clearTimeout(pr.reconnectTimer);
+		pr.reconnectTimer = window.setTimeout(() => prConnect(), delay);
+	}
+
+	function prConnect(): void {
+		if (!pr || pr.destroyed) return;
+		if (pr.ws && (pr.ws.readyState === WebSocket.CONNECTING || pr.ws.readyState === WebSocket.OPEN)) return;
+		const base = pr.api.replace(/\/+$/, "");
+		const wsBase = base.startsWith("https://")
+			? `wss://${base.slice(8)}`
+			: base.startsWith("http://")
+				? `ws://${base.slice(7)}`
+				: base;
+		const p = pr.curP >= 0 ? `&p=${pr.curP}` : "";
+		let ws: WebSocket;
+		try {
+			ws = new WebSocket(`${wsBase}/api/presence/ws?post=${encodeURIComponent(pr.slug)}${p}`);
+		} catch {
+			prScheduleReconnect();
+			return;
+		}
+		pr.ws = ws;
+		ws.onopen = () => {
+			if (!pr || pr.ws !== ws) return;
+			pr.retry = 0;
+			document.getElementById("yaoxi-presence-root")?.classList.remove("hidden");
+			pr.curP = prComputePos();
+			prSend(true);
+		};
+		ws.onmessage = (e) => {
+			if (!pr || pr.ws !== ws || typeof e.data !== "string" || e.data.length > 2048) return;
+			let m: any = null;
+			try {
+				m = JSON.parse(e.data);
+			} catch {
+				return;
+			}
+			if (!m || m.t !== "pr") return;
+			prRender(typeof m.n === "number" ? m.n : 1, m.h && typeof m.h === "object" ? m.h : {});
+		};
+		ws.onclose = () => {
+			if (!pr || pr.ws !== ws) return;
+			pr.ws = null;
+			prScheduleReconnect();
+		};
+	}
+
+	function prTeardown(): void {
+		if (!pr) return;
+		pr.destroyed = true;
+		window.clearTimeout(pr.reconnectTimer);
+		window.clearInterval(pr.hbTimer);
+		window.clearTimeout(pr.scrollTimer);
+		if (pr.onScroll) window.removeEventListener("scroll", pr.onScroll);
+		if (pr.onVis) document.removeEventListener("visibilitychange", pr.onVis);
+		try {
+			pr.ws?.close();
+		} catch {}
+		for (const el of pr.paras) {
+			el.classList.remove("yaoxi-pr-hot", "yaoxi-pr-flash");
+			el.style.removeProperty("--yaoxi-pr-n");
+		}
+		document.getElementById("yaoxi-presence-root")?.classList.add("hidden");
+		document.getElementById("yaoxi-pr-pop")?.classList.add("hidden");
+		pr = null;
+	}
+
+	function prBoot(): void {
+		const root = document.getElementById("yaoxi-presence-root") as HTMLElement | null;
+		if (!root) {
+			prTeardown();
+			return;
+		}
+		const slug = root.dataset.slug || "";
+		if (!slug) return;
+		if (pr && pr.slug === slug && !pr.destroyed) return;
+		prTeardown();
+
+		pr = {
+			slug,
+			api: (root.dataset.api || "https://blog-api.yaoxi.cloud").replace(/\/+$/, ""),
+			ws: null,
+			paras: prParas(),
+			curP: -1,
+			lastSentP: -2,
+			lastSendAt: 0,
+			retry: 0,
+			destroyed: false,
+			reconnectTimer: 0,
+			hbTimer: 0,
+			scrollTimer: 0,
+		};
+
+		document.getElementById("yaoxi-pr-pill")?.addEventListener("click", () => prTogglePop());
+		document.getElementById("yaoxi-pr-close")?.addEventListener("click", () => prTogglePop(false));
+
+		const onScroll = () => {
+			if (!pr) return;
+			window.clearTimeout(pr.scrollTimer);
+			pr.scrollTimer = window.setTimeout(() => {
+				if (!pr) return;
+				pr.curP = prComputePos();
+				prSend(false);
+			}, 700);
+		};
+		pr.onScroll = onScroll;
+		window.addEventListener("scroll", onScroll, { passive: true });
+
+		// 心跳：保活 + 位置补报；断线时兜底重连
+		pr.hbTimer = window.setInterval(() => {
+			if (!pr) return;
+			if (!pr.ws || pr.ws.readyState === WebSocket.CLOSED) {
+				prConnect();
+			} else {
+				pr.curP = prComputePos();
+				prSend(true);
+			}
+		}, PR_HB_MS);
+
+		// 回到前台：立即补报 + 断线重连
+		const onVis = () => {
+			if (!pr || document.visibilityState !== "visible") return;
+			if (!pr.ws || pr.ws.readyState === WebSocket.CLOSED) {
+				prConnect();
+			} else {
+				pr.curP = prComputePos();
+				prSend(true);
+			}
+		};
+		pr.onVis = onVis;
+		document.addEventListener("visibilitychange", onVis);
+
+		pr.curP = prComputePos();
+		prSetStatus("连接中…");
+		prConnect();
+	}
+
+	// 防重入：任何情况下（含 swup 动态注入、重复执行）引擎只初始化一次
+	if (!w.__yaoxiPrEngineLoaded) {
+		w.__yaoxiPrEngineLoaded = true;
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", prBoot, { once: true });
+		} else {
+			// 模块晚于 swup:page:view 执行时的竞态兜底：直接按当前 DOM 自检
+			prBoot();
+		}
+		document.addEventListener("swup:page:view", prBoot);
+	}
+</script>

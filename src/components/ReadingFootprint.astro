@@ -1,0 +1,207 @@
+---
+// ReadingFootprint.astro - 阅读足迹采集引擎（全局挂载，纯本地零上云）
+// 在文章页静默记录：阅读进度、活跃时长、打卡天数、有效阅读次数
+// 数据落于 localStorage `yaoxi_footprint_v1`，按用户分区，登录时自动合并游客足迹
+// 通过 `yaoxi:footprint:update` 事件广播给 /reader/ 读者中心消费
+---
+
+<div id="yaoxi-footprint-root" hidden aria-hidden="true"></div>
+
+<script>
+	import {
+		todayKey,
+		resolveBucketId,
+		getBucket,
+		loadStore,
+		saveStore,
+		pruneBucket,
+		mergeGuestInto,
+		GUEST_BUCKET,
+	} from "../utils/footprint";
+
+	const engineWindow = window as any;
+
+	interface ReadSession {
+		slug: string;
+		title: string;
+		tags: string[];
+		pub?: string;
+		start: number;
+		active: number;
+		flushedActive: number;
+		progressMax: number;
+		counted: boolean;
+	}
+
+	if (!engineWindow.__yaoxiFootprintEngineLoaded) {
+		engineWindow.__yaoxiFootprintEngineLoaded = true;
+
+		let session: ReadSession | null = null;
+		let tickTimer: number | null = null;
+		let lastWriteAt = 0;
+		let lastBootAt = 0;
+
+		function currentProgress(): number {
+			const doc = document.documentElement;
+			const denom = doc.scrollHeight - doc.clientHeight;
+			if (denom <= 8) return 100; // 短文无需滚动即视为全文可见
+			const top = doc.scrollTop || document.body.scrollTop || 0;
+			return Math.min(Math.max((top / denom) * 100, 0), 100);
+		}
+
+		function snapshotProgress() {
+			if (!session) return;
+			const p = currentProgress();
+			if (p > session.progressMax) session.progressMax = p;
+		}
+
+		function flush() {
+			if (!session) return;
+			const s = session;
+
+			// 闪进闪出（未满 5 秒且几乎无滚动）不建档，避免污染足迹统计
+			if (s.active < 5 && s.progressMax < 5) {
+				const probe = loadStore();
+				const hasItem = (id: string) => !!probe.buckets[id]?.items?.[s.slug];
+				if (!hasItem(resolveBucketId()) && !hasItem(GUEST_BUCKET)) return;
+			}
+
+			const store = loadStore();
+			let bucketId = resolveBucketId();
+
+			// 会话进行中若发生了登录/登出，先把游客桶数据合并进当前桶保证不丢
+			if (bucketId !== GUEST_BUCKET) {
+				if (mergeGuestInto(store, bucketId)) bucketId = resolveBucketId();
+			}
+
+			const bucket = getBucket(store, bucketId);
+			let item = bucket.items[s.slug];
+			if (!item) {
+				item = bucket.items[s.slug] = {
+					slug: s.slug,
+					title: s.title,
+					progress: 0,
+					active: 0,
+					reads: 0,
+					first: s.start,
+					last: s.start,
+					tags: s.tags,
+					pub: s.pub,
+				};
+			}
+			if (s.title) item.title = s.title;
+			if (s.tags && s.tags.length > 0) item.tags = s.tags;
+			if (s.pub) item.pub = s.pub;
+
+			// 进度只取本会话在【本文档 DOM】上滚动记录的最大值：
+			// swup 换页后 DOM 已被替换，此刻再实时计算会错把新页面进度记到旧文章
+			item.progress = Math.max(item.progress || 0, s.progressMax);
+
+			const delta = Math.max(0, s.active - s.flushedActive);
+			if (delta > 0) {
+				item.active = (item.active || 0) + delta;
+				s.flushedActive = s.active;
+				const dk = todayKey();
+				bucket.days[dk] = (bucket.days[dk] || 0) + delta;
+			}
+
+			item.first = Math.min(item.first || s.start, s.start);
+			item.last = Date.now();
+
+			if (!s.counted && s.active >= 10) {
+				item.reads = (item.reads || 0) + 1;
+				s.counted = true;
+			}
+
+			pruneBucket(bucket, [s.slug]);
+			saveStore(store);
+			lastWriteAt = Date.now();
+			window.dispatchEvent(
+				new CustomEvent("yaoxi:footprint:update", {
+					detail: { bucketId, slug: s.slug },
+				})
+			);
+		}
+
+		function endSession() {
+			if (!session) return;
+			flush();
+			session = null;
+			if (tickTimer !== null) {
+				clearInterval(tickTimer);
+				tickTimer = null;
+			}
+		}
+
+		function boot() {
+			if (!document.getElementById("yaoxi-footprint-root")) return; // 引擎已被移出 DOM
+			if (Date.now() - lastBootAt < 800 && session) return; // 双钩子防抖
+			lastBootAt = Date.now();
+
+			endSession();
+
+			const post = document.getElementById("post-container");
+			const m = /^\/posts\/([^/]+)\/?$/.exec(window.location.pathname);
+			if (!post || !m) return;
+
+			const slug = decodeURIComponent(m[1]);
+			const ogTitle = document.querySelector('meta[property="og:title"]') as HTMLMetaElement | null;
+			const keywords = document.querySelector('meta[name="keywords"]') as HTMLMetaElement | null;
+			const published = document.querySelector('meta[property="article:published_time"]') as HTMLMetaElement | null;
+
+			session = {
+				slug,
+				title: (ogTitle?.content || document.title || slug).trim(),
+				tags: (keywords?.content || "")
+					.split(/[,，]/)
+					.map((t) => t.trim())
+					.filter(Boolean),
+				pub: published?.content || undefined,
+				start: Date.now(),
+				active: 0,
+				flushedActive: 0,
+				progressMax: 0,
+				counted: false,
+			};
+
+			tickTimer = window.setInterval(() => {
+				if (!session) return;
+				if (document.visibilityState !== "visible") return;
+				session.active += 5;
+				if (Date.now() - lastWriteAt > 15000) flush();
+			}, 5000);
+
+			snapshotProgress();
+		}
+
+		// 滚动时同步刷新进度快照（两次布局读取，代价与 ReadingProgress 相同）
+		window.addEventListener("scroll", snapshotProgress, { passive: true });
+
+		document.addEventListener("visibilitychange", () => {
+			if (document.visibilityState === "hidden") flush();
+		});
+		window.addEventListener("pagehide", () => flush());
+
+		// 登录/登出：登录时把游客桶合并进用户桶
+		window.addEventListener("yaoxi:auth:change", (ev: Event) => {
+			const detail = (ev as CustomEvent).detail || {};
+			if (detail.isAuthenticated) {
+				const store = loadStore();
+				if (mergeGuestInto(store, resolveBucketId())) {
+					saveStore(store);
+					window.dispatchEvent(
+						new CustomEvent("yaoxi:footprint:update", { detail: { bucketId: resolveBucketId(), merged: true } })
+					);
+				}
+			}
+		});
+
+		// Swup 导航（全站唯一 DOM 生命周期钩子）+ 首屏兜底
+		document.addEventListener("swup:page:view", boot);
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", boot);
+		} else {
+			boot();
+		}
+	}
+</script>

@@ -12,11 +12,18 @@
  *   POST /api/newsletter/broadcast        新文章/动态批量邮件广播（需 ADMIN_TOKEN，/api/send/notify）
  *   POST /api/newsletter/weekly-digest    每周数据与精选周报推送（需 ADMIN_TOKEN，/api/send/bot）
  *   POST /api/contact                     访客留言提交（站长工单通报 + 访客自动回执，/api/send/service）
+ *   GET  /api/danmaku                     某篇文章的已上墙弹幕列表（?post=slug）
+ *   POST /api/danmaku/submit              读者弹幕投稿（蜜罐 + 限流 + 去重，默认人工审核流）
+ *   GET  /api/danmaku/pending             待审核弹幕列表（需 ADMIN_TOKEN）
+ *   POST /api/danmaku/moderate            弹幕放行 / 拒绝（需 ADMIN_TOKEN，Telegram 按钮回调经 Bot 转发）
+ *   GET  /api/presence                    实时共读快照（在线人数 + 段落热度）
+ *   GET  /api/presence/ws                 实时共读 WebSocket 房间（Durable Object）
  *
  * 限流：单 IP 60 次/分钟，全局 600 次/分钟；敏感发信端点独立计数防刷。
  * 所有 API 响应带 CORS（Access-Control-Allow-Origin: *）。
  */
 
+import { createDanmakuModule } from "./danmaku.js";
 import {
 	buildBroadcastHtml,
 	buildContactAutoReplyHtml,
@@ -25,6 +32,9 @@ import {
 	buildWeeklyDigestHtml,
 	sendEmail,
 } from "./email-client.js";
+
+// Durable Object 类必须从 Worker 入口模块导出（wrangler migrations 绑定）
+export { PresenceRoom } from "./presence.js";
 
 const BLOG_ORIGIN = "https://blog.yaoxi.wiki";
 const MOMENTS_INDEX = `${BLOG_ORIGIN}/api/moments.json`;
@@ -301,6 +311,43 @@ const num = (v, dft) => {
 	const n = Number(v);
 	return Number.isFinite(n) ? n : dft;
 };
+
+/* ================= 弹幕模块（段落锚定 Danmaku） ================= */
+
+const danmaku = createDanmakuModule({
+	json,
+	tooManyRequests,
+	getClientIp,
+	requireAdmin,
+	getStorageKv,
+	checkEndpointRateLimit,
+	checkRateLimit,
+	htmlEsc,
+});
+
+/* ================= 实时共读（Durable Objects Presence） ================= */
+
+const PRESENCE_POST_RE = /^[\p{L}\p{N}_\-./]{1,120}$/u;
+
+/** 实时共读：WebSocket 房间接入 / HTTP 快照（转发到 slug 对应的 Durable Object） */
+async function handlePresence(request, env, url) {
+	const slug = (url.searchParams.get("post") || "").trim();
+	if (!PRESENCE_POST_RE.test(slug)) {
+		return json({ error: "invalid post", message: "post 参数非法" }, 400);
+	}
+	if (url.pathname === "/api/presence/ws" && (request.headers.get("Upgrade") || "").toLowerCase() !== "websocket") {
+		return json({ error: "upgrade required", message: "该端点仅接受 WebSocket 连接" }, 426);
+	}
+	if (!env.PRESENCE) {
+		return json({ ok: false, error: "presence unavailable", message: "实时共读未启用" }, 503);
+	}
+	const ip = getClientIp(request);
+	if (!(await checkEndpointRateLimit(env, ip, "presence", 20, 60_000))) {
+		return tooManyRequests(30, "连接过于频繁，请稍后再试");
+	}
+	const stub = env.PRESENCE.get(env.PRESENCE.idFromName(slug));
+	return stub.fetch(request);
+}
 
 /* ================= 业务路由处理器 ================= */
 
@@ -1468,6 +1515,12 @@ export default {
 					"POST /api/newsletter/broadcast": "批量向订阅者广播新文章通知（需 ADMIN_TOKEN）",
 					"POST /api/newsletter/weekly-digest": "批量向订阅者发送每周精选周报（需 ADMIN_TOKEN）",
 					"POST /api/contact": "访客留言提交（站长工单通报 + 访客自动回执）",
+					"GET /api/danmaku": "某篇文章的已上墙弹幕列表（?post=slug）",
+					"POST /api/danmaku/submit": "读者弹幕投稿（蜜罐 + 限流 + 去重，默认人工审核流）",
+					"GET /api/danmaku/pending": "待审核弹幕列表（需 ADMIN_TOKEN）",
+					"POST /api/danmaku/moderate": "弹幕放行 / 拒绝（需 ADMIN_TOKEN）",
+					"GET /api/presence": "实时共读快照（在线人数 + 段落热度）",
+					"GET /api/presence/ws": "实时共读 WebSocket 房间（Durable Object）",
 				},
 				rateLimit: {
 					ip: `${RATE_LIMIT.IP_MAX} 次 / ${RATE_LIMIT.IP_WINDOW_MS / 1000} 秒`,
@@ -1514,6 +1567,25 @@ export default {
 		// 访客留言
 		if (url.pathname === "/api/contact" && request.method === "POST") {
 			return handleContact(request, env, url);
+		}
+
+		// 弹幕：已上墙列表 / 投稿 / 待审列表 / 放行拒绝
+		if (url.pathname === "/api/danmaku" && request.method === "GET") {
+			return danmaku.handleGet(request, env, url);
+		}
+		if (url.pathname === "/api/danmaku/submit" && request.method === "POST") {
+			return danmaku.handleSubmit(request, env, url, ctx);
+		}
+		if (url.pathname === "/api/danmaku/pending" && request.method === "GET") {
+			return danmaku.handlePending(request, env);
+		}
+		if (url.pathname === "/api/danmaku/moderate" && request.method === "POST") {
+			return danmaku.handleModerate(request, env);
+		}
+
+		// 实时共读：WebSocket 房间接入 / HTTP 快照
+		if ((url.pathname === "/api/presence/ws" || url.pathname === "/api/presence") && request.method === "GET") {
+			return handlePresence(request, env, url);
 		}
 
 		return json({ error: "not found", path: url.pathname }, 404);

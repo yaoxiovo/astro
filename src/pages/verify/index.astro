@@ -1,0 +1,127 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+import { getSealManifest } from "@utils/seal-loader";
+
+const manifest = getSealManifest();
+const seals = [...manifest.seals].sort((a, b) =>
+	(a.published || "") < (b.published || "") ? 1 : -1,
+);
+
+const offlineScript = `// verify-seal.mjs — 离线复核瑶曦官印（Node 18+，零依赖）
+// 用法: node verify-seal.mjs manifest.json payload.json
+import { createPublicKey, verify, createHash } from "node:crypto";
+import fs from "node:fs";
+
+const manifest = JSON.parse(fs.readFileSync(process.argv[2], "utf-8"));
+const payload = JSON.parse(fs.readFileSync(process.argv[3], "utf-8"));
+const publicKey = createPublicKey(manifest.publicKeyPem);
+
+const data = Buffer.from(payload.canonical, "utf-8");
+const ok = verify(null, data, publicKey, Buffer.from(payload.signature, "base64"));
+const sha256 = createHash("sha256").update(data).digest("hex");
+
+console.log("✅ 签名有效:", ok);
+console.log("✅ 指纹一致:", sha256 === payload.hash);
+console.log("   公钥指纹:", manifest.keyFingerprint);`;
+---
+
+<MainGridLayout title="官印验证中心" noindex>
+    <div class="card-base p-6 md:p-8">
+        <div class="flex items-center gap-2 mb-2">
+            <div class="h-8 w-8 rounded-lg bg-[#c0392b] flex items-center justify-center text-white">
+                <Icon name="material-symbols:verified-user" class="text-[1.35rem]" />
+            </div>
+            <h1 class="text-2xl font-bold text-black dark:text-white">瑶曦官印 · 公开验证中心</h1>
+        </div>
+        <p class="text-black/60 dark:text-white/60 text-sm mb-6">
+            本站每一篇正式文章在构建时都会由「瑶曦网络科技官方」签发
+            <b>Ed25519 数字官印</b>：对文章标题、发布时间、标签与正文计算 SHA-256 指纹并签名固化。
+            任何对已发布内容的篡改都会导致验签失败。全部校验均可在浏览器或本地离线完成。
+        </p>
+
+        <!-- 公钥信息 -->
+        <div class="p-4 rounded-xl border border-[var(--line-divider)] bg-black/[0.02] dark:bg-white/[0.02] mb-6">
+            <div class="flex items-center justify-between flex-wrap gap-2 mb-3">
+                <div class="text-sm font-bold text-black/80 dark:text-white/80 flex items-center gap-1.5">
+                    <Icon name="material-symbols:key-outline" class="text-[var(--primary)]" />
+                    当前签发公钥（Ed25519）
+                </div>
+                <div class="flex gap-2">
+                    <a href="/api/seal/pubkey.pem" class="text-xs px-2.5 py-1 rounded-lg bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] text-[var(--btn-content)] font-medium transition-all">
+                        下载公钥 PEM
+                    </a>
+                    <a href="/api/seal/manifest.json" class="text-xs px-2.5 py-1 rounded-lg bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] text-[var(--btn-content)] font-medium transition-all">
+                        下载签名清单
+                    </a>
+                </div>
+            </div>
+            <div class="text-xs text-black/50 dark:text-white/50 mb-1">公钥指纹 (SHA-256)</div>
+            <code class="block px-2 py-1.5 rounded bg-black/5 dark:bg-white/10 font-mono text-xs break-all select-all mb-3">{manifest.keyFingerprint || "（尚未签发）"}</code>
+            <div class="text-xs text-black/50 dark:text-white/50 mb-1">公钥原文</div>
+            <pre class="p-3 rounded-lg bg-black/5 dark:bg-white/10 overflow-x-auto font-mono text-[0.7rem] leading-relaxed select-all">{manifest.publicKeyPem || "（尚未签发）"}</pre>
+        </div>
+
+        <!-- 统计 -->
+        <div class="flex items-center gap-2 mb-4 text-sm text-black/70 dark:text-white/70">
+            <Icon name="material-symbols:fact-check-outline" class="text-[var(--primary)]" />
+            已签发 <b class="text-[var(--primary)]">{seals.length}</b> 篇文章 · 算法 Ed25519 / SHA-256 · 逐篇详情页内含可离线复核的完整载荷
+        </div>
+
+        <!-- 签发清单 -->
+        <div class="overflow-x-auto rounded-xl border border-[var(--line-divider)] mb-6">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-black/[0.03] dark:bg-white/[0.03] text-left text-xs text-black/50 dark:text-white/50">
+                        <th class="px-4 py-2.5 font-medium">文章</th>
+                        <th class="px-4 py-2.5 font-medium whitespace-nowrap">签发日期</th>
+                        <th class="px-4 py-2.5 font-medium whitespace-nowrap hidden md:table-cell">指纹 (SHA-256)</th>
+                        <th class="px-4 py-2.5 font-medium whitespace-nowrap">验证</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {seals.map((seal) => (
+                        <tr class="border-t border-[var(--line-divider)] hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                            <td class="px-4 py-2.5">
+                                <a href={`/posts/${seal.slug}/`} class="text-black/80 dark:text-white/80 hover:text-[var(--primary)] transition-colors">
+                                    {seal.title}
+                                </a>
+                                {seal.encrypted && <span class="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400">密文</span>}
+                            </td>
+                            <td class="px-4 py-2.5 font-mono text-xs text-black/50 dark:text-white/50 whitespace-nowrap">{seal.published}</td>
+                            <td class="px-4 py-2.5 font-mono text-xs text-black/40 dark:text-white/40 hidden md:table-cell">
+                                {seal.hash.slice(0, 16)}…
+                            </td>
+                            <td class="px-4 py-2.5 whitespace-nowrap">
+                                <a href={`/verify/${seal.slug}/`} class="text-xs text-[var(--primary)] hover:underline font-medium inline-flex items-center gap-1">
+                                    <Icon name="material-symbols:verified-outline" class="text-sm" />
+                                    验签
+                                </a>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 离线复核指南 -->
+        <details class="p-4 rounded-xl border border-[var(--line-divider)] bg-black/[0.02] dark:bg-white/[0.02]">
+            <summary class="cursor-pointer text-sm font-bold text-black/80 dark:text-white/80 select-none">
+                🧪 离线复核指南（不信任本站也能验证）
+            </summary>
+            <div class="mt-3 text-xs text-black/60 dark:text-white/60 space-y-3">
+                <p>
+                    1. 下载 <a href="/api/seal/pubkey.pem" class="text-[var(--primary)] hover:underline">公钥</a> 与
+                    <a href="/api/seal/manifest.json" class="text-[var(--primary)] hover:underline">签名清单</a>（可通过其他渠道交叉核对公钥指纹）；
+                    2. 打开任意文章的验证页，把页面源码中 <code class="px-1 rounded bg-black/5 dark:bg-white/10">&lt;script id="seal-payload"&gt;</code>
+                    标签内的 JSON 原样保存为 <code class="px-1 rounded bg-black/5 dark:bg-white/10">payload.json</code>；
+                    3. 运行下面的零依赖脚本复核：
+                </p>
+                <pre class="p-3 rounded-lg bg-black/5 dark:bg-white/10 overflow-x-auto font-mono text-[0.7rem] leading-relaxed select-all">{offlineScript}</pre>
+                <p class="text-black/40 dark:text-white/40">
+                    提示：本页面与各文章验证页的「浏览器实时校验」使用完全相同的公钥与载荷，在您的设备本地完成验签。
+                </p>
+            </div>
+        </details>
+    </div>
+</MainGridLayout>

@@ -24,6 +24,9 @@ jobs:
 
       - name: Build Astro
         run: npm run build
+        env:
+          # 官印签名私钥（Ed25519 PEM 或 base64(PEM)）；未配置时构建自动跳过签发并保留既有 manifest
+          SEAL_PRIVATE_KEY: ${{ secrets.SEAL_PRIVATE_KEY }}
 
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@v2.2.2

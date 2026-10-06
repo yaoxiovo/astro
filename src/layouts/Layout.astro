@@ -9,6 +9,8 @@ import ConfigCarrier from "@components/ConfigCarrier.astro";
 import ReadingProgress from "@components/control/ReadingProgress.astro";
 import CookieConsent from "@components/CookieConsent.astro";
 import YaoxiAuth from "@components/YaoxiAuth.astro";
+import EasterEggEngine from "@components/EasterEggEngine.astro";
+import ReadingFootprint from "@components/ReadingFootprint.astro";
 import { Icon } from "astro-icon/components";
 import {
 	AUTO_MODE,
@@ -529,6 +531,8 @@ const bannerOffset =
 		<CookieConsent />
 		<ConfigCarrier></ConfigCarrier>
 		<YaoxiAuth />
+		<EasterEggEngine />
+		<ReadingFootprint />
 		<slot />
 
 		<!-- increase the page height during page transition to prevent the scrolling animation from jumping -->

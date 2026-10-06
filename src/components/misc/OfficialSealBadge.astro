@@ -1,0 +1,71 @@
+---
+import { getSealForPost } from "@utils/seal-loader";
+
+interface Props {
+	slug: string;
+}
+
+const { slug } = Astro.props;
+const seal = getSealForPost(slug);
+---
+
+{seal ? (
+	<a
+		href={`/verify/${seal.slug}/`}
+		class="flex flex-row items-center hover:text-[var(--primary)] text-black/40 dark:text-white/40 transition-colors group cursor-pointer"
+		title={`瑶曦官印 · Ed25519 已签发\n指纹(SHA-256): ${seal.hash}`}
+	>
+		<div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 flex items-center justify-center mr-2">
+			<span class="seal-stamp">瑶曦</span>
+		</div>
+		<div class="text-sm font-medium">官方已签发</div>
+	</a>
+) : (
+	<span
+		class="flex flex-row items-center text-black/25 dark:text-white/25 cursor-help"
+		title="该文章尚未被官印签发（等待下一次构建签发或为草稿）"
+	>
+		<div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 flex items-center justify-center mr-2">
+			<span class="seal-stamp seal-stamp-pending">未签</span>
+		</div>
+		<div class="text-sm">待签发</div>
+	</span>
+)}
+
+<style>
+	.seal-stamp {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 0.5rem;
+		font-weight: 900;
+		line-height: 1;
+		color: #c0392b;
+		border: 1.5px solid currentColor;
+		border-radius: 3px;
+		padding: 1px 2px;
+		background: rgba(192, 57, 43, 0.08);
+		font-family: "STKaiti", "KaiTi", "Noto Serif SC", serif;
+		transform: rotate(-2deg);
+		transition: transform 0.2s ease;
+	}
+
+	a:hover .seal-stamp {
+		transform: rotate(4deg) scale(1.08);
+	}
+
+	.seal-stamp-pending {
+		color: #8b8b8b;
+		background: rgba(139, 139, 139, 0.08);
+	}
+
+	:global(html.dark) .seal-stamp {
+		color: #e56b5e;
+		background: rgba(229, 107, 94, 0.1);
+	}
+
+	:global(html.dark) .seal-stamp-pending {
+		color: #9a9a9a;
+		background: rgba(154, 154, 154, 0.1);
+	}
+</style>

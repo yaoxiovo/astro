@@ -6,6 +6,8 @@ import SeriesNav from "@components/SeriesNav.astro";
 import CyberSummary from "@components/CyberSummary.astro";
 import PosterGenerator from "@components/PosterGenerator.astro";
 import EncryptedReader from "@components/EncryptedReader.svelte";
+import DanmakuLayer from "@components/DanmakuLayer.astro";
+import PresenceWidget from "@components/PresenceWidget.astro";
 import WikiHistoryPage from "@components/wiki/WikiHistoryPage.astro";
 import WikiRevisionPage from "@components/wiki/WikiRevisionPage.astro";
 import WikiHistoryTable from "@components/wiki/WikiHistoryTable.svelte";
@@ -14,6 +16,7 @@ import RelatedArticles from "@components/wiki/RelatedArticles.astro";
 import LinkSuggestionsPanel from "@components/wiki/LinkSuggestionsPanel.astro";
 import CiteThisArticle from "@components/wiki/CiteThisArticle.svelte";
 import LongPressTextMenu from "@components/widget/LongPressTextMenu.astro";
+import OfficialSealBadge from "@components/misc/OfficialSealBadge.astro";
 import { getPostWikiHistorySync } from "@utils/wiki-history-loader";
 // KaTeX 样式仅在文章页加载（避免全站阻塞渲染）
 import "katex/dist/katex.css";
@@ -205,6 +208,7 @@ if (mode === "article") {
                     </div>
                     <div class="text-sm font-medium">{historyData?.totalRevisions || 1} 次修订</div>
                 </a>
+                <OfficialSealBadge slug={slug} />
             </div>
 
             <!-- title -->
@@ -254,9 +258,13 @@ if (mode === "article") {
             {entry.data.encrypted ? (
                 <EncryptedReader client:only="svelte" rawPayloadJson={encryptedPayloadJson} />
             ) : (
-                <Markdown class="mb-6 markdown-content onload-animation">
-                    <Content />
-                </Markdown>
+                <>
+                    <Markdown class="mb-6 markdown-content onload-animation">
+                        <Content />
+                    </Markdown>
+                    <DanmakuLayer slug={slug} />
+                    <PresenceWidget slug={slug} />
+                </>
             )}
 
             <!-- 文章反馈与编辑区域 -->

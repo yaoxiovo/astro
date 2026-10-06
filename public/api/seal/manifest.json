@@ -1,0 +1,477 @@
+{
+  "version": "yaoxi-official-seal/v1",
+  "algorithm": "Ed25519",
+  "hashAlgorithm": "SHA-256",
+  "keyFingerprint": "977909da5f3b9d9315dd7d80391cbf2cafb7b6b245813f4b4b682149c25f009a",
+  "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEA0JeV5cwffkWyAX7HSEu4nYvnwyB2FrHIdexxdJsgpJs=\n-----END PUBLIC KEY-----\n",
+  "publicKeyJwk": {
+    "crv": "Ed25519",
+    "x": "0JeV5cwffkWyAX7HSEu4nYvnwyB2FrHIdexxdJsgpJs",
+    "kty": "OKP"
+  },
+  "seals": [
+    {
+      "slug": "2cx",
+      "title": "除夕漫谈：在 0 与 1 之间，重构生活的最优解",
+      "published": "2026-02-16",
+      "encrypted": false,
+      "tags": [
+        "除夕"
+      ],
+      "hash": "449d262b30c5a4fba96d5c1cdf8d2dde18feb8de8164b4cae55a26917db54faf",
+      "signature": "cX/6cgSEkpqLSH1MHF1ULMoSUFE8ee4/E9HiLLwap+vAliJuHY+CptxD3izyLi4BASwlIEIEuE7v3H9Xy5NaCw=="
+    },
+    {
+      "slug": "Tradition",
+      "title": "传统代际沟通中的“滑坡谬误”与边界防御",
+      "published": "2026-10-04",
+      "encrypted": false,
+      "tags": [
+        "心理学"
+      ],
+      "hash": "cee452085e9bb3af506d5349a0ebfe51d354c01f208ab25ab855cd84b215bc69",
+      "signature": "f1LYHHe3LnnyO93DcBGyB83weP7X4FzR0nm6z4jOzTpu8rcHFp5QfnT2bOMsvM0g6o6cQHfAuOUjgJAzsgPSCg=="
+    },
+    {
+      "slug": "Youth-Romance-Novel1",
+      "title": "概率之外的变量：青春小说第一章",
+      "published": "2026-04-25",
+      "encrypted": false,
+      "tags": [
+        "青春恋爱",
+        "小说文"
+      ],
+      "hash": "7a746b707bd188bc4b477e5ebd8454479d23ed9a7c54c1e71ff5f70d3650070d",
+      "signature": "krkrYAJROFu8Aq96GoRSMBx50GhkyqVqPEO5OulmBwYfGL4DcpZGONEYaim9wnZ3/4eIWlywbh/Rf42DcxANBA=="
+    },
+    {
+      "slug": "acg-goods-and-emotions",
+      "title": "十几块的零食舍不得，十几块的“谷子”果断买：二次元与当代年轻人的“精神资产重构”",
+      "published": "2026-09-12",
+      "encrypted": false,
+      "tags": [
+        "二次元",
+        "随笔",
+        "生活",
+        "消费观察"
+      ],
+      "hash": "51319004be3e1f336e4077f72d1c45e8225517b976eab7695feba9ffe51291ee",
+      "signature": "bIaMjSLUCC0Jqv8cGWPfJhzmdpn+v85+pV7269Tg6ZBJZcVNYfahz4p7jY1YcC8Tuw8koCBsQw3LfnzAPY1eBA=="
+    },
+    {
+      "slug": "ai-integrated-workflow",
+      "title": "我如何把 AI 工具无缝衔接进我的日常工作流",
+      "published": "2026-05-10",
+      "encrypted": false,
+      "tags": [
+        "AI",
+        "ChatGPT",
+        "工作流",
+        "Obsidian",
+        "技术",
+        "数字化"
+      ],
+      "hash": "92da1a131e0691a0e94295768cc057c392d9c221098d2c3b09c55489247483d4",
+      "signature": "4O0j23iPX5hgopNuYPDsbKfj+wKwWh+UnUjzKe6P6p2tiTMi/+DrM3hSvu29Gcf+DobjLLi8MumgqbtF4v5tDA=="
+    },
+    {
+      "slug": "astro-cdn-hosting",
+      "title": "极速与安全的终极博弈：Astro 博客结合腾讯云 EdgeOne（海外版）与 Cloudflare 静态托管的双活架构实践",
+      "published": "2026-06-20",
+      "encrypted": false,
+      "tags": [
+        "CDN",
+        "Astro",
+        "Cloudflare",
+        "Tencent EdgeOne",
+        "架构设计",
+        "静态托管",
+        "OAuth2",
+        "用户隐私"
+      ],
+      "hash": "d5d2254bc12be2703a59a8bb2a1a333814072f5ad631eeb0fd17ab0776578578",
+      "signature": "7qYWkP/NoWYwGO3PR0pDw2sqWbSmYzbvvvbOnSMkVkgx3meB1SGVJXl319thTzVfawZaqnJrPUY8zupiUxu0Ag=="
+    },
+    {
+      "slug": "backdrop-filter-performance-guide",
+      "title": "移动端液态玻璃 UI 性能调优完全指南：backdrop-filter 的陷阱与降级策略",
+      "published": "2026-07-31",
+      "encrypted": false,
+      "tags": [
+        "Performance",
+        "CSS",
+        "Frontend",
+        "技术",
+        "经验总结"
+      ],
+      "hash": "5f693036d4573da7e2fff3b7599fc0dd3e6c13581fd333c4e7fe2e7a536424af",
+      "signature": "j7rdmX9YIdNmpKs7r6UhHGUaMzIqS+Y+FMv8MYqeNkiyDvw3v7aUCKNpnNSjt+r+y0EVdqFxMQqHkwIWGVabAQ=="
+    },
+    {
+      "slug": "blog-api-guide",
+      "title": "博客 API 接口大全与调用教程",
+      "published": "2026-08-16",
+      "encrypted": false,
+      "tags": [
+        "API",
+        "接口文档",
+        "教程",
+        "Web 开发"
+      ],
+      "hash": "cefc392cce6d1adc8e4cb332b9208dc13a44f165693c0161fa3265e386a18ce8",
+      "signature": "oWMP87VI3/4djCuVW2uZtDG+jtgn2MVTzCF5LXSi9kEFUPV0e8Ad/Rngtq67ffn/3hL6UlB5hBABcAvXYrH+BA=="
+    },
+    {
+      "slug": "blog-dev-logs",
+      "title": "开发日志：海报分享组件的剪贴板修复",
+      "published": "2026-06-21",
+      "encrypted": false,
+      "tags": [
+        "DevLog",
+        "BugFix",
+        "Astro"
+      ],
+      "hash": "2d1a092efd16dca9113fb6e445eaf0a925324b2b7a1ce5e40ddc16d4327b4959",
+      "signature": "2nmcDYqsaVrmzE3mu3xYkrEhy5YWQtkO7OX+kWtfE4AeHWSIlPOJH+GLVd6MGd7jJBgKtBRKV2Hi8gOPBQzKCw=="
+    },
+    {
+      "slug": "blog-fullstack-architecture-evolution-2026",
+      "title": "博客系统重大架构升级与全栈重构报告：零知识 BFF、即时发布流与极致交互实践",
+      "published": "2026-10-03",
+      "encrypted": false,
+      "tags": [
+        "Astro",
+        "架构重构",
+        "全栈开发",
+        "更新日志",
+        "工程实践"
+      ],
+      "hash": "965711bab99c639595d1eb979429a0a69d5e0d02bf0a37e0289bf5c5e962388b",
+      "signature": "WYBIy8USunDsg8WZceGwt/Jbe6Cxq8MPo96zk/ihBpf6Ec5wKCfEfykDrKrUZU+oRQ1rPlA8zQVDrjtQLO+SAQ=="
+    },
+    {
+      "slug": "cf-worker-reverse-proxy",
+      "title": "Cloudflare Worker 反向代理代码：CORS、Cookie 与 302 跳转修复",
+      "published": "2026-05-04",
+      "encrypted": false,
+      "tags": [
+        "Cloudflare Worker",
+        "反向代理",
+        "CORS",
+        "Cookie",
+        "JavaScript"
+      ],
+      "hash": "258f9e1085f2397412879305d13bcbca0dbd0f0fbb54de25b22e523ae35bb5cd",
+      "signature": "oRupAJHp2xWXL9S2c0IQyEQOLqrONbjYLp4YHbQjp9fwDT/zLqLGs0OyRvXao+SOX8bUaMJy+4FV3f/R5+jHDA=="
+    },
+    {
+      "slug": "cfworker",
+      "title": "Cloudflare Workers 反向代理教程：免费搭建 API 中转与 CORS 代理",
+      "published": "2026-01-09",
+      "encrypted": false,
+      "tags": [
+        "Cloudflare Workers",
+        "反向代理",
+        "API中转",
+        "CORS",
+        "教程"
+      ],
+      "hash": "514a6f365f0b8b596754e6866e0e9242d944d8df71e2c03ef123bf776542d5a7",
+      "signature": "8EjqQlMbzYfUjtM7ZGAq3C7d2lepw8n+OARrgUN0q62PgkY8y//EyAgo+c1ZVP3Sw+w9g1z3+JTabJ1k7PAvBw=="
+    },
+    {
+      "slug": "china",
+      "title": "中国近代史（1840—1949）核心事件脉络",
+      "published": "2025-12-27",
+      "encrypted": false,
+      "tags": [
+        "历史",
+        "中国近代史",
+        "鸦片战争",
+        "辛亥革命",
+        "抗日战争"
+      ],
+      "hash": "851a348bd525ce48aeab87629b481c4174aaed7e20b069579e2d5087caa53847",
+      "signature": "pOFV7NA8yY6CaVOM9B4pvLO/a7GJEfQXAc4G9Bb+1XeXAwlM9GCZBw9DxG4BJT916cD5YgMlkoN6Jt/hVEaSDQ=="
+    },
+    {
+      "slug": "diejia",
+      "title": "【安全通告】关于 AGI 伦理阈值与价值对齐风险的声明",
+      "published": "2026-02-23",
+      "encrypted": false,
+      "tags": [
+        "合规声明",
+        "AI安全",
+        "伦理审查"
+      ],
+      "hash": "105511c054991a30325379f0758e742c53a95b73a94090e4bde12e3d7365504b",
+      "signature": "ZC4zOSAlVZ5OU27elk5zRF4aOuQLe1KC/c7GxU5vhnwmGXqNx50c86bQSvjOomjtW8Qtqdylzsdf/jMIaPTfCQ=="
+    },
+    {
+      "slug": "domain-connect-cloudflare",
+      "title": "如何把域名接入 Cloudflare（完整实操版）",
+      "published": "2026-05-10",
+      "encrypted": false,
+      "tags": [
+        "Cloudflare",
+        "域名",
+        "DNS",
+        "建站",
+        "教程"
+      ],
+      "hash": "886f593c6a52ac43d4bb809b2048a7d7c6f124ce0b9fae47a696fcabb4d1a03c",
+      "signature": "RdAU5u4LavqQ3ZUeoejzsI3tq6S8CN9CsQgl8G3kq5mnfUCqFwgsaoNxK7S1/pQu+2eprQDqNr4N1UrXP2DCDA=="
+    },
+    {
+      "slug": "firstone",
+      "title": "入团申请书模板：初中生共青团申请写作参考",
+      "published": "2025-12-27",
+      "encrypted": false,
+      "tags": [
+        "入团申请书",
+        "共青团",
+        "初中作文",
+        "申请书模板",
+        "学生写作"
+      ],
+      "hash": "6e71a1a18778212a996bf9cb31713e319d337e2a48f7978b3e6a2019ab0779f8",
+      "signature": "vm3FgbK+Vy5BXGPK6WVKYU4RIUdpyAvv2dGSmwbnT0VJBU7f8HNX2zW2QF603juOJUw3ktX45SXMWJWmg/zLAg=="
+    },
+    {
+      "slug": "geren",
+      "title": "探索与重构：瑶曦个人主页（yaoxi.wiki）设计与技术全解",
+      "published": "2026-02-22",
+      "encrypted": false,
+      "tags": [
+        "个人主页",
+        "前端开发",
+        "项目展示",
+        "UI设计",
+        "性能优化",
+        "yaoxi.wiki"
+      ],
+      "hash": "2763d660da710a774a40ffc1b4a2d66474892230bf064c8e6dd9054d2c636f99",
+      "signature": "/1yic8LSIZ+Gw6JjnQ7XsgSitfmADlmcPSJ3nDqKDv2lVB4IarjbZ2DSGZ17hZsH71o2kNtnZex0ptO2z5fdDQ=="
+    },
+    {
+      "slug": "hardware-overheat-and-high-functioning-compensation",
+      "title": "当软件依然积极，而硬件开始报警：一个“高功能代偿者”的身心检修手记",
+      "published": "2026-09-07",
+      "encrypted": false,
+      "tags": [
+        "高功能代偿",
+        "心理应激",
+        "慢性疲劳",
+        "睡眠障碍",
+        "身心自救",
+        "深度思考",
+        "个人成长"
+      ],
+      "hash": "35d1c8aca26bafd6981586dd2ed873cfc1cd520c4d4d39208fd989d98f26f332",
+      "signature": "wqo5pNB47iFxGp1l+Rl6Kq5kXZw6uKWNwQ+kiuuwz8MKHuPZyjiEGD4zcUaV3PZ2t7c03miwMkcRQr93Zc+RCA=="
+    },
+    {
+      "slug": "heci",
+      "title": "2026 新年贺词精选",
+      "published": "2025-12-31",
+      "encrypted": false,
+      "tags": [
+        "新年贺词",
+        "祝福",
+        "激励",
+        "节日"
+      ],
+      "hash": "d950071332ec259b4b3b5601808032a866f854641e7cad64fccfb2c11632e2a4",
+      "signature": "i8IeAb8ArBKnAaKLUO+cRE30A0mKgLEOp9ZEUUcO3EQwayUuR5NnrKDRjeMbIMYo/yn7/CwiFQwPM1eiqTaRCw=="
+    },
+    {
+      "slug": "homepage-liquid-glass-refactor",
+      "title": "开发日志：主页液态玻璃重构——闪频歼灭战与性能审计报告",
+      "published": "2026-07-31",
+      "encrypted": false,
+      "tags": [
+        "DevLog",
+        "Performance",
+        "Refactor",
+        "Frontend",
+        "WebPerf"
+      ],
+      "hash": "309201d3e08322017343fc8df01674d567d2cf2f281db479bdd4f641bbec95ae",
+      "signature": "LiPWYOF5PLIWISDQS9BYkLdZOdmPKDFoz6DkJFdpYG/cMlcoc7LqVKG6H7GJ2/GH5koDsUqQv9TpZfQCNMr2DQ=="
+    },
+    {
+      "slug": "jianjie",
+      "title": "网站简介",
+      "published": "2025-12-04",
+      "encrypted": false,
+      "tags": [
+        "Cloudflare",
+        "域名解析",
+        "CDN",
+        "网站加速"
+      ],
+      "hash": "849ed97c088e8e22fb4dbfa8becf75796b5f0f70b3a9ca9ad3a9e21089d03df6",
+      "signature": "/OONkGZ/zGMUuU4SZXFiNFJ7fh4/vLhfnVEQcMfIi0SCN+fQtCUjZJeQwEMUmQZIkFK0EnU0td+ddPAVVi0IDQ=="
+    },
+    {
+      "slug": "jieshao",
+      "title": "Cloud云服务",
+      "published": "2026-03-21",
+      "encrypted": false,
+      "tags": [
+        "Cloudflare",
+        "Tencent",
+        "Aliyun",
+        "云服务"
+      ],
+      "hash": "65f5570e9c1fc624e234b0657aabc411ab0818279a70f0ce71a91d74161ae304",
+      "signature": "VgyZRzmVjLggtFz6ObjqKjf2cwzmfdFBcxCn0XjDlvCWfH4LCyOoI7Lab68XjwlfYWHJbYKcfEBMSh4jIoxjCA=="
+    },
+    {
+      "slug": "junior-high-epic-chronicle",
+      "title": "凡人、火种与未央的长夜：初中三年毕业纪事",
+      "published": "2026-09-25",
+      "encrypted": false,
+      "tags": [
+        "毕业纪事",
+        "翁法罗斯",
+        "黄金裔",
+        "青春",
+        "随笔"
+      ],
+      "hash": "889dd6ef7a42d1fcb3aae99328a21951436754e72e7224b6ff625f9a25ffa097",
+      "signature": "KbwnJnlsEFsPZOaDasD8t6LnFyAuL7FRnG7wnknC2JY7UeTJoy5JUc+n7nUnOFhEw+7UamzUpTi4rO7+9/E5Cg=="
+    },
+    {
+      "slug": "mothers-day-2026",
+      "title": "今天，愿所有母亲都被温柔以待",
+      "published": "2026-05-10",
+      "encrypted": false,
+      "tags": [
+        "母亲节",
+        "祝福",
+        "亲情",
+        "感恩"
+      ],
+      "hash": "b5f64d2109dc31acf47984c2cc473c603066ba15ca2c33dfc9dd9f7c819de1e5",
+      "signature": "qsiV9S+vpdYpqa415pzoVeqQJ71FtsWFsqMybEG8FCOMr0qaJaNAW4Y5CY2FuFGneckh6za0dAkbLkBCewSABw=="
+    },
+    {
+      "slug": "ncm-converter-intro",
+      "title": "网易云音乐 NCM 转 MP3/FLAC 在线工具介绍",
+      "published": "2026-01-02",
+      "encrypted": false,
+      "tags": [
+        "NCM转换",
+        "网易云音乐",
+        "MP3",
+        "FLAC",
+        "前端工具"
+      ],
+      "hash": "c1061fb0e54bdb9931212adfbdab6dcf80d4c634bd29f90802c3856d0af47e8d",
+      "signature": "CXSrYLqcNtonUbiqvqaxQ8OWjp83t16MrJjqwaWVlQOFh5B5zLq1MS4WrgpoIsjyomqP95n6L9jkyJnD+Kv/AA=="
+    },
+    {
+      "slug": "other-sites",
+      "title": "瑶曦的其他网站与项目导航",
+      "published": "1999-01-01T19:25:08",
+      "encrypted": false,
+      "tags": [
+        "Yaoxi",
+        "个人网站",
+        "项目导航",
+        "博客"
+      ],
+      "hash": "44e0286bb3ebcc2d699a7ff9750c38c2beba7a669d8848bb3c76486f84387969",
+      "signature": "b21gCPns6RwEpMXxittclsOM72CQu9wPOERB05K0i4ou2s42uqBArNHaCR9hEKdjvAff/rg8ztvdJ2BG8B3VBg=="
+    },
+    {
+      "slug": "our-cloud-services",
+      "title": "探秘本站的云端地基：双活 CDN、Serverless 统计与边缘安全架构实践",
+      "published": "2026-06-28",
+      "encrypted": false,
+      "tags": [
+        "Cloudflare",
+        "Tencent EdgeOne",
+        "Supabase",
+        "Umami",
+        "架构设计"
+      ],
+      "hash": "e831a107f9250a0bea864614157cbe5a7cdb2bf0e0fc9d025a11aa38e77e5b05",
+      "signature": "mUKGYHIgv88ln8ZGA9MApqKoYoiuhd1WfTJre279sWTWKALQxI18weMcGnYmtQ2Jxa6VjBZcRN+vObuZjXaHBg=="
+    },
+    {
+      "slug": "persistence-and-compound-growth",
+      "title": "在无人问津的荒原里深耕：从 0 到 3831 次 AI 引用的坚持与复利",
+      "published": "2026-09-07",
+      "encrypted": false,
+      "tags": [
+        "独立博客",
+        "坚持不懈",
+        "SEO优化",
+        "AI引用",
+        "数据复盘",
+        "个人成长"
+      ],
+      "hash": "83c5bc2edf4a5a55dea83421e3432e0c9d20f9026ca7068ff03a6c553a6432b4",
+      "signature": "Fyp/ZOQU4le1Zj8GoxFFdohGSHWJKnz3l92Hremdo2ajE/4EMqy/vxzIiivWSQTIjLlnCy9M245x7shpXgzUAw=="
+    },
+    {
+      "slug": "security-statement",
+      "title": "关于本站坚定政治立场、维护意识形态安全及网络空间清朗的郑重声明。",
+      "published": "2026-02-23",
+      "encrypted": false,
+      "tags": [
+        "公告",
+        "合规声明"
+      ],
+      "hash": "cd75926736b563bf4606b8f847d7bc903611b2622c3855d6645760798130c2a9",
+      "signature": "gL6HPV8CY+bQyAOhQzzxeS9bWV9dytmfeWssVmFW4mnvQ8SuhhDpRM+H7sK1im4RViDDu38eJ/rjkFMMuVNrDw=="
+    },
+    {
+      "slug": "short-video-algorithm-polarization-report",
+      "title": "短视频平台的算法推荐与舆论极化：\"两边站队\"现象的技术根源与治理路径",
+      "published": "2026-08-17",
+      "encrypted": false,
+      "tags": [
+        "短视频",
+        "推荐算法",
+        "舆论极化",
+        "信息茧房",
+        "算法治理",
+        "TikTok",
+        "抖音"
+      ],
+      "hash": "a026ada612decfe444c2d8cf8979d490afd8e98f5378e89f0c52792b627449ad",
+      "signature": "1E7phR7eZmH6C/CNtztlQl9W/0m+hyaYkx0Oa/ONvCaTDFrqQfe5QbcJ0FDsSdOBWMPGnThxf5P8oiGpif+bBQ=="
+    },
+    {
+      "slug": "umami",
+      "title": "Umami 统计修复日志",
+      "published": "2026-04-03",
+      "encrypted": false,
+      "tags": [
+        "Umami",
+        "网站统计",
+        "数据库配置",
+        "修复日志"
+      ],
+      "hash": "acc20bdda61571c8abfb6bf26b40ff70b7e11a5e1ee0f8c47e6b8023a35f3bf7",
+      "signature": "mDYdJ5OzieTGM6WpZG++f/rfCnsoV9zy9DGbzvDhd8aWyUR0TtNei4Fyq5x4ZhdhupGXDLIUQDyX5C56Rof2Dg=="
+    },
+    {
+      "slug": "zhinan",
+      "title": "Archive-REF：叙事侵染后的现实锚定指南",
+      "published": "2026-02-23",
+      "encrypted": false,
+      "tags": [
+        "创作者保护",
+        "现实锚定",
+        "心理学",
+        "脱敏指南"
+      ],
+      "hash": "a0967278b014f2dc17a0df63a46bbef6ca6b212e21cac3a4db57ebeddb028ae2",
+      "signature": "iPwDi6AOjrz8Wmhbx9gTNI1cnrPzVrRdenmCNWJtdB1v/EEohvGrPwkuTX4ilMFbuUMwbAvKOUv7s8g0WrLfDw=="
+    }
+  ]
+}

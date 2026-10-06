@@ -1,0 +1,662 @@
+---
+/**
+ * 瑶曦弹幕 · 段落锚定（Paragraph-anchored Danmaku）
+ *
+ * 每条弹幕「钉」在投稿时选中的段落上，贴着该段落横向飘过（B 站式），
+ * 而不是全屏乱飞——读到哪里，弹幕就长在哪里。
+ *
+ * 数据流：投稿 → blog-api /api/danmaku/submit →（默认）Telegram 人工审核 → 上墙。
+ * 生命周期：bundled 模块脚本单次执行；DOMContentLoaded / swup:page:view 双钩子自恢复，
+ *          晚于 page:view 执行时走 readyState 兜底自检（与站点既有脚本契约一致）。
+ */
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	slug: string;
+	api?: string;
+}
+const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
+---
+
+<div id="danmaku-root" data-slug={slug} data-api={api}></div>
+
+<!-- 右下停靠区：弹幕总开关 + 发射入口（让位 bg-saver 的 right-4 位） -->
+<div id="yaoxi-dm-dock" class="fixed right-16 bottom-6 z-40 flex flex-col gap-2">
+	<button
+		id="yaoxi-dm-toggle"
+		type="button"
+		aria-label="开启或关闭弹幕"
+		title="弹幕已关闭，点击开启"
+		class="relative flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-divider)] bg-[var(--float-panel-bg)] text-black/50 dark:text-white/50 shadow-lg backdrop-blur-md transition-all duration-200 select-none hover:scale-110 hover:text-[var(--primary)] cursor-pointer"
+	>
+		<Icon name="material-symbols:chat-bubble-outline" class="text-xl" />
+		<span
+			id="yaoxi-dm-count"
+			class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--primary)] text-white dark:text-black/80 text-[10px] leading-[18px] text-center font-bold pointer-events-none"
+		>0</span>
+	</button>
+	<button
+		id="yaoxi-dm-compose"
+		type="button"
+		aria-label="发弹幕"
+		title="发一条段落弹幕"
+		class="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-divider)] bg-[var(--float-panel-bg)] text-black/50 dark:text-white/50 shadow-lg backdrop-blur-md transition-all duration-200 select-none hover:scale-110 hover:text-[var(--primary)] cursor-pointer"
+	>
+		<Icon name="material-symbols:edit-square-outline" class="text-xl" />
+	</button>
+</div>
+
+<!-- 发射面板 -->
+<div
+	id="yaoxi-dm-panel"
+	class="hidden fixed z-[80] bottom-20 left-1/2 -translate-x-1/2 w-[92vw] max-w-md card-base p-4 shadow-2xl border border-[var(--line-divider)]"
+>
+	<div class="flex items-center justify-between mb-3">
+		<span class="text-sm font-bold text-90 flex items-center">
+			<Icon name="material-symbols:chat-bubble-outline" class="mr-1.5 text-[var(--primary)]" />
+			发一条段落弹幕
+		</span>
+		<button
+			id="yaoxi-dm-panel-close"
+			type="button"
+			aria-label="关闭面板"
+			class="h-6 w-6 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-colors flex items-center justify-center cursor-pointer text-xs text-75"
+		>✕</button>
+	</div>
+
+	<button
+		id="yaoxi-dm-anchor-chip"
+		type="button"
+		title="点击后到正文中选择弹幕锚定的段落"
+		class="w-full flex items-center gap-2 text-left px-3 py-2 mb-3 rounded-xl bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] transition-colors cursor-pointer"
+	>
+		<Icon name="material-symbols:pin-drop-outline" class="shrink-0 text-[var(--primary)]" />
+		<span class="flex-1 min-w-0">
+			<span class="block text-[10px] text-black/40 dark:text-white/40 leading-tight">锚定段落（点击可重新选择）</span>
+			<span id="yaoxi-dm-anchor-text" class="block text-xs text-75 truncate">自动：视口中央段落</span>
+		</span>
+	</button>
+
+	<div class="flex gap-2 mb-2">
+		<input
+			id="yaoxi-dm-author"
+			type="text"
+			maxlength="20"
+			placeholder="昵称"
+			autocomplete="off"
+			class="w-24 shrink-0 px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm outline-none focus:border-[var(--primary)] transition-colors"
+		/>
+		<input
+			id="yaoxi-dm-text"
+			type="text"
+			maxlength="100"
+			placeholder="说点什么…（≤100 字）"
+			autocomplete="off"
+			class="flex-1 min-w-0 px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm outline-none focus:border-[var(--primary)] transition-colors"
+		/>
+	</div>
+
+	<div class="flex items-center justify-between mb-3">
+		<div id="yaoxi-dm-colors" class="flex items-center gap-1.5"></div>
+		<span id="yaoxi-dm-len" class="text-[10px] text-black/35 dark:text-white/35">0/100</span>
+	</div>
+
+	<div class="flex gap-2">
+		<button
+			id="yaoxi-dm-cancel"
+			type="button"
+			class="flex-1 py-2 rounded-xl bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] text-[var(--btn-content)] text-sm font-medium transition-all active:scale-95 cursor-pointer"
+		>取消</button>
+		<button
+			id="yaoxi-dm-send"
+			type="button"
+			class="flex-1 py-2 rounded-xl bg-[var(--primary)] hover:bg-[oklch(0.65_0.16_var(--hue))] text-white dark:text-black/80 text-sm font-medium transition-all active:scale-95 cursor-pointer"
+		>🚀 发射</button>
+	</div>
+
+	<p class="text-[10px] text-black/35 dark:text-white/35 mt-2">弹幕经站长审核后展示喵~ 文明发言，共建和谐评论区</p>
+	<!-- 蜜罐：真人不可见，机器人若填写则静默丢弃 -->
+	<input id="yaoxi-dm-honeypot" name="website" type="text" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
+</div>
+
+<div
+	id="yaoxi-dm-toast"
+	role="status"
+	class="fixed right-16 bottom-32 z-[85] max-w-[82vw] px-3.5 py-2 rounded-xl bg-black/75 text-white text-xs leading-relaxed shadow-lg backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300"
+></div>
+
+<style is:global>
+	/* 锚定段落：相对定位承载弹幕轨道层 */
+	.yaoxi-dm-anchor {
+		position: relative;
+	}
+	.yaoxi-dm-layer {
+		position: absolute;
+		inset: 0;
+		overflow: hidden;
+		pointer-events: none;
+	}
+	.yaoxi-dm-item {
+		position: absolute;
+		left: 100%;
+		top: 3px;
+		white-space: nowrap;
+		font-size: 12px;
+		font-weight: 600;
+		line-height: 18px;
+		letter-spacing: 0.2px;
+		text-shadow:
+			0 1px 2px rgba(0, 0, 0, 0.18),
+			0 0 2px rgba(255, 255, 255, 0.55);
+		animation-name: yaoxi-dm-fly;
+		animation-timing-function: linear;
+		animation-iteration-count: infinite;
+		will-change: transform, opacity;
+	}
+	.yaoxi-dm-author {
+		font-style: normal;
+		font-weight: 400;
+		font-size: 11px;
+		opacity: 0.62;
+	}
+	.yaoxi-dm-paused .yaoxi-dm-item {
+		animation-play-state: paused;
+	}
+	/* 反向引用宿主话题色：跟随站点主题的弹幕开关态 */
+	.yaoxi-dm-btn-active {
+		color: var(--primary) !important;
+		border-color: var(--primary) !important;
+	}
+	@keyframes yaoxi-dm-fly {
+		0% {
+			transform: translateX(0);
+			opacity: 0;
+		}
+		3% {
+			opacity: 0.92;
+		}
+		78% {
+			transform: translateX(calc(-100% - var(--yaoxi-dm-track, 100vw)));
+			opacity: 0.92;
+		}
+		79%,
+		100% {
+			transform: translateX(calc(-100% - var(--yaoxi-dm-track, 100vw)));
+			opacity: 0;
+		}
+	}
+	/* 选段模式：正文段落高亮可点 */
+	html.yaoxi-dm-picking .yaoxi-dm-anchor {
+		cursor: crosshair;
+	}
+	html.yaoxi-dm-picking .markdown-content :is(p, h2, h3, h4, blockquote):hover {
+		outline: 2px dashed var(--primary);
+		outline-offset: 2px;
+		border-radius: 6px;
+	}
+	.yaoxi-dm-picked {
+		outline: 2px solid var(--primary);
+		outline-offset: 2px;
+		border-radius: 6px;
+	}
+	.yaoxi-dm-color-swatch {
+		width: 18px;
+		height: 18px;
+		border-radius: 9999px;
+		border: 2px solid transparent;
+		cursor: pointer;
+		transition: transform 0.15s ease;
+	}
+	.yaoxi-dm-color-swatch:hover {
+		transform: scale(1.15);
+	}
+	.yaoxi-dm-color-swatch.active {
+		border-color: var(--primary);
+		box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.yaoxi-dm-item {
+			animation: none;
+			opacity: 0;
+		}
+	}
+</style>
+
+<script>
+	type DmItem = { id: string; p: number; x?: string; t: string; a?: string; c?: string; ts?: number };
+
+	const DM_SELECTOR = "p, h2, h3, h4, blockquote";
+	const DM_COLORS = ["#ff6b81", "#ff9f43", "#feca57", "#48dbfb", "#54a0ff", "#a29bfe", "#1dd1a1"];
+	const DM_LS_ENABLED = "yaoxi-dm-enabled";
+	const DM_LS_AUTHOR = "yaoxi-dm-author";
+	const DM_MAX_ITEMS_PER_PARA = 36;
+
+	interface DmState {
+		slug: string;
+		api: string;
+		content: HTMLElement;
+		paras: HTMLElement[];
+		items: DmItem[];
+		enabled: boolean;
+		picked: number;
+		color: string;
+		io?: IntersectionObserver;
+		onDocClick?: (e: MouseEvent) => void;
+		onKey?: (e: KeyboardEvent) => void;
+	}
+
+	let dm: DmState | null = null;
+	let dmToastTimer = 0;
+
+	const w = window as any;
+
+	function dmNormText(el: HTMLElement): string {
+		return (el.textContent || "").replace(/\s+/g, " ").trim();
+	}
+
+	function dmToast(msg?: string): void {
+		const el = document.getElementById("yaoxi-dm-toast");
+		if (!el || !msg) return;
+		el.textContent = msg;
+		el.classList.remove("opacity-0", "pointer-events-none");
+		window.clearTimeout(dmToastTimer);
+		dmToastTimer = window.setTimeout(() => {
+			el.classList.add("opacity-0", "pointer-events-none");
+		}, 2800);
+	}
+
+	/** 锚点解析：优先按摘录匹配（内容编辑后索引漂移仍可归位），回退索引 */
+	function dmResolveAnchor(it: DmItem): number {
+		if (!dm) return -1;
+		const ex = (it.x || "").trim();
+		if (ex) {
+			const key = ex.slice(0, 12);
+			const byExcerpt = dm.paras.findIndex((el) => dmNormText(el).startsWith(key));
+			if (byExcerpt >= 0) return byExcerpt;
+		}
+		if (Number.isInteger(it.p) && it.p >= 0 && it.p < dm.paras.length) return it.p;
+		return -1;
+	}
+
+	function dmRemoveLayers(): void {
+		if (!dm) return;
+		dm.io?.disconnect();
+		dm.io = undefined;
+		for (const el of dm.paras) {
+			el.classList.remove("yaoxi-dm-anchor", "yaoxi-dm-picked");
+			const layer = el.querySelector(":scope > .yaoxi-dm-layer");
+			if (layer) layer.remove();
+		}
+	}
+
+	function dmApply(): void {
+		if (!dm) return;
+		dmRemoveLayers();
+
+		const groups = new Map<number, DmItem[]>();
+		for (const it of dm.items) {
+			const idx = dmResolveAnchor(it);
+			if (idx < 0) continue;
+			if (!groups.has(idx)) groups.set(idx, []);
+			groups.get(idx)!.push(it);
+		}
+
+		dm.io = new IntersectionObserver(
+			(entries) => {
+				for (const e of entries) {
+					const layer = (e.target as HTMLElement).querySelector(":scope > .yaoxi-dm-layer");
+					if (layer) layer.classList.toggle("yaoxi-dm-paused", !e.isIntersecting);
+				}
+			},
+			{ rootMargin: "100px 0px" },
+		);
+
+		for (const [idx, list] of groups) {
+			const el = dm.paras[idx];
+			if (!el) continue;
+			el.classList.add("yaoxi-dm-anchor");
+
+			const layer = document.createElement("div");
+			layer.className = "yaoxi-dm-layer";
+			const trackWidth = el.clientWidth || el.offsetWidth || 600;
+			layer.style.setProperty("--yaoxi-dm-track", `${trackWidth}px`);
+
+			const height = el.offsetHeight || 28;
+			const lanes = height >= 72 ? 3 : height >= 44 ? 2 : 1;
+
+			list.slice(0, DM_MAX_ITEMS_PER_PARA).forEach((it, i) => {
+				const span = document.createElement("span");
+				span.className = "yaoxi-dm-item";
+				span.textContent = it.t;
+				if (it.a && it.a !== "匿名") {
+					const author = document.createElement("i");
+					author.className = "yaoxi-dm-author";
+					author.textContent = ` ${it.a}`;
+					span.appendChild(author);
+				}
+				span.style.color = it.c || DM_COLORS[0];
+				span.style.top = `${3 + (i % lanes) * 20}px`;
+				const dur = Math.max(9, Math.min(16, 9 + it.t.length * 0.07));
+				span.style.animationDuration = `${dur}s`;
+				// 负延迟：入场即错峰在途，避免同段落弹幕扎堆起跑
+				span.style.animationDelay = `${(-((i * 2.6) % dur)).toFixed(2)}s`;
+				layer.appendChild(span);
+			});
+
+			el.appendChild(layer);
+			dm.io.observe(el);
+		}
+	}
+
+	function dmRefreshToggle(): void {
+		const btn = document.getElementById("yaoxi-dm-toggle");
+		const count = document.getElementById("yaoxi-dm-count");
+		if (!btn || !count || !dm) return;
+		count.textContent = String(dm.items.length);
+		btn.classList.toggle("yaoxi-dm-btn-active", dm.enabled);
+		btn.setAttribute("title", dm.enabled ? "弹幕已开启，点击关闭" : "弹幕已关闭，点击开启");
+	}
+
+	function dmFetchItems(): void {
+		if (!dm) return;
+		const { api, slug } = dm;
+		fetch(`${api}/api/danmaku?post=${encodeURIComponent(slug)}`)
+			.then((r) => (r.ok ? r.json() : null))
+			.then((data) => {
+				if (!dm || dm.slug !== slug) return;
+				dm.items = Array.isArray(data?.items) ? data.items : [];
+				dmRefreshToggle();
+				if (dm.enabled) dmApply();
+			})
+			.catch(() => {});
+	}
+
+	/* ---------- 面板 ---------- */
+
+	function dmNearestParaIndex(): number {
+		if (!dm) return 0;
+		const mid = window.innerHeight * 0.45;
+		let best = 0;
+		let bestDist = Number.POSITIVE_INFINITY;
+		dm.paras.forEach((el, i) => {
+			const r = el.getBoundingClientRect();
+			const d = Math.abs((r.top + r.bottom) / 2 - mid);
+			if (d < bestDist) {
+				bestDist = d;
+				best = i;
+			}
+		});
+		return best;
+	}
+
+	function dmUpdateAnchorChip(): void {
+		if (!dm) return;
+		const textEl = document.getElementById("yaoxi-dm-anchor-text");
+		if (!textEl) return;
+		if (dm.picked < 0 || !dm.paras[dm.picked]) {
+			textEl.textContent = "自动：视口中央段落";
+			return;
+		}
+		const excerpt = dmNormText(dm.paras[dm.picked]).slice(0, 24);
+		textEl.textContent = `「${excerpt}${excerpt.length >= 24 ? "…" : ""}」`;
+	}
+
+	function dmHighlightPicked(): void {
+		if (!dm) return;
+		for (const el of dm.paras) el.classList.remove("yaoxi-dm-picked");
+		if (dm.picked >= 0 && dm.paras[dm.picked]) dm.paras[dm.picked].classList.add("yaoxi-dm-picked");
+	}
+
+	function dmStopPicking(): void {
+		document.documentElement.classList.remove("yaoxi-dm-picking");
+	}
+
+	function dmOpenPanel(): void {
+		if (!dm) return;
+		const panel = document.getElementById("yaoxi-dm-panel");
+		if (!panel) return;
+		panel.classList.remove("hidden");
+		if (dm.picked < 0) dm.picked = dmNearestParaIndex();
+		dmUpdateAnchorChip();
+		dmHighlightPicked();
+		const author = document.getElementById("yaoxi-dm-author") as HTMLInputElement | null;
+		if (author && !author.value) {
+			try {
+				author.value = localStorage.getItem(DM_LS_AUTHOR) || "";
+			} catch {}
+		}
+		(document.getElementById("yaoxi-dm-text") as HTMLInputElement | null)?.focus();
+	}
+
+	function dmClosePanel(): void {
+		const panel = document.getElementById("yaoxi-dm-panel");
+		panel?.classList.add("hidden");
+		dmStopPicking();
+		if (dm) {
+			dm.picked = -1;
+			dmHighlightPicked();
+		}
+	}
+
+	async function dmSubmit(): Promise<void> {
+		if (!dm) return;
+		const sendBtn = document.getElementById("yaoxi-dm-send") as HTMLButtonElement | null;
+		const textInput = document.getElementById("yaoxi-dm-text") as HTMLInputElement | null;
+		const authorInput = document.getElementById("yaoxi-dm-author") as HTMLInputElement | null;
+		const honeypot = document.getElementById("yaoxi-dm-honeypot") as HTMLInputElement | null;
+		if (!sendBtn || !textInput) return;
+
+		const text = (textInput.value || "").replace(/\s+/g, " ").trim();
+		if (!text) {
+			dmToast("先写点内容喵~");
+			textInput.focus();
+			return;
+		}
+		const author = (authorInput?.value || "").trim().slice(0, 20);
+		try {
+			localStorage.setItem(DM_LS_AUTHOR, author);
+		} catch {}
+
+		const idx = dm.picked >= 0 ? dm.picked : dmNearestParaIndex();
+		const excerpt = dmNormText(dm.paras[idx] || document.body).slice(0, 60);
+
+		sendBtn.disabled = true;
+		sendBtn.classList.add("opacity-60");
+		try {
+			const res = await fetch(`${dm.api}/api/danmaku/submit`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					post: dm.slug,
+					p: idx,
+					x: excerpt,
+					t: text,
+					a: author || "匿名",
+					c: dm.color,
+					website: honeypot?.value || "",
+				}),
+			});
+			const j = await res.json().catch(() => null);
+			if (res.ok && j?.ok) {
+				textInput.value = "";
+				dmUpdateLen();
+				dmClosePanel();
+				dmToast(j.message || "已提交喵~");
+				if (j.mode === "live") dmFetchItems();
+			} else {
+				dmToast(j?.message || "提交失败，稍后再试喵");
+			}
+		} catch {
+			dmToast("网络异常，稍后再试喵");
+		} finally {
+			sendBtn.disabled = false;
+			sendBtn.classList.remove("opacity-60");
+		}
+	}
+
+	function dmUpdateLen(): void {
+		const textInput = document.getElementById("yaoxi-dm-text") as HTMLInputElement | null;
+		const lenEl = document.getElementById("yaoxi-dm-len");
+		if (textInput && lenEl) lenEl.textContent = `${textInput.value.length}/100`;
+	}
+
+	function dmRenderColors(): void {
+		if (!dm) return;
+		const box = document.getElementById("yaoxi-dm-colors");
+		if (!box) return;
+		box.innerHTML = "";
+		for (const color of DM_COLORS) {
+			const b = document.createElement("button");
+			b.type = "button";
+			b.className = "yaoxi-dm-color-swatch";
+			b.style.background = color;
+			b.setAttribute("aria-label", `弹幕颜色 ${color}`);
+			b.classList.toggle("active", color === dm.color);
+			b.addEventListener("click", () => {
+				if (!dm) return;
+				dm.color = color;
+				box.querySelectorAll(".yaoxi-dm-color-swatch").forEach((x) => x.classList.remove("active"));
+				b.classList.add("active");
+			});
+			box.appendChild(b);
+		}
+	}
+
+	/* ---------- 生命周期 ---------- */
+
+	function teardownDanmaku(): void {
+		if (!dm) return;
+		dmRemoveLayers();
+		if (dm.onDocClick) document.removeEventListener("click", dm.onDocClick, true);
+		if (dm.onKey) document.removeEventListener("keydown", dm.onKey);
+		document.documentElement.classList.remove("yaoxi-dm-picking");
+		dm = null;
+	}
+
+	function bootDanmaku(): void {
+		teardownDanmaku();
+
+		const root = document.getElementById("danmaku-root");
+		const dock = document.getElementById("yaoxi-dm-dock");
+		if (!root || !dock) return; // 已离开文章页
+		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+			dock.classList.add("hidden");
+			return;
+		}
+
+		const content = document.querySelector("#post-container .markdown-content") as HTMLElement | null;
+		if (!content) {
+			dock.classList.add("hidden");
+			return;
+		}
+		dock.classList.remove("hidden");
+
+		const paras = Array.from(content.querySelectorAll<HTMLElement>(DM_SELECTOR)).filter(
+			(el) => dmNormText(el).length > 0,
+		);
+
+		let enabled = false;
+		try {
+			enabled = localStorage.getItem(DM_LS_ENABLED) === "1";
+		} catch {}
+
+		dm = {
+			slug: root.dataset.slug || "",
+			api: (root.dataset.api || "https://blog-api.yaoxi.cloud").replace(/\/+$/, ""),
+			content,
+			paras,
+			items: [],
+			enabled,
+			picked: -1,
+			color: DM_COLORS[0],
+		};
+
+		dmRenderColors();
+		dmUpdateLen();
+		dmClosePanel();
+
+		// 悬浮开关
+		document.getElementById("yaoxi-dm-toggle")?.addEventListener("click", () => {
+			if (!dm) return;
+			dm.enabled = !dm.enabled;
+			try {
+				localStorage.setItem(DM_LS_ENABLED, dm.enabled ? "1" : "0");
+			} catch {}
+			if (dm.enabled) {
+				dmApply();
+				dmToast(dm.items.length ? `已开启弹幕（${dm.items.length} 条）喵~` : "开启啦，这个段落还没有弹幕，来发第一条喵~");
+			} else {
+				dmRemoveLayers();
+			}
+			dmRefreshToggle();
+		});
+
+		// 发射入口与面板交互
+		document.getElementById("yaoxi-dm-compose")?.addEventListener("click", dmOpenPanel);
+		document.getElementById("yaoxi-dm-panel-close")?.addEventListener("click", dmClosePanel);
+		document.getElementById("yaoxi-dm-cancel")?.addEventListener("click", dmClosePanel);
+		document.getElementById("yaoxi-dm-send")?.addEventListener("click", dmSubmit);
+		document.getElementById("yaoxi-dm-anchor-chip")?.addEventListener("click", () => {
+			if (!dm) return;
+			document.documentElement.classList.add("yaoxi-dm-picking");
+			dmToast("点击正文中的任意段落完成锚定喵~");
+		});
+		(document.getElementById("yaoxi-dm-text") as HTMLInputElement | null)?.addEventListener("input", dmUpdateLen);
+		(document.getElementById("yaoxi-dm-text") as HTMLInputElement | null)?.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" && !e.isComposing) {
+				e.preventDefault();
+				void dmSubmit();
+			}
+		});
+
+		// 选段模式：捕获阶段拦截点击（阻止链接跳转），点到正文段落即锚定
+		const onDocClick = (e: MouseEvent) => {
+			if (!dm || !document.documentElement.classList.contains("yaoxi-dm-picking")) return;
+			const target = e.target as HTMLElement | null;
+			if (!target) return;
+			// 面板 / 停靠区自身交互除外
+			if (target.closest("#yaoxi-dm-panel") || target.closest("#yaoxi-dm-dock")) return;
+			const para = target.closest(DM_SELECTOR) as HTMLElement | null;
+			if (!para || !dm.content.contains(para)) {
+				dmStopPicking();
+				return;
+			}
+			e.preventDefault();
+			e.stopPropagation();
+			const idx = dm.paras.indexOf(para);
+			if (idx >= 0) dm.picked = idx;
+			dmUpdateAnchorChip();
+			dmHighlightPicked();
+			dmStopPicking();
+			dmToast("已锚定该段落喵~");
+		};
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				if (document.documentElement.classList.contains("yaoxi-dm-picking")) {
+					dmStopPicking();
+				} else {
+					dmClosePanel();
+				}
+			}
+		};
+		dm.onDocClick = onDocClick;
+		dm.onKey = onKey;
+		document.addEventListener("click", onDocClick, true);
+		document.addEventListener("keydown", onKey);
+
+		dmRefreshToggle();
+		dmFetchItems();
+	}
+
+	// 防重入：任何情况下（含内联退化、重复注入）引擎只初始化一次
+	if (!w.__yaoxiDmEngineLoaded) {
+		w.__yaoxiDmEngineLoaded = true;
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", bootDanmaku, { once: true });
+		} else {
+			// 模块晚于 swup:page:view 执行时的竞态兜底：直接按当前 DOM 自检
+			bootDanmaku();
+		}
+		document.addEventListener("swup:page:view", bootDanmaku);
+	}
+</script>

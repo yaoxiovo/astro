@@ -1,0 +1,446 @@
+---
+/**
+ * 站点人生 · 彩蛋引擎运行时 (Runtime Easter Egg Engine)
+ * 全站注入：按访客本地时间匹配事件表 → 应用主题色相 / 粒子装饰 / 庆典横幅。
+ * 零维护：命中判定发生在浏览器运行时，节日当天无需重新构建即可自动生效。
+ * 调试：控制台执行 __yaoxiEggTest("new-year") 立即预览效果。
+ */
+import { EASTER_EGGS } from "../constants/easter-eggs";
+
+const eggsJson = JSON.stringify(EASTER_EGGS);
+---
+
+<div id="egg-banner" class="hidden fixed top-0 inset-x-0 z-[95] pointer-events-none">
+	<div
+		id="egg-banner-inner"
+		class="pointer-events-auto mx-auto max-w-2xl mt-3 mx-3 px-4 py-2.5 rounded-2xl shadow-xl border border-white/20 backdrop-blur-md flex items-center gap-3 text-white text-sm onload-animation"
+	>
+		<span id="egg-banner-emoji" class="text-lg shrink-0 select-none">✨</span>
+		<span id="egg-banner-text" class="flex-1 leading-snug font-medium"></span>
+		<button
+			id="egg-banner-close"
+			type="button"
+			aria-label="关闭庆典横幅"
+			class="shrink-0 h-6 w-6 rounded-lg bg-white/15 hover:bg-white/30 transition-colors flex items-center justify-center cursor-pointer text-xs"
+		>✕</button>
+	</div>
+</div>
+
+<canvas id="egg-canvas" class="pointer-events-none fixed inset-0 z-[60] hidden" aria-hidden="true"></canvas>
+
+<script type="application/json" id="egg-config" set:html={eggsJson}></script>
+
+<script>
+	type EggDecoration = "confetti" | "fireworks" | "sakura";
+
+	interface EggEffect {
+		hue?: number;
+		decoration?: EggDecoration;
+		banner?: string;
+		notFound?: string;
+	}
+
+	interface EggEvent {
+		id: string;
+		name: string;
+		type: "annual" | "fixed";
+		month?: number;
+		day?: number;
+		date?: string;
+		since?: number;
+		duration?: number;
+		effect: EggEffect;
+	}
+
+	interface ActiveEgg {
+		id: string;
+		name: string;
+		n: number;
+		effect: EggEffect;
+	}
+
+	declare global {
+		interface Window {
+			__yaoxiEggTest?: (idOrEvent: string | EggEvent) => void;
+			__yaoxiEggActive?: ActiveEgg | null;
+		}
+	}
+
+	const engineWindow = window as Window;
+
+	// 防重入：Swup / 多次注入下引擎只初始化一次
+	if (!(engineWindow as any).__yaoxiEggEngineLoaded) {
+		(engineWindow as any).__yaoxiEggEngineLoaded = true;
+
+		const events: EggEvent[] = (() => {
+			try {
+				return JSON.parse(document.getElementById("egg-config")?.textContent || "[]");
+			} catch {
+				return [];
+			}
+		})();
+
+		/** 返回「第 n 次」（fixed 为 1），未命中返回 null */
+		function matchEggEvent(ev: EggEvent, now: Date): number | null {
+			const dur = Math.max(1, ev.duration || 1);
+			if (ev.type === "annual") {
+				if (!ev.month || !ev.day) return null;
+				// 检查今年与去年的窗口（覆盖跨年事件）
+				for (const yearOffset of [0, -1]) {
+					const start = new Date(now.getFullYear() + yearOffset, ev.month - 1, ev.day);
+					const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + dur - 1, 23, 59, 59, 999);
+					if (now >= start && now <= end) {
+						return ev.since ? start.getFullYear() - ev.since : 1;
+					}
+				}
+				return null;
+			}
+			if (!ev.date) return null;
+			const start = new Date(`${ev.date}T00:00:00`);
+			if (Number.isNaN(start.getTime())) return null;
+			const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + dur - 1, 23, 59, 59, 999);
+			return now >= start && now <= end ? 1 : null;
+		}
+
+		// ---------- 粒子引擎 ----------
+		interface Particle {
+			x: number;
+			y: number;
+			vx: number;
+			vy: number;
+			size: number;
+			rot: number;
+			vr: number;
+			color: string;
+			alpha: number;
+			decay: number;
+			swayPhase: number;
+			kind: "rect" | "petal" | "spark";
+		}
+
+		let canvasEl: HTMLCanvasElement | null = null;
+		let ctx: CanvasRenderingContext2D | null = null;
+		let particles: Particle[] = [];
+		let rafId = 0;
+		let lastTick = 0;
+		let fireworkTimer = 0;
+		let currentMode: EggDecoration | null = null;
+		let windPhase = 0;
+
+		const CONFETTI_COLORS = ["#ff6b6b", "#feca57", "#48dbfb", "#1dd1a1", "#f368e0", "#ff9f43", "#54a0ff"];
+		const PETAL_COLORS = ["#ffb7c5", "#ffc9de", "#ff9eb5", "#ffd6e7"];
+		const SPARK_COLORS = ["#ffe066", "#ff922b", "#ff6b6b", "#63e6be", "#74c0fc", "#e599f7"];
+
+		function rand(min: number, max: number): number {
+			return min + Math.random() * (max - min);
+		}
+
+		function pick<T>(arr: T[]): T {
+			return arr[Math.floor(Math.random() * arr.length)];
+		}
+
+		function viewportSize(): { w: number; h: number } {
+			return { w: window.innerWidth, h: window.innerHeight };
+		}
+
+		function resizeCanvas(): void {
+			if (!canvasEl || !ctx) return;
+			const dpr = Math.min(window.devicePixelRatio || 1, 2);
+			const { w, h } = viewportSize();
+			canvasEl.width = Math.floor(w * dpr);
+			canvasEl.height = Math.floor(h * dpr);
+			ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+		}
+
+		function particleCount(): number {
+			return window.innerWidth < 768 ? 45 : 95;
+		}
+
+		function makeConfetti(): Particle {
+			const { w } = viewportSize();
+			return {
+				x: rand(0, w),
+				y: rand(-40, -10),
+				vx: rand(-15, 15),
+				vy: rand(35, 90),
+				size: rand(5, 10),
+				rot: rand(0, Math.PI * 2),
+				vr: rand(-3, 3),
+				color: pick(CONFETTI_COLORS),
+				alpha: 1,
+				decay: 0,
+				swayPhase: rand(0, Math.PI * 2),
+				kind: "rect",
+			};
+		}
+
+		function makePetal(): Particle {
+			const { w } = viewportSize();
+			return {
+				x: rand(0, w),
+				y: rand(-40, -10),
+				vx: rand(-8, 8),
+				vy: rand(18, 40),
+				size: rand(6, 11),
+				rot: rand(0, Math.PI * 2),
+				vr: rand(-1, 1),
+				color: pick(PETAL_COLORS),
+				alpha: rand(0.55, 0.95),
+				decay: 0,
+				swayPhase: rand(0, Math.PI * 2),
+				kind: "petal",
+			};
+		}
+
+		function spawnFireworkBurst(): void {
+			const { w, h } = viewportSize();
+			const cx = rand(w * 0.15, w * 0.85);
+			const cy = rand(h * 0.12, h * 0.55);
+			const color = pick(SPARK_COLORS);
+			const count = window.innerWidth < 768 ? 22 : 34;
+			for (let i = 0; i < count; i++) {
+				const angle = (Math.PI * 2 * i) / count + rand(-0.12, 0.12);
+				const speed = rand(0.7, 2.6);
+				particles.push({
+					x: cx,
+					y: cy,
+					vx: Math.cos(angle) * speed,
+					vy: Math.sin(angle) * speed,
+					size: rand(1.6, 3.2),
+					rot: 0,
+					vr: 0,
+					color: Math.random() < 0.16 ? "#ffffff" : color,
+					alpha: 1,
+					decay: rand(0.008, 0.02),
+					swayPhase: 0,
+					kind: "spark",
+				});
+			}
+			// 火花爆裂后的重力拖尾由 tick 统一处理
+		}
+
+		function tick(time: number): void {
+			if (!ctx || !canvasEl) return;
+			const dt = Math.min(48, time - lastTick || 16) / 16.66;
+			lastTick = time;
+			const { w, h } = viewportSize();
+			ctx.clearRect(0, 0, w, h);
+
+			windPhase += 0.01 * dt;
+			const wind = Math.sin(windPhase) * 12;
+
+			if (currentMode === "fireworks") {
+				fireworkTimer -= dt;
+				if (fireworkTimer <= 0) {
+					spawnFireworkBurst();
+					fireworkTimer = rand(28, 70);
+				}
+			}
+
+			const target = particleCount();
+
+			for (let i = particles.length - 1; i >= 0; i--) {
+				const p = particles[i];
+
+				if (p.kind === "rect") {
+					p.swayPhase += 0.06 * dt;
+					p.x += (p.vx + wind + Math.sin(p.swayPhase) * 28) * dt;
+					p.y += p.vy * dt;
+					p.rot += p.vr * dt;
+				} else if (p.kind === "petal") {
+					p.swayPhase += 0.035 * dt;
+					p.x += (p.vx + wind * 0.6 + Math.sin(p.swayPhase) * 20) * dt;
+					p.y += p.vy * dt;
+					p.rot += p.vr * dt * 0.6;
+				} else {
+					// spark: 初速衰减 + 重力 + 渐隐
+					p.vx *= 0.965;
+					p.vy = p.vy * 0.965 + 0.055 * dt;
+					p.x += p.vx * dt * 3;
+					p.y += p.vy * dt * 3;
+					p.alpha -= p.decay * dt;
+				}
+
+				const dead = p.y > h + 40 || p.x < -60 || p.x > w + 60 || p.alpha <= 0;
+				if (dead) {
+					particles.splice(i, 1);
+					if (currentMode === "confetti") particles.push(makeConfetti());
+					if (currentMode === "sakura") particles.push(makePetal());
+					// fireworks 粒子自然消亡，不补充
+					continue;
+				}
+
+				ctx.save();
+				ctx.globalAlpha = Math.max(0, p.alpha);
+				ctx.translate(p.x, p.y);
+				ctx.rotate(p.rot);
+				ctx.fillStyle = p.color;
+				if (p.kind === "rect") {
+					ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+				} else if (p.kind === "petal") {
+					ctx.beginPath();
+					ctx.ellipse(0, 0, p.size / 2, p.size / 3, 0, 0, Math.PI * 2);
+					ctx.fill();
+				} else {
+					ctx.beginPath();
+					ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+					ctx.fill();
+				}
+				ctx.restore();
+			}
+
+			// fireworks 模式下按需补充持续粒子规模（由 timer 触发炸弹，不预填充）
+			if (currentMode === "confetti" || currentMode === "sakura") {
+				while (particles.length < target) {
+					particles.push(currentMode === "confetti" ? makeConfetti() : makePetal());
+				}
+			}
+
+			if (particles.length > 0) {
+				rafId = requestAnimationFrame(tick);
+			} else {
+				rafId = 0;
+				ctx.clearRect(0, 0, w, h);
+			}
+		}
+
+		function ensureLoop(): void {
+			if (!rafId) {
+				lastTick = 0;
+				rafId = requestAnimationFrame(tick);
+			}
+		}
+
+		function startParticles(mode: EggDecoration): void {
+			if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+			canvasEl = document.getElementById("egg-canvas") as HTMLCanvasElement | null;
+			if (!canvasEl) return;
+			ctx = canvasEl.getContext("2d");
+			if (!ctx) return;
+			canvasEl.classList.remove("hidden");
+			resizeCanvas();
+			window.addEventListener("resize", resizeCanvas);
+			document.addEventListener("visibilitychange", () => {
+				if (document.hidden) {
+					if (rafId) {
+						cancelAnimationFrame(rafId);
+						rafId = 0;
+					}
+				} else {
+					ensureLoop();
+				}
+			});
+			currentMode = mode;
+			if (mode !== "fireworks") {
+				particles = [];
+				const target = particleCount();
+				for (let i = 0; i < target; i++) {
+					const p = mode === "confetti" ? makeConfetti() : makePetal();
+					p.y = rand(-40, viewportSize().h); // 初次铺满屏幕，避免空窗
+					particles.push(p);
+				}
+			} else {
+				fireworkTimer = 6;
+			}
+			ensureLoop();
+		}
+
+		// ---------- 横幅 ----------
+		let bannerClosedFor: string | null = null;
+
+		function applyBanner(ev: ActiveEgg): void {
+			const banner = document.getElementById("egg-banner");
+			const textEl = document.getElementById("egg-banner-text");
+			const inner = document.getElementById("egg-banner-inner");
+			const emojiEl = document.getElementById("egg-banner-emoji");
+			const closeBtn = document.getElementById("egg-banner-close");
+			if (!banner || !textEl || !ev.effect.banner) return;
+
+			const dismissKey = `yaoxi-egg-dismissed:${ev.id}:${new Date().toISOString().slice(0, 10)}`;
+			try {
+				if (sessionStorage.getItem(dismissKey) === "1") return;
+			} catch {
+				/* sessionStorage 不可用时照常展示 */
+			}
+
+			const raw = ev.effect.banner.replace("{n}", String(Math.max(1, ev.n)));
+			const emojiMatch = raw.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\s*/u);
+			if (emojiMatch) {
+				emojiEl && (emojiEl.textContent = emojiMatch[1]);
+				textEl.textContent = raw.slice(emojiMatch[0].length);
+			} else {
+				emojiEl && (emojiEl.textContent = "✨");
+				textEl.textContent = raw;
+			}
+
+			if (inner) {
+				const hue = ev.effect.hue ?? 250;
+				inner.style.background = `linear-gradient(135deg, hsl(${hue} 72% 52% / 0.96), hsl(${(hue + 45) % 360} 70% 42% / 0.96))`;
+			}
+
+			banner.classList.remove("hidden");
+
+			closeBtn?.addEventListener(
+				"click",
+				() => {
+					banner.classList.add("hidden");
+					try {
+						sessionStorage.setItem(dismissKey, "1");
+					} catch {
+						/* ignore */
+					}
+					bannerClosedFor = ev.id;
+				},
+				{ once: true },
+			);
+		}
+
+		// ---------- 事件应用 ----------
+		let appliedEggId: string | null = null;
+
+		function applyEgg(ev: ActiveEgg): void {
+			engineWindow.__yaoxiEggActive = ev;
+			document.dispatchEvent(new CustomEvent("easteregg:active", { detail: ev }));
+
+			if (appliedEggId === ev.id) return;
+			appliedEggId = ev.id;
+
+			if (typeof ev.effect.hue === "number") {
+				document.documentElement.style.setProperty("--hue", String(ev.effect.hue));
+			}
+			if (ev.effect.decoration) {
+				startParticles(ev.effect.decoration);
+			}
+			applyBanner(ev);
+
+			console.log(`[站点人生] 🎉 当前正在庆祝「${ev.name}」`, ev);
+		}
+
+		function detectAndApply(): void {
+			const now = new Date();
+			for (const ev of events) {
+				const n = matchEggEvent(ev, now);
+				if (n !== null) {
+					applyEgg({ id: ev.id, name: ev.name, n, effect: ev.effect });
+					return;
+				}
+			}
+			engineWindow.__yaoxiEggActive = null;
+		}
+
+		// 调试接口：__yaoxiEggTest("new-year") 或传入完整事件对象
+		engineWindow.__yaoxiEggTest = (idOrEvent: string | EggEvent) => {
+			const ev = typeof idOrEvent === "string" ? events.find((e) => e.id === idOrEvent) : idOrEvent;
+			if (!ev) {
+				console.warn("[站点人生] 未找到该彩蛋事件:", idOrEvent);
+				return;
+			}
+			appliedEggId = null; // 允许重复预览
+			applyEgg({ id: ev.id, name: ev.name, n: 1, effect: ev.effect });
+			console.log("[站点人生] 调试预览:", ev.name);
+		};
+
+		detectAndApply();
+		document.addEventListener("swup:page:view", detectAndApply);
+	}
+</script>

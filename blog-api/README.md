@@ -3,6 +3,8 @@
 博客统一查询 API 与全自动邮件发信中枢（Cloudflare Worker）：
 1. **统一查询接口**：静态博客构建产物动态参数化查询（朋友圈检索、分页、标签过滤、缓存保护与熔断）。
 2. **自动化邮件体系**：邮件订阅、双重激活验证（Double Opt-in）、新文章批量广播推送、合规一键退订、访客留言自动通报与自动确认回执。
+3. **段落锚定弹幕**：读者投稿弹幕按文章段落精准挂载，Telegram 内联按钮人工审核，KV 零竞争队列，前端飞掠引擎带负延迟错峰与离屏暂停。
+4. **实时共读**：Durable Objects WebSocket 房间聚合在线人数与段落热度，悬浮药丸「此刻 N 人与你同读」，正文绿点标记被阅读的段落。
 
 ---
 
@@ -46,6 +48,32 @@
     - ① 即时将留言工单格式化发至站长主邮箱（`OWNER_EMAIL`），包含访客信息与直达回复按钮。
     - ② 自动向访客发送一封温暖的确认回执信（Auto-Reply）。
 
+### 4. 段落锚定弹幕（Danmaku）
+- `GET /api/danmaku/live?post=<slug>`
+  - 拉取某篇文章的已上墙弹幕（一次读取，客户端本地调度时间轴）。
+  - 响应：`{ "ok": true, "items": [{ "id", "p", "x", "t", "a", "c", "ts" }] }`（`p` 段落索引，`x` 段落摘录锚点，`t` 正文，`a` 昵称，`c` 颜色，`ts` 时间戳）。
+- `POST /api/danmaku/submit`
+  - 读者投稿弹幕，进入待审队列（KV 独立键写入，无读改写竞争），并即时推送 Telegram 审核卡片（带「放行 / 驳回」内联按钮）。
+  - 请求体：`{ "post": "文章slug", "p": 3, "x": "段落摘录", "t": "弹幕正文", "a": "昵称", "c": "#ef4444", "website": "" }`（`website` 为隐藏蜜罐字段）。
+  - 限流：单 IP 10 分钟内最多 5 条；同内容 djb2 指纹 10 分钟内去重。
+- `GET /api/danmaku/pending`（🔒 需 Admin Token）
+  - 待审队列列表（最多 100 条，按投稿时间倒序）。
+- `POST /api/danmaku/moderate`（🔒 需 Admin Token）
+  - 审核弹幕（Telegram 按钮回调或手动调用）。
+  - 请求体：`{ "id": "弹幕ID", "action": "approve" | "reject" }`
+
+### 5. 实时共读（Presence · Durable Objects）
+- `GET /api/presence/ws?post=<slug>`（WebSocket 升级请求）
+  - 加入该文章的实时共读房间：在线人数 / 段落热度由 Durable Object 聚合后全房间广播。
+  - 服务端 → 客户端：`{ "t": "pr", "n": <在线人数>, "h": { "<段落索引>": <人数> } }`
+  - 客户端 → 服务端：`{ "t": "pos", "p": <段落索引> }`（阅读位置上报 / 25s 心跳，`-1` 表示未知）
+  - 治理：单房间上限 120 人；广播合并节流 800ms；240s 无心跳的僵尸连接自动踢出。
+- `GET /api/presence?post=<slug>`
+  - HTTP 快照（降级查询 / 调试）：`{ "ok": true, "n": <在线人数>, "h": { ... } }`
+- 实现说明：每篇文章一个 `PresenceRoom` Durable Object 实例（`idFromName(slug)`，SQLite 后端，免费额度可用）；采用 WebSocket Hibernation API，空闲休眠近零开销；人数与热度直接从连接附件（attachment）实时推导，无持久化双写。
+  - 首次部署由 `wrangler.jsonc` 的 `migrations` 自动创建类（`tag: v1`），无需人工干预。
+  - 未绑定 `PRESENCE`（如本地无 DO 环境）时返回 503，前端挂件静默隐藏，不影响阅读。
+
 ---
 
 ## 环境变量与 Secrets 配置
@@ -60,6 +88,10 @@
 | `ADMIN_TOKEN` | ✅ | 保护管理与批量发信接口的令牌（推荐 `openssl rand -hex 32`） |
 | `OWNER_EMAIL` | ❌ | 站长接收访客留言与监控报警的邮箱（默认 `yaoxi@yaoxi.wiki`） |
 | `EMAIL_FROM` | ❌ | 发件人地址（如 `瑶曦 Blog <newsletter@yaoxi.wiki>`） |
+| `TELEGRAM_BOT_TOKEN` | ❌ | Telegram 弹幕审核通知 Bot Token（CI 自动映射 `BOT_TOKEN`，无需新增） |
+| `TELEGRAM_CHAT_ID` | ❌ | Telegram 审核通知接收 Chat（CI 自动映射 `CHAT_ID`，无需新增） |
+
+> 💡 **弹幕自动放行**：`wrangler.jsonc` 的 `DANMAKU_AUTO_APPROVE` var 设为 `"true"` 时跳过人工审核直接上墙（默认 `"false"`）。未配置 Telegram 凭据时，投稿仍会进入待审队列，可用 `POST /api/danmaku/moderate` 手动处理。
 
 > 💡 **本地调试/开发模式**：当未配置 `RESEND_API_KEY` 时，Worker 自动进入 Mock 模式，在控制台打印邮件内容而不真正投递，完全不会报错或中断。
 

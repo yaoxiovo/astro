@@ -21,6 +21,7 @@ const COMMANDS = [
 	{ command: "capsules", description: "时间胶囊列表" },
 	{ command: "weekly", description: "本周朋友圈周报" },
 	{ command: "daily", description: "每日一言：/daily 城市" },
+	{ command: "dm", description: "弹幕审核：/dm 待审列表" },
 	{ command: "broadcast", description: "主人广播公告" },
 	{ command: "subscribe", description: "订阅新动态推送" },
 	{ command: "unsubscribe", description: "退订推送" },
@@ -94,6 +95,13 @@ async function tick(env) {
 /* ---------------- 命令处理（webhook 即时） ---------------- */
 async function handleUpdate(env, u) {
 	await syncCommands(env).catch(() => {}); // 懒触发：任意消息时同步命令菜单（KV 节流）
+
+	// 弹幕审核按钮回调（✅ 放行 / ❌ 拒绝）
+	if (u.callback_query) {
+		await handleDanmakuCallback(env, u.callback_query);
+		return;
+	}
+
 	const msg = u.message || u.edited_message;
 	if (!msg?.chat?.id) return;
 	const chatId = msg.chat.id;
@@ -117,9 +125,9 @@ async function handleUpdate(env, u) {
 	try {
 		if (text.startsWith("/start")) {
 			await setSub(env, chatId, true);
-			await send(env, chatId, "👋 欢迎订阅瑶曦的博客动态喵~\n\n📷 新朋友圈 / 📝 新文章会第一时间推送给你。\n\n命令：\n/latest 5 — 最近动态\n/random — 随机一条\n/stats — 统计 + 订阅人数\n/search 词 — 搜索\n/capsules — 时间胶囊\n/weekly — 本周周报\n/daily 城市 — 每日一言+天气\n/subscribe — 订阅推送\n/unsubscribe — 退订\n/help — 帮助");
+			await send(env, chatId, "👋 欢迎订阅瑶曦的博客动态喵~\n\n📷 新朋友圈 / 📝 新文章会第一时间推送给你。\n\n命令：\n/latest 5 — 最近动态\n/random — 随机一条\n/stats — 统计 + 订阅人数\n/search 词 — 搜索\n/capsules — 时间胶囊\n/weekly — 本周周报\n/daily 城市 — 每日一言+天气\n/dm — 弹幕审核（主人）\n/subscribe — 订阅推送\n/unsubscribe — 退订\n/help — 帮助");
 		} else if (text.startsWith("/help")) {
-			await send(env, chatId, "🤖 <b>瑶曦博客 Bot 帮助</b>\n\n/latest 5 — 最近动态（可加数量）\n/random 3 — 随机动态（可加数量）\n/stats — 统计 + 订阅人数\n/search 关键词 — 搜索朋友圈\n/capsules — 时间胶囊列表\n/weekly — 本周周报\n/daily 城市 — 每日一言 + 天气\n/broadcast 内容 — 主人广播\n/subscribe — 订阅推送\n/unsubscribe — 退订推送\n\n📭 在 Bot 内发布动态已下线，本 Bot 专注订阅推送与查询喵~");
+			await send(env, chatId, "🤖 <b>瑶曦博客 Bot 帮助</b>\n\n/latest 5 — 最近动态（可加数量）\n/random 3 — 随机动态（可加数量）\n/stats — 统计 + 订阅人数\n/search 关键词 — 搜索朋友圈\n/capsules — 时间胶囊列表\n/weekly — 本周周报\n/daily 城市 — 每日一言 + 天气\n/dm — 弹幕待审列表（主人）\n/broadcast 内容 — 主人广播\n/subscribe — 订阅推送\n/unsubscribe — 退订推送\n\n📭 在 Bot 内发布动态已下线，本 Bot 专注订阅推送与查询喵~");
 		} else if (text.startsWith("/subscribe")) {
 			await setSub(env, chatId, true);
 			await send(env, chatId, "✅ 已订阅推送，有新动态会第一时间通知你喵~");
@@ -140,6 +148,8 @@ async function handleUpdate(env, u) {
 			await cmdWeekly(env, chatId);
 		} else if (text.startsWith("/daily")) {
 			await cmdDaily(env, chatId, text.replace(/^\/daily\s*/, "").trim());
+		} else if (text.startsWith("/dm")) {
+			await cmdDanmakuPending(env, chatId, isOwner);
 		} else if (text.startsWith("/broadcast")) {
 			await cmdBroadcast(env, chatId, text.replace(/^\/broadcast\s*/, "").trim());
 		} else if (text.startsWith("/")) {
@@ -409,6 +419,171 @@ async function cmdBroadcast(env, chatId, msg) {
 		if (await send(env, cid, `📣 <b>公告</b>\n\n${esc(msg)}`)) ok++;
 	}
 	await send(env, chatId, `✅ 广播完成：${ok}/${list.length} 人送达喵~`);
+}
+
+/* ---------------- 弹幕审核（Blog API 桥接） ---------------- */
+
+/** blog-api 基址（wrangler vars 可覆盖） */
+function blogApiBase(env) {
+	return String(env.BLOG_API_ORIGIN || "https://blog-api.yaoxi.cloud").replace(/\/+$/, "");
+}
+
+/** 调用 blog-api 管理端点（BLOG_API_ADMIN_TOKEN 优先，回退本 Bot 的 ADMIN_TOKEN） */
+async function callBlogApiAdmin(env, path, { method = "GET", body } = {}) {
+	const token = env.BLOG_API_ADMIN_TOKEN || env.ADMIN_TOKEN || "";
+	if (!token) return { ok: false, status: 0, message: "未配置 BLOG_API_ADMIN_TOKEN / ADMIN_TOKEN" };
+	try {
+		const res = await fetch(`${blogApiBase(env)}${path}`, {
+			method,
+			headers: {
+				Authorization: `Bearer ${token}`,
+				...(body ? { "Content-Type": "application/json" } : {}),
+			},
+			body: body ? JSON.stringify(body) : undefined,
+			signal: AbortSignal.timeout(10000),
+		});
+		const j = await res.json().catch(() => null);
+		return { ok: res.ok && !!j?.ok, status: res.status, data: j, message: j?.message };
+	} catch (e) {
+		console.error("[dm-api]", path, e);
+		return { ok: false, status: 0, message: "请求 blog-api 失败" };
+	}
+}
+
+/** 弹幕条目在 Telegram 中的统一排版 */
+function formatDanmakuItem(it) {
+	return (
+		`💬 <b>待审弹幕</b>\n\n` +
+		`📄 ${esc(it.post)}\n` +
+		`📍 第 ${Number(it.p || 0) + 1} 段${it.x ? `「${esc(clip(it.x, 24))}」` : ""}\n` +
+		`👤 ${esc(it.a || "匿名")} · 🎨 <code>${esc(it.c || "")}</code>\n` +
+		`🌐 ${esc(it.ip || "未知")}\n\n──────────\n<b>${esc(it.t || "")}</b>`
+	);
+}
+
+/** 内联键盘消息发送（审核按钮专用） */
+async function sendWithKeyboard(env, chatId, text, inlineKeyboard) {
+	try {
+		const res = await fetch(`${TG_API}${env.BOT_TOKEN}/sendMessage`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				chat_id: chatId,
+				text,
+				parse_mode: "HTML",
+				disable_web_page_preview: true,
+				reply_markup: { inline_keyboard: inlineKeyboard },
+			}),
+			signal: AbortSignal.timeout(8000),
+		});
+		const j = await res.json().catch(() => null);
+		if (!j?.ok) console.log("[sendkbd] fail", chatId, JSON.stringify(j));
+		return !!j?.ok;
+	} catch (e) {
+		console.error("[sendkbd] err", chatId, e);
+		return false;
+	}
+}
+
+/** 回答按钮回调（弹出轻提示，不打断聊天流） */
+async function answerCallback(env, callbackId, text) {
+	try {
+		await fetch(`${TG_API}${env.BOT_TOKEN}/answerCallbackQuery`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ callback_query_id: callbackId, text }),
+			signal: AbortSignal.timeout(8000),
+		});
+	} catch (e) {
+		console.error("[answer-cb] err", e);
+	}
+}
+
+/** 编辑消息正文（审核结果回填到原消息，替换按钮） */
+async function editMessageResult(env, chatId, messageId, text) {
+	try {
+		await fetch(`${TG_API}${env.BOT_TOKEN}/editMessageText`, {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({
+				chat_id: chatId,
+				message_id: messageId,
+				text,
+				parse_mode: "HTML",
+				disable_web_page_preview: true,
+				reply_markup: { inline_keyboard: [] },
+			}),
+			signal: AbortSignal.timeout(8000),
+		});
+	} catch (e) {
+		console.error("[edit-msg] err", e);
+	}
+}
+
+/**
+ * 弹幕审核按钮回调：dm:ok:{id} 放行 / dm:no:{id} 拒绝
+ * 点击 → 调用 blog-api /api/danmaku/moderate → 原位回填结果
+ */
+async function handleDanmakuCallback(env, cb) {
+	const chatId = cb?.message?.chat?.id;
+	const isOwner = String(chatId) === String(env.CHAT_ID || "");
+	const m = /^dm:(ok|no):([a-z0-9]{6,24})$/.exec(cb?.data || "");
+
+	if (!m || !isOwner) {
+		await answerCallback(env, cb.id, "🚫 无权限或无效操作");
+		return;
+	}
+
+	const action = m[1] === "ok" ? "approve" : "reject";
+	const res = await callBlogApiAdmin(env, "/api/danmaku/moderate", {
+		method: "POST",
+		body: { id: m[2], action },
+	});
+
+	const originalText = cb.message?.text || "💬 弹幕";
+	if (res.ok) {
+		const mark =
+			action === "approve"
+				? `✅ <b>已放行</b>（该篇弹幕总数：${res.data?.live_total ?? "-"}）`
+				: "🚫 <b>已拒绝</b>";
+		await answerCallback(env, cb.id, action === "approve" ? "✅ 已放行" : "🚫 已拒绝");
+		await editMessageResult(env, chatId, cb.message.message_id, `${originalText}\n\n${mark}`);
+	} else {
+		await answerCallback(env, cb.id, `操作失败：${res.message || res.status}`);
+		if (res.status === 404) {
+			// 已被处理过：同步移除按钮，避免误重复点击
+			await editMessageResult(env, chatId, cb.message.message_id, `${originalText}\n\n⚠️ 该弹幕已不存在或已被处理`);
+		}
+	}
+}
+
+/** /dm 待审列表：逐条发送带审核按钮的弹幕卡片 */
+async function cmdDanmakuPending(env, chatId, isOwner) {
+	if (!isOwner) {
+		await send(env, chatId, "🔒 弹幕审核仅主人可用喵~");
+		return;
+	}
+	const res = await callBlogApiAdmin(env, "/api/danmaku/pending");
+	if (!res.ok) {
+		await send(env, chatId, `😿 读取待审弹幕失败：${esc(res.message || "未知错误")}`);
+		return;
+	}
+	const items = res.data?.items || [];
+	if (!items.length) {
+		await send(env, chatId, "✅ 暂无待审弹幕喵~");
+		return;
+	}
+	if (items.length > 8) {
+		await send(env, chatId, `📬 当前待审 ${items.length} 条，先展示最新 8 条喵~`);
+	}
+	for (const it of items.slice(0, 8)) {
+		await sendWithKeyboard(env, chatId, formatDanmakuItem(it), [
+			[
+				{ text: "✅ 放行", callback_data: `dm:ok:${it.id}` },
+				{ text: "❌ 拒绝", callback_data: `dm:no:${it.id}` },
+			],
+		]);
+	}
 }
 
 /** 每日一言（+可选天气） */

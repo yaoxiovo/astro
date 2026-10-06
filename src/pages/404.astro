@@ -15,7 +15,12 @@ import { Icon } from "astro-icon/components";
 						404
 					</div>
 					<div class="absolute inset-0 flex items-center justify-center">
-						<Icon name="fa6-solid:face-sad-tear" class="text-6xl md:text-7xl text-[var(--primary)]" />
+						<span id="egg-404-icon-sad">
+							<Icon name="fa6-solid:face-sad-tear" class="text-6xl md:text-7xl text-[var(--primary)]" />
+						</span>
+						<span id="egg-404-icon-happy" class="hidden">
+							<Icon name="fa6-solid:face-laugh-beam" class="text-6xl md:text-7xl text-[var(--primary)]" />
+						</span>
 					</div>
 				</div>
 			</div>
@@ -30,6 +35,11 @@ import { Icon } from "astro-icon/components";
 					<br>
 					请检查URL是否正确，或者返回首页继续浏览。
 				</p>
+
+				<!-- 限定彩蛋：庆典期间 404 展示特殊文案（运行时检测，默认隐藏） -->
+				<div id="egg-404-extra" class="hidden mb-6 px-4 py-3 rounded-xl border border-[var(--primary)]/30 bg-[var(--primary)]/5">
+					<p id="egg-404-text" class="text-[var(--primary)] text-sm md:text-base font-medium leading-relaxed"></p>
+				</div>
 				
 				<!-- 导航按钮 -->
 				<div class="flex flex-col sm:flex-row gap-3 justify-center">
@@ -52,5 +62,30 @@ import { Icon } from "astro-icon/components";
 				</p>
 			</div>
 		</div>
+
+		<script is:inline>
+			// 站点人生彩蛋联动：庆典期间 404 显示限定文案（{n} 替换为届数）
+			(function () {
+				var boxEl = document.getElementById("egg-404-extra");
+				var textEl = document.getElementById("egg-404-text");
+				var sadEl = document.getElementById("egg-404-icon-sad");
+				var happyEl = document.getElementById("egg-404-icon-happy");
+				if (!boxEl || !textEl) return;
+
+				var applied = false;
+				function applyEgg(egg) {
+					if (applied || !egg || !egg.effect || !egg.effect.notFound) return;
+					applied = true;
+					textEl.textContent = String(egg.effect.notFound).replace(/\{n\}/g, String(Math.max(1, egg.n || 1)));
+					boxEl.classList.remove("hidden");
+					if (sadEl) sadEl.classList.add("hidden");
+					if (happyEl) happyEl.classList.remove("hidden");
+				}
+
+				// 引擎模块脚本后于本内联脚本执行，事件与即时检查双保险
+				document.addEventListener("easteregg:active", function (e) { applyEgg(e.detail); });
+				if (window.__yaoxiEggActive) applyEgg(window.__yaoxiEggActive);
+			})();
+		</script>
 	</MainGridLayout>
 </Layout>

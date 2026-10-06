@@ -90,6 +90,13 @@ jobs:
           if [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
             echo "$CLOUDFLARE_ACCOUNT_ID" | npx wrangler secret put CF_ACCOUNT_ID || true
           fi
+          # 弹幕审核 Telegram 通知（复用 Bot 的凭据：BOT_TOKEN / CHAT_ID）
+          if [ -n "$TG_BOT_TOKEN" ]; then
+            echo "$TG_BOT_TOKEN" | npx wrangler secret put TELEGRAM_BOT_TOKEN || true
+          fi
+          if [ -n "$TG_CHAT_ID" ]; then
+            echo "$TG_CHAT_ID" | npx wrangler secret put TELEGRAM_CHAT_ID || true
+          fi
         env:
           MAIL_GATEWAY_TOKEN: ${{ secrets.MAIL_GATEWAY_TOKEN }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
@@ -101,6 +108,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          TG_BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.CHAT_ID }}
 
       - name: Deploy Worker
         run: npx wrangler deploy

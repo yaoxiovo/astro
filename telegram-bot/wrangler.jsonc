@@ -12,6 +12,7 @@
 		"crons": ["*/10 * * * *"]
 	},
 	"vars": {
-		"CHAT_ID": "7950928200"
+		"CHAT_ID": "7950928200",
+		"BLOG_API_ORIGIN": "https://blog-api.yaoxi.cloud"
 	}
 }

@@ -13,5 +13,24 @@
 			"binding": "RATE_LIMIT_KV",
 			"id": "REPLACE_WITH_KV_ID"
 		}
-	]
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "PRESENCE",
+				"class_name": "PresenceRoom"
+			}
+		]
+	},
+	"migrations": [
+		// 实时共读房间（SQLite 后端 Durable Object，免费额度即可运行）
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["PresenceRoom"]
+		}
+	],
+	"vars": {
+		// 弹幕免审开关：true 时投稿直接上墙；默认 false 走 Telegram 人工审核流
+		"DANMAKU_AUTO_APPROVE": "false"
+	}
 }

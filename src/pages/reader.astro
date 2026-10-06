@@ -1,0 +1,728 @@
+---
+// reader.astro - 瑶曦通行证 · 读者中心
+// 身份卡 · 零知识密钥库（初始化/验证/重建）· 本地阅读足迹 · 称号墙
+// 密钥库由 zk-api.yaoxi.cloud BFF 托管密文，主密码永不离开设备
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+---
+
+<MainGridLayout title="读者中心" noindex>
+	<div id="rc-root" data-api="https://zk-api.yaoxi.cloud" class="flex flex-col gap-6">
+
+		<!-- ================= 身份卡 ================= -->
+		<div class="card-base p-6 md:p-8">
+			<div class="flex items-center gap-3 mb-4">
+				<div class="h-10 w-10 rounded-xl bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/70 flex-shrink-0">
+					<Icon name="material-symbols:account-circle" class="text-[1.6rem]" />
+				</div>
+				<div>
+					<h1 class="text-xl md:text-2xl font-bold text-90">瑶曦通行证 · 读者中心</h1>
+					<p class="text-xs text-50 mt-0.5">统一身份认证 · 端到端密钥库 · 本地阅读足迹</p>
+				</div>
+			</div>
+
+			<!-- 游客态 -->
+			<div data-yaoxi-guest-only class="flex flex-col gap-3">
+				<p class="text-sm text-75 leading-relaxed">
+					你是以<b>游客</b>身份浏览。登录后可获得专属密钥库（用于解密博主的加密文章），
+					本地阅读足迹也会自动合并进你的账号档案 喵~
+				</p>
+				<div class="flex flex-wrap items-center gap-3">
+					<button type="button" data-yaoxi-login="popup" class="btn-regular py-2.5 px-5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 bg-[var(--primary)] text-white hover:opacity-90 active:scale-95 transition">
+						<Icon name="material-symbols:passkey" class="text-base"></Icon>
+						<span>通过认证中心登录</span>
+					</button>
+					<a href="https://accounts.yaoxi.cloud" target="_blank" rel="noopener" class="text-xs text-50 hover:text-[var(--primary)] hover:underline">什么是瑶曦通行证？</a>
+				</div>
+			</div>
+
+			<!-- 已登录态 -->
+			<div data-yaoxi-authed-only class="hidden flex items-center gap-4 flex-wrap">
+				<div id="rc-avatar" class="w-14 h-14 rounded-full bg-[var(--primary)] text-white font-bold flex items-center justify-center text-xl shadow-sm flex-shrink-0">Y</div>
+				<div class="flex flex-col min-w-0 flex-1">
+					<div class="flex items-center gap-2 flex-wrap">
+						<span id="rc-name" data-yaoxi-user-name class="font-bold text-lg text-90 truncate">读者</span>
+						<span id="rc-role" class="text-[10px] px-1.5 py-0.5 rounded bg-[var(--primary)]/10 text-[var(--primary)] font-medium">成员</span>
+					</div>
+					<span id="rc-email" class="text-xs text-50 font-mono truncate">—</span>
+				</div>
+				<button type="button" data-yaoxi-logout class="btn-regular text-xs py-1.5 px-3 rounded-lg text-red-500 hover:bg-red-500/10 transition font-medium">
+					退出登录
+				</button>
+			</div>
+		</div>
+
+		<!-- ================= 零知识密钥库 ================= -->
+		<div class="card-base p-6 md:p-8">
+			<div class="flex items-center gap-2 mb-4">
+				<div class="h-8 w-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/70 flex-shrink-0">
+					<Icon name="material-symbols:key" class="text-[1.4rem]" />
+				</div>
+				<h2 class="text-lg font-bold text-90">零知识密钥库</h2>
+			</div>
+
+			<!-- 游客提示 -->
+			<div data-yaoxi-guest-only>
+				<p class="text-sm text-50">登录后即可初始化属于你的读者密钥对 喵~</p>
+			</div>
+
+			<!-- 已登录：密钥库工作区 -->
+			<div data-yaoxi-authed-only class="hidden flex flex-col gap-4">
+				<div id="rc-vault-loading" class="text-sm text-50 flex items-center gap-2">
+					<span class="loading loading-spinner loading-xs"></span>
+					正在检索云端保险库...
+				</div>
+
+				<!-- 未初始化 -->
+				<div id="rc-vault-empty" class="hidden flex flex-col gap-3">
+					<p class="text-sm text-75 leading-relaxed">
+						尚未在云端检索到你的密钥库。点击下方按钮将现场生成 <b>RSA-OAEP 2048</b> 密钥对：
+						私钥经你的<b>阅读主密码</b>（PBKDF2 100,000 次派生 AES-GCM-256）加密为密文保险库后才会上云，
+						服务器永远无法解出你的私钥 喵~
+					</p>
+					<div>
+						<button id="rc-vault-init-btn" type="button" class="btn-regular py-2.5 px-5 rounded-xl font-bold text-xs inline-flex items-center gap-2 bg-[var(--primary)] text-white hover:opacity-90 active:scale-95 transition">
+							<Icon name="material-symbols:enhanced-encryption" class="text-base"></Icon>
+							<span>生成我的密钥对</span>
+						</button>
+					</div>
+				</div>
+
+				<!-- 已就绪 -->
+				<div id="rc-vault-ready" class="hidden flex flex-col gap-4">
+					<div class="flex flex-col gap-1.5 text-xs text-75 bg-black/[0.03] dark:bg-white/[0.05] p-3 rounded-lg font-mono">
+						<div class="flex items-center justify-between gap-3 flex-wrap">
+							<span class="text-50">公钥指纹 (SHA-256)</span>
+							<span id="rc-vault-fp" class="text-90 font-semibold tracking-wider">—</span>
+						</div>
+						<div class="flex items-center justify-between gap-3 flex-wrap">
+							<span class="text-50">PBKDF2 迭代</span>
+							<span id="rc-vault-iter">100,000 次</span>
+						</div>
+					</div>
+					<p class="text-xs text-50 leading-relaxed">
+						博主发布加密文章时，会在云端密钥目录中勾选你的公钥，为本文封装一份<b>专属数字信封</b>。
+						只有在此设备输入你的主密码，才能解锁私钥并阅读正文。
+					</p>
+					<div class="flex flex-wrap items-center gap-3">
+						<button id="rc-vault-verify-btn" type="button" class="btn-regular py-2 px-4 rounded-lg font-bold text-xs inline-flex items-center gap-2 bg-[var(--primary)] text-white hover:opacity-90 active:scale-95 transition">
+							<Icon name="material-symbols:lock-open-right" class="text-base"></Icon>
+							<span>验证主密码</span>
+						</button>
+						<button id="rc-vault-rotate-btn" type="button" class="btn-plain text-xs py-2 px-4 rounded-lg text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 transition font-medium">
+							重新生成密钥库
+						</button>
+					</div>
+				</div>
+
+				<div id="rc-vault-status" class="hidden text-xs font-mono p-3 rounded-lg"></div>
+			</div>
+		</div>
+
+		<!-- ================= 阅读足迹 ================= -->
+		<div class="card-base p-6 md:p-8">
+			<div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+				<div class="flex items-center gap-2">
+					<div class="h-8 w-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/70 flex-shrink-0">
+						<Icon name="material-symbols:footprint" class="text-[1.4rem]" />
+					</div>
+					<h2 class="text-lg font-bold text-90">阅读足迹</h2>
+				</div>
+				<button id="rc-footprint-clear" type="button" class="text-[11px] text-50 hover:text-red-500 transition">清除本机足迹</button>
+			</div>
+
+			<p id="rc-footprint-guest-note" class="hidden text-xs text-amber-600 dark:text-amber-400 mb-3 leading-relaxed">
+				当前足迹保存在本机游客档案中，登录后会自动合并到你的账号档案 喵~
+			</p>
+
+			<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+				<div class="p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] flex flex-col gap-0.5">
+					<span class="text-[11px] text-50">读过文章</span>
+					<span id="rc-stat-posts" class="text-lg font-bold text-90 font-mono">0</span>
+				</div>
+				<div class="p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] flex flex-col gap-0.5">
+					<span class="text-[11px] text-50">累计阅读时长</span>
+					<span id="rc-stat-time" class="text-lg font-bold text-90 font-mono">0 秒</span>
+				</div>
+				<div class="p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] flex flex-col gap-0.5">
+					<span class="text-[11px] text-50">连续打卡</span>
+					<span id="rc-stat-streak" class="text-lg font-bold text-90 font-mono">0 天</span>
+				</div>
+				<div class="p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] flex flex-col gap-0.5">
+					<span class="text-[11px] text-50">打卡总天数</span>
+					<span id="rc-stat-days" class="text-lg font-bold text-90 font-mono">0 天</span>
+				</div>
+				<div class="p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.05] flex flex-col gap-0.5">
+					<span class="text-[11px] text-50">最早足迹</span>
+					<span id="rc-stat-first" class="text-lg font-bold text-90 font-mono">—</span>
+				</div>
+			</div>
+
+			<h3 class="text-sm font-bold text-75 mb-3">最近阅读</h3>
+			<div id="rc-recent" class="flex flex-col gap-2"></div>
+			<p id="rc-recent-empty" class="hidden text-sm text-50">还没有任何足迹，去随便翻开一篇文章吧 喵~</p>
+		</div>
+
+		<!-- ================= 称号墙 ================= -->
+		<div class="card-base p-6 md:p-8">
+			<div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+				<div class="flex items-center gap-2">
+					<div class="h-8 w-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/70 flex-shrink-0">
+						<Icon name="material-symbols:military-tech" class="text-[1.4rem]" />
+					</div>
+					<h2 class="text-lg font-bold text-90">称号墙</h2>
+				</div>
+				<span id="rc-badge-count" class="text-xs text-50 font-mono">0 / 12 已点亮</span>
+			</div>
+			<div id="rc-badges-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+		</div>
+
+		<!-- ================= 隐私说明 ================= -->
+		<div class="card-base p-6 text-xs text-50 leading-relaxed flex flex-col gap-1.5">
+			<p>🔒 <b>隐私承诺</b>：阅读足迹仅保存在你的浏览器 localStorage 中，绝不上传服务器；换设备或清除浏览器数据后足迹不迁移。</p>
+			<p>🗝️ <b>零知识密钥库</b>：你的 RSA 私钥以主密码加密后的密文形态存储于云端保险库，解密全程在设备内存中完成，服务器永远接触不到明文私钥与主密码。</p>
+		</div>
+	</div>
+
+	<!-- ================= 密钥库初始化 / 重建弹窗 ================= -->
+	<div id="rc-vault-modal" class="modal hidden">
+		<div class="modal-box max-w-md border border-base-300">
+			<h3 id="rc-modal-title" class="font-bold text-lg mb-2">生成我的密钥对</h3>
+			<p id="rc-modal-desc" class="text-xs text-base-content/60 mb-4 leading-relaxed">
+				设置一个阅读主密码。它将经 PBKDF2 (100,000 次计算) 派生加密密钥，把你的私钥锁进密文保险库。主密码不会上云、不会被存储，忘记后将无法恢复私钥 喵！
+			</p>
+			<input id="rc-pwd" type="password" autocomplete="new-password" placeholder="设置阅读主密码（至少 8 位）" class="input input-bordered w-full mb-3 font-mono text-sm" />
+			<input id="rc-pwd2" type="password" autocomplete="new-password" placeholder="再次输入确认" class="input input-bordered w-full mb-3 font-mono text-sm" />
+			<div id="rc-modal-error" class="hidden text-error text-xs mb-3 font-mono"></div>
+			<div class="modal-action flex justify-end gap-2">
+				<button id="rc-modal-cancel" type="button" class="btn btn-ghost btn-sm">取消</button>
+				<button id="rc-modal-submit" type="button" class="btn btn-primary btn-sm">生成密钥对 喵！</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- ================= 验证主密码弹窗 ================= -->
+	<div id="rc-verify-modal" class="modal hidden">
+		<div class="modal-box max-w-md border border-base-300">
+			<h3 class="font-bold text-lg mb-2">🔐 验证主密码</h3>
+			<p class="text-xs text-base-content/60 mb-4 leading-relaxed">
+				将从云端拉取你的密文保险库，并<b>仅在本设备内存</b>中尝试解锁私钥以验证主密码正确性。验证完成后私钥立即丢弃，不做任何持久化 喵！
+			</p>
+			<input id="rc-verify-pwd" type="password" autocomplete="current-password" placeholder="请输入你的阅读主密码" class="input input-bordered w-full mb-3 font-mono text-sm" />
+			<div id="rc-verify-error" class="hidden text-error text-xs mb-3 font-mono"></div>
+			<div class="modal-action flex justify-end gap-2">
+				<button id="rc-verify-cancel" type="button" class="btn btn-ghost btn-sm">取消</button>
+				<button id="rc-verify-submit" type="button" class="btn btn-primary btn-sm">解锁验证 喵！</button>
+			</div>
+		</div>
+	</div>
+</MainGridLayout>
+
+<script>
+	import {
+		loadStore,
+		saveStore,
+		resolveBucketId,
+		computeStreak,
+		formatDuration,
+		formatDate,
+		GUEST_BUCKET,
+	} from "../utils/footprint";
+	import {
+		generateUserKeyPair,
+		lockPrivateKeyVault,
+		unlockPrivateKeyVault,
+	} from "../utils/crypto";
+
+	const w = window as any;
+	const ROOT_ID = "rc-root";
+
+	// ---------------- 基础工具 ----------------
+	function el<T extends HTMLElement = HTMLElement>(id: string): T | null {
+		return document.getElementById(id) as T | null;
+	}
+	function show(id: string) {
+		el(id)?.classList.remove("hidden");
+	}
+	function hide(id: string) {
+		el(id)?.classList.add("hidden");
+	}
+	function setText(id: string, text: string) {
+		const node = el(id);
+		if (node) node.textContent = text;
+	}
+	function getToken(): string | null {
+		return (
+			localStorage.getItem("yaoxi_access_token") ||
+			localStorage.getItem("access_token") ||
+			localStorage.getItem("yaoxi_auth_token") ||
+			localStorage.getItem("yaoxi_client_token")
+		);
+	}
+	function getUser(): any {
+		try {
+			if (typeof w.getYaoxiUser === "function") {
+				const u = w.getYaoxiUser();
+				if (u) return u;
+			}
+			return JSON.parse(localStorage.getItem("yaoxi_auth_user") || localStorage.getItem("user_profile") || "null");
+		} catch {
+			return null;
+		}
+	}
+	function isAuthed(): boolean {
+		if (w.yaoxiAuth && typeof w.yaoxiAuth.isAuthenticated === "function") return !!w.yaoxiAuth.isAuthenticated();
+		return !!getToken();
+	}
+	function apiBase(): string {
+		return el(ROOT_ID)?.dataset.api || "https://zk-api.yaoxi.cloud";
+	}
+	function isAdminRole(user: any): boolean {
+		if (!user) return false;
+		const role = String(user.role || "").toLowerCase();
+		const roles = Array.isArray(user.roles) ? user.roles.map((r: any) => String(r).toLowerCase()) : [];
+		return role === "admin" || roles.includes("admin") || user.is_admin === true;
+	}
+
+	// ---------------- 身份卡 ----------------
+	function renderIdentity() {
+		const authed = isAuthed();
+		const user = authed ? getUser() : null;
+		if (authed && user) {
+			const initial = String(user.name || user.username || user.sub || "U").trim().charAt(0).toUpperCase();
+			setText("rc-avatar", initial || "U");
+			setText("rc-name", user.name || user.username || user.sub || "读者");
+			setText("rc-email", user.email || user.sub || "accounts.yaoxi.cloud");
+			const roleEl = el("rc-role");
+			if (roleEl) {
+				const admin = isAdminRole(user);
+				roleEl.textContent = admin ? "管理员" : "成员";
+				roleEl.className = admin
+					? "text-[10px] px-1.5 py-0.5 rounded bg-[var(--primary)]/10 text-[var(--primary)] font-medium"
+					: "text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium";
+			}
+		}
+	}
+
+	// ---------------- 密钥库 ----------------
+	let vaultData: any = null;
+	let vaultGen = 0;
+	let modalMode: "init" | "rotate" = "init";
+
+	function vaultStatus(msg: string, kind: "ok" | "error" | "info") {
+		const node = el("rc-vault-status");
+		if (!node) return;
+		node.textContent = msg;
+		node.className =
+			kind === "ok"
+				? "text-xs font-mono p-3 rounded-lg bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
+				: kind === "error"
+					? "text-xs font-mono p-3 rounded-lg bg-error/10 text-error border border-error/20"
+					: "text-xs font-mono p-3 rounded-lg bg-black/[0.03] dark:bg-white/[0.05] text-50";
+		node.classList.remove("hidden");
+	}
+
+	async function fingerprintOf(jwk: JsonWebKey): Promise<string> {
+		const data = new TextEncoder().encode(JSON.stringify(jwk));
+		const hash = await crypto.subtle.digest("SHA-256", data);
+		const hex = Array.from(new Uint8Array(hash))
+			.map((b) => b.toString(16).padStart(2, "0"))
+			.join("")
+			.slice(0, 16)
+			.toUpperCase();
+		return hex.replace(/(.{4})(?=.)/g, "$1 ");
+	}
+
+	async function loadVault() {
+		const gen = ++vaultGen;
+		vaultData = null;
+		show("rc-vault-loading");
+		hide("rc-vault-empty");
+		hide("rc-vault-ready");
+		hide("rc-vault-status");
+
+		const token = getToken();
+		if (!token) {
+			hide("rc-vault-loading");
+			vaultStatus("未检测到登录授权凭据，请先登录 喵！", "error");
+			return;
+		}
+
+		try {
+			const res = await fetch(`${apiBase()}/api/user/vault`, {
+				headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+			});
+			if (gen !== vaultGen) return;
+
+			if (res.status === 404) {
+				hide("rc-vault-loading");
+				show("rc-vault-empty");
+				return;
+			}
+			if (res.status === 401) {
+				hide("rc-vault-loading");
+				vaultStatus("登录态已失效，请重新登录后再试 喵！", "error");
+				return;
+			}
+			if (!res.ok) {
+				hide("rc-vault-loading");
+				vaultStatus(`云端保险库检索失败: HTTP ${res.status}`, "error");
+				return;
+			}
+
+			const data = await res.json();
+			if (gen !== vaultGen) return;
+			vaultData = data;
+			setText("rc-vault-fp", await fingerprintOf(data.public_key_jwk));
+			setText("rc-vault-iter", `${(data.iterations || 100000).toLocaleString()} 次`);
+			hide("rc-vault-loading");
+			show("rc-vault-ready");
+		} catch (err: any) {
+			if (gen !== vaultGen) return;
+			hide("rc-vault-loading");
+			vaultStatus(`云端保险库检索异常: ${err?.message || err}`, "error");
+		}
+	}
+
+	function openVaultModal(mode: "init" | "rotate") {
+		modalMode = mode;
+		setText("rc-modal-title", mode === "rotate" ? "重新生成密钥库" : "生成我的密钥对");
+		setText(
+			"rc-modal-desc",
+			mode === "rotate"
+				? "警告：重建后旧密钥对将作废！此前为旧公钥封装的数字信封将无法再解开（除非博主重新封装）。新私钥同样由你的主密码保护 喵！"
+				: "设置一个阅读主密码。它将经 PBKDF2 (100,000 次计算) 派生加密密钥，把你的私钥锁进密文保险库。主密码不会上云、不会被存储，忘记后将无法恢复私钥 喵！"
+		);
+		const submit = el<HTMLButtonElement>("rc-modal-submit");
+		if (submit) submit.textContent = mode === "rotate" ? "重建密钥库 喵！" : "生成密钥对 喵！";
+		(el<HTMLInputElement>("rc-pwd") as HTMLInputElement).value = "";
+		(el<HTMLInputElement>("rc-pwd2") as HTMLInputElement).value = "";
+		hide("rc-modal-error");
+		show("rc-vault-modal");
+		el("rc-vault-modal")?.classList.add("modal-open");
+	}
+	function closeVaultModal() {
+		hide("rc-vault-modal");
+		el("rc-vault-modal")?.classList.remove("modal-open");
+	}
+	function modalError(msg: string) {
+		const node = el("rc-modal-error");
+		if (node) {
+			node.textContent = msg;
+			node.classList.remove("hidden");
+		}
+	}
+
+	async function submitVaultModal() {
+		const pwdEl = el<HTMLInputElement>("rc-pwd") as HTMLInputElement;
+		const pwd2El = el<HTMLInputElement>("rc-pwd2") as HTMLInputElement;
+		const submit = el<HTMLButtonElement>("rc-modal-submit") as HTMLButtonElement;
+		const pwd = pwdEl?.value || "";
+		const pwd2 = pwd2El?.value || "";
+
+		if (pwd.length < 8) return modalError("主密码至少需要 8 位字符 喵！");
+		if (pwd !== pwd2) return modalError("两次输入的主密码不一致 喵！");
+
+		const token = getToken();
+		if (!token) return modalError("登录态缺失，请先登录 喵！");
+
+		submit.disabled = true;
+		const originLabel = submit.textContent;
+		submit.textContent = "内存计算中...";
+		try {
+			const pair = await generateUserKeyPair();
+			const vault = await lockPrivateKeyVault(pair, pwd);
+			const res = await fetch(`${apiBase()}/api/user/vault`, {
+				method: "PUT",
+				headers: {
+					Authorization: `Bearer ${token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(vault),
+			});
+			if (!res.ok) throw new Error(`云端保险库写入失败: HTTP ${res.status}`);
+
+			pwdEl.value = "";
+			pwd2El.value = "";
+			closeVaultModal();
+			vaultStatus(
+				modalMode === "rotate"
+					? "新密钥对已生成并同步至云端。旧信封已作废，如需阅读旧加密文章请联系博主重新封装 喵！"
+					: "密钥对已生成并同步至云端！博主现在可以在发布加密文章时勾选你的公钥，为你封装专属数字信封 喵~",
+				"ok"
+			);
+			await loadVault();
+		} catch (err: any) {
+			modalError(err?.message || String(err));
+		} finally {
+			submit.disabled = false;
+			submit.textContent = originLabel;
+		}
+	}
+
+	function openVerifyModal() {
+		(el<HTMLInputElement>("rc-verify-pwd") as HTMLInputElement).value = "";
+		hide("rc-verify-error");
+		show("rc-verify-modal");
+		el("rc-verify-modal")?.classList.add("modal-open");
+	}
+	function closeVerifyModal() {
+		hide("rc-verify-modal");
+		el("rc-verify-modal")?.classList.remove("modal-open");
+	}
+	function verifyError(msg: string) {
+		const node = el("rc-verify-error");
+		if (node) {
+			node.textContent = msg;
+			node.classList.remove("hidden");
+		}
+	}
+
+	async function submitVerify() {
+		const pwdEl = el<HTMLInputElement>("rc-verify-pwd") as HTMLInputElement;
+		const submit = el<HTMLButtonElement>("rc-verify-submit") as HTMLButtonElement;
+		const pwd = pwdEl?.value || "";
+		if (!pwd) return verifyError("请输入你的阅读主密码 喵！");
+		if (!vaultData) return verifyError("尚未加载到云端保险库，请稍后重试 喵！");
+
+		submit.disabled = true;
+		const originLabel = submit.textContent;
+		submit.textContent = "内存计算中...";
+		try {
+			await unlockPrivateKeyVault(vaultData, pwd);
+			pwdEl.value = "";
+			closeVerifyModal();
+			vaultStatus("主密码校验通过：RSA-OAEP 私钥已在本地内存成功解锁并立即丢弃，此设备可正常解密文章 喵！", "ok");
+		} catch (err: any) {
+			verifyError(err?.message || "主密码校验失败 喵！");
+		} finally {
+			submit.disabled = false;
+			submit.textContent = originLabel;
+		}
+	}
+
+	// ---------------- 足迹统计 ----------------
+	interface BadgeState {
+		emoji: string;
+		name: string;
+		desc: string;
+		done: boolean;
+		prog: string;
+	}
+
+	function footprintStats(bucket: any) {
+		const items: any[] = bucket ? Object.values(bucket.items || {}) : [];
+		const days: Record<string, number> = bucket?.days || {};
+		const totalActive = items.reduce((a, i) => a + (i.active || 0), 0);
+		const streak = computeStreak(days);
+		const distinctTags = new Set(items.flatMap((i) => (Array.isArray(i.tags) ? i.tags : []))).size;
+		const bestActive = items.reduce((a, i) => Math.max(a, i.active || 0), 0);
+		const finishers = items.filter((i) => (i.progress || 0) >= 95).length;
+		const bestReads = items.reduce((a, i) => Math.max(a, i.reads || 0), 0);
+		const night = items.some((i) => {
+			const hours = [i.first, i.last].filter(Boolean).map((ts: number) => new Date(ts).getHours());
+			return hours.some((h: number) => h >= 0 && h < 5);
+		});
+		const yearMs = 365 * 24 * 3600 * 1000;
+		const oldCount = items.filter((i) => i.pub && Date.now() - Date.parse(i.pub) > yearMs).length;
+		const earliest = items.length ? Math.min(...items.map((i) => i.first || Infinity)) : 0;
+		return {
+			items,
+			days,
+			cnt: items.length,
+			totalActive,
+			streak,
+			dayCount: Object.keys(days).length,
+			distinctTags,
+			bestActive,
+			finishers,
+			bestReads,
+			night,
+			oldCount,
+			earliest,
+		};
+	}
+
+	function badgeStates(s: ReturnType<typeof footprintStats>): BadgeState[] {
+		return [
+			{ emoji: "🌱", name: "初见之缘", desc: "翻开博客的第一篇文章", done: s.cnt >= 1, prog: `${Math.min(s.cnt, 1)}/1` },
+			{ emoji: "📚", name: "藏书阁主", desc: "累计阅读 10 篇文章", done: s.cnt >= 10, prog: `${Math.min(s.cnt, 10)}/10` },
+			{ emoji: "🎓", name: "寒窗学者", desc: "累计阅读 50 篇文章", done: s.cnt >= 50, prog: `${Math.min(s.cnt, 50)}/50` },
+			{ emoji: "🌙", name: "深夜读者", desc: "在凌晨 0-5 点读过博客", done: s.night, prog: s.night ? "已点亮" : "等待午夜时分的你" },
+			{ emoji: "🏃", name: "马拉松读者", desc: "单篇文章沉浸阅读满 30 分钟", done: s.bestActive >= 1800, prog: `${Math.min(Math.floor(s.bestActive / 60), 30)}/30 分钟` },
+			{ emoji: "✅", name: "善始善终", desc: "5 篇文章读到 95% 以上", done: s.finishers >= 5, prog: `${Math.min(s.finishers, 5)}/5` },
+			{ emoji: "📅", name: "七日之约", desc: "连续打卡 7 天", done: s.streak >= 7, prog: `${Math.min(s.streak, 7)}/7 天` },
+			{ emoji: "🔥", name: "恒心不辍", desc: "连续打卡 30 天", done: s.streak >= 30, prog: `${Math.min(s.streak, 30)}/30 天` },
+			{ emoji: "🔁", name: "百读不厌", desc: "同一篇文章阅读 5 次", done: s.bestReads >= 5, prog: `${Math.min(s.bestReads, 5)}/5 次` },
+			{ emoji: "🏺", name: "考古学家", desc: "读过发布超过一年的旧文", done: s.oldCount >= 1, prog: `${Math.min(s.oldCount, 1)}/1` },
+			{ emoji: "🧭", name: "漫游者", desc: "涉猎 5 个不同标签的文章", done: s.distinctTags >= 5, prog: `${Math.min(s.distinctTags, 5)}/5 个标签` },
+			{ emoji: "⏳", name: "学海舟客", desc: "累计沉浸阅读 5 小时", done: s.totalActive >= 18000, prog: `${Math.min(Math.floor(s.totalActive / 3600), 5)}/5 小时` },
+		];
+	}
+
+	function renderRecent(items: any[]) {
+		const box = el("rc-recent");
+		if (!box) return;
+		box.textContent = "";
+		const sorted = items.slice().sort((a, b) => (b.last || 0) - (a.last || 0)).slice(0, 12);
+		if (sorted.length === 0) {
+			show("rc-recent-empty");
+			return;
+		}
+		hide("rc-recent-empty");
+
+		for (const it of sorted) {
+			const row = document.createElement("a");
+			row.href = `/posts/${encodeURIComponent(it.slug)}/`;
+			row.className =
+				"flex flex-col gap-1.5 p-3 rounded-lg bg-black/[0.03] dark:bg-white/[0.05] hover:bg-black/[0.06] dark:hover:bg-white/[0.09] transition no-underline";
+
+			const top = document.createElement("div");
+			top.className = "flex items-center justify-between gap-2";
+			const title = document.createElement("span");
+			title.className = "font-medium text-sm text-90 truncate";
+			title.textContent = it.title || it.slug;
+			const pct = document.createElement("span");
+			pct.className = "text-[11px] font-mono text-50 flex-shrink-0";
+			pct.textContent = `${Math.round(it.progress || 0)}%`;
+			top.appendChild(title);
+			top.appendChild(pct);
+
+			const barWrap = document.createElement("div");
+			barWrap.className = "h-1 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden";
+			const bar = document.createElement("div");
+			bar.className = "h-full rounded-full bg-[var(--primary)]";
+			bar.style.width = `${Math.min(100, Math.max(0, it.progress || 0))}%`;
+			barWrap.appendChild(bar);
+
+			const sub = document.createElement("span");
+			sub.className = "text-[11px] text-50 font-mono";
+			sub.textContent = `${formatDate(it.last)} · ${formatDuration(it.active || 0)}${it.reads > 1 ? ` · 重读 ${it.reads} 次` : ""}`;
+
+			row.appendChild(top);
+			row.appendChild(barWrap);
+			row.appendChild(sub);
+			box.appendChild(row);
+		}
+	}
+
+	function renderBadges(s: ReturnType<typeof footprintStats>) {
+		const grid = el("rc-badges-grid");
+		if (!grid) return;
+		const states = badgeStates(s);
+		const doneCount = states.filter((b) => b.done).length;
+		setText("rc-badge-count", `${doneCount} / ${states.length} 已点亮`);
+		grid.innerHTML = states
+			.map(
+				(b) => `
+			<div class="p-4 rounded-xl border ${b.done ? "border-[var(--primary)]/40 bg-[var(--primary)]/5" : "border-[var(--line-divider)] opacity-60"}">
+				<div class="text-2xl mb-1.5">${b.emoji}</div>
+				<div class="font-bold text-sm text-90 mb-0.5">${b.name}${b.done ? ' <span class="text-[10px] font-normal text-[var(--primary)]">已点亮</span>' : ""}</div>
+				<div class="text-xs text-50 leading-relaxed mb-2">${b.desc}</div>
+				<div class="text-[11px] font-mono ${b.done ? "text-[var(--primary)]" : "text-40"}">${b.prog}</div>
+			</div>`
+			)
+			.join("");
+	}
+
+	function renderFootprint() {
+		const store = loadStore();
+		const bucketId = resolveBucketId();
+		const bucket = store.buckets[bucketId] || null;
+		const s = footprintStats(bucket);
+
+		setText("rc-stat-posts", String(s.cnt));
+		setText("rc-stat-time", formatDuration(s.totalActive));
+		setText("rc-stat-streak", `${s.streak} 天`);
+		setText("rc-stat-days", `${s.dayCount} 天`);
+		setText("rc-stat-first", s.earliest ? formatDate(s.earliest) : "—");
+
+		const guestNote = el("rc-footprint-guest-note");
+		if (guestNote) guestNote.classList.toggle("hidden", bucketId !== GUEST_BUCKET || s.cnt === 0);
+
+		renderRecent(s.items);
+		renderBadges(s);
+	}
+
+	// ---------------- 引导与钩子 ----------------
+	function bindControls() {
+		const initBtn = el("rc-vault-init-btn");
+		if (initBtn) initBtn.onclick = () => openVaultModal("init");
+		const rotateBtn = el("rc-vault-rotate-btn");
+		if (rotateBtn) rotateBtn.onclick = () => openVaultModal("rotate");
+		const verifyBtn = el("rc-vault-verify-btn");
+		if (verifyBtn) verifyBtn.onclick = () => openVerifyModal();
+
+		const modalCancel = el("rc-modal-cancel");
+		if (modalCancel) modalCancel.onclick = closeVaultModal;
+		const modalSubmit = el("rc-modal-submit");
+		if (modalSubmit) modalSubmit.onclick = submitVaultModal;
+		const verifyCancel = el("rc-verify-cancel");
+		if (verifyCancel) verifyCancel.onclick = closeVerifyModal;
+		const verifySubmit = el("rc-verify-submit");
+		if (verifySubmit) verifySubmit.onclick = submitVerify;
+
+		const clearBtn = el("rc-footprint-clear");
+		if (clearBtn)
+			clearBtn.onclick = () => {
+				if (!confirm("确定要清除本机该账号下的全部阅读足迹吗？此操作不可恢复 喵！")) return;
+				const store = loadStore();
+				delete store.buckets[resolveBucketId()];
+				saveStore(store);
+				renderFootprint();
+			};
+
+		const pwd2 = el<HTMLInputElement>("rc-pwd2");
+		if (pwd2)
+			pwd2.onkeydown = (e: KeyboardEvent) => {
+				if (e.key === "Enter") submitVaultModal();
+			};
+		const verifyPwd = el<HTMLInputElement>("rc-verify-pwd");
+		if (verifyPwd)
+			verifyPwd.onkeydown = (e: KeyboardEvent) => {
+				if (e.key === "Enter") submitVerify();
+			};
+	}
+
+	let lastBootAt = 0;
+	function boot() {
+		if (!el(ROOT_ID)) return;
+		if (Date.now() - lastBootAt < 600) return;
+		lastBootAt = Date.now();
+
+		renderIdentity();
+		renderFootprint();
+		bindControls();
+
+		if (isAuthed()) loadVault();
+		else {
+			hide("rc-vault-loading");
+			hide("rc-vault-empty");
+			hide("rc-vault-ready");
+			hide("rc-vault-status");
+		}
+	}
+
+	if (!w.__yaoxiReaderCenterLoaded) {
+		w.__yaoxiReaderCenterLoaded = true;
+
+		["yaoxi:auth:ready", "yaoxi:auth:change"].forEach((evt) => {
+			w.addEventListener(evt, () => {
+				if (!el(ROOT_ID)) return;
+				renderIdentity();
+				if (isAuthed()) loadVault();
+			});
+		});
+
+		w.addEventListener("yaoxi:footprint:update", () => {
+			if (el(ROOT_ID)) renderFootprint();
+		});
+
+		document.addEventListener("swup:page:view", boot);
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", boot);
+		} else {
+			boot();
+		}
+	}
+</script>

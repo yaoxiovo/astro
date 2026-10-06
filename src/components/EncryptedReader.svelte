@@ -71,7 +71,10 @@
       });
 
       if (!res.ok) {
-        throw new Error('未在云端检索到您的密钥保险库，请先初始化您的客户端密钥对 喵！');
+        if (res.status === 404) {
+          throw new Error('您还未初始化密钥库：请先前往【读者中心】生成属于你的密钥对，再回来解密阅读 喵！');
+        }
+        throw new Error('云端密钥库检索失败，请稍后重试 喵！');
       }
 
       const vaultData: VaultData = await res.json();
@@ -123,6 +126,10 @@
         <span>🔑</span>
         输入主密码现场解密 喵！
       </button>
+      <a href="/reader/" class="btn btn-ghost btn-sm gap-1.5 text-base-content/70">
+        <span>🪪</span>
+        前往读者中心初始化密钥
+      </a>
     </div>
 
     {#if errorMsg}

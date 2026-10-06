@@ -68,17 +68,29 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
 
-        - name: Set ADMIN_TOKEN (protect /tick, /err)
-          run: |
-            if [ -n "$BOT_ADMIN_TOKEN" ]; then
-              echo "$BOT_ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN
-            else
-              echo "ADMIN_TOKEN not set, skipping — /tick and /err will be open!"
-            fi
-          env:
-            BOT_ADMIN_TOKEN: ${{ secrets.BOT_ADMIN_TOKEN }}
-            CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-            CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Set ADMIN_TOKEN (protect /tick, /err)
+        run: |
+          if [ -n "$BOT_ADMIN_TOKEN" ]; then
+            echo "$BOT_ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN
+          else
+            echo "ADMIN_TOKEN not set, skipping — /tick and /err will be open!"
+          fi
+        env:
+          BOT_ADMIN_TOKEN: ${{ secrets.BOT_ADMIN_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set BLOG_API_ADMIN_TOKEN (弹幕审核桥接 blog-api)
+        run: |
+          if [ -n "$ADMIN_TOKEN" ]; then
+            echo "$ADMIN_TOKEN" | npx wrangler secret put BLOG_API_ADMIN_TOKEN
+          else
+            echo "ADMIN_TOKEN not set — 弹幕审核按钮将无法放行（回退使用本 Bot ADMIN_TOKEN）"
+          fi
+        env:
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy Worker
         run: npx wrangler deploy
@@ -91,18 +103,18 @@ jobs:
           # 生成 webhook 校验密钥并写入 Worker secret
           WHS="whs_$(openssl rand -hex 16)"
           echo "$WHS" | npx wrangler secret put WEBHOOK_SECRET
-          # 设置 webhook（消息即时推送，替代旧 getUpdates 轮询）
+          # 设置 webhook（消息即时推送 + 弹幕审核按钮回调，替代旧 getUpdates 轮询）
           curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/setWebhook" \
             -H "Content-Type: application/json" \
-            -d "{\"url\":\"https://yaoxi-blog-bot.yaoxiovo.workers.dev/webhook\",\"secret_token\":\"$WHS\",\"allowed_updates\":[\"message\"]}"
+            -d "{\"url\":\"https://yaoxi-blog-bot.yaoxiovo.workers.dev/webhook\",\"secret_token\":\"$WHS\",\"allowed_updates\":[\"message\",\"callback_query\"]}"
           # 清空旧命令菜单
           curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/setMyCommands" \
             -H "Content-Type: application/json" \
             -d '{"commands":[]}'
-          # 写入新命令快捷菜单（与代码 COMMANDS 一致：12 个）
+          # 写入新命令快捷菜单（与代码 COMMANDS 一致：13 个）
           curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/setMyCommands" \
             -H "Content-Type: application/json" \
-            -d '{"commands":[{"command":"start","description":"开始使用 / 订阅推送"},{"command":"latest","description":"最近动态：/latest 5"},{"command":"random","description":"随机动态：/random 3"},{"command":"stats","description":"朋友圈统计 + 订阅人数"},{"command":"search","description":"搜索朋友圈：/search 关键词"},{"command":"capsules","description":"时间胶囊列表"},{"command":"weekly","description":"本周朋友圈周报"},{"command":"daily","description":"每日一言：/daily 城市"},{"command":"broadcast","description":"主人广播公告"},{"command":"subscribe","description":"订阅新动态推送"},{"command":"unsubscribe","description":"退订推送"},{"command":"help","description":"帮助与全部命令"}]}'
+            -d '{"commands":[{"command":"start","description":"开始使用 / 订阅推送"},{"command":"latest","description":"最近动态：/latest 5"},{"command":"random","description":"随机动态：/random 3"},{"command":"stats","description":"朋友圈统计 + 订阅人数"},{"command":"search","description":"搜索朋友圈：/search 关键词"},{"command":"capsules","description":"时间胶囊列表"},{"command":"weekly","description":"本周朋友圈周报"},{"command":"daily","description":"每日一言：/daily 城市"},{"command":"dm","description":"弹幕审核：/dm 待审列表"},{"command":"broadcast","description":"主人广播公告"},{"command":"subscribe","description":"订阅新动态推送"},{"command":"unsubscribe","description":"退订推送"},{"command":"help","description":"帮助与全部命令"}]}'
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
