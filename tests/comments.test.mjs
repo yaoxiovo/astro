@@ -150,6 +150,15 @@ describe("SSO JWT 零依赖验签 (jwt.js)", () => {
 		assert.equal(await resolveIdentity(makeRequest(undefined), { JWT_SECRET: "s3cret" }), null);
 	});
 
+	it("token 无 username claim 时应兜底取 sub（认证中心账户约定）", async () => {
+		const token = await makeToken(
+			{ sub: "薇斯纳", email: "a@b.c", roles: ["member"], exp: now + 3600 },
+			"s3cret",
+		);
+		const req = makeRequest(undefined, { token });
+		assert.deepEqual(await resolveIdentity(req, { JWT_SECRET: "s3cret" }), { sub: "薇斯纳", username: "薇斯纳" });
+	});
+
 	it("extractBearerToken 应做长度防御且只认 Bearer 前缀", () => {
 		assert.equal(extractBearerToken(makeRequest(undefined, { token: "abc" })), "abc");
 		assert.equal(extractBearerToken(makeRequest(undefined)), null);

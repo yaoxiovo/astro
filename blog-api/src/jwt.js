@@ -105,6 +105,7 @@ export function getCandidateSecrets(env) {
 /**
  * 从请求解析 SSO 身份：{ sub, username } 或 null（游客）。
  * sub 缺失视为无效身份——绑定必须锚定认证中心下发的唯一主体标识。
+ * 昵称兜底链：username → name → sub（认证中心 accounts 的 sub 即用户名，无独立 username claim）。
  */
 export async function resolveIdentity(request, env) {
 	const token = extractBearerToken(request);
@@ -118,6 +119,7 @@ export async function resolveIdentity(request, env) {
 	const sub = payload.sub != null ? String(payload.sub).slice(0, 64) : "";
 	if (!sub) return null;
 
-	const username = payload.username != null ? String(payload.username) : payload.name != null ? String(payload.name) : "";
-	return { sub, username: username.slice(0, 32) };
+	const raw = payload.username ?? payload.name ?? payload.displayName ?? sub;
+	const username = String(raw == null ? "" : raw).slice(0, 32);
+	return { sub, username };
 }

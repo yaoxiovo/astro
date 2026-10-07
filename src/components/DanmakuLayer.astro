@@ -253,7 +253,8 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 			const token = auth?.getToken?.() || null;
 			if (!token) return null;
 			const user = auth?.getUser?.() || null;
-			const name = String(user?.name || user?.username || "").slice(0, 20);
+			// 昵称兜底链与后端对齐：认证中心 token 的 sub 即用户名（无独立 username claim）
+			const name = String(user?.name || user?.username || user?.displayName || user?.sub || "").slice(0, 20);
 			return { token, name };
 		} catch {
 			return null;
