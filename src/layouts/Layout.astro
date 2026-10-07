@@ -827,7 +827,7 @@ function scrollFunction() {
 
     if (goToCommentsBtn) {
         // Only show if comments exist and scrolled down
-        const commentsExist = !!document.getElementById('giscus-container');
+        const commentsExist = !!(document.getElementById('yaoxi-cm-root') || document.getElementById('giscus-container'));
         if (commentsExist && (document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight)) {
             goToCommentsBtn.classList.remove('hide')
         } else {

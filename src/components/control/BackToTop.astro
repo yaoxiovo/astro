@@ -56,7 +56,7 @@ function backToTop() {
 }
 
 function goToComments() {
-    const comments = document.getElementById('giscus-container');
+    const comments = document.getElementById('yaoxi-cm-root') || document.getElementById('giscus-container');
     if (comments) {
         comments.scrollIntoView({ behavior: 'smooth' });
     }

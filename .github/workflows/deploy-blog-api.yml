@@ -59,6 +59,42 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Resolve D1 database (comments store)
+        run: |
+          if grep -q "REPLACE_WITH_D1_DATABASE_ID" wrangler.jsonc; then
+            API="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database"
+            DB_LIST=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$API")
+            ID=$(echo "$DB_LIST" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);const n=(j.result||[]).find(x=>x.name==='yaoxi-blog-d1');if(n)console.log(n.uuid);else process.exit(1)}catch(e){process.exit(1)}})" 2>/dev/null || true)
+            if [ -z "$ID" ]; then
+              echo "Existing D1 not found, creating a new one..."
+              CREATE_OUT=$(curl -s -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" "$API" -d '{"name":"yaoxi-blog-d1"}')
+              ID=$(echo "$CREATE_OUT" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);if(j.success!==true){console.error(JSON.stringify(j.errors));process.exit(1)}console.log(j.result.uuid)}catch(e){process.exit(1)}})" 2>/dev/null || true)
+              if [ -z "$ID" ]; then
+                echo "::error::D1_CREATE_RESP=$(echo "$CREATE_OUT" | head -c 1200 | tr '\n' ' ')"
+                echo "### ❌ D1 database 创建失败" >> $GITHUB_STEP_SUMMARY
+                echo '```' >> $GITHUB_STEP_SUMMARY
+                echo "$CREATE_OUT" >> $GITHUB_STEP_SUMMARY
+                echo '```' >> $GITHUB_STEP_SUMMARY
+                exit 1
+              fi
+            else
+              echo "Reusing existing D1: $ID"
+            fi
+            echo "D1 ID: $ID"
+            sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$ID/" wrangler.jsonc
+          else
+            echo "D1 already configured."
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Apply D1 migrations
+        run: npx wrangler d1 migrations apply yaoxi-blog-d1 --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Sync Worker Secrets
         run: |
           if [ -n "$MAIL_GATEWAY_TOKEN" ]; then
@@ -97,6 +133,16 @@ jobs:
           if [ -n "$TG_CHAT_ID" ]; then
             echo "$TG_CHAT_ID" | npx wrangler secret put TELEGRAM_CHAT_ID || true
           fi
+          # 评论 SSO 身份验签候选密钥（与 zk-bff / 认证中心对齐，验签失败自动降级游客）
+          if [ -n "$JWT_SECRET" ]; then
+            echo "$JWT_SECRET" | npx wrangler secret put JWT_SECRET || true
+          fi
+          if [ -n "$AUTH_SECRET" ]; then
+            echo "$AUTH_SECRET" | npx wrangler secret put AUTH_SECRET || true
+          fi
+          if [ -n "$SSO_SECRET" ]; then
+            echo "$SSO_SECRET" | npx wrangler secret put SSO_SECRET || true
+          fi
         env:
           MAIL_GATEWAY_TOKEN: ${{ secrets.MAIL_GATEWAY_TOKEN }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
@@ -110,6 +156,8 @@ jobs:
           CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
           TG_BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.CHAT_ID }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SSO_SECRET: ${{ secrets.SSO_SECRET }}
 
       - name: Deploy Worker
         run: npx wrangler deploy

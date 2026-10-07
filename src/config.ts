@@ -101,6 +101,10 @@ export const siteConfig: SiteConfig = {
 		authUrl: "https://accounts.yaoxi.cloud",
 		clientId: "yaoxi-blog",
 	},
+	comments: {
+		provider: "native",
+		api: "https://blog-api.yaoxi.cloud",
+	},
 };
 
 export const navBarConfig: NavBarConfig = {

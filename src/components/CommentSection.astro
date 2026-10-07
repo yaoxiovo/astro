@@ -1,0 +1,839 @@
+---
+/**
+ * 瑶曦评论区 · 自研评论系统（段落锚定 + 楼中楼 + SSO 身份 + TG 审核）
+ *
+ * 数据流：投稿 → blog-api /api/comments/submit →（默认）Telegram 人工审核 → 上墙；
+ *        携带 SSO JWT 时绑定认证身份并显示认证徽标；作者可撤回自己的评论（软删 + 审计）。
+ * 段落锚定：评论可锚定到正文段落（复用与弹幕一致的视口中央段落定位），点击徽标可回跳原文。
+ * 安全：所有动态内容一律 textContent 渲染，杜绝 XSS；蜜罐字段拦截机器人。
+ * 生命周期：bundled 模块脚本单次执行；DOMContentLoaded / swup:page:view 双钩子自恢复，
+ *          晚于 page:view 执行时走 readyState 兜底自检（与站点既有脚本契约一致）。
+ */
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	slug: string;
+	api?: string;
+}
+const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
+---
+
+<div id="yaoxi-cm-root" data-slug={slug} data-api={api} class="mt-6">
+	<div class="card-base p-6 md:p-8">
+		<!-- 头部：标题 + 计数 + 登录态 -->
+		<div class="flex items-center justify-between mb-5 flex-wrap gap-2">
+			<div class="flex items-center gap-2">
+				<div class="h-8 w-8 rounded-lg bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/80">
+					<Icon name="material-symbols:forum-outline" class="text-[1.35rem]" />
+				</div>
+				<h2 class="text-xl font-bold text-black dark:text-white">
+					评论 · <span id="yaoxi-cm-count">0</span>
+				</h2>
+			</div>
+			<div id="yaoxi-cm-auth-badge" class="text-xs text-black/50 dark:text-white/50"></div>
+		</div>
+
+		<!-- 提交表单 -->
+		<div class="rounded-xl border border-[var(--line-divider)] bg-black/[0.02] dark:bg-white/[0.02] p-4 mb-6">
+			<div class="flex gap-2 mb-2">
+				<input
+					id="yaoxi-cm-author"
+					type="text"
+					maxlength="20"
+					placeholder="昵称"
+					autocomplete="off"
+					class="w-28 shrink-0 px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm outline-none focus:border-[var(--primary)] transition-colors"
+				/>
+				<button
+					id="yaoxi-cm-anchor"
+					type="button"
+					title="点击锚定/取消锚定到当前阅读段落"
+					class="flex-1 min-w-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] text-[var(--btn-content)] text-xs transition-colors text-left cursor-pointer"
+				>
+					<Icon name="material-symbols:pin-drop-outline" class="shrink-0 text-[var(--primary)]" />
+					<span id="yaoxi-cm-anchor-text" class="truncate">评论全文（点击可锚定当前阅读段落）</span>
+				</button>
+			</div>
+			<textarea
+				id="yaoxi-cm-text"
+				maxlength="500"
+				rows="3"
+				placeholder="友善发言，支持 500 字喵~"
+				class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 text-sm outline-none focus:border-[var(--primary)] transition-colors resize-y"
+			></textarea>
+			<div class="flex items-center justify-between mt-2">
+				<span id="yaoxi-cm-len" class="text-[10px] text-black/35 dark:text-white/35">0/500</span>
+				<button
+					id="yaoxi-cm-send"
+					type="button"
+					class="px-5 py-2 rounded-xl bg-[var(--primary)] hover:bg-[oklch(0.65_0.16_var(--hue))] text-white dark:text-black/80 text-sm font-medium transition-all active:scale-95 cursor-pointer"
+				>🚀 发表评论</button>
+			</div>
+			<p
+				id="yaoxi-cm-identity"
+				class="text-[10px] text-black/40 dark:text-white/40 mt-2 cursor-pointer select-none hover:text-[var(--primary)] transition-colors"
+			>💡 登录后评论将带认证标识，点此登录喵~</p>
+			<!-- 蜜罐：真人不可见，机器人若填写则静默丢弃 -->
+			<input id="yaoxi-cm-honeypot" name="website" type="text" tabindex="-1" autocomplete="off" class="hidden" aria-hidden="true" />
+		</div>
+
+		<!-- 列表 -->
+		<div id="yaoxi-cm-list" class="flex flex-col gap-3"></div>
+		<div id="yaoxi-cm-empty" class="hidden text-center py-8 text-black/40 dark:text-white/40 text-sm">还没有评论喵，快来抢沙发~</div>
+		<div class="flex justify-center mt-4">
+			<button
+				id="yaoxi-cm-more"
+				type="button"
+				class="hidden px-4 py-2 rounded-xl bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] text-[var(--btn-content)] text-xs font-medium transition-all active:scale-95 cursor-pointer"
+			>加载更多评论</button>
+		</div>
+	</div>
+</div>
+
+<div
+	id="yaoxi-cm-toast"
+	role="status"
+	class="fixed right-16 bottom-44 z-[85] max-w-[82vw] px-3.5 py-2 rounded-xl bg-black/75 text-white text-xs leading-relaxed shadow-lg backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300"
+></div>
+
+<style is:global>
+	.yaoxi-cm-card {
+		border: 1px solid var(--line-divider);
+		border-radius: 14px;
+		padding: 12px 14px;
+	}
+	.yaoxi-cm-meta {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 6px;
+		font-size: 12px;
+		opacity: 0.68;
+		margin-bottom: 6px;
+	}
+	.yaoxi-cm-author {
+		font-weight: 600;
+	}
+	.yaoxi-cm-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 14px;
+		height: 14px;
+		border-radius: 9999px;
+		background: #1d9bf0;
+		color: #fff;
+		font-size: 9px;
+		font-weight: 700;
+		flex-shrink: 0;
+	}
+	.yaoxi-cm-body {
+		font-size: 14px;
+		line-height: 1.7;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+	.yaoxi-cm-actions {
+		margin-top: 8px;
+		display: flex;
+		gap: 14px;
+		font-size: 12px;
+	}
+	.yaoxi-cm-action {
+		cursor: pointer;
+		opacity: 0.55;
+		transition:
+			opacity 0.15s,
+			color 0.15s;
+		user-select: none;
+	}
+	.yaoxi-cm-action:hover {
+		opacity: 1;
+		color: var(--primary);
+	}
+	.yaoxi-cm-locate {
+		cursor: pointer;
+		color: var(--primary);
+	}
+	.yaoxi-cm-replies {
+		margin-top: 10px;
+		padding-left: 12px;
+		border-left: 2px solid var(--line-divider);
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	.yaoxi-cm-reply .yaoxi-cm-body {
+		font-size: 13px;
+	}
+	.yaoxi-cm-para-flash {
+		outline: 2px solid var(--primary);
+		outline-offset: 3px;
+		border-radius: 6px;
+	}
+	.yaoxi-cm-replybox textarea {
+		width: 100%;
+		padding: 8px 12px;
+		border-radius: 12px;
+		border: 1px solid rgba(127, 127, 127, 0.25);
+		background: rgba(127, 127, 127, 0.06);
+		font-size: 13px;
+		outline: none;
+		resize: vertical;
+		transition: border-color 0.15s;
+	}
+	.yaoxi-cm-replybox textarea:focus {
+		border-color: var(--primary);
+	}
+</style>
+
+<script>
+	type CmItem = {
+		id: string;
+		p: number | null;
+		x?: string;
+		body: string;
+		author: string;
+		username?: string | null;
+		verified?: boolean;
+		ts: number;
+		parentId?: string | null;
+		replies?: CmItem[];
+		replyTo?: { author: string; verified?: boolean };
+		mine?: boolean;
+	};
+
+	interface CmState {
+		slug: string;
+		api: string;
+		roots: CmItem[];
+		total: number;
+		before: number;
+		loading: boolean;
+		done: boolean;
+		anchor: { p: number; x: string } | null;
+		replyTo: string | null;
+		pendingReload: boolean;
+		onAuth?: () => void;
+	}
+
+	const CM_PAGE_SIZE = 30;
+	const CM_LS_AUTHOR = "yaoxi-cm-author";
+	const CM_PARA_SELECTOR = "p, h2, h3, h4, blockquote";
+	const CM_MAX_TEXT = 500;
+
+	let cm: CmState | null = null;
+	let cmToastTimer = 0;
+	let cmAbort: AbortController | null = null;
+	const w = window as any;
+
+	function cmToast(msg?: string): void {
+		const el = document.getElementById("yaoxi-cm-toast");
+		if (!el || !msg) return;
+		el.textContent = msg;
+		el.classList.remove("opacity-0", "pointer-events-none");
+		window.clearTimeout(cmToastTimer);
+		cmToastTimer = window.setTimeout(() => {
+			el.classList.add("opacity-0", "pointer-events-none");
+		}, 2800);
+	}
+
+	/** SSO 认证辅助：读取当前登录态（YaoxiAuth SDK 就绪前安全降级为游客） */
+	function cmGetAuth(): { token: string; name: string } | null {
+		try {
+			const auth = w.yaoxiAuth;
+			const token = auth?.getToken?.() || null;
+			if (!token) return null;
+			const user = auth?.getUser?.() || null;
+			const name = String(user?.name || user?.username || "").slice(0, 20);
+			return { token, name };
+		} catch {
+			return null;
+		}
+	}
+
+	function cmSavedAuthor(): string {
+		try {
+			return localStorage.getItem(CM_LS_AUTHOR) || "";
+		} catch {
+			return "";
+		}
+	}
+
+	async function cmFetchJson(
+		path: string,
+		opts: { method?: string; body?: unknown; auth?: boolean; cache?: RequestCache } = {},
+	): Promise<{ ok: boolean; status: number; data: any }> {
+		if (!cm) return { ok: false, status: 0, data: null };
+		const headers: Record<string, string> = {};
+		if (opts.body !== undefined) headers["Content-Type"] = "application/json";
+		if (opts.auth) {
+			const auth = cmGetAuth();
+			if (auth) headers.Authorization = `Bearer ${auth.token}`;
+		}
+		try {
+			const res = await fetch(`${cm.api}${path}`, {
+				method: opts.method || "GET",
+				headers,
+				body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+				cache: opts.cache,
+			});
+			const data = await res.json().catch(() => null);
+			return { ok: res.ok, status: res.status, data };
+		} catch {
+			return { ok: false, status: 0, data: null };
+		}
+	}
+
+	/* ---------- 时间与段落工具 ---------- */
+
+	function cmFmtTime(ts: number): string {
+		const d = new Date(ts);
+		const pad = (n: number) => String(n).padStart(2, "0");
+		return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+	}
+
+	function cmTimeAgo(ts: number): string {
+		const diff = Date.now() - ts;
+		if (diff < 60_000) return "刚刚";
+		if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} 分钟前`;
+		if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} 小时前`;
+		if (diff < 2_592_000_000) return `${Math.floor(diff / 86_400_000)} 天前`;
+		return cmFmtTime(ts).slice(0, 10);
+	}
+
+	function cmContentParas(): HTMLElement[] {
+		const content = document.querySelector("#post-container .markdown-content") as HTMLElement | null;
+		if (!content) return [];
+		return Array.from(content.querySelectorAll<HTMLElement>(CM_PARA_SELECTOR)).filter(
+			(el) => (el.textContent || "").trim().length > 0,
+		);
+	}
+
+	/** 视口中央段落（与弹幕锚定同一策略） */
+	function cmNearestPara(): { p: number; x: string } | null {
+		const paras = cmContentParas();
+		if (!paras.length) return null;
+		const mid = window.innerHeight * 0.45;
+		let best = 0;
+		let bestDist = Number.POSITIVE_INFINITY;
+		paras.forEach((el, i) => {
+			const r = el.getBoundingClientRect();
+			const d = Math.abs((r.top + r.bottom) / 2 - mid);
+			if (d < bestDist) {
+				bestDist = d;
+				best = i;
+			}
+		});
+		const excerpt = (paras[best].textContent || "").replace(/\s+/g, " ").trim().slice(0, 60);
+		return { p: best, x: excerpt };
+	}
+
+	function cmLocatePara(p: number | null): void {
+		if (p == null) return;
+		const el = cmContentParas()[p];
+		if (!el) {
+			cmToast("找不到对应段落，文章可能已更新喵~");
+			return;
+		}
+		el.scrollIntoView({ behavior: "smooth", block: "center" });
+		el.classList.add("yaoxi-cm-para-flash");
+		window.setTimeout(() => el.classList.remove("yaoxi-cm-para-flash"), 1600);
+	}
+
+	/* ---------- 渲染 ---------- */
+
+	function cmBuildMeta(it: CmItem, isReply: boolean): HTMLElement {
+		const meta = document.createElement("div");
+		meta.className = "yaoxi-cm-meta";
+
+		const author = document.createElement("span");
+		author.className = "yaoxi-cm-author";
+		author.textContent = it.username || it.author;
+		meta.appendChild(author);
+
+		if (it.verified) {
+			const badge = document.createElement("span");
+			badge.className = "yaoxi-cm-badge";
+			badge.textContent = "✓";
+			badge.title = "SSO 已认证身份";
+			meta.appendChild(badge);
+		}
+
+		if (isReply && it.replyTo) {
+			const to = document.createElement("span");
+			to.textContent = `回复 ${it.replyTo.author}`;
+			meta.appendChild(to);
+		}
+
+		const time = document.createElement("span");
+		time.textContent = cmTimeAgo(it.ts);
+		time.title = cmFmtTime(it.ts);
+		meta.appendChild(time);
+
+		if (it.p != null) {
+			const locate = document.createElement("span");
+			locate.className = "yaoxi-cm-locate";
+			locate.dataset.cmAct = "locate";
+			locate.dataset.p = String(it.p);
+			locate.textContent = `📍 第 ${it.p + 1} 段`;
+			locate.title = it.x ? `锚定段落：「${it.x}」` : "锚定段落";
+			meta.appendChild(locate);
+		}
+
+		return meta;
+	}
+
+	function cmBuildActions(it: CmItem): HTMLElement {
+		const actions = document.createElement("div");
+		actions.className = "yaoxi-cm-actions";
+
+		const reply = document.createElement("span");
+		reply.className = "yaoxi-cm-action";
+		reply.dataset.cmAct = "reply";
+		reply.dataset.id = it.id;
+		reply.textContent = "回复";
+		actions.appendChild(reply);
+
+		if (it.mine) {
+			const del = document.createElement("span");
+			del.className = "yaoxi-cm-action";
+			del.dataset.cmAct = "delete";
+			del.dataset.id = it.id;
+			del.textContent = "撤回";
+			actions.appendChild(del);
+		}
+
+		return actions;
+	}
+
+	/** 内联回复表单（未登录时含昵称输入） */
+	function cmBuildReplyBox(rootId: string): HTMLElement {
+		const box = document.createElement("div");
+		box.className = "yaoxi-cm-replybox mt-3 rounded-xl border border-[var(--line-divider)] p-3";
+		box.dataset.cmReplyBox = rootId;
+
+		const authed = !!cmGetAuth();
+		if (!authed) {
+			const author = document.createElement("input");
+			author.type = "text";
+			author.maxLength = 20;
+			author.placeholder = "昵称";
+			author.autocomplete = "off";
+			author.dataset.cmRole = "reply-author";
+			author.value = cmSavedAuthor();
+			author.className =
+				"w-28 px-3 py-1.5 mb-2 rounded-lg border border-[rgba(127,127,127,0.25)] bg-[rgba(127,127,127,0.06)] text-xs outline-none";
+			box.appendChild(author);
+		}
+
+		const text = document.createElement("textarea");
+		text.rows = 2;
+		text.maxLength = CM_MAX_TEXT;
+		text.placeholder = "回复点什么…";
+		text.dataset.cmRole = "reply-text";
+		box.appendChild(text);
+
+		const bar = document.createElement("div");
+		bar.className = "flex items-center justify-end gap-2 mt-2";
+
+		const cancel = document.createElement("button");
+		cancel.type = "button";
+		cancel.dataset.cmAct = "cancel-reply";
+		cancel.className =
+			"px-3 py-1.5 rounded-lg bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] text-[var(--btn-content)] text-xs transition-colors cursor-pointer";
+		cancel.textContent = "取消";
+		bar.appendChild(cancel);
+
+		const send = document.createElement("button");
+		send.type = "button";
+		send.dataset.cmAct = "send-reply";
+		send.dataset.id = rootId;
+		send.className =
+			"px-4 py-1.5 rounded-lg bg-[var(--primary)] text-white dark:text-black/80 text-xs font-medium transition-all active:scale-95 cursor-pointer";
+		send.textContent = "回复";
+		bar.appendChild(send);
+
+		box.appendChild(bar);
+		return box;
+	}
+
+	function cmBuildCard(it: CmItem, isReply: boolean): HTMLElement {
+		const card = document.createElement("div");
+		card.className = isReply ? "yaoxi-cm-reply" : "yaoxi-cm-card";
+
+		card.appendChild(cmBuildMeta(it, isReply));
+
+		const body = document.createElement("div");
+		body.className = "yaoxi-cm-body";
+		body.textContent = it.body;
+		card.appendChild(body);
+
+		card.appendChild(cmBuildActions(it));
+
+		if (!isReply && it.replies?.length) {
+			const replies = document.createElement("div");
+			replies.className = "yaoxi-cm-replies";
+			for (const r of it.replies) replies.appendChild(cmBuildCard(r, true));
+			card.appendChild(replies);
+		}
+
+		if (!isReply && cm?.replyTo === it.id) {
+			card.appendChild(cmBuildReplyBox(it.id));
+		}
+
+		return card;
+	}
+
+	function cmUpdateAnchorText(): void {
+		if (!cm) return;
+		const el = document.getElementById("yaoxi-cm-anchor-text");
+		if (!el) return;
+		if (cm.anchor) {
+			const clip = cm.anchor.x.length > 18 ? `${cm.anchor.x.slice(0, 18)}…` : cm.anchor.x;
+			el.textContent = `📍 已锚定第 ${cm.anchor.p + 1} 段「${clip}」`;
+		} else {
+			el.textContent = "评论全文（点击可锚定当前阅读段落）";
+		}
+	}
+
+	function cmUpdateLen(): void {
+		const input = document.getElementById("yaoxi-cm-text") as HTMLTextAreaElement | null;
+		const lenEl = document.getElementById("yaoxi-cm-len");
+		if (input && lenEl) lenEl.textContent = `${input.value.length}/${CM_MAX_TEXT}`;
+	}
+
+	/** 同步 SSO 登录态到表单与徽标 */
+	function cmSyncIdentity(): void {
+		const input = document.getElementById("yaoxi-cm-author") as HTMLInputElement | null;
+		const hint = document.getElementById("yaoxi-cm-identity");
+		const badge = document.getElementById("yaoxi-cm-auth-badge");
+		const auth = cmGetAuth();
+
+		if (input) {
+			if (auth) {
+				if (input.dataset.locked !== "1") input.dataset.locked = "1";
+				input.value = auth.name || "已认证读者";
+				input.disabled = true;
+				input.classList.add("opacity-60");
+			} else {
+				if (input.dataset.locked === "1") {
+					input.value = cmSavedAuthor();
+					input.dataset.locked = "0";
+				}
+				input.disabled = false;
+				input.classList.remove("opacity-60");
+			}
+		}
+		if (hint) {
+			if (auth) {
+				hint.textContent = `✅ 已登录 ${auth.name || "读者"}，将以认证身份发表喵~`;
+				hint.classList.remove("cursor-pointer", "hover:text-[var(--primary)]");
+			} else {
+				hint.textContent = "💡 登录后评论将带认证标识，点此登录喵~";
+				hint.classList.add("cursor-pointer", "hover:text-[var(--primary)]");
+			}
+		}
+		if (badge) badge.textContent = auth ? `✅ ${auth.name || "已登录"}` : "";
+	}
+
+	function cmRender(): void {
+		if (!cm) return;
+		const list = document.getElementById("yaoxi-cm-list");
+		if (!list) return;
+		list.textContent = "";
+		for (const it of cm.roots) list.appendChild(cmBuildCard(it, false));
+
+		const count = document.getElementById("yaoxi-cm-count");
+		if (count) count.textContent = String(cm.total);
+		document.getElementById("yaoxi-cm-empty")?.classList.toggle("hidden", cm.roots.length > 0 || cm.loading);
+		document.getElementById("yaoxi-cm-more")?.classList.toggle("hidden", cm.done || cm.roots.length === 0);
+
+		cmSyncIdentity();
+		cmUpdateAnchorText();
+		cmUpdateLen();
+	}
+
+	/* ---------- 数据流 ---------- */
+
+	async function cmLoad(reset: boolean): Promise<void> {
+		if (!cm || cm.loading) return;
+		cm.loading = true;
+		const slug = cm.slug;
+		try {
+			const params = new URLSearchParams({ post: slug, kind: "comment", limit: String(CM_PAGE_SIZE) });
+			if (!reset && cm.before > 0) params.set("before", String(cm.before));
+			// 时间戳击穿 HTTP 缓存：提交/撤回后的刷新必须立即反映最新状态
+			params.set("_t", String(Date.now()));
+			const { ok, data } = await cmFetchJson(`/api/comments?${params.toString()}`, { auth: true, cache: "no-store" });
+			if (!cm || cm.slug !== slug || !ok || !data) return;
+			const items: CmItem[] = Array.isArray(data.items) ? data.items : [];
+			cm.roots = reset ? items : cm.roots.concat(items);
+			cm.total = Number(data.total || 0);
+			const last = items[items.length - 1];
+			if (last) cm.before = last.ts;
+			cm.done = items.length < CM_PAGE_SIZE;
+		} finally {
+			// 渲染统一放在 loading 归位后：空状态/加载更多按钮的显隐依赖最终 loading 值
+			if (cm) {
+				cm.loading = false;
+				if (cm.pendingReload) {
+					cm.pendingReload = false;
+					void cmLoad(true);
+				} else {
+					cmRender();
+				}
+			}
+		}
+	}
+
+	/** 请求整表刷新（带并发保护：加载中则排队，避免提交后列表漏刷） */
+	function cmReload(): void {
+		if (!cm) return;
+		cm.before = 0;
+		if (cm.loading) {
+			cm.pendingReload = true;
+			return;
+		}
+		void cmLoad(true);
+	}
+
+	async function cmSubmit(): Promise<void> {
+		if (!cm) return;
+		const textEl = document.getElementById("yaoxi-cm-text") as HTMLTextAreaElement | null;
+		const authorEl = document.getElementById("yaoxi-cm-author") as HTMLInputElement | null;
+		const honeypot = document.getElementById("yaoxi-cm-honeypot") as HTMLInputElement | null;
+		const sendBtn = document.getElementById("yaoxi-cm-send") as HTMLButtonElement | null;
+		if (!textEl || !sendBtn) return;
+
+		const text = textEl.value.replace(/\s+/g, " ").trim();
+		if (!text) {
+			cmToast("先写点内容喵~");
+			textEl.focus();
+			return;
+		}
+		const author = (authorEl?.value || "").trim().slice(0, 20);
+		if (!cmGetAuth()) {
+			try {
+				localStorage.setItem(CM_LS_AUTHOR, author);
+			} catch {}
+		}
+
+		sendBtn.disabled = true;
+		sendBtn.classList.add("opacity-60");
+		try {
+			const payload: Record<string, unknown> = {
+				post: cm.slug,
+				kind: "comment",
+				t: text,
+				a: author || "匿名",
+				website: honeypot?.value || "",
+			};
+			if (cm.anchor) {
+				payload.p = cm.anchor.p;
+				payload.x = cm.anchor.x;
+			}
+			const { ok, data } = await cmFetchJson("/api/comments/submit", { method: "POST", body: payload, auth: true });
+			if (ok && data?.ok) {
+				textEl.value = "";
+				cmUpdateLen();
+				cm.anchor = null;
+				cmUpdateAnchorText();
+				cmToast(data.message || "已提交喵~");
+				if (data.mode === "live") cmReload();
+			} else {
+				cmToast(data?.message || "提交失败，稍后再试喵");
+			}
+		} finally {
+			sendBtn.disabled = false;
+			sendBtn.classList.remove("opacity-60");
+		}
+	}
+
+	async function cmSendReply(rootId: string): Promise<void> {
+		if (!cm) return;
+		const list = document.getElementById("yaoxi-cm-list");
+		const box = list?.querySelector(`[data-cm-reply-box="${rootId}"]`) as HTMLElement | null;
+		if (!box) return;
+		const textEl = box.querySelector("[data-cm-role='reply-text']") as HTMLTextAreaElement | null;
+		const authorEl = box.querySelector("[data-cm-role='reply-author']") as HTMLInputElement | null;
+		const honeypot = document.getElementById("yaoxi-cm-honeypot") as HTMLInputElement | null;
+		if (!textEl) return;
+
+		const text = textEl.value.replace(/\s+/g, " ").trim();
+		if (!text) {
+			cmToast("先写点内容喵~");
+			textEl.focus();
+			return;
+		}
+		const author = (authorEl?.value || "").trim().slice(0, 20);
+		if (!cmGetAuth()) {
+			try {
+				localStorage.setItem(CM_LS_AUTHOR, author);
+			} catch {}
+		}
+
+		const { ok, data } = await cmFetchJson("/api/comments/submit", {
+			method: "POST",
+			body: {
+				post: cm.slug,
+				kind: "comment",
+				parentId: rootId,
+				t: text,
+				a: author || "匿名",
+				website: honeypot?.value || "",
+			},
+			auth: true,
+		});
+		if (ok && data?.ok) {
+			cm.replyTo = null;
+			cmToast(data.message || "回复已提交喵~");
+			if (data.mode === "live") cmReload();
+			else cmRender();
+		} else {
+			cmToast(data?.message || "回复失败，稍后再试喵");
+		}
+	}
+
+	async function cmDelete(id: string): Promise<void> {
+		if (!cm) return;
+		if (!window.confirm("确定撤回这条评论吗？撤回后将从页面移除喵~")) return;
+		const { ok, data } = await cmFetchJson("/api/comments/delete", { method: "POST", body: { id }, auth: true });
+		if (ok && data?.ok) {
+			cmToast("已撤回喵~");
+			cmReload();
+		} else {
+			cmToast(data?.message || "撤回失败，稍后再试喵");
+		}
+	}
+
+	/* ---------- 生命周期 ---------- */
+
+	function teardownComments(): void {
+		// AbortController 一次性回收全部元素级监听（防同页重复 boot 时监听器叠加）
+		cmAbort?.abort();
+		cmAbort = null;
+		if (!cm) return;
+		if (cm.onAuth) {
+			window.removeEventListener("yaoxi:auth:change", cm.onAuth);
+			window.removeEventListener("yaoxi:auth:ready", cm.onAuth);
+		}
+		cm = null;
+	}
+
+	function bootComments(): void {
+		teardownComments();
+
+		const root = document.getElementById("yaoxi-cm-root");
+		if (!root) return; // 已离开文章页
+		const slug = root.dataset.slug || "";
+		if (!slug) return;
+
+		cm = {
+			slug,
+			api: (root.dataset.api || "https://blog-api.yaoxi.cloud").replace(/\/+$/, ""),
+			roots: [],
+			total: 0,
+			before: 0,
+			loading: false,
+			done: false,
+			anchor: null,
+			replyTo: null,
+			pendingReload: false,
+		};
+
+		const list = document.getElementById("yaoxi-cm-list");
+		const textEl = document.getElementById("yaoxi-cm-text") as HTMLTextAreaElement | null;
+
+		// 游客昵称恢复
+		const authorEl = document.getElementById("yaoxi-cm-author") as HTMLInputElement | null;
+		if (authorEl && !authorEl.value) authorEl.value = cmSavedAuthor();
+
+		// 元素级监听统一挂到本轮 boot 的 AbortSignal 上，teardown 一次性回收
+		cmAbort = new AbortController();
+		const { signal } = cmAbort;
+
+		document.getElementById("yaoxi-cm-send")?.addEventListener("click", () => void cmSubmit(), { signal });
+		document.getElementById("yaoxi-cm-more")?.addEventListener("click", () => void cmLoad(false), { signal });
+		document.getElementById("yaoxi-cm-anchor")?.addEventListener(
+			"click",
+			() => {
+				if (!cm) return;
+				cm.anchor = cm.anchor ? null : cmNearestPara();
+				if (!cm.anchor) cmToast("未找到可锚定的段落喵~");
+				else cmToast("已锚定当前阅读段落，点击可取消喵~");
+				cmUpdateAnchorText();
+			},
+			{ signal },
+		);
+		textEl?.addEventListener("input", cmUpdateLen, { signal });
+		textEl?.addEventListener(
+			"keydown",
+			(e) => {
+				if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !e.isComposing) {
+					e.preventDefault();
+					void cmSubmit();
+				}
+			},
+			{ signal },
+		);
+
+		// 登录提示条：未登录时点击唤起 SSO 登录
+		document.getElementById("yaoxi-cm-identity")?.addEventListener(
+			"click",
+			() => {
+				if (cmGetAuth()) return;
+				const login = w.yaoxiLogin;
+				if (typeof login === "function") void login("popup");
+			},
+			{ signal },
+		);
+
+		// 列表委托：回复 / 撤回 / 锚点回跳
+		list?.addEventListener("click", (e) => {
+			const target = (e.target as HTMLElement).closest("[data-cm-act]") as HTMLElement | null;
+			if (!target || !cm) return;
+			const act = target.dataset.cmAct || "";
+			const id = target.dataset.id || "";
+			if (act === "reply") {
+				cm.replyTo = cm.replyTo === id ? null : id;
+				cmRender();
+				const box = document.querySelector(`[data-cm-reply-box="${id}"]`);
+				(box?.querySelector("[data-cm-role='reply-text']") as HTMLTextAreaElement | null)?.focus();
+			} else if (act === "cancel-reply") {
+				cm.replyTo = null;
+				cmRender();
+			} else if (act === "send-reply") {
+				void cmSendReply(id);
+			} else if (act === "delete") {
+				void cmDelete(id);
+			} else if (act === "locate") {
+				cmLocatePara(Number(target.dataset.p));
+			}
+		}, { signal });
+
+		// 登录态变更：刷新身份 UI 并重拉列表（mine 撤回标记随之更新）
+		const onAuth = () => {
+			cmSyncIdentity();
+			cm.before = 0;
+			void cmLoad(true);
+		};
+		window.addEventListener("yaoxi:auth:change", onAuth);
+		window.addEventListener("yaoxi:auth:ready", onAuth);
+		cm.onAuth = onAuth;
+
+		cmSyncIdentity();
+		void cmLoad(true);
+	}
+
+	// 防重入：任何情况下（含内联退化、重复注入）引擎只初始化一次
+	if (!w.__yaoxiCmEngineLoaded) {
+		w.__yaoxiCmEngineLoaded = true;
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", bootComments, { once: true });
+		} else {
+			bootComments();
+		}
+		document.addEventListener("swup:page:view", bootComments);
+	}
+</script>

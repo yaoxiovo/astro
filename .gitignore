@@ -34,6 +34,9 @@ ori
 # EdgeOne
 .edgeone
 
+# Cloudflare Workers 本地状态（wrangler dev 的 D1/KV/DO 数据）
+.wrangler/
+
 # Obsidian
 .obsidian/
 .seal/

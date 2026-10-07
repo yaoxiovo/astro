@@ -1,4 +1,11 @@
 /**
+ * ⚠️ DEPRECATED（2026-10）：本模块已由 comments.js（D1 统一评论系统）整体取代，
+ * 不再被 index.js 装配；/api/danmaku/* 现由 comments.js 的兼容层承接。
+ * 保留本文件作迁移期参考（旧 KV 数据结构文档）。
+ * 数据经 POST /api/comments/migrate 迁移并观察稳定后，可整体删除。
+ *
+ * —— 以下为历史实现说明 ——
+ *
  * 瑶曦弹幕 · 段落锚定（Paragraph-anchored Danmaku）存储与审核模块
  *
  * KV-only 设计（复用现有 RATE_LIMIT_KV，零新增绑定）：

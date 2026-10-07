@@ -55,6 +55,12 @@ export type SiteConfig = {
 		authUrl?: string;
 		clientId?: string;
 	};
+	comments?: {
+		/** 评论系统提供方：native 自研评论系统（D1 存储 + SSO 身份 + TG 审核）/ giscus 旧第三方 / off 关闭 */
+		provider: "native" | "giscus" | "off";
+		/** blog-api 基址（native 模式使用） */
+		api?: string;
+	};
 };
 
 export type Favicon = {

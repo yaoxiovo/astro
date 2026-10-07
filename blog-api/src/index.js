@@ -12,10 +12,15 @@
  *   POST /api/newsletter/broadcast        新文章/动态批量邮件广播（需 ADMIN_TOKEN，/api/send/notify）
  *   POST /api/newsletter/weekly-digest    每周数据与精选周报推送（需 ADMIN_TOKEN，/api/send/bot）
  *   POST /api/contact                     访客留言提交（站长工单通报 + 访客自动回执，/api/send/service）
- *   GET  /api/danmaku                     某篇文章的已上墙弹幕列表（?post=slug）
- *   POST /api/danmaku/submit              读者弹幕投稿（蜜罐 + 限流 + 去重，默认人工审核流）
- *   GET  /api/danmaku/pending             待审核弹幕列表（需 ADMIN_TOKEN）
- *   POST /api/danmaku/moderate            弹幕放行 / 拒绝（需 ADMIN_TOKEN，Telegram 按钮回调经 Bot 转发）
+ *   GET  /api/comments                    某篇文章已上墙内容（?post=slug&kind=&p=&limit=&before=）
+ *   POST /api/comments/submit             读者评论/弹幕投稿（蜜罐 + 限流 + 去重 + SSO 身份绑定，默认人工审核流）
+ *   POST /api/comments/delete             作者撤回自己的评论（Bearer SSO JWT，软删 + 审计）
+ *   GET  /api/comments/pending            待审列表（需 ADMIN_TOKEN）
+ *   POST /api/comments/moderate           状态机流转 approve/reject/delete/restore（需 ADMIN_TOKEN，TG 按钮经 Bot 转发）
+ *   GET  /api/comments/events             审计流水（需 ADMIN_TOKEN）
+ *   POST /api/comments/migrate            旧 KV 弹幕一次性迁移（需 ADMIN_TOKEN，幂等）
+ *   GET  /api/danmaku                     旧弹幕读取兼容层（thin alias → /api/comments）
+ *   POST /api/danmaku/submit              旧弹幕投稿兼容层（字段映射 kind=danmaku）
  *   GET  /api/presence                    实时共读快照（在线人数 + 段落热度）
  *   GET  /api/presence/ws                 实时共读 WebSocket 房间（Durable Object）
  *
@@ -23,7 +28,8 @@
  * 所有 API 响应带 CORS（Access-Control-Allow-Origin: *）。
  */
 
-import { createDanmakuModule } from "./danmaku.js";
+import { createCommentsModule } from "./comments.js";
+import { resolveIdentity } from "./jwt.js";
 import {
 	buildBroadcastHtml,
 	buildContactAutoReplyHtml,
@@ -312,9 +318,11 @@ const num = (v, dft) => {
 	return Number.isFinite(n) ? n : dft;
 };
 
-/* ================= 弹幕模块（段落锚定 Danmaku） ================= */
+/* ================= 评论系统（D1 统一互动存储，取代原 KV 弹幕模块） =================
+ * 旧 danmaku.js 已退役（仅保留文件作迁移期参考），/api/danmaku/* 由下方兼容层承接。
+ */
 
-const danmaku = createDanmakuModule({
+const comments = createCommentsModule({
 	json,
 	tooManyRequests,
 	getClientIp,
@@ -323,6 +331,7 @@ const danmaku = createDanmakuModule({
 	checkEndpointRateLimit,
 	checkRateLimit,
 	htmlEsc,
+	resolveIdentity,
 });
 
 /* ================= 实时共读（Durable Objects Presence） ================= */
@@ -1569,18 +1578,41 @@ export default {
 			return handleContact(request, env, url);
 		}
 
-		// 弹幕：已上墙列表 / 投稿 / 待审列表 / 放行拒绝
+		// 评论系统：列表 / 投稿 / 撤回 / 待审 / 状态机 / 审计 / 迁移
+		if (url.pathname === "/api/comments" && request.method === "GET") {
+			return comments.handleList(request, env, url);
+		}
+		if (url.pathname === "/api/comments/submit" && request.method === "POST") {
+			return comments.handleSubmit(request, env, url, ctx);
+		}
+		if (url.pathname === "/api/comments/delete" && request.method === "POST") {
+			return comments.handleDelete(request, env);
+		}
+		if (url.pathname === "/api/comments/pending" && request.method === "GET") {
+			return comments.handlePending(request, env, url);
+		}
+		if (url.pathname === "/api/comments/moderate" && request.method === "POST") {
+			return comments.handleModerate(request, env);
+		}
+		if (url.pathname === "/api/comments/events" && request.method === "GET") {
+			return comments.handleEvents(request, env, url);
+		}
+		if (url.pathname === "/api/comments/migrate" && request.method === "POST") {
+			return comments.handleMigrate(request, env);
+		}
+
+		// 旧弹幕端点兼容层（thin alias，供页面缓存中的旧脚本过渡使用）
 		if (url.pathname === "/api/danmaku" && request.method === "GET") {
-			return danmaku.handleGet(request, env, url);
+			return comments.handleLegacyGet(request, env, url);
 		}
 		if (url.pathname === "/api/danmaku/submit" && request.method === "POST") {
-			return danmaku.handleSubmit(request, env, url, ctx);
+			return comments.handleLegacySubmit(request, env, url, ctx);
 		}
 		if (url.pathname === "/api/danmaku/pending" && request.method === "GET") {
-			return danmaku.handlePending(request, env);
+			return comments.handlePending(request, env, url);
 		}
 		if (url.pathname === "/api/danmaku/moderate" && request.method === "POST") {
-			return danmaku.handleModerate(request, env);
+			return comments.handleModerate(request, env);
 		}
 
 		// 实时共读：WebSocket 房间接入 / HTTP 快照

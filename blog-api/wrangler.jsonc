@@ -14,6 +14,14 @@
 			"id": "REPLACE_WITH_KV_ID"
 		}
 	],
+	"d1_databases": [
+		// 评论系统存储：与 zk-bff 共享同一 D1 库（migrations 在 ./migrations 下独立管理）
+		{
+			"binding": "DB",
+			"database_name": "yaoxi-blog-d1",
+			"database_id": "REPLACE_WITH_D1_DATABASE_ID"
+		}
+	],
 	"durable_objects": {
 		"bindings": [
 			{
@@ -30,7 +38,7 @@
 		}
 	],
 	"vars": {
-		// 弹幕免审开关：true 时投稿直接上墙；默认 false 走 Telegram 人工审核流
+		// 互动内容（弹幕/评论）免审开关：true 时投稿直接上墙；默认 false 走 Telegram 人工审核流
 		"DANMAKU_AUTO_APPROVE": "false"
 	}
 }

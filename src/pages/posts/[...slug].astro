@@ -7,6 +7,7 @@ import CyberSummary from "@components/CyberSummary.astro";
 import PosterGenerator from "@components/PosterGenerator.astro";
 import EncryptedReader from "@components/EncryptedReader.svelte";
 import DanmakuLayer from "@components/DanmakuLayer.astro";
+import CommentSection from "@components/CommentSection.astro";
 import PresenceWidget from "@components/PresenceWidget.astro";
 import WikiHistoryPage from "@components/wiki/WikiHistoryPage.astro";
 import WikiRevisionPage from "@components/wiki/WikiRevisionPage.astro";
@@ -506,6 +507,12 @@ if (mode === "article") {
                 date={formatDateToYYYYMMDD(entry.data.published)}
             />
 
+            <!-- 评论区：默认自研评论系统（D1 + SSO 身份 + TG 审核）；provider=giscus 可一键回滚旧方案 -->
+            {siteConfig.comments?.provider === "native" && (
+                <CommentSection slug={slug} api={siteConfig.comments?.api} />
+            )}
+            {siteConfig.comments?.provider === "giscus" && (
+                <>
             <!-- Giscus 评论区 -->
             <div id="giscus-container"></div>
             <script is:inline>
@@ -566,6 +573,8 @@ if (mode === "article") {
                 // 支持 Swup 页面切换
                 document.addEventListener('swup:contentReplaced', loadGiscus);
             </script>
+                </>
+            )}
     <br>
 
     <div class="flex flex-col md:flex-row justify-between mb-4 gap-4 overflow-hidden w-full">
@@ -1116,8 +1125,8 @@ if (mode === "article") {
         selBtnComment?.addEventListener('click', (e) => {
             e.stopPropagation();
             selectionToolbar?.classList.add('hidden');
-            const giscus = document.getElementById('giscus-container');
-            giscus?.scrollIntoView({ behavior: 'smooth' });
+            const commentsAnchor = document.getElementById('yaoxi-cm-root') || document.getElementById('giscus-container');
+            commentsAnchor?.scrollIntoView({ behavior: 'smooth' });
             showToast('已跳转至评论探讨区 喵！');
         });
 

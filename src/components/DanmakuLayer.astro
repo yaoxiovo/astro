@@ -96,6 +96,11 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 		/>
 	</div>
 
+	<p
+		id="yaoxi-dm-identity"
+		class="text-[10px] text-black/40 dark:text-white/40 mb-2 cursor-pointer select-none hover:text-[var(--primary)] transition-colors"
+	>💡 登录后弹幕将带认证标识，点此登录喵~</p>
+
 	<div class="flex items-center justify-between mb-3">
 		<div id="yaoxi-dm-colors" class="flex items-center gap-1.5"></div>
 		<span id="yaoxi-dm-len" class="text-[10px] text-black/35 dark:text-white/35">0/100</span>
@@ -223,13 +228,37 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 </style>
 
 <script>
-	type DmItem = { id: string; p: number; x?: string; t: string; a?: string; c?: string; ts?: number };
+	type DmItem = {
+		id: string;
+		p: number;
+		x?: string;
+		body: string;
+		author?: string;
+		username?: string;
+		color?: string;
+		verified?: boolean;
+		ts?: number;
+	};
 
 	const DM_SELECTOR = "p, h2, h3, h4, blockquote";
 	const DM_COLORS = ["#ff6b81", "#ff9f43", "#feca57", "#48dbfb", "#54a0ff", "#a29bfe", "#1dd1a1"];
 	const DM_LS_ENABLED = "yaoxi-dm-enabled";
 	const DM_LS_AUTHOR = "yaoxi-dm-author";
 	const DM_MAX_ITEMS_PER_PARA = 36;
+
+	/** SSO 认证辅助：读取当前登录态（YaoxiAuth SDK 就绪前安全降级为游客） */
+	function dmGetAuth(): { token: string; name: string } | null {
+		try {
+			const auth = (window as any).yaoxiAuth;
+			const token = auth?.getToken?.() || null;
+			if (!token) return null;
+			const user = auth?.getUser?.() || null;
+			const name = String(user?.name || user?.username || "").slice(0, 20);
+			return { token, name };
+		} catch {
+			return null;
+		}
+	}
 
 	interface DmState {
 		slug: string;
@@ -243,10 +272,12 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 		io?: IntersectionObserver;
 		onDocClick?: (e: MouseEvent) => void;
 		onKey?: (e: KeyboardEvent) => void;
+		onAuth?: () => void;
 	}
 
 	let dm: DmState | null = null;
 	let dmToastTimer = 0;
+	let dmAbort: AbortController | null = null;
 
 	const w = window as any;
 
@@ -327,16 +358,16 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 			list.slice(0, DM_MAX_ITEMS_PER_PARA).forEach((it, i) => {
 				const span = document.createElement("span");
 				span.className = "yaoxi-dm-item";
-				span.textContent = it.t;
-				if (it.a && it.a !== "匿名") {
+				span.textContent = it.body;
+				if (it.author && it.author !== "匿名") {
 					const author = document.createElement("i");
 					author.className = "yaoxi-dm-author";
-					author.textContent = ` ${it.a}`;
+					author.textContent = ` ${it.author}${it.verified ? " ✓" : ""}`;
 					span.appendChild(author);
 				}
-				span.style.color = it.c || DM_COLORS[0];
+				span.style.color = it.color || DM_COLORS[0];
 				span.style.top = `${3 + (i % lanes) * 20}px`;
-				const dur = Math.max(9, Math.min(16, 9 + it.t.length * 0.07));
+				const dur = Math.max(9, Math.min(16, 9 + it.body.length * 0.07));
 				span.style.animationDuration = `${dur}s`;
 				// 负延迟：入场即错峰在途，避免同段落弹幕扎堆起跑
 				span.style.animationDelay = `${(-((i * 2.6) % dur)).toFixed(2)}s`;
@@ -360,7 +391,8 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 	function dmFetchItems(): void {
 		if (!dm) return;
 		const { api, slug } = dm;
-		fetch(`${api}/api/danmaku?post=${encodeURIComponent(slug)}`)
+		// 时间戳击穿 HTTP 缓存：提交上墙后的重拉必须立即拿到最新弹幕
+		fetch(`${api}/api/comments?kind=danmaku&post=${encodeURIComponent(slug)}&_t=${Date.now()}`, { cache: "no-store" })
 			.then((r) => (r.ok ? r.json() : null))
 			.then((data) => {
 				if (!dm || dm.slug !== slug) return;
@@ -425,7 +457,28 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 				author.value = localStorage.getItem(DM_LS_AUTHOR) || "";
 			} catch {}
 		}
+		dmSyncIdentity();
 		(document.getElementById("yaoxi-dm-text") as HTMLInputElement | null)?.focus();
+	}
+
+	/** 同步 SSO 登录态到发射面板：已登录锁定认证昵称，未登录提示可登录 */
+	function dmSyncIdentity(): void {
+		const input = document.getElementById("yaoxi-dm-author") as HTMLInputElement | null;
+		const hint = document.getElementById("yaoxi-dm-identity");
+		if (!input || !hint) return;
+		const auth = dmGetAuth();
+		if (auth) {
+			input.value = auth.name || "已认证读者";
+			input.disabled = true;
+			input.classList.add("opacity-60");
+			hint.textContent = `✅ 已登录 ${auth.name || "读者"}，将以认证身份发表喵~`;
+			hint.classList.remove("cursor-pointer", "hover:text-[var(--primary)]");
+		} else {
+			input.disabled = false;
+			input.classList.remove("opacity-60");
+			hint.textContent = "💡 登录后弹幕将带认证标识，点此登录喵~";
+			hint.classList.add("cursor-pointer", "hover:text-[var(--primary)]");
+		}
 	}
 
 	function dmClosePanel(): void {
@@ -463,11 +516,15 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 		sendBtn.disabled = true;
 		sendBtn.classList.add("opacity-60");
 		try {
-			const res = await fetch(`${dm.api}/api/danmaku/submit`, {
+			const auth = dmGetAuth();
+			const headers: Record<string, string> = { "Content-Type": "application/json" };
+			if (auth) headers.Authorization = `Bearer ${auth.token}`;
+			const res = await fetch(`${dm.api}/api/comments/submit`, {
 				method: "POST",
-				headers: { "Content-Type": "application/json" },
+				headers,
 				body: JSON.stringify({
 					post: dm.slug,
+					kind: "danmaku",
 					p: idx,
 					x: excerpt,
 					t: text,
@@ -525,10 +582,17 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 	/* ---------- 生命周期 ---------- */
 
 	function teardownDanmaku(): void {
+		// AbortController 一次性回收元素级监听（防同页重复 boot 时监听器叠加）
+		dmAbort?.abort();
+		dmAbort = null;
 		if (!dm) return;
 		dmRemoveLayers();
 		if (dm.onDocClick) document.removeEventListener("click", dm.onDocClick, true);
 		if (dm.onKey) document.removeEventListener("keydown", dm.onKey);
+		if (dm.onAuth) {
+			window.removeEventListener("yaoxi:auth:change", dm.onAuth);
+			window.removeEventListener("yaoxi:auth:ready", dm.onAuth);
+		}
 		document.documentElement.classList.remove("yaoxi-dm-picking");
 		dm = null;
 	}
@@ -575,6 +639,10 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 		dmUpdateLen();
 		dmClosePanel();
 
+		// 元素级监听统一挂到本轮 boot 的 AbortSignal 上，teardown 一次性回收
+		dmAbort = new AbortController();
+		const { signal } = dmAbort;
+
 		// 悬浮开关
 		document.getElementById("yaoxi-dm-toggle")?.addEventListener("click", () => {
 			if (!dm) return;
@@ -589,25 +657,36 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 				dmRemoveLayers();
 			}
 			dmRefreshToggle();
-		});
+		}, { signal });
 
 		// 发射入口与面板交互
-		document.getElementById("yaoxi-dm-compose")?.addEventListener("click", dmOpenPanel);
-		document.getElementById("yaoxi-dm-panel-close")?.addEventListener("click", dmClosePanel);
-		document.getElementById("yaoxi-dm-cancel")?.addEventListener("click", dmClosePanel);
-		document.getElementById("yaoxi-dm-send")?.addEventListener("click", dmSubmit);
+		document.getElementById("yaoxi-dm-compose")?.addEventListener("click", dmOpenPanel, { signal });
+		document.getElementById("yaoxi-dm-panel-close")?.addEventListener("click", dmClosePanel, { signal });
+		document.getElementById("yaoxi-dm-cancel")?.addEventListener("click", dmClosePanel, { signal });
+		document.getElementById("yaoxi-dm-send")?.addEventListener("click", dmSubmit, { signal });
+
+		// 认证身份：未登录时点击提示条唤起 SSO 登录；登录态变更实时同步面板
+		document.getElementById("yaoxi-dm-identity")?.addEventListener("click", () => {
+			if (dmGetAuth()) return;
+			const login = (window as any).yaoxiLogin;
+			if (typeof login === "function") void login("popup");
+		}, { signal });
+		const onAuth = () => dmSyncIdentity();
+		window.addEventListener("yaoxi:auth:change", onAuth);
+		window.addEventListener("yaoxi:auth:ready", onAuth);
+		dm.onAuth = onAuth;
 		document.getElementById("yaoxi-dm-anchor-chip")?.addEventListener("click", () => {
 			if (!dm) return;
 			document.documentElement.classList.add("yaoxi-dm-picking");
 			dmToast("点击正文中的任意段落完成锚定喵~");
-		});
-		(document.getElementById("yaoxi-dm-text") as HTMLInputElement | null)?.addEventListener("input", dmUpdateLen);
+		}, { signal });
+		(document.getElementById("yaoxi-dm-text") as HTMLInputElement | null)?.addEventListener("input", dmUpdateLen, { signal });
 		(document.getElementById("yaoxi-dm-text") as HTMLInputElement | null)?.addEventListener("keydown", (e) => {
 			if (e.key === "Enter" && !e.isComposing) {
 				e.preventDefault();
 				void dmSubmit();
 			}
-		});
+		}, { signal });
 
 		// 选段模式：捕获阶段拦截点击（阻止链接跳转），点到正文段落即锚定
 		const onDocClick = (e: MouseEvent) => {
