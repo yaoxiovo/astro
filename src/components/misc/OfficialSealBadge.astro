@@ -19,6 +19,7 @@ const seal = getSealForPost(slug);
 			<span class="seal-stamp">瑶曦</span>
 		</div>
 		<div class="text-sm font-medium">官方已签发</div>
+		<span id="seal-render-status" class="seal-render-status" data-state="pending">· 核验中…</span>
 	</a>
 ) : (
 	<span
@@ -59,6 +60,31 @@ const seal = getSealForPost(slug);
 		background: rgba(139, 139, 139, 0.08);
 	}
 
+	.seal-render-status {
+		margin-left: 0.3rem;
+		font-size: 0.65rem;
+		white-space: nowrap;
+		color: #9a9a9a;
+		transition: color 0.2s ease;
+	}
+
+	.seal-render-status[data-state="ok"] {
+		color: #10b981;
+	}
+
+	.seal-render-status[data-state="tampered"] {
+		color: #c0392b;
+		font-weight: 700;
+	}
+
+	:global(html.dark) .seal-render-status[data-state="ok"] {
+		color: #34d399;
+	}
+
+	:global(html.dark) .seal-render-status[data-state="tampered"] {
+		color: #e56b5e;
+	}
+
 	:global(html.dark) .seal-stamp {
 		color: #e56b5e;
 		background: rgba(229, 107, 94, 0.1);
@@ -69,3 +95,151 @@ const seal = getSealForPost(slug);
 		background: rgba(154, 154, 154, 0.1);
 	}
 </style>
+
+<script>
+	import {
+		RENDER_GUARD_VERSION,
+		GUARD_ROOT,
+		GUARD_TARGETS,
+		GUARD_EXCLUDE_SELECTOR,
+		buildGuardMessage,
+		normalizeGuardText,
+	} from "@utils/seal-render-core.mjs";
+
+	interface GuardPayload {
+		v: string;
+		textHash: string;
+		signature: string;
+		publicKeyJwk: JsonWebKey;
+		keyFingerprint: string;
+	}
+
+	function b64ToBytes(b64: string): Uint8Array {
+		const bin = atob(b64);
+		const bytes = new Uint8Array(bin.length);
+		for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+		return bytes;
+	}
+
+	function toHex(buf: ArrayBuffer): string {
+		return Array.from(new Uint8Array(buf))
+			.map((b) => b.toString(16).padStart(2, "0"))
+			.join("");
+	}
+
+	/** 抽取渲染文本：与构建端 node-html-parser 遍历语义逐字节等价（排除清单见共享核心） */
+	function extractRenderedText(): string | null {
+		const root = document.querySelector(GUARD_ROOT);
+		if (!root) return null;
+		let text = "";
+		for (const selector of GUARD_TARGETS) {
+			const el = root.querySelector(selector);
+			if (!el) return null;
+			const clone = el.cloneNode(true) as Element;
+			for (const node of clone.querySelectorAll(GUARD_EXCLUDE_SELECTOR)) node.remove();
+			text += clone.textContent ?? "";
+		}
+		return normalizeGuardText(text);
+	}
+
+	let guardObserver: MutationObserver | null = null;
+	let guardTimer: number | null = null;
+
+	function scheduleVerify(delay: number): void {
+		if (guardTimer !== null) window.clearTimeout(guardTimer);
+		guardTimer = window.setTimeout(() => {
+			guardTimer = null;
+			void runRenderGuard();
+		}, delay);
+	}
+
+	function ensureObserver(): void {
+		if (guardObserver) return;
+		const root = document.querySelector(GUARD_ROOT);
+		if (!root) return;
+		guardObserver = new MutationObserver(() => scheduleVerify(400));
+		for (const selector of GUARD_TARGETS) {
+			const el = root.querySelector(selector);
+			if (el) guardObserver.observe(el, { subtree: true, childList: true, characterData: true });
+		}
+	}
+
+	async function runRenderGuard(): Promise<void> {
+		const statusEl = document.getElementById("seal-render-status");
+		if (!statusEl) return;
+
+		const setStatus = (state: string, label: string, title: string): void => {
+			if (statusEl.dataset.state === state && statusEl.textContent === label) return;
+			statusEl.dataset.state = state;
+			statusEl.textContent = label;
+			statusEl.title = title;
+		};
+
+		const payloadEl = document.getElementById("seal-render-guard");
+		let payload: GuardPayload | null = null;
+		try {
+			payload = JSON.parse(payloadEl?.textContent || "null") as GuardPayload | null;
+		} catch {
+			payload = null;
+		}
+		if (!payload || payload.v !== RENDER_GUARD_VERSION) {
+			setStatus("off", "· 未启用", "尚未签发渲染护栏载荷（开发模式或未构建）");
+			return;
+		}
+
+		ensureObserver();
+
+		const subtle = window.crypto?.subtle;
+		if (!subtle) {
+			setStatus("off", "· 需现代浏览器", "当前浏览器不支持 Ed25519 在线核验，可参考官印验证中心离线复核");
+			return;
+		}
+
+		try {
+			const text = extractRenderedText();
+			if (text === null) {
+				setStatus("off", "· 不适用", "该页面无参与签名的正文区域（如加密文章）");
+				return;
+			}
+			const hash = toHex(await subtle.digest("SHA-256", new TextEncoder().encode(text)));
+			const key = await subtle.importKey("jwk", payload.publicKeyJwk, { name: "Ed25519" }, false, [
+				"verify",
+			]);
+			// 信任链：先验签确认载荷中的 textHash 为官方签发，再比对浏览器实算哈希
+			const sigOk = await subtle.verify(
+				"Ed25519",
+				key,
+				b64ToBytes(payload.signature),
+				new TextEncoder().encode(buildGuardMessage(payload.textHash)),
+			);
+			if (!sigOk) {
+				setStatus("tampered", "· ⚠ 官印异常", "渲染护栏签名无法通过官方公钥验证");
+				return;
+			}
+			if (hash !== payload.textHash) {
+				setStatus("tampered", "· ⚠ 内容被改动", "页面渲染内容与官印签发内容不一致");
+				return;
+			}
+			setStatus(
+				"ok",
+				"· 内容已核验",
+				`渲染内容与官印一致（公钥指纹 ${payload.keyFingerprint.slice(0, 16)}…，可到官印验证中心交叉核对）`,
+			);
+		} catch {
+			setStatus("off", "· 核验不可用", "渲染护栏核验过程出错");
+		}
+	}
+
+	function kickRenderGuard(): void {
+		guardObserver?.disconnect();
+		guardObserver = null;
+		scheduleVerify(0);
+	}
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", kickRenderGuard);
+	} else {
+		kickRenderGuard();
+	}
+	document.addEventListener("swup:page:view", kickRenderGuard);
+</script>

@@ -29,6 +29,7 @@ import rehypeImageFallback from "./src/plugins/rehype-image-fallback.mjs";
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
+import sealRenderGuard from "./src/integrations/seal-render-guard.mjs";
 
 // Build backlink whitelist only for official yaoxi.wiki and subdomains
 const backlinkWhitelist = new Set([
@@ -163,6 +164,7 @@ export default defineConfig({
 				showCopyToClipboardButton: false,
 			},
 		}),
+		sealRenderGuard(),
 	],
 	markdown: {
 		remarkPlugins: [
