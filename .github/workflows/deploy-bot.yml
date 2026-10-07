@@ -46,46 +46,42 @@ jobs:
       - name: Set BOT_TOKEN secret
         run: |
           if [ -n "$BOT_TOKEN" ]; then
-            echo "$BOT_TOKEN" | npx wrangler secret put BOT_TOKEN
+            if ! echo "$BOT_TOKEN" | npx wrangler secret put BOT_TOKEN; then
+              echo "::warning::BOT_TOKEN secret put 失败（部署继续，请稍后手动补配）"
+            fi
           else
-            echo "BOT_TOKEN secret not set, skipping"
+            echo "::warning::BOT_TOKEN 未配置 —— Bot 将无法调用 Telegram API！"
           fi
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Set CHAT_ID secret
-        run: |
-          if [ -n "$CHAT_ID" ]; then
-            echo "$CHAT_ID" | npx wrangler secret put CHAT_ID
-          else
-            echo "CHAT_ID secret not set, skipping (using wrangler.jsonc var)"
-          fi
-        env:
-          CHAT_ID: ${{ secrets.CHAT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
+      # CHAT_ID 无需 secret：wrangler.jsonc vars 已有固定值；
+      # 早期在此步骤的 secret put 曾静默失败并卡断整个部署（Deploy Worker 被跳过），故移除。
 
       - name: Set ADMIN_TOKEN (protect /tick, /err)
         run: |
           if [ -n "$BOT_ADMIN_TOKEN" ]; then
-            echo "$BOT_ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN
+            if ! echo "$BOT_ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN; then
+              echo "::warning::ADMIN_TOKEN secret put 失败（部署继续，请稍后手动补配）"
+            fi
           else
-            echo "ADMIN_TOKEN not set, skipping — /tick and /err will be open!"
+            echo "::warning::BOT_ADMIN_TOKEN 未配置 —— /tick 与 /err 将无鉴权保护！"
           fi
         env:
           BOT_ADMIN_TOKEN: ${{ secrets.BOT_ADMIN_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Set BLOG_API_ADMIN_TOKEN (弹幕审核桥接 blog-api)
+      - name: Set BLOG_API_ADMIN_TOKEN (评论审核桥接 blog-api)
         run: |
           if [ -n "$ADMIN_TOKEN" ]; then
-            echo "$ADMIN_TOKEN" | npx wrangler secret put BLOG_API_ADMIN_TOKEN
+            if ! echo "$ADMIN_TOKEN" | npx wrangler secret put BLOG_API_ADMIN_TOKEN; then
+              echo "::warning::BLOG_API_ADMIN_TOKEN secret put 失败（部署继续，请稍后手动补配，否则审核按钮无法放行）"
+            fi
           else
-            echo "ADMIN_TOKEN not set — 弹幕审核按钮将无法放行（回退使用本 Bot ADMIN_TOKEN）"
+            echo "::warning::ADMIN_TOKEN 未配置 —— 评论/弹幕审核按钮将无法放行（回退使用本 Bot ADMIN_TOKEN）"
           fi
         env:
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
@@ -100,10 +96,15 @@ jobs:
 
       - name: Setup webhook & commands
         run: |
-          # 生成 webhook 校验密钥并写入 Worker secret
+          # 生成 webhook 校验密钥并写入 Worker secret。
+          # ⚠️ 必须 put 成功后才允许 setWebhook：否则新 secret 未写入而 webhook 已换新密钥，
+          # 校验必然 401，Bot 将彻底收不到消息——失败时保留旧 webhook 配置直接跳过。
           WHS="whs_$(openssl rand -hex 16)"
-          echo "$WHS" | npx wrangler secret put WEBHOOK_SECRET
-          # 设置 webhook（消息即时推送 + 弹幕审核按钮回调，替代旧 getUpdates 轮询）
+          if ! echo "$WHS" | npx wrangler secret put WEBHOOK_SECRET; then
+            echo "::warning::WEBHOOK_SECRET put 失败，跳过 webhook 重设（保留旧配置，Bot 继续可用）"
+            exit 0
+          fi
+          # 设置 webhook（消息即时推送 + 评论审核按钮回调，替代旧 getUpdates 轮询）
           curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/setWebhook" \
             -H "Content-Type: application/json" \
             -d "{\"url\":\"https://yaoxi-blog-bot.yaoxiovo.workers.dev/webhook\",\"secret_token\":\"$WHS\",\"allowed_updates\":[\"message\",\"callback_query\"]}"
@@ -114,7 +115,7 @@ jobs:
           # 写入新命令快捷菜单（与代码 COMMANDS 一致：13 个）
           curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/setMyCommands" \
             -H "Content-Type: application/json" \
-            -d '{"commands":[{"command":"start","description":"开始使用 / 订阅推送"},{"command":"latest","description":"最近动态：/latest 5"},{"command":"random","description":"随机动态：/random 3"},{"command":"stats","description":"朋友圈统计 + 订阅人数"},{"command":"search","description":"搜索朋友圈：/search 关键词"},{"command":"capsules","description":"时间胶囊列表"},{"command":"weekly","description":"本周朋友圈周报"},{"command":"daily","description":"每日一言：/daily 城市"},{"command":"dm","description":"弹幕审核：/dm 待审列表"},{"command":"broadcast","description":"主人广播公告"},{"command":"subscribe","description":"订阅新动态推送"},{"command":"unsubscribe","description":"退订推送"},{"command":"help","description":"帮助与全部命令"}]}'
+            -d '{"commands":[{"command":"start","description":"开始使用 / 订阅推送"},{"command":"latest","description":"最近动态：/latest 5"},{"command":"random","description":"随机动态：/random 3"},{"command":"stats","description":"朋友圈统计 + 订阅人数"},{"command":"search","description":"搜索朋友圈：/search 关键词"},{"command":"capsules","description":"时间胶囊列表"},{"command":"weekly","description":"本周朋友圈周报"},{"command":"daily","description":"每日一言：/daily 城市"},{"command":"dm","description":"评论/弹幕审核：/dm 待审列表"},{"command":"broadcast","description":"主人广播公告"},{"command":"subscribe","description":"订阅新动态推送"},{"command":"unsubscribe","description":"退订推送"},{"command":"help","description":"帮助与全部命令"}]}'
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
