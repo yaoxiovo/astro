@@ -1,9 +1,0 @@
-{
-  "sha": "9638fb22114d3e9e814aee5cd38b6c338a0298c6",
-  "shortSha": "9638fb2",
-  "date": "2026-09-07T17:15:39+08:00",
-  "author": "yaoxiovo",
-  "message": "perf(seo): 全站 SEO 第一二阶段优化",
-  "slug": "draft",
-  "content": "---\ntitle: Draft Example\npublished: 2022-07-01\ndescription: \"A draft example demonstration showing how drafts are configured and excluded from production builds in Astro.\"\ntags:\n  - Markdown\n  - Blogging\n  - Demo\ncategory: Examples\ndraft: true\nlang: \"en\"\n---\n\n# This Article is a Draft\n\nThis article is currently in a draft state and is not published. Therefore, it will not be visible to the general audience. The content is still a work in progress and may require further editing and review.\n\nWhen the article is ready for publication, you can update the \"draft\" field to \"false\" in the Frontmatter:\n\n```markdown\n---\ntitle: Draft Example\npublished: 2024-01-11T04:40:26.381Z\ntags: [Markdown, Blogging, Demo]\ncategory: Examples\ndraft: false\n---\n"
-}

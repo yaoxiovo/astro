@@ -25,7 +25,7 @@ const postsCollection = defineCollection({
 });
 
 const assetsCollection = defineCollection({
-	type: 'data',
+	type: "data",
 	schema: z.object({
 		title: z.string().optional(),
 		description: z.string().optional(),
@@ -39,17 +39,19 @@ const momentsCollection = defineCollection({
 		avatar: z.string().optional(),
 		images: z.array(z.string()).optional().default([]),
 		videos: z.array(z.string()).optional().default([]),
-		verifyType: z.enum(['blue', 'yellow', 'none']).optional().default('none'),
-		verifySubject: z.string().optional().default(''),
+		verifyType: z.enum(["blue", "yellow", "none"]).optional().default("none"),
+		verifySubject: z.string().optional().default(""),
 		source: z.string().optional(),
 		pinned: z.boolean().optional().default(false),
 		replyTo: z.string().optional(),
 		capsule: z.date().optional(),
-		location: z.object({
-			name: z.string(),
-			lat: z.number(),
-			lng: z.number(),
-		}).optional(),
+		location: z
+			.object({
+				name: z.string(),
+				lat: z.number(),
+				lng: z.number(),
+			})
+			.optional(),
 	}),
 });
 
@@ -63,15 +65,20 @@ const musicCollection = defineCollection({
 		published: z.date(),
 		author: z.string().optional(),
 		avatar: z.string().optional(),
-		verifyType: z.enum(['blue', 'yellow', 'none']).optional().default('none'),
-		verifySubject: z.string().optional().default(''),
+		verifyType: z.enum(["blue", "yellow", "none"]).optional().default("none"),
+		verifySubject: z.string().optional().default(""),
 		source: z.string().optional(),
 		likes: z.number().optional().default(0),
 		comments: z.number().optional().default(0),
 	}),
 });
 
-export const collections = {
+export const collections: {
+	posts: ReturnType<typeof defineCollection>;
+	assets: ReturnType<typeof defineCollection>;
+	moments: ReturnType<typeof defineCollection>;
+	music: ReturnType<typeof defineCollection>;
+} = {
 	posts: postsCollection,
 	assets: assetsCollection,
 	moments: momentsCollection,

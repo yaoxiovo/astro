@@ -1,0 +1,81 @@
+# Cloudflare Workers 子项目类型检查
+#
+# 为什么需要这个工作流：
+#   workers/zero-knowledge-bff 此前没有任何工作流覆盖，导致 src/index.ts 里一个致命的
+#   语法错误（app.post 处理器缺少收尾 `});`）长期潜伏，第 543 行之后的所有路由实际都
+#   不可部署，却无人发现。本工作流把它纳入 CI 视野，保证这类问题在 PR 阶段就变红。
+#
+# 触发范围：
+#   - push 到 main、以及所有 pull_request。
+#   - paths 过滤限定为 workers/**（含本文件自身）。主站内容、文章、样式等改动不会
+#     触发 worker 检查，避免无关的 CI 消耗。
+#
+# 包管理器选型：pnpm
+#   - 仓库根 package.json 声明 packageManager: pnpm@9.14.4，pnpm-lock.yaml 是仓库唯一
+#     提交的 lockfile。
+#   - 根 .gitignore 明确忽略 package-lock.json / yarn.lock，因此 npm 生成的 lockfile
+#     无法被提交，也就无法用 --frozen-lockfile 做可复现安装。
+#   - 本子项目通过 corepack 解析到与根一致的 pnpm@9.14.4。
+#
+# 可复现性：
+#   - pnpm install --frozen-lockfile：lockfile 与 package.json 不同步时直接失败，
+#     不会静默改写 lockfile 造成漂移。
+#   - --ignore-scripts：本工作流只做类型检查，不需要 workerd / sharp / esbuild 的
+#     postinstall 二进制下载，跳过可显著缩短 CI 时间并减少网络抖动导致的假失败。
+#     类型检查只依赖 typescript 与 @cloudflare/workers-types 的 .d.ts，与这些脚本无关。
+#   - 不使用任何容错/忽略失败的开关或 shell 兜底：任何一步失败都必须让工作流变红。
+
+name: Worker Typecheck
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'workers/**'
+      - '.github/workflows/worker-typecheck.yml'
+  pull_request:
+    paths:
+      - 'workers/**'
+      - '.github/workflows/worker-typecheck.yml'
+
+# 最小权限：只读仓库内容
+permissions:
+  contents: read
+
+# 同一 ref 的新运行取消尚未完成的旧运行
+concurrency:
+  group: worker-typecheck-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  zero-knowledge-bff:
+    name: zero-knowledge-bff Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: workers/zero-knowledge-bff
+    # corepack 在非交互环境下解析 packageManager 前会要求确认，置 0 关闭该提示；
+    # 这不影响任何步骤的退出码。
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack (pnpm via packageManager)
+        run: corepack enable
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # 用 pnpm exec 而非 npx：前者只从本项目的 node_modules 解析，不会因为本地缺失
+      # 而去 registry 拉取一个未锁定的 typescript 版本。
+      - name: Type Check
+        run: pnpm exec tsc --noEmit

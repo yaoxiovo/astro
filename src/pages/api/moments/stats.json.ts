@@ -1,4 +1,4 @@
-import { getSortedMoments, computeMomentStats } from "@/utils/content-utils";
+import { computeMomentStats, getSortedMoments } from "@/utils/content-utils";
 import type { APIRoute } from "astro";
 
 export const GET: APIRoute = async () => {

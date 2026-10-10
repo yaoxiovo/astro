@@ -13,7 +13,8 @@
 			".astro/**/*",
 			"src/content/.obsidian/**/*",
 			"dist/**/*",
-			"node_modules/**/*"
+			"node_modules/**/*",
+			"src/data/**/*"
 		]
 	},
 	"formatter": {

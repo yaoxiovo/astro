@@ -1,11 +1,10 @@
 name: DeepSeek Code Review
 
+# 仅在 PR 场景触发：AI 审查的产物是 PR 评论，push 到任意分支既无发布目标，
+# 又会为每次提交消耗 DeepSeek API 额度，故不监听 push。
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-  push:
-    branches:
-      - '**'
 
 permissions:
   contents: read

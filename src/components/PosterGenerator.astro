@@ -3,11 +3,31 @@
 import { Icon } from "astro-icon/components";
 import authorsConfig from "../content/moments/authors.json";
 
+interface AuthorRole {
+	avatar?: string;
+	verifyType?: string;
+	verifySubject?: string;
+}
+
 interface Props {
-  title: string;
-  excerpt: string;
-  coverImage?: string;
-  author: string;
+	title: string;
+	excerpt: string;
+	coverImage?: string;
+	author: string;
+}
+
+// html-to-image 1.11.x 的最小类型声明（该库经 CDN 动态加载并挂载到 window）
+interface HtmlToImage {
+	toPng: (
+		node: HTMLElement,
+		options?: { pixelRatio?: number; backgroundColor?: string },
+	) => Promise<string>;
+}
+
+declare global {
+	interface Window {
+		htmlToImage?: HtmlToImage;
+	}
 }
 
 const { title, excerpt, coverImage, author } = Astro.props;
@@ -16,15 +36,15 @@ const { title, excerpt, coverImage, author } = Astro.props;
 let verifiedIconColor = "";
 let verifiedEntity = "";
 
-const role = (authorsConfig as any)[author];
+const role = (authorsConfig as Record<string, AuthorRole | undefined>)[author];
 if (role) {
-  if (role.verifyType === "blue") {
-    verifiedIconColor = "text-blue-500";
-    verifiedEntity = role.verifySubject || "企业官方认证";
-  } else if (role.verifyType === "yellow") {
-    verifiedIconColor = "text-yellow-500";
-    verifiedEntity = role.verifySubject || "个人博主认证";
-  }
+	if (role.verifyType === "blue") {
+		verifiedIconColor = "text-blue-500";
+		verifiedEntity = role.verifySubject || "企业官方认证";
+	} else if (role.verifyType === "yellow") {
+		verifiedIconColor = "text-yellow-500";
+		verifiedEntity = role.verifySubject || "个人博主认证";
+	}
 }
 ---
 
@@ -89,7 +109,7 @@ if (role) {
       btn.style.pointerEvents = 'none';
       
       try {
-        if (!(window as any).htmlToImage) {
+        if (!window.htmlToImage) {
            await new Promise((resolve, reject) => {
              const s = document.createElement('script');
              s.src = "https://cdn.staticfile.net/html-to-image/1.11.11/html-to-image.min.js";
@@ -124,10 +144,10 @@ if (role) {
         await new Promise(resolve => setTimeout(resolve, 50));
         
         // 预热渲染（应对 Safari 首次渲染空白的 Bug）
-        try { await (window as any).htmlToImage.toPng(container, { pixelRatio: 1 }); } catch(e) {}
-        
+        try { await window.htmlToImage?.toPng(container, { pixelRatio: 1 }); } catch(e) {}
+
         // 正式渲染高清海报
-        const url = await (window as any).htmlToImage.toPng(container, {
+        const url = await window.htmlToImage.toPng(container, {
           pixelRatio: 2, // 高清
           backgroundColor: '#ffffff'
         });

@@ -26,6 +26,14 @@ interface SearchResult {
 	urlPath?: string;
 }
 
+interface SearchMomentItem {
+	slug: string;
+	text?: string;
+	capsule?: string | Date;
+	tags?: string[];
+	published?: string;
+}
+
 let keywordDesktop = "";
 let keywordMobile = "";
 let result: SearchResult[] = [];
@@ -61,7 +69,7 @@ const ensureDataLoaded = async (): Promise<void> => {
 					const xml = parser.parseFromString(rssRes.value, "text/xml");
 					const xmlItems = xml.querySelectorAll("item");
 
-					xmlItems.forEach((item) => {
+					for (const item of xmlItems) {
 						let content = "";
 						const contentEncoded =
 							item.getElementsByTagNameNS("*", "encoded")[0]?.textContent ||
@@ -85,7 +93,7 @@ const ensureDataLoaded = async (): Promise<void> => {
 							badge: "文章",
 							pubDate: item.querySelector("pubDate")?.textContent || "",
 						});
-					});
+					}
 				} catch (e) {
 					console.warn("Failed to parse RSS XML:", e);
 				}
@@ -93,11 +101,13 @@ const ensureDataLoaded = async (): Promise<void> => {
 
 			// 解析朋友圈动态
 			if (momentsRes.status === "fulfilled" && momentsRes.value?.moments) {
-				momentsRes.value.moments.forEach((m: any) => {
+				const rawMoments = momentsRes.value.moments as SearchMomentItem[];
+				for (const m of rawMoments) {
 					const isCapsule = Boolean(m.capsule);
 					const rawText = m.text || "";
 					const firstLine = rawText.split("\n")[0].trim() || "朋友圈随笔";
-					const displayTitle = firstLine.length > 32 ? `${firstLine.slice(0, 32)}...` : firstLine;
+					const displayTitle =
+						firstLine.length > 32 ? `${firstLine.slice(0, 32)}...` : firstLine;
 
 					items.push({
 						type: isCapsule ? "capsule" : "moment",
@@ -109,7 +119,7 @@ const ensureDataLoaded = async (): Promise<void> => {
 						badge: isCapsule ? "时间胶囊" : "朋友圈",
 						pubDate: m.published || "",
 					});
-				});
+				}
 			}
 
 			allItems = items;
@@ -169,7 +179,8 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 		const searchResults: SearchResult[] = allItems
 			.filter((item) => {
 				const tagsStr = (item.tags || []).join(" ").toLowerCase();
-				const searchText = `${item.title} ${item.description} ${item.content} ${tagsStr}`.toLowerCase();
+				const searchText =
+					`${item.title} ${item.description} ${item.content} ${tagsStr}`.toLowerCase();
 				return searchText.includes(kw) || item.link.toLowerCase().includes(kw);
 			})
 			.map((item) => {
@@ -184,8 +195,10 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 					if (start > 0) excerpt = `...${excerpt}`;
 					if (end < item.content.length) excerpt = `${excerpt}...`;
 				} else {
-					excerpt = item.description.slice(0, 120) || item.content.slice(0, 120);
-					if (item.description.length > 120 || item.content.length > 120) excerpt += "...";
+					excerpt =
+						item.description.slice(0, 120) || item.content.slice(0, 120);
+					if (item.description.length > 120 || item.content.length > 120)
+						excerpt += "...";
 				}
 
 				return {

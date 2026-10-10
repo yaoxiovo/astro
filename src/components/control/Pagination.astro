@@ -47,8 +47,8 @@ if (r < page.lastPage) pages.push(page.lastPage);
 
 const getPageUrl = (p: number) => {
 	let base = baseUrl;
-	if (!base.startsWith('/')) base = '/' + base;
-	if (base.endsWith('/')) base = base.slice(0, -1);
+	if (!base.startsWith("/")) base = `/${base}`;
+	if (base.endsWith("/")) base = base.slice(0, -1);
 	if (p === 1) return `${base}/`;
 	return `${base}/${p}/`;
 };

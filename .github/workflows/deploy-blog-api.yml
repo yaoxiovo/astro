@@ -97,51 +97,71 @@ jobs:
 
       - name: Sync Worker Secrets
         run: |
+          # 密钥同步策略（两层）：
+          #   [必须] 安全关键密钥：不追加 `|| true`。GitHub Actions 的 bash 默认带 -e，
+          #          同步失败会立即以非零退出中断本次部署，避免线上运行时才发现鉴权/签名密钥缺失。
+          #   [可容忍] 保留 `|| true` 的密钥均有运行时兜底（见逐条注释），缺失只降级对应功能，
+          #          不影响鉴权与数据安全。
           if [ -n "$MAIL_GATEWAY_TOKEN" ]; then
+            # [可容忍] 邮件网关 Token：缺失时 email-client.js 回退 AUTH_SECRET/ADMIN_TOKEN，
+            #          再退化为本地 mock 日志，不影响鉴权与数据安全。
             echo "$MAIL_GATEWAY_TOKEN" | npx wrangler secret put MAIL_GATEWAY_TOKEN || true
           elif [ -n "$AUTH_SECRET" ]; then
             echo "$AUTH_SECRET" | npx wrangler secret put MAIL_GATEWAY_TOKEN || true
           fi
           if [ -n "$MAIL_GATEWAY_URL" ]; then
+            # [可容忍] 未配置时回退默认网关地址 https://mail-api.yaoxi.cloud。
             echo "$MAIL_GATEWAY_URL" | npx wrangler secret put MAIL_GATEWAY_URL || true
           fi
           if [ -n "$RESEND_API_KEY" ]; then
+            # [可容忍] Resend 仅是自建邮件网关的兼容回退通道。
             echo "$RESEND_API_KEY" | npx wrangler secret put RESEND_API_KEY || true
           fi
           if [ -n "$ADMIN_TOKEN" ]; then
-            echo "$ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN || true
+            # [必须] 管理接口鉴权凭据（评论审核 / 弹幕管理 / 广播 / DDoS 查询），缺失即线上鉴权失效。
+            echo "$ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN
           fi
           if [ -n "$OWNER_EMAIL" ]; then
+            # [可容忍] 未配置时回退硬编码站长邮箱。
             echo "$OWNER_EMAIL" | npx wrangler secret put OWNER_EMAIL || true
           fi
           if [ -n "$EMAIL_FROM" ]; then
+            # [可容忍] 未配置时回退默认发件人身份。
             echo "$EMAIL_FROM" | npx wrangler secret put EMAIL_FROM || true
           fi
           if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "$CLOUDFLARE_API_TOKEN" | npx wrangler secret put CF_API_TOKEN || true
+            # [必须] Cloudflare API 凭据（DDoS 防护与安全日志查询），缺失即该接口不可用。
+            echo "$CLOUDFLARE_API_TOKEN" | npx wrangler secret put CF_API_TOKEN
           fi
           if [ -n "$CLOUDFLARE_ZONE_ID" ]; then
+            # [可容忍] 仅 Zone 标识，未配置时由 index.js 自动定位可用 Zone。
             echo "$CLOUDFLARE_ZONE_ID" | npx wrangler secret put CF_ZONE_ID || true
           fi
           if [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            # [可容忍] 仅账号标识，未配置时可经 API Token 派生。
             echo "$CLOUDFLARE_ACCOUNT_ID" | npx wrangler secret put CF_ACCOUNT_ID || true
           fi
           # 弹幕审核 Telegram 通知（复用 Bot 的凭据：BOT_TOKEN / CHAT_ID）
           if [ -n "$TG_BOT_TOKEN" ]; then
+            # [可容忍] 未配置时静默跳过 Telegram 通知，弹幕仍可经 /dm 命令管理。
             echo "$TG_BOT_TOKEN" | npx wrangler secret put TELEGRAM_BOT_TOKEN || true
           fi
           if [ -n "$TG_CHAT_ID" ]; then
+            # [可容忍] 同上，仅影响通知推送。
             echo "$TG_CHAT_ID" | npx wrangler secret put TELEGRAM_CHAT_ID || true
           fi
           # 评论 SSO 身份验签候选密钥（与 zk-bff / 认证中心对齐，验签失败自动降级游客）
           if [ -n "$JWT_SECRET" ]; then
-            echo "$JWT_SECRET" | npx wrangler secret put JWT_SECRET || true
+            # [必须] SSO 验签候选密钥，缺失会使已登录用户被静默降级为游客。
+            echo "$JWT_SECRET" | npx wrangler secret put JWT_SECRET
           fi
           if [ -n "$AUTH_SECRET" ]; then
-            echo "$AUTH_SECRET" | npx wrangler secret put AUTH_SECRET || true
+            # [必须] SSO 验签候选密钥（同时是邮件网关 Token 的回退来源）。
+            echo "$AUTH_SECRET" | npx wrangler secret put AUTH_SECRET
           fi
           if [ -n "$SSO_SECRET" ]; then
-            echo "$SSO_SECRET" | npx wrangler secret put SSO_SECRET || true
+            # [必须] SSO 验签候选密钥，三把候选密钥任一缺失都会收窄验签范围。
+            echo "$SSO_SECRET" | npx wrangler secret put SSO_SECRET
           fi
         env:
           MAIL_GATEWAY_TOKEN: ${{ secrets.MAIL_GATEWAY_TOKEN }}

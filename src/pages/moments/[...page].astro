@@ -1,54 +1,83 @@
 ---
-import MainGridLayout from '../../layouts/MainGridLayout.astro';
-import MomentCard from '../../components/MomentCard.astro';
-import MomentsClient from '../../components/MomentsClient.astro';
-import Pagination from '../../components/control/Pagination.astro';
-import { getSortedMoments, momentToText, stripMomentId } from "../../utils/content-utils";
+import MomentCard from "../../components/MomentCard.astro";
+import MomentsClient from "../../components/MomentsClient.astro";
+import Pagination from "../../components/control/Pagination.astro";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import {
+	getSortedMoments,
+	momentToText,
+	stripMomentId,
+} from "../../utils/content-utils";
 
 // 注意：getStaticPaths 必须完全自包含（Astro 5.7 构建时独立提取执行，
 // 模块顶层 const/let 不可见），所有辅助数据在函数内生成并通过 props 传递
 export async function getStaticPaths({ paginate }) {
-    const allMoments = await getSortedMoments();
-    
-    // Filter out replies, only show top-level moments on homepage
-    const topLevelMoments = allMoments.filter((moment) => !moment.data.replyTo);
+	const allMoments = await getSortedMoments();
 
-    // 收集所有 slug 供「随机一条」使用
-    const allSlugs = topLevelMoments.map((m) => stripMomentId(m.id));
+	// Filter out replies, only show top-level moments on homepage
+	const topLevelMoments = allMoments.filter((moment) => !moment.data.replyTo);
 
-    // 收集年份供「年度回顾」入口使用（倒序，第一个为最新年份）
-    const allYears = [...new Set(topLevelMoments.map((m) => new Date(m.data.published).getFullYear()))].sort((a, b) => b - a);
+	// 收集所有 slug 供「随机一条」使用
+	const allSlugs = topLevelMoments.map((m) => stripMomentId(m.id));
 
-    // 最新一条动态的发布时间（供「新动态小红点」判断）
-    const latestPublished = topLevelMoments.length > 0
-        ? new Date(topLevelMoments[0].data.published).toISOString()
-        : "";
+	// 收集年份供「年度回顾」入口使用（倒序，第一个为最新年份）
+	const allYears = [
+		...new Set(
+			topLevelMoments.map((m) => new Date(m.data.published).getFullYear()),
+		),
+	].sort((a, b) => b - a);
 
-    // getSortedMoments 已按「置顶优先 + 时间倒序」排序
-    const sortedMoments = topLevelMoments;
+	// 最新一条动态的发布时间（供「新动态小红点」判断）
+	const latestPublished =
+		topLevelMoments.length > 0
+			? new Date(topLevelMoments[0].data.published).toISOString()
+			: "";
 
-    // 构建「那年今日」索引：MM-DD -> [{ slug, date, text }]（仅顶层动态）
-    const memoryMap: Record<string, { slug: string; date: string; text: string }[]> = {};
-    for (const m of allMoments) {
-        if (m.data.replyTo) continue;
-        const d = new Date(m.data.published);
-        if (Number.isNaN(d.getTime())) continue;
-        const mmdd = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        (memoryMap[mmdd] ??= []).push({
-            slug: stripMomentId(m.id),
-            date: `${d.getFullYear()}-${mmdd}`,
-            text: momentToText(m.body, 40),
-        });
-    }
+	// getSortedMoments 已按「置顶优先 + 时间倒序」排序
+	const sortedMoments = topLevelMoments;
 
-    // Return a paginated collection，注入额外 props 供模板消费
-    return paginate(sortedMoments, { pageSize: 10 }).map((entry) => ({
-        ...entry,
-        props: { ...entry.props, allSlugs, allYears, memoryMap, latestPublished },
-    }));
+	// 构建「那年今日」索引：MM-DD -> [{ slug, date, text }]（仅顶层动态）
+	const memoryMap: Record<
+		string,
+		{ slug: string; date: string; text: string }[]
+	> = {};
+	for (const m of allMoments) {
+		if (m.data.replyTo) continue;
+		const d = new Date(m.data.published);
+		if (Number.isNaN(d.getTime())) continue;
+		const mmdd = `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+		let bucket = memoryMap[mmdd];
+		if (!bucket) {
+			bucket = [];
+			memoryMap[mmdd] = bucket;
+		}
+		bucket.push({
+			slug: stripMomentId(m.id),
+			date: `${d.getFullYear()}-${mmdd}`,
+			text: momentToText(m.body, 40),
+		});
+	}
+
+	// Return a paginated collection，注入额外 props 供模板消费
+	return paginate(sortedMoments, { pageSize: 10 }).map((entry) => ({
+		...entry,
+		props: { ...entry.props, allSlugs, allYears, memoryMap, latestPublished },
+	}));
 }
 
-const { page, allSlugs, allYears, memoryMap, latestPublished } = Astro.props as any;
+interface MomentPageProps {
+	page: {
+		data: unknown[];
+		url: { current: string; prev?: string; next?: string };
+	};
+	allSlugs: string[];
+	allYears: number[];
+	memoryMap: Record<string, { slug: string; date: string; text: string }[]>;
+	latestPublished: string;
+}
+
+const { page, allSlugs, allYears, memoryMap, latestPublished } =
+	Astro.props as MomentPageProps;
 ---
 
 <MainGridLayout title="朋友圈" description="我的生活瞬间与絮语" noindex>

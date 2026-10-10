@@ -1,36 +1,43 @@
 ---
 import path from "node:path";
+import CommentSection from "@components/CommentSection.astro";
+import CyberSummary from "@components/CyberSummary.astro";
+import DanmakuLayer from "@components/DanmakuLayer.astro";
+import EncryptedReader from "@components/EncryptedReader.svelte";
+import PosterGenerator from "@components/PosterGenerator.astro";
+import PresenceWidget from "@components/PresenceWidget.astro";
+import SeriesNav from "@components/SeriesNav.astro";
 import License from "@components/misc/License.astro";
 import Markdown from "@components/misc/Markdown.astro";
-import SeriesNav from "@components/SeriesNav.astro";
-import CyberSummary from "@components/CyberSummary.astro";
-import PosterGenerator from "@components/PosterGenerator.astro";
-import EncryptedReader from "@components/EncryptedReader.svelte";
-import DanmakuLayer from "@components/DanmakuLayer.astro";
-import CommentSection from "@components/CommentSection.astro";
-import PresenceWidget from "@components/PresenceWidget.astro";
-import WikiHistoryPage from "@components/wiki/WikiHistoryPage.astro";
-import WikiRevisionPage from "@components/wiki/WikiRevisionPage.astro";
-import WikiHistoryTable from "@components/wiki/WikiHistoryTable.svelte";
+import OfficialSealBadge from "@components/misc/OfficialSealBadge.astro";
+import LongPressTextMenu from "@components/widget/LongPressTextMenu.astro";
 import BacklinksPanel from "@components/wiki/BacklinksPanel.astro";
+import CiteThisArticle from "@components/wiki/CiteThisArticle.svelte";
+import LinkSuggestionsPanel from "@components/wiki/LinkSuggestionsPanel.astro";
 import RelatedArticles from "@components/wiki/RelatedArticles.astro";
 import RelatedReading from "@components/wiki/RelatedReading.astro";
-import LinkSuggestionsPanel from "@components/wiki/LinkSuggestionsPanel.astro";
-import CiteThisArticle from "@components/wiki/CiteThisArticle.svelte";
-import LongPressTextMenu from "@components/widget/LongPressTextMenu.astro";
-import OfficialSealBadge from "@components/misc/OfficialSealBadge.astro";
+import WikiHistoryPage from "@components/wiki/WikiHistoryPage.astro";
+import WikiHistoryTable from "@components/wiki/WikiHistoryTable.svelte";
+import WikiRevisionPage from "@components/wiki/WikiRevisionPage.astro";
 import { getPostWikiHistorySync } from "@utils/wiki-history-loader";
 // KaTeX 样式仅在文章页加载（避免全站阻塞渲染）
 import "katex/dist/katex.css";
 
+import type { CollectionEntry, RenderResult } from "astro:content";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getSortedPosts } from "@utils/content-utils";
 import { getDir, getPostUrlBySlug } from "@utils/url-utils";
+import type { MarkdownHeading } from "astro";
 import { Icon } from "astro-icon/components";
 import { gitHubEditConfig, licenseConfig } from "src/config";
 import PostMetadata from "../../components/PostMeta.astro";
 import ImageWrapper from "../../components/misc/ImageWrapper.astro";
-import { profileConfig, siteConfig, umamiConfig, authorRoles } from "../../config";
+import {
+	authorRoles,
+	profileConfig,
+	siteConfig,
+	umamiConfig,
+} from "../../config";
 import { formatDateToYYYYMMDD } from "../../utils/date-utils";
 
 export async function getStaticPaths() {
@@ -58,7 +65,12 @@ export async function getStaticPaths() {
 			for (const rev of history.revisions) {
 				paths.push({
 					params: { slug: `${slug}/revision/${rev.shortSha}` },
-					props: { entry, mode: "revision", revision: rev, historyData: history },
+					props: {
+						entry,
+						mode: "revision",
+						revision: rev,
+						historyData: history,
+					},
 				});
 			}
 		}
@@ -69,27 +81,29 @@ export async function getStaticPaths() {
 
 const { entry, mode = "article", revision, historyData } = Astro.props;
 const slug = entry.id.replace(/\.[^/.]+$/, "");
-const siteUrlBase = (Astro.site ?? new URL("https://blog.yaoxi.wiki")).href.replace(/\/$/, "");
+const siteUrlBase = (
+	Astro.site ?? new URL("https://blog.yaoxi.wiki")
+).href.replace(/\/$/, "");
 const latestRevisionShortSha = historyData?.revisions?.[0]?.shortSha || "";
 const latestRevisionDateISO = historyData?.revisions?.[0]?.date || "";
 
-let Content: any = null;
-let headings: any[] = [];
-let remarkPluginFrontmatter: any = { words: 0, minutes: 0 };
+let Content: RenderResult["Content"] | null = null;
+let headings: MarkdownHeading[] = [];
+let remarkPluginFrontmatter: Record<string, unknown> = { words: 0, minutes: 0 };
 let mindmapData = "{}";
 let rawPostMarkdown = "";
 let articleTitle = entry.data.title;
 let postId = entry.id;
-let seriesPosts: any[] = [];
-let seriesName: any = undefined;
-let articlePosts: any[] = [];
+let seriesPosts: CollectionEntry<"posts">[] = [];
+let seriesName: string | undefined = undefined;
+let articlePosts: CollectionEntry<"posts">[] = [];
 let articleImageUrl = "";
 let datePublishedISO = "";
 let dateModifiedISO = "";
 let authorName = "";
-let authorRole: any = null;
+let authorRole: (typeof authorRoles)[string] | null = null;
 let isOrg = false;
-let jsonLd: any = {};
+let jsonLd: Record<string, unknown> = {};
 let encryptedPayloadJson = "";
 
 if (mode === "article") {
@@ -99,15 +113,15 @@ if (mode === "article") {
 	remarkPluginFrontmatter = renderResult.remarkPluginFrontmatter;
 
 	// 组装思维导图数据
-	let mindmapMd = `# ${entry.data.title.replace(/"/g, '')}\n`;
-	headings.forEach((h: any) => {
+	let mindmapMd = `# ${entry.data.title.replace(/"/g, "")}\n`;
+	for (const h of headings) {
 		// 过滤太深的层级，保持脑图清爽
 		if (h.depth <= 4) {
-			mindmapMd += `${'#'.repeat(h.depth + 1)} ${h.text.replace(/"/g, '')}\n`;
+			mindmapMd += `${"#".repeat(h.depth + 1)} ${h.text.replace(/"/g, "")}\n`;
 		}
-	});
+	}
 	mindmapData = JSON.stringify(mindmapMd);
-	rawPostMarkdown = entry.data.encrypted ? "" : (entry.body || "");
+	rawPostMarkdown = entry.data.encrypted ? "" : entry.body || "";
 
 	// 获取同系列文章
 	const allPosts = await getSortedPosts();
@@ -115,12 +129,18 @@ if (mode === "article") {
 	seriesName = entry.data.series;
 	seriesPosts = seriesName
 		? allPosts
-			.filter(p => p.data.series === seriesName)
-			.map(p => ({ title: p.data.title, slug: p.id, published: p.data.published }))
+				.filter((p) => p.data.series === seriesName)
+				.map((p) => ({
+					title: p.data.title,
+					slug: p.id,
+					published: p.data.published,
+				}))
 		: [];
 
 	articleImageUrl = entry.data.image
-		? (entry.data.image.startsWith("http") ? entry.data.image : new URL(entry.data.image, Astro.site).href)
+		? entry.data.image.startsWith("http")
+			? entry.data.image
+			: new URL(entry.data.image, Astro.site).href
 		: new URL(profileConfig.avatar, Astro.site).href;
 
 	datePublishedISO = entry.data.published.toISOString();
@@ -142,15 +162,17 @@ if (mode === "article") {
 			"@type": isOrg ? "Organization" : "Person",
 			name: authorName,
 			url: Astro.site,
-			...(isOrg ? { logo: profileConfig.avatar } : { image: profileConfig.avatar })
+			...(isOrg
+				? { logo: profileConfig.avatar }
+				: { image: profileConfig.avatar }),
 		},
 		publisher: {
 			"@type": "Organization",
 			name: siteConfig.title,
 			logo: {
 				"@type": "ImageObject",
-				url: new URL(profileConfig.avatar, Astro.site).href
-			}
+				url: new URL(profileConfig.avatar, Astro.site).href,
+			},
 		},
 		datePublished: datePublishedISO,
 		dateModified: dateModifiedISO,
@@ -167,8 +189,12 @@ if (mode === "article") {
 		...(entry.data.category ? { articleSection: entry.data.category } : {}),
 	};
 
-	if (entry.data.encrypted && (entry as any).body) {
-		const match = ((entry as any).body as string).match(/```encrypted-payload\s*\n([\s\S]*?)\n```/);
+	if (
+		entry.data.encrypted &&
+		"body" in entry &&
+		typeof entry.body === "string"
+	) {
+		const match = entry.body.match(/```encrypted-payload\s*\n([\s\S]*?)\n```/);
 		encryptedPayloadJson = match ? match[1].trim() : "";
 	}
 }

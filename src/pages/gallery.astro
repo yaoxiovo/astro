@@ -5,21 +5,23 @@ import { Icon } from "astro-icon/components";
 // 扫描 src/content/posts/photo 目录的图片
 // Astro 5 中 eager glob 返回 { default: string } 对于非处理图片
 const rawImages = import.meta.glob(
-  '/src/content/posts/photo/*.{jpg,jpeg,png,webp,avif,gif,JPG,JPEG,PNG,WEBP}',
-  { eager: true, query: '?url', import: 'default' }
+	"/src/content/posts/photo/*.{jpg,jpeg,png,webp,avif,gif,JPG,JPEG,PNG,WEBP}",
+	{ eager: true, query: "?url", import: "default" },
 ) as Record<string, string>;
 
 interface GalleryItem {
-  src: string;
-  title: string;
-  filename: string;
+	src: string;
+	title: string;
+	filename: string;
 }
 
-const images: GalleryItem[] = Object.entries(rawImages).map(([filePath, src]) => {
-  const filename = filePath.split('/').pop() ?? '';
-  const title = filename.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-  return { src, title, filename };
-});
+const images: GalleryItem[] = Object.entries(rawImages).map(
+	([filePath, src]) => {
+		const filename = filePath.split("/").pop() ?? "";
+		const title = filename.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
+		return { src, title, filename };
+	},
+);
 ---
 
 <MainGridLayout title="相册" description="瑶曦的照片墙 — 记录生活的美好瞬间" noindex>

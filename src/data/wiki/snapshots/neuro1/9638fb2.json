@@ -1,9 +1,0 @@
-{
-  "sha": "9638fb22114d3e9e814aee5cd38b6c338a0298c6",
-  "shortSha": "9638fb2",
-  "date": "2026-09-07T17:15:39+08:00",
-  "author": "yaoxiovo",
-  "message": "perf(seo): 全站 SEO 第一二阶段优化",
-  "slug": "neuro1",
-  "content": "---\ntitle: neuro-sama小剧场第1集\npublished: 2026-03-21\ndescription: \"Neuro-sama 趣味小剧场第 1 集：记录 AI 主播 Neuro-sama 的精彩直播切片与幽默对话瞬间。\"\ntags:\n  - Neuro-sama\n  - 小剧场\ncategory: 记录\ndraft: true\nlang: \"zh_CN\"\n---\n![Neuro-sama 精彩切片展示](../assets/images/4.webp)\n"
-}

@@ -15,11 +15,11 @@ import rehypeExternalLinks from "rehype-external-links";
 import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
 import remarkDirective from "remark-directive"; /* Handle directives */
-import { remarkGithubAdmonitions } from "./src/plugins/remark-github-admonitions.js";
 import remarkMath from "remark-math";
 import remarkSectionize from "remark-sectionize";
-import { imageFallbackConfig, siteConfig } from "./src/config.ts";
+import { imageFallbackConfig } from "./src/config.ts";
 import { expressiveCodeConfig } from "./src/config.ts";
+import sealRenderGuard from "./src/integrations/seal-render-guard.mjs";
 // import { pluginLanguageBadge } from "./src/plugins/expressive-code/language-badge.ts";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 import { AdmonitionComponent } from "./src/plugins/rehype-component-admonition.mjs";
@@ -28,8 +28,8 @@ import { UrlCardComponent } from "./src/plugins/rehype-component-url-card.mjs";
 import rehypeImageFallback from "./src/plugins/rehype-image-fallback.mjs";
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
+import { remarkGithubAdmonitions } from "./src/plugins/remark-github-admonitions.js";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
-import sealRenderGuard from "./src/integrations/seal-render-guard.mjs";
 
 // Build backlink whitelist only for official yaoxi.wiki and subdomains
 const backlinkWhitelist = new Set([
@@ -39,7 +39,7 @@ const backlinkWhitelist = new Set([
 	"api.blog.yaoxi.cloud",
 	"accounts.yaoxi.cloud",
 	"umami.yaoxi.cloud",
-	"yaoxi.xyz"
+	"yaoxi.xyz",
 ]);
 
 // ---- SEO: sitemap 白名单与 lastmod ----
@@ -62,7 +62,10 @@ try {
 		const published = content.match(/^published:\s*(.+)$/m)?.[1]?.trim();
 		const updated = content.match(/^updated:\s*(.+)$/m)?.[1]?.trim();
 		if (published) {
-			postDates.set(`/posts/${file.replace(/\.md$/, "")}/`, (updated || published).slice(0, 10));
+			postDates.set(
+				`/posts/${file.replace(/\.md$/, "")}/`,
+				(updated || published).slice(0, 10),
+			);
 		}
 	}
 } catch (e) {
@@ -72,9 +75,11 @@ try {
 // https://astro.build/config
 export default defineConfig({
 	image: {
-		service: (process.env.NODE_ENV === "development" || process.env.LOCAL_AARCH64 === "true")
-			? passthroughImageService()
-			: undefined,
+		service:
+			process.env.NODE_ENV === "development" ||
+			process.env.LOCAL_AARCH64 === "true"
+				? passthroughImageService()
+				: undefined,
 		// 允许构建时从 png.yaoxi.wiki 拉取动态图片做 OG 压缩
 		remotePatterns: [{ protocol: "https", hostname: "png.yaoxi.wiki" }],
 	},
@@ -200,11 +205,15 @@ export default defineConfig({
 					target: "_blank",
 					rel: (el) => {
 						const href = el.properties?.href;
-						if (typeof href !== "string") return ["noopener", "noreferrer", "nofollow"];
+						if (typeof href !== "string")
+							return ["noopener", "noreferrer", "nofollow"];
 						try {
 							const urlObj = new URL(href);
 							const hostname = urlObj.hostname;
-							if (backlinkWhitelist.has(hostname) || backlinkWhitelist.has(hostname.replace(/^www\./, ""))) {
+							if (
+								backlinkWhitelist.has(hostname) ||
+								backlinkWhitelist.has(hostname.replace(/^www\./, ""))
+							) {
 								// Do NOT inject nofollow to trusted partners/friends & official sites
 								return ["noopener", "noreferrer"];
 							}
@@ -213,7 +222,7 @@ export default defineConfig({
 						}
 						// Anti SEO juice leak for raw external links
 						return ["noopener", "noreferrer", "nofollow"];
-					}
+					},
 				},
 			],
 			[

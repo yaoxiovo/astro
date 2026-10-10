@@ -2,25 +2,27 @@
 // SeriesNav.astro - 文章系列导航组件
 // 用法：传入 series (系列名), posts (系列所有文章), currentSlug
 
-import { Icon } from 'astro-icon/components';
+import { Icon } from "astro-icon/components";
 
 interface SeriesPost {
-  title: string;
-  slug: string;
-  published: Date;
+	title: string;
+	slug: string;
+	published: Date;
 }
 
 interface Props {
-  series: string;
-  posts: SeriesPost[];
-  currentSlug: string;
+	series: string;
+	posts: SeriesPost[];
+	currentSlug: string;
 }
 
 const { series, posts, currentSlug } = Astro.props;
 
 // 按发布日期升序排列
-const sortedPosts = [...posts].sort((a, b) => a.published.getTime() - b.published.getTime());
-const currentIndex = sortedPosts.findIndex(p => p.id === currentSlug);
+const sortedPosts = [...posts].sort(
+	(a, b) => a.published.getTime() - b.published.getTime(),
+);
+const currentIndex = sortedPosts.findIndex((p) => p.id === currentSlug);
 ---
 
 {sortedPosts.length > 1 && (

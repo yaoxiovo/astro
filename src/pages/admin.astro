@@ -1,21 +1,26 @@
 ---
-import Layout from "@layouts/Layout.astro";
 import { getSortedPosts } from "@/utils/content-utils";
+import Layout from "@layouts/Layout.astro";
 import { umamiConfig } from "../config";
 
 const allPosts = await getSortedPosts();
 const initialPosts = allPosts.map((p) => ({
-  slug: p.id.replace(/\.[^/.]+$/, ""),
-  title: p.data.title,
-  published: p.data.published ? new Date(p.data.published).toISOString().split('T')[0] : '',
-  category: p.data.category || '技术分享',
-  tags: p.data.tags || [],
-  description: p.data.description || '',
-  encrypted: Boolean(p.data.encrypted),
-  draft: Boolean(p.data.draft),
-  body: p.body || '',
+	slug: p.id.replace(/\.[^/.]+$/, ""),
+	title: p.data.title,
+	published: p.data.published
+		? new Date(p.data.published).toISOString().split("T")[0]
+		: "",
+	category: p.data.category || "技术分享",
+	tags: p.data.tags || [],
+	description: p.data.description || "",
+	encrypted: Boolean(p.data.encrypted),
+	draft: Boolean(p.data.draft),
+	body: p.body || "",
 }));
-const safeInitialPostsJson = JSON.stringify(initialPosts).replace(/<\/script>/gi, '<\\/script>');
+const safeInitialPostsJson = JSON.stringify(initialPosts).replace(
+	/<\/script>/gi,
+	"<\\/script>",
+);
 ---
 
 <Layout title="文章发布与部署控制台 | 瑶曦博客" description="开箱即用的 Astro 博客便捷发布后台与实时部署监听系统" noindex={true}>

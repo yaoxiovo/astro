@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { glob } from "glob";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -67,15 +67,19 @@ function extractImageReferences(content) {
 	// 匹配 YAML frontmatter 中的 image 字段（支持带引号和不带引号的值）
 	const yamlImageRegex =
 		/^---[\s\S]*?image:\s*(?:['"]([^'"]+)['"]|([^\s\n]+))[\s\S]*?^---/m;
-	let match = yamlImageRegex.exec(content);
-	if (match) {
-		// match[1] 是带引号的值，match[2] 是不带引号的值
-		references.add(match[1] || match[2]);
+	const yamlMatch = yamlImageRegex.exec(content);
+	if (yamlMatch) {
+		// yamlMatch[1] 是带引号的值，yamlMatch[2] 是不带引号的值
+		references.add(yamlMatch[1] || yamlMatch[2]);
 	}
 
 	// 匹配 HTML img 标签: <img src="path">
 	const htmlImageRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
-	while ((match = htmlImageRegex.exec(content)) !== null) {
+	for (
+		let match = htmlImageRegex.exec(content);
+		match !== null;
+		match = htmlImageRegex.exec(content)
+	) {
 		references.add(match[1]);
 	}
 
@@ -83,11 +87,15 @@ function extractImageReferences(content) {
 	// 标准 Markdown 图片语法: ![alt](url "title") 或 ![alt](url)
 	// 我们主要关心 url 部分，它可能包含空格，但通常会被 <> 包裹或者 URL 编码
 	// 但如果是本地文件引用，可能直接就是路径
-	
+
 	// 1. 匹配标准 Markdown 图片 ![...](...)
 	// 修复：支持 URL 中包含一层括号，例如 image(1).png
 	const markdownImageRegex = /!\[.*?\]\(((?:[^()]+|\([^()]*\))+)\)/g;
-	while ((match = markdownImageRegex.exec(content)) !== null) {
+	for (
+		let match = markdownImageRegex.exec(content);
+		match !== null;
+		match = markdownImageRegex.exec(content)
+	) {
 		let url = match[1].trim();
 		// 如果 URL 包含 title 部分 (例如 "path/to/image.png" "Title")，去除 title
 		// 简单的做法是看是否有空格后跟引号
@@ -95,26 +103,30 @@ function extractImageReferences(content) {
 		if (titleMatch) {
 			url = titleMatch[1];
 		} else {
-            // 处理可能的 URL 编码空格 (%20)
-            try {
-                url = decodeURIComponent(url);
-            } catch (e) {
-                // ignore
-            }
-        }
-        
-        // 移除可能存在的 <> 包裹 (CommonMark 标准允许 <path>)
-        if (url.startsWith('<') && url.endsWith('>')) {
-            url = url.slice(1, -1);
-        }
-        
+			// 处理可能的 URL 编码空格 (%20)
+			try {
+				url = decodeURIComponent(url);
+			} catch (e) {
+				// ignore
+			}
+		}
+
+		// 移除可能存在的 <> 包裹 (CommonMark 标准允许 <path>)
+		if (url.startsWith("<") && url.endsWith(">")) {
+			url = url.slice(1, -1);
+		}
+
 		references.add(url);
 	}
 
 	// 匹配 Astro Image 组件引用
 	const astroImageRegex =
 		/import\s+.*?\s+from\s+["']([^"']+\.(jpg|jpeg|png|gif|webp|svg|avif))["']/gi;
-	while ((match = astroImageRegex.exec(content)) !== null) {
+	for (
+		let match = astroImageRegex.exec(content);
+		match !== null;
+		match = astroImageRegex.exec(content)
+	) {
 		references.add(match[1]);
 	}
 

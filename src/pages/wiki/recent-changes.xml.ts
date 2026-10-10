@@ -1,6 +1,6 @@
+import { siteConfig } from "@/config";
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
-import { siteConfig } from "@/config";
 import { getRecentChangesSync } from "../../utils/wiki-special-loader";
 
 const FEED_SIZE = 100;
@@ -14,7 +14,7 @@ function escapeXml(value: string): string {
 		.replace(/'/g, "&apos;");
 }
 
-export async function GET(context: APIContext) {
+export async function GET(context: APIContext): Promise<Response> {
 	if (!context.site) {
 		throw Error("site not set");
 	}

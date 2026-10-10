@@ -1,9 +1,0 @@
-{
-  "sha": "5636e288539472f04ffd73b0e8710f041eba66d7",
-  "shortSha": "5636e28",
-  "date": "2026-01-01T23:00:39+08:00",
-  "author": "yaoxiovo",
-  "message": "Update 143 files: config.ts, 163-free-domain-email.md, acg-randompic-api.md, across-nat.md, aicode-prompt.md, alist-for-aliyun.md, alist-web.md, anuneko.md, asf.md, astrov3-redirects.md, atpx-fun-blog.md, auto-icp-query.md, ...omitted 131 file(s)",
-  "slug": "video",
-  "content": "---\ntitle: Include Video in the Posts\npublished: 2023-08-01\ndescription: This post demonstrates how to include embedded video in a blog post.\ntags: [Example, Video]\ncategory: Examples\ndraft: false\n---\n\nJust copy the embed code from YouTube or other platforms, and paste it in the markdown file.\n\n```yaml\n---\ntitle: Include Video in the Post\npublished: 2023-10-19\n// ...\n---\n\n<iframe width=\"100%\" height=\"468\" src=\"https://www.youtube.com/embed/5gIf0_xpFPI?si=N1WTorLKL0uwLsU_\" title=\"YouTube video player\" frameborder=\"0\" allowfullscreen></iframe>\n```\n\n## YouTube\n\n<iframe width=\"100%\" height=\"468\" src=\"https://www.youtube.com/embed/5gIf0_xpFPI?si=N1WTorLKL0uwLsU_\" title=\"YouTube video player\" frameborder=\"0\" allow=\"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share\" allowfullscreen></iframe>\n\n## Bilibili\n\n<iframe width=\"100%\" height=\"468\" src=\"//player.bilibili.com/player.html?bvid=BV1fK4y1s7Qf&p=1\" scrolling=\"no\" border=\"0\" frameborder=\"no\" framespacing=\"0\" allowfullscreen=\"true\"> </iframe>\n"
-}

@@ -1,400 +1,484 @@
 /**
  * 搜索引擎 URL 实时提交脚本 (Google Indexing API & IndexNow / Bing & 百度推送)
- * 
+ *
  * 运行方式:
  * 1. 自动检测改动提交: node scripts/submit-urls.js
  * 2. 手动指定提交: node scripts/submit-urls.js https://blog.yaoxi.wiki/posts/some-post/
  * 3. 全量 Sitemap 提交: node scripts/submit-urls.js --all
- * 
+ *
  * 环境变量配置 (Google Indexing API 必需):
  * export GOOGLE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": ...}'
  * export BAIDU_TOKEN='百度站长平台 token'   (可选，未配置则跳过百度推送)
- * 
+ *
  * 详细配置步骤见 scripts/SEO-SUBMIT.md
  */
 
-import { execSync } from 'child_process';
-import fs from 'fs';
-import path from 'path';
-import crypto from 'crypto';
-import { fileURLToPath } from 'url';
+import { execSync } from "node:child_process";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 自动加载根目录下的 .env 配置文件，避免三方库依赖
 try {
-    const envPath = path.resolve(__dirname, '../.env');
-    if (fs.existsSync(envPath)) {
-        const envContent = fs.readFileSync(envPath, 'utf-8');
-        const lines = envContent.split(/\r?\n/);
-        let currentKey = null;
-        let currentValue = [];
-        let inQuotes = false;
-        let quoteChar = null;
+	const envPath = path.resolve(__dirname, "../.env");
+	if (fs.existsSync(envPath)) {
+		const envContent = fs.readFileSync(envPath, "utf-8");
+		const lines = envContent.split(/\r?\n/);
+		let currentKey = null;
+		let currentValue = [];
+		let inQuotes = false;
+		let quoteChar = null;
 
-        for (const line of lines) {
-            const cleanLine = line.trim();
-            
-            if (!inQuotes) {
-                if (!cleanLine || cleanLine.startsWith('#')) continue;
-                
-                const delimiterIndex = cleanLine.indexOf('=');
-                if (delimiterIndex !== -1) {
-                    const key = cleanLine.substring(0, delimiterIndex).trim();
-                    let val = cleanLine.substring(delimiterIndex + 1).trim();
-                    
-                    // 检测是否以单引号或双引号开头
-                    if (val.startsWith('"') || val.startsWith("'")) {
-                        quoteChar = val[0];
-                        // 检查是否在同一行闭合
-                        if (val.endsWith(quoteChar) && val.length > 1) {
-                            let finalVal = val.substring(1, val.length - 1);
-                            finalVal = finalVal.replace(/\\n/g, '\n');
-                            if (!process.env[key]) process.env[key] = finalVal;
-                        } else {
-                            // 未闭合，跨行读取
-                            inQuotes = true;
-                            currentKey = key;
-                            currentValue.push(val.substring(1));
-                        }
-                    } else {
-                        if (!process.env[key]) process.env[key] = val;
-                    }
-                }
-            } else {
-                // 多行追加逻辑
-                if (line.endsWith(quoteChar)) {
-                    currentValue.push(line.substring(0, line.length - quoteChar.length));
-                    inQuotes = false;
-                    let finalVal = currentValue.join('\n');
-                    finalVal = finalVal.replace(/\\n/g, '\n');
-                    if (!process.env[currentKey]) process.env[currentKey] = finalVal;
-                    currentKey = null;
-                    currentValue = [];
-                } else {
-                    currentValue.push(line);
-                }
-            }
-        }
-    }
+		for (const line of lines) {
+			const cleanLine = line.trim();
+
+			if (!inQuotes) {
+				if (!cleanLine || cleanLine.startsWith("#")) continue;
+
+				const delimiterIndex = cleanLine.indexOf("=");
+				if (delimiterIndex !== -1) {
+					const key = cleanLine.substring(0, delimiterIndex).trim();
+					const val = cleanLine.substring(delimiterIndex + 1).trim();
+
+					// 检测是否以单引号或双引号开头
+					if (val.startsWith('"') || val.startsWith("'")) {
+						quoteChar = val[0];
+						// 检查是否在同一行闭合
+						if (val.endsWith(quoteChar) && val.length > 1) {
+							let finalVal = val.substring(1, val.length - 1);
+							finalVal = finalVal.replace(/\\n/g, "\n");
+							if (!process.env[key]) process.env[key] = finalVal;
+						} else {
+							// 未闭合，跨行读取
+							inQuotes = true;
+							currentKey = key;
+							currentValue.push(val.substring(1));
+						}
+					} else {
+						if (!process.env[key]) process.env[key] = val;
+					}
+				}
+			} else {
+				// 多行追加逻辑
+				if (line.endsWith(quoteChar)) {
+					currentValue.push(line.substring(0, line.length - quoteChar.length));
+					inQuotes = false;
+					let finalVal = currentValue.join("\n");
+					finalVal = finalVal.replace(/\\n/g, "\n");
+					if (!process.env[currentKey]) process.env[currentKey] = finalVal;
+					currentKey = null;
+					currentValue = [];
+				} else {
+					currentValue.push(line);
+				}
+			}
+		}
+	}
 } catch (e) {
-    console.warn(`[Env] 自动加载 .env 配置文件失败:`, e.message);
+	console.warn("[Env] 自动加载 .env 配置文件失败:", e.message);
 }
 
 // 基础配置
 const HOST = "blog.yaoxi.wiki";
 const SITE_URL = `https://${HOST}`;
-const INDEXNOW_KEY = process.env.INDEXNOW_KEY || "b5e805d422e801f439b3a140d0b0bcc39120202c";
-const INDEXNOW_KEY_FILE = "046ec0635a134ddfb686f6db24924071.txt";
+const INDEXNOW_KEY =
+	process.env.INDEXNOW_KEY || "b5e805d422e801f439b3a140d0b0bcc39120202c";
+// IndexNow 协议硬性要求：托管文件的【文件名】必须等于【密钥本身】，
+// 即密钥文件必须位于 /<key>.txt。此前文件名被写成 046ec0635a…txt（与密钥不符），
+// 会导致所有提交被搜索引擎拒绝，故此处直接由密钥推导文件名，杜绝再次漂移。
+const INDEXNOW_KEY_FILE = `${INDEXNOW_KEY}.txt`;
 const INDEXNOW_KEY_LOCATION = `${SITE_URL}/${INDEXNOW_KEY_FILE}`;
+
+/**
+ * 提交前自检：确认 public/<key>.txt 存在且内容与密钥一致。
+ * 这是 IndexNow 协议的两条硬性要求，任一不满足都会被网关拒绝。
+ */
+function verifyIndexNowKeyFile() {
+	const localPath = path.join(process.cwd(), "public", INDEXNOW_KEY_FILE);
+	if (!fs.existsSync(localPath)) {
+		console.error(`[IndexNow] 密钥文件缺失：public/${INDEXNOW_KEY_FILE}`);
+		console.error(`[IndexNow] 请创建该文件，内容为：${INDEXNOW_KEY}`);
+		return false;
+	}
+	const content = fs.readFileSync(localPath, "utf-8").trim();
+	if (content !== INDEXNOW_KEY) {
+		console.error(
+			`[IndexNow] 密钥文件内容与密钥不一致：public/${INDEXNOW_KEY_FILE}`,
+		);
+		console.error(`[IndexNow] 期望内容：${INDEXNOW_KEY}`);
+		console.error(`[IndexNow] 实际内容：${content}`);
+		return false;
+	}
+	return true;
+}
 
 // 获取待提交的 URLs
 async function getUrls() {
-    const args = process.argv.slice(2);
-    
-    // 1. 手动传参模式
-    if (args.length > 0 && !args.includes('--all')) {
-        const manualUrls = args.filter(arg => arg.startsWith('http'));
-        if (manualUrls.length > 0) {
-            console.log(`[URL] 检测到手动指定的 URL: \n${manualUrls.join('\n')}`);
-            return manualUrls;
-        }
-    }
+	const args = process.argv.slice(2);
 
-    // 2. 全量 Sitemap 模式
-    if (args.includes('--all')) {
-        console.log(`[URL] 开始读取 Sitemap 进行全量提交...`);
-        try {
-            // 优先读取本地打包出来的 sitemap
-            const sitemapPath = path.resolve(__dirname, '../dist/sitemap-0.xml');
-            if (fs.existsSync(sitemapPath)) {
-                const content = fs.readFileSync(sitemapPath, 'utf-8');
-                const urls = [...content.matchAll(/<loc>(https?:\/\/[^<]+)<\/loc>/g)].map(m => m[1]);
-                console.log(`[URL] 从本地 sitemap 中读取到 ${urls.length} 个链接`);
-                return urls;
-            } else {
-                console.warn(`[URL] 本地 dist/sitemap-0.xml 不存在，尝试拉取线上 sitemap...`);
-                const response = await fetch(`${SITE_URL}/sitemap-0.xml`);
-                const content = await response.text();
-                const urls = [...content.matchAll(/<loc>(https?:\/\/[^<]+)<\/loc>/g)].map(m => m[1]);
-                console.log(`[URL] 从线上 sitemap 中读取到 ${urls.length} 个链接`);
-                return urls;
-            }
-        } catch (e) {
-            console.error(`[URL] 读取 Sitemap 失败:`, e.message);
-            return [];
-        }
-    }
+	// 1. 手动传参模式
+	if (args.length > 0 && !args.includes("--all")) {
+		const manualUrls = args.filter((arg) => arg.startsWith("http"));
+		if (manualUrls.length > 0) {
+			console.log(`[URL] 检测到手动指定的 URL: \n${manualUrls.join("\n")}`);
+			return manualUrls;
+		}
+	}
 
-    // 3. 自动 Git 检测模式
-    console.log(`[URL] 自动模式：通过 Git 查找最近修改的文章...`);
-    const urls = new Set();
+	// 2. 全量 Sitemap 模式
+	if (args.includes("--all")) {
+		console.log("[URL] 开始读取 Sitemap 进行全量提交...");
+		try {
+			// 优先读取本地打包出来的 sitemap
+			const sitemapPath = path.resolve(__dirname, "../dist/sitemap-0.xml");
+			if (fs.existsSync(sitemapPath)) {
+				const content = fs.readFileSync(sitemapPath, "utf-8");
+				const urls = [
+					...content.matchAll(/<loc>(https?:\/\/[^<]+)<\/loc>/g),
+				].map((m) => m[1]);
+				console.log(`[URL] 从本地 sitemap 中读取到 ${urls.length} 个链接`);
+				return urls;
+			}
+			console.warn(
+				"[URL] 本地 dist/sitemap-0.xml 不存在，尝试拉取线上 sitemap...",
+			);
+			const response = await fetch(`${SITE_URL}/sitemap-0.xml`);
+			const content = await response.text();
+			const urls = [...content.matchAll(/<loc>(https?:\/\/[^<]+)<\/loc>/g)].map(
+				(m) => m[1],
+			);
+			console.log(`[URL] 从线上 sitemap 中读取到 ${urls.length} 个链接`);
+			return urls;
+		} catch (e) {
+			console.error("[URL] 读取 Sitemap 失败:", e.message);
+			return [];
+		}
+	}
 
-    try {
-        let diffFiles = [];
-        try {
-            const gitDiff = execSync('git diff --name-only HEAD~1', { encoding: 'utf-8' });
-            diffFiles = diffFiles.concat(gitDiff.split('\n'));
-        } catch (e) {
-            // ignore
-        }
-        try {
-            const gitStatus = execSync('git status --porcelain', { encoding: 'utf-8' });
-            const statusFiles = gitStatus.split('\n').map(l => l.trim().replace(/^[\s\S]*?\s+/, '').replace(/"/g, ''));
-            diffFiles = diffFiles.concat(statusFiles);
-        } catch (e) {
-            // ignore
-        }
+	// 3. 自动 Git 检测模式
+	console.log("[URL] 自动模式：通过 Git 查找最近修改的文章...");
+	const urls = new Set();
 
-        let hasRealChange = false;
-        for (const file of diffFiles) {
-            const cleanLine = file.trim();
-            if (!cleanLine) continue;
+	try {
+		let diffFiles = [];
+		try {
+			const gitDiff = execSync("git diff --name-only HEAD~1", {
+				encoding: "utf-8",
+			});
+			diffFiles = diffFiles.concat(gitDiff.split("\n"));
+		} catch (e) {
+			// ignore
+		}
+		try {
+			const gitStatus = execSync("git status --porcelain", {
+				encoding: "utf-8",
+			});
+			const statusFiles = gitStatus.split("\n").map((l) =>
+				l
+					.trim()
+					.replace(/^[\s\S]*?\s+/, "")
+					.replace(/"/g, ""),
+			);
+			diffFiles = diffFiles.concat(statusFiles);
+		} catch (e) {
+			// ignore
+		}
 
-            // 文章变更
-            if (cleanLine.startsWith('src/content/posts/') && cleanLine.endsWith('.md')) {
-                const fileBasename = path.basename(cleanLine, '.md');
-                if (fileBasename !== 'blog-dev-logs') { // 忽略日志文章
-                    const fullPath = path.resolve(__dirname, '..', cleanLine);
-                    // 检查文件是否存在且是否为草稿 (draft: true)
-                    let isDraft = false;
-                    if (fs.existsSync(fullPath)) {
-                        try {
-                            const postRaw = fs.readFileSync(fullPath, 'utf-8');
-                            const fmMatch = postRaw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-                            if (fmMatch) {
-                                const draftMatch = fmMatch[1].match(/^draft:\s*(true|false)/m);
-                                if (draftMatch && draftMatch[1] === 'true') {
-                                    isDraft = true;
-                                }
-                            }
-                        } catch (err) {
-                            // ignore read error
-                        }
-                    } else {
-                        // 文件已删除，不作为新增/修改提交
-                        continue;
-                    }
+		let hasRealChange = false;
+		for (const file of diffFiles) {
+			const cleanLine = file.trim();
+			if (!cleanLine) continue;
 
-                    if (isDraft) {
-                        console.log(`[URL] 跳过草稿文章提交: ${cleanLine}`);
-                    } else {
-                        const relativePath = cleanLine
-                            .substring('src/content/posts/'.length)
-                            .replace(/\.md$/, '');
-                        urls.add(`${SITE_URL}/posts/${relativePath}/`);
-                        hasRealChange = true;
-                    }
-                }
-            }
-            // 注意：朋友圈动态相关页面已全量配置 noindex，不提交给搜索引擎以避免 GSC noindex 报警
-        }
+			// 文章变更
+			if (
+				cleanLine.startsWith("src/content/posts/") &&
+				cleanLine.endsWith(".md")
+			) {
+				const fileBasename = path.basename(cleanLine, ".md");
+				if (fileBasename !== "blog-dev-logs") {
+					// 忽略日志文章
+					const fullPath = path.resolve(__dirname, "..", cleanLine);
+					// 检查文件是否存在且是否为草稿 (draft: true)
+					let isDraft = false;
+					if (fs.existsSync(fullPath)) {
+						try {
+							const postRaw = fs.readFileSync(fullPath, "utf-8");
+							const fmMatch = postRaw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+							if (fmMatch) {
+								const draftMatch = fmMatch[1].match(/^draft:\s*(true|false)/m);
+								if (draftMatch && draftMatch[1] === "true") {
+									isDraft = true;
+								}
+							}
+						} catch (err) {
+							// ignore read error
+						}
+					} else {
+						// 文件已删除，不作为新增/修改提交
+						continue;
+					}
 
-        // 仅在存在实质性内容变更时，才附带提交首页
-        if (hasRealChange) {
-            urls.add(SITE_URL + '/');
-        }
-    } catch (e) {
-        console.warn(`[URL] Git 检测失败:`, e.message);
-    }
+					if (isDraft) {
+						console.log(`[URL] 跳过草稿文章提交: ${cleanLine}`);
+					} else {
+						const relativePath = cleanLine
+							.substring("src/content/posts/".length)
+							.replace(/\.md$/, "");
+						urls.add(`${SITE_URL}/posts/${relativePath}/`);
+						hasRealChange = true;
+					}
+				}
+			}
+			// 注意：朋友圈动态相关页面已全量配置 noindex，不提交给搜索引擎以避免 GSC noindex 报警
+		}
 
-    const finalUrls = Array.from(urls);
-    if (finalUrls.length > 0) {
-        console.log(`[URL] 自动检测到 ${finalUrls.length} 个相关的 URL 进行提交: \n${finalUrls.join('\n')}`);
-    } else {
-        console.log(`[URL] 自动检测完毕：工作区无任何新内容更新，已跳过推送以保留 API 额度喵！`);
-    }
-    return finalUrls;
+		// 仅在存在实质性内容变更时，才附带提交首页
+		if (hasRealChange) {
+			urls.add(`${SITE_URL}/`);
+		}
+	} catch (e) {
+		console.warn("[URL] Git 检测失败:", e.message);
+	}
+
+	const finalUrls = Array.from(urls);
+	if (finalUrls.length > 0) {
+		console.log(
+			`[URL] 自动检测到 ${finalUrls.length} 个相关的 URL 进行提交: \n${finalUrls.join("\n")}`,
+		);
+	} else {
+		console.log(
+			"[URL] 自动检测完毕：工作区无任何新内容更新，已跳过推送以保留 API 额度喵！",
+		);
+	}
+	return finalUrls;
 }
 
 // Base64Url 编码
 function base64url(strOrBuffer) {
-    const buffer = Buffer.isBuffer(strOrBuffer) ? strOrBuffer : Buffer.from(strOrBuffer);
-    return buffer.toString('base64')
-        .replace(/=/g, '')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_');
+	const buffer = Buffer.isBuffer(strOrBuffer)
+		? strOrBuffer
+		: Buffer.from(strOrBuffer);
+	return buffer
+		.toString("base64")
+		.replace(/=/g, "")
+		.replace(/\+/g, "-")
+		.replace(/\//g, "_");
 }
 
 // 手搓 Google JWT 签名
 function generateGoogleJWT(clientEmail, privateKey) {
-    const iat = Math.floor(Date.now() / 1000);
-    const exp = iat + 3600;
+	const iat = Math.floor(Date.now() / 1000);
+	const exp = iat + 3600;
 
-    const header = { alg: 'RS256', typ: 'JWT' };
-    const payload = {
-        iss: clientEmail,
-        scope: 'https://www.googleapis.com/auth/indexing',
-        aud: 'https://oauth2.googleapis.com/token',
-        exp: exp,
-        iat: iat
-    };
+	const header = { alg: "RS256", typ: "JWT" };
+	const payload = {
+		iss: clientEmail,
+		scope: "https://www.googleapis.com/auth/indexing",
+		aud: "https://oauth2.googleapis.com/token",
+		exp: exp,
+		iat: iat,
+	};
 
-    const encodedHeader = base64url(JSON.stringify(header));
-    const encodedPayload = base64url(JSON.stringify(payload));
-    const signatureInput = `${encodedHeader}.${encodedPayload}`;
+	const encodedHeader = base64url(JSON.stringify(header));
+	const encodedPayload = base64url(JSON.stringify(payload));
+	const signatureInput = `${encodedHeader}.${encodedPayload}`;
 
-    // 使用 SHA256withRSA (RS256) 签名
-    const sign = crypto.createSign('RSA-SHA256');
-    sign.update(signatureInput);
-    const signature = base64url(sign.sign(privateKey));
+	// 使用 SHA256withRSA (RS256) 签名
+	const sign = crypto.createSign("RSA-SHA256");
+	sign.update(signatureInput);
+	const signature = base64url(sign.sign(privateKey));
 
-    return `${signatureInput}.${signature}`;
+	return `${signatureInput}.${signature}`;
 }
 
 // 换取 Google Access Token
 async function getGoogleAccessToken(jwt) {
-    const response = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
-    });
-    
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Google Auth 失败: ${errText}`);
-    }
-    
-    const data = await response.json();
-    return data.access_token;
+	const response = await fetch("https://oauth2.googleapis.com/token", {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded",
+		},
+		body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
+	});
+
+	if (!response.ok) {
+		const errText = await response.text();
+		throw new Error(`Google Auth 失败: ${errText}`);
+	}
+
+	const data = await response.json();
+	return data.access_token;
 }
 
 // 提交至 Google Indexing API
 async function submitToGoogle(url, token) {
-    const response = await fetch('https://indexing.googleapis.com/v3/urlNotifications:publish', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-            url: url,
-            type: 'URL_UPDATED'
-        })
-    });
-    
-    const data = await response.json();
-    if (response.ok) {
-        console.log(`[Google] 提交成功: ${url}`);
-    } else {
-        console.error(`[Google] 提交失败: ${url}, 原因:`, data.error?.message || data);
-    }
+	const response = await fetch(
+		"https://indexing.googleapis.com/v3/urlNotifications:publish",
+		{
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify({
+				url: url,
+				type: "URL_UPDATED",
+			}),
+		},
+	);
+
+	const data = await response.json();
+	if (response.ok) {
+		console.log(`[Google] 提交成功: ${url}`);
+	} else {
+		console.error(
+			`[Google] 提交失败: ${url}, 原因:`,
+			data.error?.message || data,
+		);
+	}
 }
 
 // 提交至 IndexNow (Bing / Yandex)
 async function submitToIndexNow(urls) {
-    if (urls.length === 0) return;
-    
-    console.log(`[IndexNow] 正在向 IndexNow 提交 ${urls.length} 个 URL...`);
-    try {
-        const response = await fetch('https://api.indexnow.org/indexnow', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json; charset=utf-8'
-            },
-            body: JSON.stringify({
-                host: HOST,
-                key: INDEXNOW_KEY,
-                keyLocation: INDEXNOW_KEY_LOCATION,
-                urlList: urls
-            })
-        });
-        
-        if (response.status === 200 || response.status === 202) {
-            console.log(`[IndexNow] 提交成功 (状态码: ${response.status})！已通过微软 IndexNow 网关推送到各大搜索引擎喵！`);
-        } else {
-            const text = await response.text();
-            console.error(`[IndexNow] 提交失败，状态码: ${response.status}, 回显:`, text);
-        }
-    } catch (e) {
-        console.error(`[IndexNow] 请求出错:`, e.message);
-    }
+	if (urls.length === 0) return;
+
+	// 协议自检：文件名必须等于密钥且内容一致，否则必然被网关拒绝
+	if (!verifyIndexNowKeyFile()) {
+		console.error(
+			"[IndexNow] 自检未通过，已跳过本次 IndexNow 提交（避免无效请求）。",
+		);
+		return;
+	}
+
+	console.log(`[IndexNow] 正在向 IndexNow 提交 ${urls.length} 个 URL...`);
+	try {
+		const response = await fetch("https://api.indexnow.org/indexnow", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json; charset=utf-8",
+			},
+			body: JSON.stringify({
+				host: HOST,
+				key: INDEXNOW_KEY,
+				keyLocation: INDEXNOW_KEY_LOCATION,
+				urlList: urls,
+			}),
+		});
+
+		if (response.status === 200 || response.status === 202) {
+			console.log(
+				`[IndexNow] 提交成功 (状态码: ${response.status})！已通过微软 IndexNow 网关推送到各大搜索引擎喵！`,
+			);
+		} else {
+			const text = await response.text();
+			console.error(
+				`[IndexNow] 提交失败，状态码: ${response.status}, 回显:`,
+				text,
+			);
+		}
+	} catch (e) {
+		console.error("[IndexNow] 请求出错:", e.message);
+	}
 }
 
 // 提交至百度站长平台 (主动推送 API)
 async function submitToBaidu(urls) {
-    const token = process.env.BAIDU_TOKEN;
-    if (!token) {
-        console.log(`\n[百度] 提示: 未配置 BAIDU_TOKEN，跳过百度推送。`);
-        console.log(`如需百度收录，请在百度搜索资源平台 (ziyuan.baidu.com) 获取 token 并配置环境变量/GitHub Secret 喵~`);
-        return;
-    }
-    if (urls.length === 0) return;
+	const token = process.env.BAIDU_TOKEN;
+	if (!token) {
+		console.log("\n[百度] 提示: 未配置 BAIDU_TOKEN，跳过百度推送。");
+		console.log(
+			"如需百度收录，请在百度搜索资源平台 (ziyuan.baidu.com) 获取 token 并配置环境变量/GitHub Secret 喵~",
+		);
+		return;
+	}
+	if (urls.length === 0) return;
 
-    console.log(`\n[百度] 正在向百度站长平台推送 ${urls.length} 个 URL...`);
-    try {
-        const response = await fetch(
-            `https://data.zz.baidu.com/urls?site=${HOST}&token=${token}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain; charset=utf-8'
-                },
-                body: urls.join('\n')
-            }
-        );
-        const data = await response.json();
-        if (response.ok && data.success) {
-            console.log(`[百度] 推送成功喵！成功 ${data.success} 条，剩余配额 ${data.remain} 条`);
-        } else {
-            console.error(`[百度] 推送失败:`, JSON.stringify(data));
-        }
-    } catch (e) {
-        console.error(`[百度] 请求出错:`, e.message);
-    }
+	console.log(`\n[百度] 正在向百度站长平台推送 ${urls.length} 个 URL...`);
+	try {
+		const response = await fetch(
+			`https://data.zz.baidu.com/urls?site=${HOST}&token=${token}`,
+			{
+				method: "POST",
+				headers: {
+					"Content-Type": "text/plain; charset=utf-8",
+				},
+				body: urls.join("\n"),
+			},
+		);
+		const data = await response.json();
+		if (response.ok && data.success) {
+			console.log(
+				`[百度] 推送成功喵！成功 ${data.success} 条，剩余配额 ${data.remain} 条`,
+			);
+		} else {
+			console.error("[百度] 推送失败:", JSON.stringify(data));
+		}
+	} catch (e) {
+		console.error("[百度] 请求出错:", e.message);
+	}
 }
 
 // 主程序入口
 async function main() {
-    const urls = await getUrls();
-    if (urls.length === 0) {
-        console.log(`[Info] 没有检测到需要提交的 URL，结束任务。`);
-        return;
-    }
+	const urls = await getUrls();
+	if (urls.length === 0) {
+		console.log("[Info] 没有检测到需要提交的 URL，结束任务。");
+		return;
+	}
 
-    // 1. 提交至 IndexNow
-    await submitToIndexNow(urls);
+	// 1. 提交至 IndexNow
+	await submitToIndexNow(urls);
 
-    // 1.5 提交至百度站长平台 (可选)
-    await submitToBaidu(urls);
+	// 1.5 提交至百度站长平台 (可选)
+	await submitToBaidu(urls);
 
-    // 2. 提交至 Google Indexing API (如有服务账号配置)
-    const serviceAccountEnv = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-    if (!serviceAccountEnv) {
-        console.log(`\n[Google] 提示: 未配置 GOOGLE_SERVICE_ACCOUNT_KEY 环境变量。`);
-        console.log(`如果需要向 Google 实时提交 URL，请在环境变量或 GitHub Secret 中配置 Google 服务账号 JSON 密钥喵~`);
-        return;
-    }
+	// 2. 提交至 Google Indexing API (如有服务账号配置)
+	const serviceAccountEnv = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+	if (!serviceAccountEnv) {
+		console.log(
+			"\n[Google] 提示: 未配置 GOOGLE_SERVICE_ACCOUNT_KEY 环境变量。",
+		);
+		console.log(
+			"如果需要向 Google 实时提交 URL，请在环境变量或 GitHub Secret 中配置 Google 服务账号 JSON 密钥喵~",
+		);
+		return;
+	}
 
-    console.log(`\n[Google] 检测到服务账号密钥，正在生成 JWT Token 进行授权...`);
-    try {
-        // 极致兼容多行物理换行格式的 JSON 私钥字符串
-        let cleanedEnv = serviceAccountEnv.trim();
-        const pkRegex = /("private_key"\s*:\s*")([\s\S]*?)(")/;
-        const match = cleanedEnv.match(pkRegex);
-        if (match) {
-            const rawPrivateKey = match[2];
-            const cleanPrivateKey = rawPrivateKey.replace(/\r?\n/g, '\\n');
-            cleanedEnv = cleanedEnv.replace(pkRegex, `$1${cleanPrivateKey}$3`);
-        }
-        cleanedEnv = cleanedEnv.replace(/\r?\n/g, ' ');
+	console.log("\n[Google] 检测到服务账号密钥，正在生成 JWT Token 进行授权...");
+	try {
+		// 极致兼容多行物理换行格式的 JSON 私钥字符串
+		let cleanedEnv = serviceAccountEnv.trim();
+		const pkRegex = /("private_key"\s*:\s*")([\s\S]*?)(")/;
+		const match = cleanedEnv.match(pkRegex);
+		if (match) {
+			const rawPrivateKey = match[2];
+			const cleanPrivateKey = rawPrivateKey.replace(/\r?\n/g, "\\n");
+			cleanedEnv = cleanedEnv.replace(pkRegex, `$1${cleanPrivateKey}$3`);
+		}
+		cleanedEnv = cleanedEnv.replace(/\r?\n/g, " ");
 
-        const credentials = JSON.parse(cleanedEnv);
-        const jwt = generateGoogleJWT(credentials.client_email, credentials.private_key);
-        const token = await getGoogleAccessToken(jwt);
-        
-        console.log(`[Google] 授权成功！正在向 Google Indexing API 批量提交 URL...`);
-        // 限制 Google Indexing 速率，这里依次执行
-        for (const url of urls) {
-            await submitToGoogle(url, token);
-            await new Promise(r => setTimeout(r, 200)); // 适当限速
-        }
-    } catch (e) {
-        console.error(`[Google] 提交出错:`, e.message);
-    }
+		const credentials = JSON.parse(cleanedEnv);
+		const jwt = generateGoogleJWT(
+			credentials.client_email,
+			credentials.private_key,
+		);
+		const token = await getGoogleAccessToken(jwt);
+
+		console.log(
+			"[Google] 授权成功！正在向 Google Indexing API 批量提交 URL...",
+		);
+		// 限制 Google Indexing 速率，这里依次执行
+		for (const url of urls) {
+			await submitToGoogle(url, token);
+			await new Promise((r) => setTimeout(r, 200)); // 适当限速
+		}
+	} catch (e) {
+		console.error("[Google] 提交出错:", e.message);
+	}
 }
 
 main().catch(console.error);

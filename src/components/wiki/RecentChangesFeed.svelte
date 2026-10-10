@@ -1,12 +1,12 @@
 <script lang="ts">
 import { onMount } from "svelte";
-import type { DiffResult } from "../../types/wiki";
+import type { DiffResult, WikiRevision } from "../../types/wiki";
+import { applyDeltaPatch, fetchDeltaPatch } from "../../utils/delta-patcher";
+import { generateWikiDiff } from "../../utils/wiki-diff";
 import type {
 	RecentChangeEntry,
 	RecentChangesData,
 } from "../../utils/wiki-special-loader";
-import { applyDeltaPatch, fetchDeltaPatch } from "../../utils/delta-patcher";
-import { generateWikiDiff } from "../../utils/wiki-diff";
 import WikiDiffViewer from "./WikiDiffViewer.svelte";
 
 let data: RecentChangesData | null = null;
@@ -43,7 +43,13 @@ let deltaInfo:
 	  }
 	| undefined = undefined;
 
-const snapshotCache = new Map<string, any>();
+interface WikiSnapshot extends Partial<WikiRevision> {
+	slug?: string;
+	content: string;
+	[key: string]: unknown;
+}
+
+const snapshotCache = new Map<string, WikiSnapshot>();
 
 onMount(async () => {
 	try {
@@ -76,7 +82,8 @@ $: filtered = entries.filter((e) => {
 	if (minorOnly && !e.isMinor) return false;
 	if (authorFilter && e.author !== authorFilter) return false;
 	if (slugFilter && e.slug !== slugFilter) return false;
-	if (rangeKey !== "all" && new Date(e.date).getTime() < cutoffTime()) return false;
+	if (rangeKey !== "all" && new Date(e.date).getTime() < cutoffTime())
+		return false;
 	if (query) {
 		const q = query.toLowerCase();
 		const haystack = `${titleOf(e.slug)} ${e.cleanMessage} ${e.section || ""} ${e.author}`;
@@ -133,12 +140,16 @@ function goRandom() {
 	window.location.href = `/posts/${slug}/`;
 }
 
-async function loadSnapshot(slug: string, shortSha: string) {
+async function loadSnapshot(
+	slug: string,
+	shortSha: string,
+): Promise<WikiSnapshot> {
 	const key = `${slug}:${shortSha}`;
-	if (snapshotCache.has(key)) return snapshotCache.get(key);
+	const cached = snapshotCache.get(key);
+	if (cached) return cached;
 	const res = await fetch(`/api/wiki/snapshots/${slug}/${shortSha}.json`);
 	if (!res.ok) throw new Error(`快照 ${shortSha} 拉取失败`);
-	const json = await res.json();
+	const json = (await res.json()) as WikiSnapshot;
 	snapshotCache.set(key, json);
 	return json;
 }
@@ -155,9 +166,11 @@ async function loadRevisionPair(
 		const patch = await fetchDeltaPatch(slug, oldShort, newShort);
 		if (patch) {
 			const oldData = snapshotCache.get(oldKey);
-			const newData = applyDeltaPatch(oldData, patch);
-			snapshotCache.set(newKey, newData);
-			return { oldData, newData, hitDelta: true, patch };
+			if (oldData) {
+				const newData = applyDeltaPatch(oldData, patch);
+				snapshotCache.set(newKey, newData);
+				return { oldData, newData, hitDelta: true, patch };
+			}
 		}
 	}
 	const [oldData, newData] = await Promise.all([

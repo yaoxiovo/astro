@@ -26,16 +26,22 @@ export function GithubCardComponent(properties, children) {
 	const cardUuid = `GC${Math.random().toString(36).slice(-6)}`; // Collisions are not important
 
 	const hasStatic = !!properties.description;
-	const descVal = properties.desc || properties.description || "Waiting for api.github.com...";
+	const descVal =
+		properties.desc ||
+		properties.description ||
+		"Waiting for api.github.com...";
 	const starsVal = properties.stars || "00K";
 	const forksVal = properties.forks || "0K";
 	const licenseVal = properties.license || "no-license";
 	const languageVal = properties.language || "Waiting...";
 	const avatarUrl = properties.avatar || properties.avatarUrl;
 
-	const nAvatar = h(`div#${cardUuid}-avatar`, { 
+	const nAvatar = h(`div#${cardUuid}-avatar`, {
 		class: "gc-avatar",
-		style: avatarUrl && hasStatic ? `background-image: url(${avatarUrl}); background-color: transparent;` : undefined
+		style:
+			avatarUrl && hasStatic
+				? `background-image: url(${avatarUrl}); background-color: transparent;`
+				: undefined,
 	});
 	const nLanguage = h(
 		`span#${cardUuid}-language`,
@@ -63,7 +69,11 @@ export function GithubCardComponent(properties, children) {
 
 	const nStars = h(`div#${cardUuid}-stars`, { class: "gc-stars" }, starsVal);
 	const nForks = h(`div#${cardUuid}-forks`, { class: "gc-forks" }, forksVal);
-	const nLicense = h(`div#${cardUuid}-license`, { class: "gc-license" }, licenseVal);
+	const nLicense = h(
+		`div#${cardUuid}-license`,
+		{ class: "gc-license" },
+		licenseVal,
+	);
 
 	let nScript = null;
 	let cardClass = "card-github fetch-waiting no-styling";
@@ -148,7 +158,7 @@ export function GithubCardComponent(properties, children) {
 	const childrenList = [
 		nTitle,
 		nDescription,
-		h("div", { class: "gc-infobar" }, [nStars, nForks, nLicense, nLanguage])
+		h("div", { class: "gc-infobar" }, [nStars, nForks, nLicense, nLanguage]),
 	];
 	if (nScript) {
 		childrenList.push(nScript);

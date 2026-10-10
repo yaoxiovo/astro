@@ -1,8 +1,8 @@
 import { siteConfig } from "@/config";
 import {
+	extractMomentTags,
 	getSortedMoments,
 	momentToText,
-	extractMomentTags,
 	stripMomentId,
 } from "@/utils/content-utils";
 import rss from "@astrojs/rss";
@@ -13,7 +13,7 @@ import sanitizeHtml from "sanitize-html";
 
 const markdownParser = new MarkdownIt();
 
-export async function GET(context: APIContext) {
+export async function GET(context: APIContext): Promise<Response> {
 	if (!context.site) {
 		throw Error("site not set");
 	}

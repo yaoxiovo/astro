@@ -1,10 +1,10 @@
 ---
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { Icon } from "astro-icon/components";
 import {
-	getMaintenanceSync,
 	getLinkSuggestionsReportSync,
+	getMaintenanceSync,
 } from "@utils/wiki-special-loader";
+import { Icon } from "astro-icon/components";
 
 const report = getMaintenanceSync();
 const stats = report?.stats;

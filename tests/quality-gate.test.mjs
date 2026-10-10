@@ -1,15 +1,16 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { describe, it } from "node:test";
 import {
-	slugifyHeading,
+	analyzeCognitiveComplexity,
+	computeScorecard,
 	extractLinterLines,
 	inspectCjkTypography,
 	inspectLinksAndAnchors,
-	analyzeCognitiveComplexity,
-	computeScorecard,
+	listPostFiles,
 	runQualityGate,
+	slugifyHeading,
 } from "../scripts/content-quality-gate.mjs";
 
 describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Analysis & Quality Gate)", () => {
@@ -39,7 +40,9 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 			const raw = "这是一个规范的句子，我们在 Hello 世界 中快乐编程。";
 			const lines = extractLinterLines(raw);
 			const issues = inspectCjkTypography(lines);
-			const panguIssues = issues.filter((i) => i.type === "pangu_missing_space");
+			const panguIssues = issues.filter(
+				(i) => i.type === "pangu_missing_space",
+			);
 			assert.equal(panguIssues.length, 0, "规范文本不应有任何盘古空格告警");
 		});
 
@@ -57,7 +60,9 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 
 			const lines = extractLinterLines(markdown);
 			const issues = inspectCjkTypography(lines);
-			const panguIssues = issues.filter((i) => i.type === "pangu_missing_space");
+			const panguIssues = issues.filter(
+				(i) => i.type === "pangu_missing_space",
+			);
 			assert.equal(panguIssues.length, 0, "代码块与公式内部不得触发误报");
 		});
 
@@ -72,26 +77,30 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 			const issues = inspectCjkTypography(lines);
 
 			const commaIssue = issues.find(
-				(i) => i.type === "punctuation_drift" && i.message.includes('半角逗号 ","'),
+				(i) =>
+					i.type === "punctuation_drift" && i.message.includes('半角逗号 ","'),
 			);
 			assert.ok(commaIssue, "必须捕获半角逗号漂移");
 			assert.equal(commaIssue.suggestion, "号，");
 
 			const periodIssue = issues.find(
-				(i) => i.type === "punctuation_drift" && i.message.includes('半角句号 "."'),
+				(i) =>
+					i.type === "punctuation_drift" && i.message.includes('半角句号 "."'),
 			);
 			assert.ok(periodIssue, "必须捕获半角句号漂移");
 			assert.equal(periodIssue.suggestion, "号。");
 
 			const semicolonIssue = issues.find(
-				(i) => i.type === "punctuation_drift" && i.message.includes('半角分号 ";"'),
+				(i) =>
+					i.type === "punctuation_drift" && i.message.includes('半角分号 ";"'),
 			);
 			assert.ok(semicolonIssue, "必须捕获半角分号漂移");
 			assert.equal(semicolonIssue.suggestion, "号；");
 		});
 
 		it("规范的全角中文标点应 100% 豁免", () => {
-			const raw = "猫娘架构师写道：“优雅的代码，不仅跑得快，读起来也赏心悦目；这就是艺术。”";
+			const raw =
+				"猫娘架构师写道：“优雅的代码，不仅跑得快，读起来也赏心悦目；这就是艺术。”";
 			const lines = extractLinterLines(raw);
 			const issues = inspectCjkTypography(lines);
 			const driftIssues = issues.filter((i) => i.type === "punctuation_drift");
@@ -108,7 +117,9 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 				{ level: 2, title: "第二章", slug: "第二章" },
 			];
 			const analysis = analyzeCognitiveComplexity("", [], headings);
-			const jumps = analysis.issues.filter((i) => i.type === "heading_hierarchy_jump");
+			const jumps = analysis.issues.filter(
+				(i) => i.type === "heading_hierarchy_jump",
+			);
 			assert.equal(jumps.length, 0);
 		});
 
@@ -118,7 +129,9 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 				{ level: 4, title: "细粒度锁实现", slug: "细粒度锁实现" }, // 跳过了 H3
 			];
 			const analysis = analyzeCognitiveComplexity("", [], headings);
-			const jumps = analysis.issues.filter((i) => i.type === "heading_hierarchy_jump");
+			const jumps = analysis.issues.filter(
+				(i) => i.type === "heading_hierarchy_jump",
+			);
 			assert.equal(jumps.length, 1);
 			assert.equal(jumps[0].severity, "warning");
 			assert.ok(jumps[0].message.includes("从 H2 直接跳跃至 H4"));
@@ -131,7 +144,9 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 				{ level: 3, title: "底层子模块", slug: "底层子模块" },
 			];
 			const analysis = analyzeCognitiveComplexity("", [], headings);
-			const jumps = analysis.issues.filter((i) => i.type === "heading_hierarchy_jump");
+			const jumps = analysis.issues.filter(
+				(i) => i.type === "heading_hierarchy_jump",
+			);
 			assert.equal(jumps.length, 1);
 			assert.ok(jumps[0].message.includes("从 H1 直接跳跃至 H3"));
 		});
@@ -148,7 +163,11 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 				"执行 `pnpm install` 即可。",
 			].join("\n");
 
-			const { issues } = inspectLinksAndAnchors(markdown, "test-post", new Set(["test-post"]));
+			const { issues } = inspectLinksAndAnchors(
+				markdown,
+				"test-post",
+				new Set(["test-post"]),
+			);
 			const brokenAnchors = issues.filter((i) => i.type === "broken_anchor");
 			assert.equal(brokenAnchors.length, 0, "合法锚点不应报错");
 		});
@@ -163,16 +182,25 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 				"这里是现有模块内容。",
 			].join("\n");
 
-			const { issues } = inspectLinksAndAnchors(markdown, "test-post", new Set(["test-post"]));
+			const { issues } = inspectLinksAndAnchors(
+				markdown,
+				"test-post",
+				new Set(["test-post"]),
+			);
 			const broken = issues.find((i) => i.type === "broken_anchor");
 			assert.ok(broken, "必须捕获失效锚点");
 			assert.equal(broken.severity, "error");
 			assert.equal(broken.excerpt, "#ghost-module");
-			assert.ok(broken.message.includes('目标锚点 "#ghost-module" 在当前文章标题大纲中未找到'));
+			assert.ok(
+				broken.message.includes(
+					'目标锚点 "#ghost-module" 在当前文章标题大纲中未找到',
+				),
+			);
 		});
 
 		it("应当拦截不存在的站内文章链接 (/posts/non-existent)", () => {
-			const markdown = "推荐阅读 [不存在的旧博文](/posts/old-deleted-article/) 喵。";
+			const markdown =
+				"推荐阅读 [不存在的旧博文](/posts/old-deleted-article/) 喵。";
 			const { issues } = inspectLinksAndAnchors(
 				markdown,
 				"current-post",
@@ -191,7 +219,9 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 				"current-post",
 				new Set(["current-post", "valid-post"]),
 			);
-			const brokenLink = issues.filter((i) => i.type === "broken_internal_link");
+			const brokenLink = issues.filter(
+				(i) => i.type === "broken_internal_link",
+			);
 			assert.equal(brokenLink.length, 0);
 		});
 	});
@@ -251,35 +281,92 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 				],
 			};
 
-			const scorecard = computeScorecard(typographyIssues, linkIssues, complexityAnalysis);
-			assert.ok(scorecard.score < 80, `综合评分应显著降级，实际: ${scorecard.score}`);
+			const scorecard = computeScorecard(
+				typographyIssues,
+				linkIssues,
+				complexityAnalysis,
+			);
+			assert.ok(
+				scorecard.score < 80,
+				`综合评分应显著降级，实际: ${scorecard.score}`,
+			);
 			assert.ok(["B", "C", "D"].includes(scorecard.grade));
 			assert.equal(scorecard.issuesCount.errors, 2);
 		});
 	});
 
-	describe("5. 全站 49 篇真实博文全量静态巡检与质量排行榜 (Full Site Benchmark)", () => {
-		it("必须完整扫描全站 49 篇真实博文并生成质量大盘排行榜", () => {
-			const result = runQualityGate({ verbose: false });
+	describe("5. 全站真实博文全量静态巡检与质量排行榜 (Full Site Benchmark)", () => {
+		it("必须完整扫描 src/content/posts 下全部真实博文并生成质量大盘排行榜", () => {
+			// 文章总数由 src/content/posts 动态推导，而非硬编码：
+			// 1) diskFiles 直接读目录，独立推导真实篇数；
+			// 2) listPostFiles() 是 content-quality-gate.mjs 内部使用的唯一发现规则，
+			//    两者必须一致，保证测试断言与真实扫描结果同源。
+			// 注意：该规则不按 draft 过滤（draft 仅在 thin_content 提示中豁免），
+			// 因此这里也不应自行排除 draft 文章。
+			const postsDir = path.resolve("src/content/posts");
+			const diskFiles = fs
+				.readdirSync(postsDir)
+				.filter((f) => f.endsWith(".md") && !f.startsWith("."));
+			const expectedFiles = listPostFiles();
+			const expectedSlugs = diskFiles.map((f) => f.replace(/\.md$/, ""));
 
-			assert.equal(result.totalFiles, 49, "全站文章总数必须为 49 篇");
-			assert.ok(result.totalPassedS >= 40, `S 级卓越文章应达到 40 篇以上 (实际: ${result.totalPassedS})`);
-			assert.equal(result.totalFatalErrors, 0, "全站不应有任何未解决的致命死链");
+			assert.ok(
+				diskFiles.length > 0,
+				"src/content/posts 下必须至少存在一篇 .md 博文",
+			);
+			assert.deepEqual(
+				[...expectedFiles].sort(),
+				[...diskFiles].sort(),
+				"listPostFiles() 的文章发现规则必须与 src/content/posts 真实内容一致",
+			);
 
-			// 验证产物文件已生成
-			const matrixDataPath = path.resolve("src/data/wiki/quality/matrix.json");
-			const matrixPublicPath = path.resolve("public/api/wiki/quality/matrix.json");
-			assert.ok(fs.existsSync(matrixDataPath), "src/data/wiki/quality/matrix.json 必须生成");
-			assert.ok(fs.existsSync(matrixPublicPath), "public/api/wiki/quality/matrix.json 必须生成");
+			// write: false -> 只读巡检，测试不产生任何文件系统副作用
+			const result = runQualityGate({ verbose: false, write: false });
 
-			const matrix = JSON.parse(fs.readFileSync(matrixDataPath, "utf-8"));
-			const slugs = Object.keys(matrix);
-			assert.equal(slugs.length, 49);
+			assert.equal(result.wrote, false, "测试必须运行在只读模式（不落盘）");
+			assert.equal(
+				result.totalFiles,
+				diskFiles.length,
+				`全站文章总数必须与 src/content/posts 中实际 .md 篇数一致 (${diskFiles.length} 篇)`,
+			);
+
+			// 质量下限保护：S 级卓越文章占比不得低于 80%（沿用原有的 S 级数量下限保护，
+			// 改为按实际篇数比例表达，既不随文章增长而失效，也不退化为恒真断言）；
+			// 同时保留绝对下限，避免小站点下比例保护失去意义。
+			const minSPosts = Math.min(
+				Math.max(1, Math.ceil(diskFiles.length * 0.8)),
+				diskFiles.length,
+			);
+			assert.ok(
+				result.totalPassedS >= minSPosts,
+				`S 级卓越文章应不少于 ${minSPosts} 篇（占比 >= 80%，实际: ${result.totalPassedS}/${diskFiles.length}）`,
+			);
+			assert.equal(
+				result.totalFatalErrors,
+				0,
+				"全站不应有任何未解决的致命死链",
+			);
+
+			// 矩阵报告（内存版）应覆盖全部真实博文
+			const slugs = Object.keys(result.summaryMatrix);
+			assert.equal(
+				slugs.length,
+				diskFiles.length,
+				"质量矩阵必须覆盖 src/content/posts 下全部博文",
+			);
+			assert.deepEqual(
+				[...slugs].sort(),
+				[...expectedSlugs].sort(),
+				"质量矩阵的 slug 集合必须与 src/content/posts 实际文件一一对应",
+			);
 
 			// 按评分从高到低排序，输出全站 Top 10 质量排行榜
 			const leaderboard = slugs
-				.map((slug) => matrix[slug])
-				.sort((a, b) => b.score - a.score || a.issuesCount.total - b.issuesCount.total);
+				.map((slug) => result.summaryMatrix[slug])
+				.sort(
+					(a, b) =>
+						b.score - a.score || a.issuesCount.total - b.issuesCount.total,
+				);
 
 			console.log("\n=======================================================");
 			console.log("🏆 [FuWari Blog] 全站博文质量工程排行榜 Top 10 喵！");
@@ -289,16 +376,15 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 				const score = String(item.score).padStart(3, " ");
 				console.log(
 					` ${rank}. [${item.grade}] ${score}分 | 《${item.title}》 (${item.slug})` +
-					` [警告: ${item.issuesCount.warnings}, 字数: ${item.metrics?.totalEquivalentWords || 0}]`,
+						` [警告: ${item.issuesCount.warnings}, 字数: ${item.metrics?.totalEquivalentWords || 0}]`,
 				);
 			});
 			console.log("=======================================================");
 
-			// 验证每篇博文独立报告的 Schema 完整性
+			// 验证每篇博文独立报告的 Schema 完整性（取自内存报告，无需读盘）
 			for (const slug of slugs.slice(0, 5)) {
-				const singlePath = path.resolve(`src/data/wiki/quality/${slug}.json`);
-				assert.ok(fs.existsSync(singlePath), `单篇博文质量报告 ${slug}.json 必须存在`);
-				const singleData = JSON.parse(fs.readFileSync(singlePath, "utf-8"));
+				const singleData = result.reports[slug];
+				assert.ok(singleData, `单篇博文质量报告 ${slug} 必须存在于巡检结果中`);
 				assert.equal(singleData.slug, slug);
 				assert.ok(typeof singleData.score === "number");
 				assert.ok(["S", "A", "B", "C", "D"].includes(singleData.grade));
@@ -307,6 +393,42 @@ describe("静态内容 CI/CD 质量工程门禁测试套件 (Content Static Anal
 				assert.ok(singleData.breakdown.structure);
 				assert.ok(singleData.breakdown.readability);
 			}
+		});
+
+		it("只读巡检（write: false）不得对工作区产生任何文件系统副作用", () => {
+			const qualityDirs = [
+				path.resolve("src/data/wiki/quality"),
+				path.resolve("public/api/wiki/quality"),
+			];
+
+			// 记录巡检前两个质量产物目录的完整快照（文件集合 + mtime + size）
+			const snapshot = () => {
+				const entries = {};
+				for (const dir of qualityDirs) {
+					if (!fs.existsSync(dir)) {
+						entries[dir] = null;
+						continue;
+					}
+					entries[dir] = fs
+						.readdirSync(dir)
+						.sort()
+						.map((name) => {
+							const stat = fs.statSync(path.join(dir, name));
+							return `${name}:${stat.mtimeMs}:${stat.size}`;
+						});
+				}
+				return entries;
+			};
+
+			const before = snapshot();
+			runQualityGate({ verbose: false, write: false });
+			const after = snapshot();
+
+			assert.deepEqual(
+				after,
+				before,
+				"write: false 的只读巡检不得新增/修改/删除 src/data/wiki/quality 与 public/api/wiki/quality 下的任何文件",
+			);
 		});
 	});
 });

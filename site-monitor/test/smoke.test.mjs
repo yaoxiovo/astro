@@ -237,12 +237,72 @@ test("T9 管理端点需要 ADMIN_TOKEN", async () => {
 	assert.equal(allowed.status, 200);
 	const data = await allowed.json();
 	assert.ok(data.results.every((r) => r.ok));
-	// 兼容旧 ?secret= 方式
-	const allowed2 = await worker.fetch(
+	// 生产环境必须拒绝 ?secret= 查询串（该回退仅在 development 下开放）
+	const denied3 = await worker.fetch(
 		new Request("https://site-monitor.workers.dev/api/run?secret=test-admin-token"),
 		env,
 	);
-	assert.equal(allowed2.status, 200);
+	assert.equal(denied3.status, 401, "生产环境不得接受 ?secret= 查询串鉴权");
+
+	// 仅 development 环境下兼容旧 ?secret= 方式
+	const devEnv = { ...env, ENVIRONMENT: "development" };
+	const allowed2 = await worker.fetch(
+		new Request("https://site-monitor.workers.dev/api/run?secret=test-admin-token"),
+		devEnv,
+	);
+	assert.equal(allowed2.status, 200, "development 环境应保留 ?secret= 兼容");
+
+	// X-Admin-Token 自定义头同样可用
+	const allowed3 = await worker.fetch(
+		new Request("https://site-monitor.workers.dev/api/run", {
+			headers: { "X-Admin-Token": "test-admin-token" },
+		}),
+		env,
+	);
+	assert.equal(allowed3.status, 200, "X-Admin-Token 头应可用");
+});
+
+test("T9b 状态页公开历史端点：无需鉴权且窗口受限", async () => {
+	reset();
+	const env = makeEnv();
+	const now = Date.now();
+	const d = new Date(now);
+	const pad = (n) => String(n).padStart(2, "0");
+	const hourKey = `hist:${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}-${pad(d.getUTCHours())}`;
+	await env.MONITOR_KV.put(
+		hourKey,
+		JSON.stringify({
+			samples: {
+				博客主站: [
+					{ ts: now - 20000, state: "up", ms: 100 },
+					{ ts: now - 10000, state: "down", ms: 0 },
+					{ ts: now, state: "up", ms: 90 },
+				],
+			},
+		}),
+		{ expirationTtl: 2592000 },
+	);
+
+	// 状态页是公开页面：不带任何凭据也必须能取到历史数据
+	const pub = await worker.fetch(new Request("https://site-monitor.workers.dev/api/status-history?days=1"), env);
+	assert.equal(pub.status, 200, "公开历史端点不得要求鉴权");
+	const data = await pub.json();
+	assert.equal(data.sites["博客主站"].count, 3);
+	assert.equal(data.sites["博客主站"].uptime, 66.67, "uptime = 2/3");
+	assert.equal(data.sites["博客主站"].events.length, 1, "应推导出 1 次故障事件");
+
+	// 公开端点回溯窗口硬限制在 30 天，防滥用
+	const capped = await worker.fetch(new Request("https://site-monitor.workers.dev/api/status-history?days=365"), env);
+	assert.equal(capped.status, 200);
+	assert.equal((await capped.json()).days, 30, "公开端点 days 应被钳制到 30");
+
+	// 非法 days 参数应安全降级为默认 30 天
+	const bogus = await worker.fetch(new Request("https://site-monitor.workers.dev/api/status-history?days=abc"), env);
+	assert.equal((await bogus.json()).days, 30, "非法 days 应回落到 30");
+
+	// 管理端点仍必须要求 ADMIN_TOKEN（公开化不得顺带放开管理端点）
+	const stillGated = await worker.fetch(new Request("https://site-monitor.workers.dev/api/history?days=1"), env);
+	assert.equal(stillGated.status, 401, "/api/history 必须继续要求鉴权");
 });
 
 test("T10 告警消息 HTML 转义安全", async () => {

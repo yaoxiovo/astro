@@ -23,7 +23,8 @@ export const GUARD_EXCLUDE_SELECTOR = [
 
 /** 构建端遍历时判断某元素是否应跳过整棵子树(classList 为空格分隔后的数组) */
 export function isGuardExcluded(tagName, classList) {
-	if (GUARD_EXCLUDE_TAGS.includes(String(tagName || "").toLowerCase())) return true;
+	if (GUARD_EXCLUDE_TAGS.includes(String(tagName || "").toLowerCase()))
+		return true;
 	if (!classList || classList.length === 0) return false;
 	return GUARD_EXCLUDE_CLASSES.some((c) => classList.includes(c));
 }

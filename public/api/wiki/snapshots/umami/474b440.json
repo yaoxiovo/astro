@@ -1,9 +1,0 @@
-{
-  "sha": "474b440b802d5a9e7aaf6689bd8f983c8d9423a7",
-  "shortSha": "474b440",
-  "date": "2026-05-05T10:36:53+08:00",
-  "author": "yaoxiovo",
-  "message": "seo: improve Umami issue post metadata",
-  "slug": "umami",
-  "content": "---\ntitle: Umami 统计显示为 0 的临时记录\npublished: 2026-04-03\ndescription: 记录博客 Umami 访问统计暂时显示为 0 的原因，主要与数据库配置相关，后续将继续排查和修复。\ntags:\n  - Umami\n  - 网站统计\n  - 数据库配置\n  - 开发笔记\ncategory: 开发记录\ndraft: false\nlang: \"zh_CN\"\n---\n数据库配置问题过几个月再修，只能暂时显示0了\n"
-}

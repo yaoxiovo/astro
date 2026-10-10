@@ -27,20 +27,31 @@ export function UrlCardComponent(properties, children) {
 
 	const hasStaticTitle = !!properties.title;
 	const titleVal = properties.title || "Loading...";
-	const descVal = properties.desc || properties.description || "Waiting for api.microlink.io...";
+	const descVal =
+		properties.desc ||
+		properties.description ||
+		"Waiting for api.microlink.io...";
 	const faviconUrl = properties.logo || properties.favicon;
 	const imageUrl = properties.image || properties.cover;
 
-	const nImage = h(`div#${cardUuid}-image`, { 
+	const nImage = h(`div#${cardUuid}-image`, {
 		class: "uc-image",
-		style: imageUrl && hasStaticTitle ? `background-image: url(${imageUrl});` : undefined
+		style:
+			imageUrl && hasStaticTitle
+				? `background-image: url(${imageUrl});`
+				: undefined,
 	});
 
 	const nTitle = h("div", { class: "uc-titlebar" }, [
 		h("div", { class: "uc-titlebar-left" }, [
-			h(`div#${cardUuid}-favicon`, { 
+			h(`div#${cardUuid}-favicon`, {
 				class: "uc-favicon",
-				style: faviconUrl && hasStaticTitle ? `background-image: url(${faviconUrl}); background-color: transparent;` : (hasStaticTitle ? "display: none;" : undefined)
+				style:
+					faviconUrl && hasStaticTitle
+						? `background-image: url(${faviconUrl}); background-color: transparent;`
+						: hasStaticTitle
+							? "display: none;"
+							: undefined,
 			}),
 			h("div", { class: "uc-domain" }, new URL(url).hostname),
 		]),
@@ -155,7 +166,7 @@ export function UrlCardComponent(properties, children) {
 		h(`div#${cardUuid}-container`, { class: containerClass }, [
 			h("div", { class: "uc-content" }, [nTitle, nTitleText, nDescription]),
 			nImage,
-		])
+		]),
 	];
 	if (nScript) {
 		childrenList.push(nScript);

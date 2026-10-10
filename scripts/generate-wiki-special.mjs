@@ -39,8 +39,11 @@ function safeDecode(value) {
 export function extractInternalLinks(markdown, selfSlug, siteHost = SITE_HOST) {
 	const targets = new Map();
 	const linkRegex = /\[([^\]]*)\]\(([^)"]+)(?:(?:\s+["'][^"']*["'])?)\)/g;
-	let match;
-	while ((match = linkRegex.exec(markdown)) !== null) {
+	for (
+		let match = linkRegex.exec(markdown);
+		match !== null;
+		match = linkRegex.exec(markdown)
+	) {
 		// 跳过图片语法 ![alt](src)
 		if (match.index > 0 && markdown[match.index - 1] === "!") continue;
 
@@ -104,15 +107,25 @@ export function mergeSeeAlsoLinks(outboundMap, relatedBySlug) {
  */
 export function validateRelatedLinks({ posts, relatedBySlug }) {
 	const known = new Set(posts.map((post) => post.slug));
-	const drafts = new Set(posts.filter((post) => post.draft).map((post) => post.slug));
+	const drafts = new Set(
+		posts.filter((post) => post.draft).map((post) => post.slug),
+	);
 	const warnings = [];
 	for (const [sourceSlug, targets] of Object.entries(relatedBySlug)) {
 		const source = posts.find((post) => post.slug === sourceSlug);
 		for (const targetSlug of targets) {
 			if (!known.has(targetSlug)) {
-				warnings.push({ type: "unknown", source: sourceSlug, target: targetSlug });
+				warnings.push({
+					type: "unknown",
+					source: sourceSlug,
+					target: targetSlug,
+				});
 			} else if (source && !source.draft && drafts.has(targetSlug)) {
-				warnings.push({ type: "draft-target", source: sourceSlug, target: targetSlug });
+				warnings.push({
+					type: "draft-target",
+					source: sourceSlug,
+					target: targetSlug,
+				});
 			}
 		}
 	}
@@ -170,7 +183,9 @@ export function flattenRecentChanges(historyMap, limit = 0) {
 			});
 		}
 	}
-	entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+	entries.sort(
+		(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+	);
 	return limit > 0 ? entries.slice(0, limit) : entries;
 }
 
@@ -362,8 +377,11 @@ export function buildScanMask(markdown) {
 	];
 	for (const pattern of patterns) {
 		pattern.lastIndex = 0;
-		let match;
-		while ((match = pattern.exec(markdown)) !== null) {
+		for (
+			let match = pattern.exec(markdown);
+			match !== null;
+			match = pattern.exec(markdown)
+		) {
 			maskRange(match.index, match.index + match[0].length);
 		}
 	}
@@ -400,9 +418,10 @@ export function computeLinkSuggestions({
 			keyOwners.set(variant, keyOwners.has(variant) ? null : post.slug);
 		}
 	}
-	const titleEntries = Array.from(keyOwners, ([key, slug]) => ({ key, slug })).filter(
-		(entry) => entry.slug,
-	);
+	const titleEntries = Array.from(keyOwners, ([key, slug]) => ({
+		key,
+		slug,
+	})).filter((entry) => entry.slug);
 
 	const suggestions = {};
 	const articles = {};
@@ -411,14 +430,17 @@ export function computeLinkSuggestions({
 
 	for (const source of sourcePool) {
 		const mask = buildScanMask(source.raw);
-		const alreadyLinked = new Set((outboundMap[source.slug] || []).map((l) => l.slug));
+		const alreadyLinked = new Set(
+			(outboundMap[source.slug] || []).map((l) => l.slug),
+		);
 		const matches = [];
 		for (const { key, slug } of titleEntries) {
 			if (slug === source.slug || alreadyLinked.has(slug)) continue;
 			let idx = mask.indexOf(key);
 			while (idx !== -1) {
 				const end = idx + key.length;
-				const leftOk = !isAsciiWordChar(key[0]) || !isAsciiWordChar(mask[idx - 1]);
+				const leftOk =
+					!isAsciiWordChar(key[0]) || !isAsciiWordChar(mask[idx - 1]);
 				const rightOk =
 					!isAsciiWordChar(key[key.length - 1]) || !isAsciiWordChar(mask[end]);
 				if (leftOk && rightOk) matches.push({ start: idx, end, slug, key });
@@ -568,7 +590,9 @@ function parseFrontmatterList(frontmatter, key) {
 	if (inline) return [inline.replace(/^['"]|['"]$/g, "")];
 	const items = [];
 	const lines = frontmatter.split(/\r?\n/);
-	const start = lines.findIndex((line) => new RegExp(`^${key}:\\s*$`).test(line));
+	const start = lines.findIndex((line) =>
+		new RegExp(`^${key}:\\s*$`).test(line),
+	);
 	if (start === -1) return [];
 	for (let i = start + 1; i < lines.length; i++) {
 		const itemMatch = lines[i].match(/^\s+-\s*(.+)$/);
@@ -704,14 +728,7 @@ export function runWikiSpecialGeneration(options = {}) {
 	if (verbose) {
 		const s = maintenance.stats;
 		console.log(
-			`\n✨ [Wiki Special] 特殊页面索引生成完毕！耗时 ${Date.now() - startTime}ms 喵！` +
-				`\n📡 最近更改流: ${recentChanges.totalEntries} 条修订 / ${Object.keys(articles).length} 篇条目` +
-				`\n🔗 反链索引: ${Object.keys(backlinkIndex).length} 篇条目存在链入` +
-				`\n🧩 编排指引: ${Object.keys(relatedBySlug).length} 篇条目存在 related 指引` +
-				`\n🛠️ 维护巡检: 孤立 ${s.totalOrphans} · 断头路 ${s.totalDeadEnds} · 过时 ${s.totalStale} · 低质 ${s.totalLowQuality} · 死链 ${s.totalBrokenLinks}` +
-				`\n🧭 相关文章: ${Object.keys(related.related).length} 篇条目存在相关推荐` +
-				`\n🪄 补链雷达: ${linkSuggestions.stats.totalArticles} 篇存在可补链接 · ${linkSuggestions.stats.totalSuggestions} 个目标 · ${linkSuggestions.stats.totalMentions} 处未链接提及` +
-				`\n📦 数据已沉淀至 src/data/wiki/ 与 public/api/wiki/ 喵呜~\n`,
+			`\n✨ [Wiki Special] 特殊页面索引生成完毕！耗时 ${Date.now() - startTime}ms 喵！\n📡 最近更改流: ${recentChanges.totalEntries} 条修订 / ${Object.keys(articles).length} 篇条目\n🔗 反链索引: ${Object.keys(backlinkIndex).length} 篇条目存在链入\n🧩 编排指引: ${Object.keys(relatedBySlug).length} 篇条目存在 related 指引\n🛠️ 维护巡检: 孤立 ${s.totalOrphans} · 断头路 ${s.totalDeadEnds} · 过时 ${s.totalStale} · 低质 ${s.totalLowQuality} · 死链 ${s.totalBrokenLinks}\n🧭 相关文章: ${Object.keys(related.related).length} 篇条目存在相关推荐\n🪄 补链雷达: ${linkSuggestions.stats.totalArticles} 篇存在可补链接 · ${linkSuggestions.stats.totalSuggestions} 个目标 · ${linkSuggestions.stats.totalMentions} 处未链接提及\n📦 数据已沉淀至 src/data/wiki/ 与 public/api/wiki/ 喵呜~\n`,
 		);
 		if (relatedWarnings.length) {
 			for (const w of relatedWarnings) {

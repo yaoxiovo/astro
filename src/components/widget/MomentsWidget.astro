@@ -1,5 +1,10 @@
 ---
-import { getSortedMoments, momentToText, extractMomentTags, stripMomentId } from "@/utils/content-utils";
+import {
+	extractMomentTags,
+	getSortedMoments,
+	momentToText,
+	stripMomentId,
+} from "@/utils/content-utils";
 import { Icon } from "astro-icon/components";
 
 // 最新 3 条顶层动态（跳过置顶与回复，胶囊未到期自动被 getSortedMoments 过滤）

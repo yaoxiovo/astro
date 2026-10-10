@@ -33,7 +33,9 @@ async function main() {
 	let momentsCount = 0;
 	let topTags = [];
 	try {
-		const res = await fetch(`${BLOG_ORIGIN}/api/moments.json`, { signal: AbortSignal.timeout(10000) });
+		const res = await fetch(`${BLOG_ORIGIN}/api/moments.json`, {
+			signal: AbortSignal.timeout(10000),
+		});
 		if (res.ok) {
 			const data = await res.json();
 			const list = data?.moments || [];
@@ -59,22 +61,32 @@ async function main() {
 	}
 
 	// 2. 获取本周新文章
-	let posts = [];
+	const posts = [];
 	try {
-		const res = await fetch(`${BLOG_ORIGIN}/rss.xml`, { signal: AbortSignal.timeout(10000) });
+		const res = await fetch(`${BLOG_ORIGIN}/rss.xml`, {
+			signal: AbortSignal.timeout(10000),
+		});
 		if (res.ok) {
 			const xml = await res.text();
 			const itemMatches = xml.matchAll(/<item>([\s\S]*?)<\/item>/g);
 			for (const match of itemMatches) {
 				const block = match[1];
-				const title = (block.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/) || [])[1] || "";
+				const title =
+					(block.match(
+						/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/,
+					) || [])[1] || "";
 				const link = (block.match(/<link>([\s\S]*?)<\/link>/) || [])[1] || "";
-				const pubDate = (block.match(/<pubDate>([\s\S]*?)<\/pubDate>/) || [])[1] || "";
+				const pubDate =
+					(block.match(/<pubDate>([\s\S]*?)<\/pubDate>/) || [])[1] || "";
 				const desc =
-					(block.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/) || [])[1] || "";
+					(block.match(
+						/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/,
+					) || [])[1] || "";
 
 				const d = new Date(pubDate);
-				const dStr = !Number.isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : "";
+				const dStr = !Number.isNaN(d.getTime())
+					? d.toISOString().slice(0, 10)
+					: "";
 
 				// 本周文章
 				if (dStr >= mondayStr && dStr <= todayStr && title && link) {
@@ -125,7 +137,9 @@ async function main() {
 			console.error("❌ 发送周报失败：", result.message || result.error);
 			process.exitCode = 1;
 		} else {
-			console.log(`✅ 周报投递完成！总订阅者：${result.total ?? 0}，成功：${result.sent ?? 0}`);
+			console.log(
+				`✅ 周报投递完成！总订阅者：${result.total ?? 0}，成功：${result.sent ?? 0}`,
+			);
 		}
 	} catch (err) {
 		console.error("❌ 调用周报接口异常：", err);

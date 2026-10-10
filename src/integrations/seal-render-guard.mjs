@@ -15,9 +15,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "node-html-parser";
 import {
-	RENDER_GUARD_VERSION,
 	GUARD_ROOT,
 	GUARD_TARGETS,
+	RENDER_GUARD_VERSION,
 	buildGuardMessage,
 	isGuardExcluded,
 	normalizeGuardText,
@@ -29,7 +29,9 @@ function loadSealPrivateKey() {
 	const envKey = process.env.SEAL_PRIVATE_KEY?.trim();
 	if (envKey) {
 		try {
-			const pem = envKey.includes("BEGIN") ? envKey : Buffer.from(envKey, "base64").toString("utf-8");
+			const pem = envKey.includes("BEGIN")
+				? envKey
+				: Buffer.from(envKey, "base64").toString("utf-8");
 			return crypto.createPrivateKey(pem);
 		} catch {
 			// 继续尝试本地密钥
@@ -46,7 +48,7 @@ function loadSealPrivateKey() {
 function collectText(node, out) {
 	for (const child of node.childNodes) {
 		if (child.nodeType === 1) {
-			const classAttr = (child.getAttribute && child.getAttribute("class")) || "";
+			const classAttr = child.getAttribute?.("class") || "";
 			if (isGuardExcluded(child.rawTagName, classAttr.split(/\s+/))) continue;
 			collectText(child, out);
 		} else if (child.nodeType === 3 && child.text != null) {
@@ -77,7 +79,9 @@ export default function sealRenderGuard() {
 			"astro:build:done": ({ dir, logger }) => {
 				const privateKey = loadSealPrivateKey();
 				if (!privateKey) {
-					logger.warn("[渲染护栏] 未找到签名私钥(SEAL_PRIVATE_KEY / .seal/private.pem),跳过注入");
+					logger.warn(
+						"[渲染护栏] 未找到签名私钥(SEAL_PRIVATE_KEY / .seal/private.pem),跳过注入",
+					);
 					return;
 				}
 
@@ -131,7 +135,11 @@ export default function sealRenderGuard() {
 						.update(normalizeGuardText(parts.join("")), "utf-8")
 						.digest("hex");
 					const signature = crypto
-						.sign(null, Buffer.from(buildGuardMessage(textHash), "utf-8"), privateKey)
+						.sign(
+							null,
+							Buffer.from(buildGuardMessage(textHash), "utf-8"),
+							privateKey,
+						)
 						.toString("base64");
 
 					const payload = JSON.stringify({
@@ -149,7 +157,10 @@ export default function sealRenderGuard() {
 					}
 
 					const replacement = `<script type="application/json" id="seal-render-guard">${payload}</script>`;
-					fs.writeFileSync(file, html.slice(0, start) + replacement + html.slice(end));
+					fs.writeFileSync(
+						file,
+						html.slice(0, start) + replacement + html.slice(end),
+					);
 					injected++;
 				}
 

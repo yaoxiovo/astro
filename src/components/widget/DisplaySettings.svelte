@@ -30,69 +30,78 @@ let rainbowSpeed = getRainbowSpeed();
 let bgBlur = getBgBlur();
 let hideBg = getHideBg();
 let isDevMode = getDevMode();
-	let devServer = getDevServer();
-	let animationId: number;
+let devServer = getDevServer();
+let animationId: number;
 
-	const defaultHue = getDefaultHue();
+const defaultHue = getDefaultHue();
 
-	function resetHue() {
-		hue = getDefaultHue();
+function resetHue() {
+	hue = getDefaultHue();
+}
+
+$: if ((hue || hue === 0) && !isRainbowMode) {
+	setHue(hue);
+}
+
+$: {
+	setBgBlur(bgBlur);
+}
+
+function switchTheme(newTheme: string) {
+	theme = newTheme;
+	setTheme(newTheme);
+}
+
+function toggleRainbow() {
+	isRainbowMode = !isRainbowMode;
+	setRainbowMode(isRainbowMode);
+
+	if (isRainbowMode) {
+		document.documentElement.classList.add("is-rainbow-mode");
+		document.documentElement.style.setProperty(
+			"--rainbow-duration",
+			`${120 / rainbowSpeed}s`,
+		);
+	} else {
+		document.documentElement.classList.remove("is-rainbow-mode");
+		document.documentElement.style.removeProperty("--rainbow-duration");
+		setHue(hue); // Restore the static hue
 	}
+}
 
-	$: if ((hue || hue === 0) && !isRainbowMode) {
-		setHue(hue);
+function toggleHideBg() {
+	hideBg = !hideBg;
+	setHideBg(hideBg);
+}
+
+function toggleDevMode() {
+	isDevMode = !isDevMode;
+	setDevMode(isDevMode);
+}
+
+function onDevServerChange() {
+	setDevServer(devServer);
+}
+
+function onSpeedChange() {
+	setRainbowSpeed(rainbowSpeed);
+	if (isRainbowMode) {
+		document.documentElement.style.setProperty(
+			"--rainbow-duration",
+			`${120 / rainbowSpeed}s`,
+		);
 	}
+}
 
-	$: {
-		setBgBlur(bgBlur);
+onMount(() => {
+	if (isRainbowMode) {
+		document.documentElement.classList.add("is-rainbow-mode");
+		document.documentElement.style.setProperty(
+			"--rainbow-duration",
+			`${120 / rainbowSpeed}s`,
+		);
 	}
-
-	function switchTheme(newTheme: string) {
-		theme = newTheme;
-		setTheme(newTheme);
-	}
-
-	function toggleRainbow() {
-		isRainbowMode = !isRainbowMode;
-		setRainbowMode(isRainbowMode);
-
-		if (isRainbowMode) {
-			document.documentElement.classList.add("is-rainbow-mode");
-            document.documentElement.style.setProperty("--rainbow-duration", `${120 / rainbowSpeed}s`);
-		} else {
-            document.documentElement.classList.remove("is-rainbow-mode");
-            document.documentElement.style.removeProperty("--rainbow-duration");
-			setHue(hue); // Restore the static hue
-		}
-	}
-
-	function toggleHideBg() {
-		hideBg = !hideBg;
-		setHideBg(hideBg);
-	}
-
-	function toggleDevMode() {
-		isDevMode = !isDevMode;
-		setDevMode(isDevMode);
-	}
-
-	function onDevServerChange() {
-		setDevServer(devServer);
-	}
-
-	function onSpeedChange() {
-		setRainbowSpeed(rainbowSpeed);
-        if (isRainbowMode) {
-             document.documentElement.style.setProperty("--rainbow-duration", `${120 / rainbowSpeed}s`);
-        }
-	}
-
-	onMount(() => {
-		if (isRainbowMode) {
-            document.documentElement.classList.add("is-rainbow-mode");
-            document.documentElement.style.setProperty("--rainbow-duration", `${120 / rainbowSpeed}s`);
-		}
-	});
+});
 </script>
 
 <div id="display-setting" class="float-panel float-panel-closed absolute transition-all w-80 right-4 px-4 py-4">

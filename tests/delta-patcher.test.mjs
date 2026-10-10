@@ -1,16 +1,16 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import {
-	parseJsonPointer,
-	encodePointerToken,
-	getPointerValue,
-	applyOperation,
-	applyJsonPatch,
-	generateLineDeltas,
-	applyLineDeltas,
-	generateObjectJsonPatch,
-	createDeltaPatch,
 	applyDeltaPatch,
+	applyJsonPatch,
+	applyLineDeltas,
+	applyOperation,
+	createDeltaPatch,
+	encodePointerToken,
+	generateLineDeltas,
+	generateObjectJsonPatch,
+	getPointerValue,
+	parseJsonPointer,
 } from "../src/utils/delta-patcher.mjs";
 
 describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & Hot-Patching)", () => {
@@ -20,12 +20,22 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 			assert.deepEqual(parseJsonPointer("/"), []);
 			assert.deepEqual(parseJsonPointer("/title"), ["title"]);
 			assert.deepEqual(parseJsonPointer("/a/b/c"), ["a", "b", "c"]);
-			assert.deepEqual(parseJsonPointer("/users/0/name"), ["users", "0", "name"]);
+			assert.deepEqual(parseJsonPointer("/users/0/name"), [
+				"users",
+				"0",
+				"name",
+			]);
 			assert.deepEqual(parseJsonPointer("/special~1slash"), ["special/slash"]);
 			assert.deepEqual(parseJsonPointer("/special~0tilde"), ["special~tilde"]);
-			assert.deepEqual(parseJsonPointer("/mix~0tilde~1slash/item"), ["mix~tilde/slash", "item"]);
+			assert.deepEqual(parseJsonPointer("/mix~0tilde~1slash/item"), [
+				"mix~tilde/slash",
+				"item",
+			]);
 
-			assert.throws(() => parseJsonPointer("invalid_no_slash"), /非法 JSON Pointer 路径/);
+			assert.throws(
+				() => parseJsonPointer("invalid_no_slash"),
+				/非法 JSON Pointer 路径/,
+			);
 		});
 
 		it("应当正确编码 JSON Pointer token", () => {
@@ -57,7 +67,11 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 			};
 
 			// add 属性与数组项
-			applyOperation(doc, { op: "add", path: "/description", value: "博文描述" });
+			applyOperation(doc, {
+				op: "add",
+				path: "/description",
+				value: "博文描述",
+			});
 			assert.equal(doc.description, "博文描述");
 			applyOperation(doc, { op: "add", path: "/tags/1", value: "ops" });
 			assert.deepEqual(doc.tags, ["dev", "ops"]);
@@ -65,7 +79,11 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 			// replace 属性与数组项
 			applyOperation(doc, { op: "replace", path: "/title", value: "更新标题" });
 			assert.equal(doc.title, "更新标题");
-			applyOperation(doc, { op: "replace", path: "/tags/0", value: "development" });
+			applyOperation(doc, {
+				op: "replace",
+				path: "/tags/0",
+				value: "development",
+			});
 			assert.deepEqual(doc.tags, ["development", "ops"]);
 
 			// copy 操作
@@ -73,7 +91,11 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 			assert.equal(doc.backupTitle, "更新标题");
 
 			// move 操作
-			applyOperation(doc, { op: "move", from: "/backupTitle", path: "/archivedTitle" });
+			applyOperation(doc, {
+				op: "move",
+				from: "/backupTitle",
+				path: "/archivedTitle",
+			});
 			assert.equal(doc.archivedTitle, "更新标题");
 			assert.equal("backupTitle" in doc, false);
 
@@ -145,7 +167,9 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 			assert.equal(applyLineDeltas(base, deltaMid), atMid);
 
 			// 末尾插入
-			const atTail = ["line 1", "line 2", "line 3", "line 4", "line 5"].join("\n");
+			const atTail = ["line 1", "line 2", "line 3", "line 4", "line 5"].join(
+				"\n",
+			);
 			const deltaTail = generateLineDeltas(base, atTail);
 			assert.equal(applyLineDeltas(base, deltaTail), atTail);
 		});
@@ -155,15 +179,24 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 
 			// 删首
 			const delHead = ["B", "C", "D", "E"].join("\n");
-			assert.equal(applyLineDeltas(base, generateLineDeltas(base, delHead)), delHead);
+			assert.equal(
+				applyLineDeltas(base, generateLineDeltas(base, delHead)),
+				delHead,
+			);
 
 			// 删中间
 			const delMid = ["A", "C", "E"].join("\n");
-			assert.equal(applyLineDeltas(base, generateLineDeltas(base, delMid)), delMid);
+			assert.equal(
+				applyLineDeltas(base, generateLineDeltas(base, delMid)),
+				delMid,
+			);
 
 			// 删尾部
 			const delTail = ["A", "B"].join("\n");
-			assert.equal(applyLineDeltas(base, generateLineDeltas(base, delTail)), delTail);
+			assert.equal(
+				applyLineDeltas(base, generateLineDeltas(base, delTail)),
+				delTail,
+			);
 		});
 
 		it("边界用例：中英文混排与复杂标点符号改写", () => {
@@ -213,7 +246,7 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 				"数学公式演进：",
 				"$$ f(x) = \\frac{1}{\\sqrt{2\\pi}} \\int_{-\\infty}^\\infty \\hat f(\\xi)\\,e^{i \\xi x} \\,d\\xi $$",
 				"",
-				"Emoji 与特殊控制符强化: 🐱🐾⚡🚀 <div>Safe & Sound</div> `\"escaped\"`",
+				'Emoji 与特殊控制符强化: 🐱🐾⚡🚀 <div>Safe & Sound</div> `"escaped"`',
 			].join("\n");
 
 			const deltas = generateLineDeltas(v1, v2);
@@ -224,7 +257,9 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 		it("边界用例：超大文本块 (2000+ 行) 差分算法健壮性", () => {
 			const originalLines = [];
 			for (let i = 1; i <= 2000; i++) {
-				originalLines.push(`Line ${i}: 这是全站静态内容工程的第 ${i} 行测试数据喵~`);
+				originalLines.push(
+					`Line ${i}: 这是全站静态内容工程的第 ${i} 行测试数据喵~`,
+				);
 			}
 			const v1 = originalLines.join("\n");
 
@@ -232,7 +267,11 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 			// 散布几处修改
 			modifiedLines[42] = "Line 43: [MODIFIED] 特异性修改点 Alpha 喵！";
 			modifiedLines[500] = "Line 501: [MODIFIED] 特异性修改点 Beta 喵！";
-			modifiedLines.splice(1000, 5, "Line 1001-1005: 批量替换为一行核心日志喵！");
+			modifiedLines.splice(
+				1000,
+				5,
+				"Line 1001-1005: 批量替换为一行核心日志喵！",
+			);
 			modifiedLines.push("Line 2001: 尾部追加新行喵~");
 			const v2 = modifiedLines.join("\n");
 
@@ -322,7 +361,8 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 				author: "yaoxi",
 				date: "2026-10-05T12:00:00Z",
 				message: "feat: add hot patch support",
-				content: "# Title (Updated)\nInitial content line 1\nPatched content line 2",
+				content:
+					"# Title (Updated)\nInitial content line 1\nPatched content line 2",
 				badgeStatus: "verified",
 			};
 
@@ -347,29 +387,27 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 			const paragraphs = [];
 			for (let i = 1; i <= 80; i++) {
 				paragraphs.push(
-					`### 第 ${i} 章节：高并发架构演进论\n` +
-					`在现代云原生架构体系中，微服务与边缘计算的结合极大地降低了端到端延迟（Latency）。\n` +
-					`通过充分利用 Redis 缓存层、Cloudflare Workers 边缘分发网络与本地 SQLite/D1 数据库，\n` +
-					`我们可以将吞吐量（Throughput）提升至数万 QPS 以上，同时保持系统 CPU 占用率在 15% 以下。\n` +
-					`\`\`\`typescript\n` +
-					`export async function handleRequest(req: Request): Promise<Response> {\n` +
-					`    const cacheKey = req.url;\n` +
-					`    const cached = await caches.default.match(cacheKey);\n` +
-					`    if (cached) return cached;\n` +
-					`    return new Response("OK - Stage ${i}", { headers: { "X-Cache": "MISS" } });\n` +
-					`}\n` +
-					`\`\`\`\n`
+					`### 第 ${i} 章节：高并发架构演进论\n在现代云原生架构体系中，微服务与边缘计算的结合极大地降低了端到端延迟（Latency）。\n通过充分利用 Redis 缓存层、Cloudflare Workers 边缘分发网络与本地 SQLite/D1 数据库，\n我们可以将吞吐量（Throughput）提升至数万 QPS 以上，同时保持系统 CPU 占用率在 15% 以下。\n\`\`\`typescript\nexport async function handleRequest(req: Request): Promise<Response> {\n    const cacheKey = req.url;\n    const cached = await caches.default.match(cacheKey);\n    if (cached) return cached;\n    return new Response("OK - Stage ${i}", { headers: { "X-Cache": "MISS" } });\n}\n\`\`\`\n`,
 				);
 			}
 
 			const fullDocA = paragraphs.join("\n");
 			const fullDocSize = Buffer.byteLength(fullDocA, "utf-8");
-			assert.ok(fullDocSize >= 15000, `全量快照体积需达到真实技术长文规模 (当前: ${fullDocSize} 字节)`);
+			assert.ok(
+				fullDocSize >= 15000,
+				`全量快照体积需达到真实技术长文规模 (当前: ${fullDocSize} 字节)`,
+			);
 
 			// 模拟真实修订：修改 2 个段落中的错别字与代码优化
 			const modifiedParagraphs = [...paragraphs];
-			modifiedParagraphs[10] = modifiedParagraphs[10].replace("数万 QPS", "数十万 QPS (优化升级)");
-			modifiedParagraphs[50] = modifiedParagraphs[50].replace("X-Cache", "X-Edge-Cache");
+			modifiedParagraphs[10] = modifiedParagraphs[10].replace(
+				"数万 QPS",
+				"数十万 QPS (优化升级)",
+			);
+			modifiedParagraphs[50] = modifiedParagraphs[50].replace(
+				"X-Cache",
+				"X-Edge-Cache",
+			);
 			const fullDocB = modifiedParagraphs.join("\n");
 
 			// 生成增量补丁
@@ -387,23 +425,19 @@ describe("RFC 6902 客户端增量差分热补丁测试套件 (Delta-Encoding & 
 					sha: "2222222222222222222222222222222222222222",
 					content: fullDocB,
 				}),
-				"utf-8"
+				"utf-8",
 			);
 
 			const slimmingPercentage = (1 - patchSize / fullSnapshotSize) * 100;
 
 			console.log(
-				`\n📊 [OTA Delta Benchmark] 瘦身指标汇报：\n` +
-				`   - 全量快照体积: ${fullSnapshotSize} 字节 (${(fullSnapshotSize / 1024).toFixed(2)} KB)\n` +
-				`   - 增量补丁体积: ${patchSize} 字节 (${(patchSize / 1024).toFixed(2)} KB)\n` +
-				`   - 带宽节约瘦身率: ${slimmingPercentage.toFixed(2)}%\n` +
-				`   - 变更行数: +${patch.stats.addedLines} / -${patch.stats.deletedLines} 行喵~`
+				`\n📊 [OTA Delta Benchmark] 瘦身指标汇报：\n   - 全量快照体积: ${fullSnapshotSize} 字节 (${(fullSnapshotSize / 1024).toFixed(2)} KB)\n   - 增量补丁体积: ${patchSize} 字节 (${(patchSize / 1024).toFixed(2)} KB)\n   - 带宽节约瘦身率: ${slimmingPercentage.toFixed(2)}%\n   - 变更行数: +${patch.stats.addedLines} / -${patch.stats.deletedLines} 行喵~`,
 			);
 
 			// 严苛断言：必须达到 80%~95% 以上的高压缩瘦身比率
 			assert.ok(
 				slimmingPercentage >= 80.0,
-				`增量补丁瘦身率必须达到 80% 以上！当前仅为 ${slimmingPercentage.toFixed(2)}%`
+				`增量补丁瘦身率必须达到 80% 以上！当前仅为 ${slimmingPercentage.toFixed(2)}%`,
 			);
 
 			// 验证还原数据无误

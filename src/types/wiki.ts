@@ -26,6 +26,15 @@ export interface WikiPostHistory {
 	revisions: WikiRevision[];
 }
 
+/**
+ * src/data/wiki/history.json 的顶层结构：slug → 该文章的完整修订历史。
+ *
+ * 该文件由 scripts/generate-wiki-history.mjs 生成，全部条目均为
+ * `{ slug, title, filePath, totalRevisions, lastUpdated, revisions }`，
+ * 因此顶层是 slug 到 WikiPostHistory 的映射（而非单篇文章的历史）。
+ */
+export type WikiHistoryData = Record<string, WikiPostHistory>;
+
 export interface DiffToken {
 	type: "same" | "add" | "del";
 	text: string;

@@ -1,11 +1,11 @@
 ---
 // CyberSummary.astro
 interface Props {
-  summary: string;
+	summary: string;
 }
 const { summary } = Astro.props;
 // 清理可能的 markdown 标记或换行
-const cleanSummary = summary.replace(/[\n\r]+/g, ' ').replace(/"/g, '&quot;');
+const cleanSummary = summary.replace(/[\n\r]+/g, " ").replace(/"/g, "&quot;");
 ---
 
 <div class="cyber-summary-container mb-6 rounded-xl border border-[var(--primary)]/50 bg-[var(--primary)]/5 p-4 md:p-5 relative overflow-hidden group">

@@ -8,6 +8,10 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    # corepack 在非交互环境下下载 packageManager 指定的 pnpm 前会要求确认，
+    # 置 0 关闭该提示；这不影响任何步骤的退出码，失败仍会让工作流变红。
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -19,11 +23,16 @@ jobs:
         with:
           node-version: 22
 
+      - name: Enable Corepack (pnpm via packageManager)
+        run: corepack enable
+
+      # 必须用 pnpm：pnpm.patchedDependencies 对 astro 的补丁（patches/astro.patch）
+      # 只有 pnpm 会应用，npm 会静默跳过并让构建产物与本地分叉。
       - name: Install Dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build Astro
-        run: npm run build
+        run: pnpm run build
         env:
           # 官印签名私钥（Ed25519 PEM 或 base64(PEM)）；未配置时构建自动跳过签发并保留既有 manifest
           SEAL_PRIVATE_KEY: ${{ secrets.SEAL_PRIVATE_KEY }}

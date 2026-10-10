@@ -1,9 +1,0 @@
-{
-  "sha": "1b5f7a7d7c748e3de6228ed695386cfc37fd9fd1",
-  "shortSha": "1b5f7a7",
-  "date": "2026-04-03T22:53:57+08:00",
-  "author": "yaoxiovo",
-  "message": "更新文章",
-  "slug": "umami",
-  "content": "---\ntitle: 什么umami问题\npublished: 2026-04-03\ndescription: umami问题\ntags:\n  - 开发笔记\ncategory: 成长记录\ndraft: false\nlang: \"\"\n---\n数据库配置问题过几个月再修，只能暂时显示0了\n"
-}

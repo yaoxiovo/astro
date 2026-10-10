@@ -1,7 +1,7 @@
 ---
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { Icon } from "astro-icon/components";
 import { getSealManifest } from "@utils/seal-loader";
+import { Icon } from "astro-icon/components";
 
 const manifest = getSealManifest();
 const seals = [...manifest.seals].sort((a, b) =>

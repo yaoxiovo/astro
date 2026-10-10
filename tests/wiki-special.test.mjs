@@ -1,18 +1,18 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import {
 	SITE_HOST,
 	STALE_THRESHOLD_DAYS,
-	extractInternalLinks,
-	extractRelatedSlugs,
-	mergeSeeAlsoLinks,
-	validateRelatedLinks,
-	invertBacklinks,
-	flattenRecentChanges,
 	buildMaintenanceReport,
 	buildScanMask,
 	computeLinkSuggestions,
 	computeRelatedArticles,
+	extractInternalLinks,
+	extractRelatedSlugs,
+	flattenRecentChanges,
+	invertBacklinks,
+	mergeSeeAlsoLinks,
+	validateRelatedLinks,
 } from "../scripts/generate-wiki-special.mjs";
 
 describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)", () => {
@@ -32,10 +32,7 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 		it("应当剥离锚点 (#anchor) 与查询串 (?query) 后归一化 slug", () => {
 			const md = "[A](/posts/foo#section-2) 和 [B](/posts/bar?tab=1&x=2)";
 			const links = extractInternalLinks(md, "self-slug");
-			assert.deepEqual(
-				links.map((l) => l.slug).sort(),
-				["bar", "foo"],
-			);
+			assert.deepEqual(links.map((l) => l.slug).sort(), ["bar", "foo"]);
 		});
 
 		it("应当识别绝对站内 URL 并拒绝外站 /posts/ 路径", () => {
@@ -60,15 +57,14 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 				'[带标题](/posts/titled "鼠标悬停标题")',
 			].join("\n");
 			const links = extractInternalLinks(md, "self-slug");
-			assert.deepEqual(
-				links.map((l) => l.slug).sort(),
-				["hello world", "titled"],
-			);
+			assert.deepEqual(links.map((l) => l.slug).sort(), [
+				"hello world",
+				"titled",
+			]);
 		});
 
 		it("应当忽略普通相对路径与外部 http 链接", () => {
-			const md =
-				"[相对](./other.md) [外部](https://google.com) [锚点](#top)";
+			const md = "[相对](./other.md) [外部](https://google.com) [锚点](#top)";
 			const links = extractInternalLinks(md, "self-slug");
 			assert.deepEqual(links, []);
 		});
@@ -172,10 +168,7 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 
 		it("空历史或缺失 revisions 字段应当安全降级为空数组", () => {
 			assert.deepEqual(flattenRecentChanges({}), []);
-			assert.deepEqual(
-				flattenRecentChanges({ "post-x": { title: "X" } }),
-				[],
-			);
+			assert.deepEqual(flattenRecentChanges({ "post-x": { title: "X" } }), []);
 		});
 	});
 
@@ -201,7 +194,12 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 				score: 42,
 				issuesCount: { total: 9 },
 			},
-			desert: { title: "荒漠", grade: "B", score: 80, issuesCount: { total: 3 } },
+			desert: {
+				title: "荒漠",
+				grade: "B",
+				score: 80,
+				issuesCount: { total: 3 },
+			},
 		};
 		const qualityReports = {
 			hub: {
@@ -241,14 +239,8 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 
 		it("应当识别孤立条目（零链入）与断头路（零出链）", () => {
 			const r = report();
-			assert.deepEqual(
-				r.orphans.map((o) => o.slug).sort(),
-				["desert", "leaf"],
-			);
-			assert.deepEqual(
-				r.deadEnds.map((d) => d.slug).sort(),
-				["desert", "hub"],
-			);
+			assert.deepEqual(r.orphans.map((o) => o.slug).sort(), ["desert", "leaf"]);
+			assert.deepEqual(r.deadEnds.map((d) => d.slug).sort(), ["desert", "hub"]);
 		});
 
 		it("自链接引用不应计入链入/出链度", () => {
@@ -325,7 +317,11 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 				lonely: [],
 			};
 			const backlinkIndex = invertBacklinks(outboundMap);
-			const { related } = computeRelatedArticles({ posts, outboundMap, backlinkIndex });
+			const { related } = computeRelatedArticles({
+				posts,
+				outboundMap,
+				backlinkIndex,
+			});
 
 			assert.equal(related.alpha.length, 1);
 			assert.equal(related.alpha[0].slug, "gamma");
@@ -373,7 +369,11 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 				hidden: [{ slug: "beta", count: 1 }],
 			};
 			const backlinkIndex = invertBacklinks(outboundMap);
-			const { related } = computeRelatedArticles({ posts, outboundMap, backlinkIndex });
+			const { related } = computeRelatedArticles({
+				posts,
+				outboundMap,
+				backlinkIndex,
+			});
 
 			assert.equal("hidden" in related, false);
 			assert.equal(related.alpha, undefined);
@@ -395,7 +395,11 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 				outboundMap[slug] = [{ slug: "hub", count: 1 }];
 				backlinkIndex.hub.push({ slug, count: 1 });
 			}
-			const { related } = computeRelatedArticles({ posts, outboundMap, backlinkIndex });
+			const { related } = computeRelatedArticles({
+				posts,
+				outboundMap,
+				backlinkIndex,
+			});
 
 			assert.equal(related.main.length, 5);
 			assert.deepEqual(
@@ -447,7 +451,10 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 
 		it("应当统计未链接的标题提及并生成样本上下文", () => {
 			const { posts, outboundMap } = makeSuggestionsFixture();
-			const { suggestions, stats } = computeLinkSuggestions({ posts, outboundMap });
+			const { suggestions, stats } = computeLinkSuggestions({
+				posts,
+				outboundMap,
+			});
 
 			const list = suggestions.source;
 			assert.equal(list.length, 1);
@@ -489,11 +496,24 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 
 		it("加密正文与 draft 条目不应作为扫描来源（样本防泄漏）", () => {
 			const posts = [
-				{ slug: "secret", title: "加密文章", encrypted: true, raw: "这里提到 目标文章甲 的内容" },
-				{ slug: "draft-x", title: "草稿", draft: true, raw: "这里提到 目标文章甲 的内容" },
+				{
+					slug: "secret",
+					title: "加密文章",
+					encrypted: true,
+					raw: "这里提到 目标文章甲 的内容",
+				},
+				{
+					slug: "draft-x",
+					title: "草稿",
+					draft: true,
+					raw: "这里提到 目标文章甲 的内容",
+				},
 				{ slug: "target-a", title: "目标文章甲", raw: "" },
 			];
-			const { suggestions } = computeLinkSuggestions({ posts, outboundMap: {} });
+			const { suggestions } = computeLinkSuggestions({
+				posts,
+				outboundMap: {},
+			});
 			assert.deepEqual(suggestions, {});
 		});
 
@@ -504,7 +524,10 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 				{ slug: "dup-b", title: "重名条目", raw: "" },
 				{ slug: "short", title: "短", raw: "" },
 			];
-			const { suggestions } = computeLinkSuggestions({ posts, outboundMap: {} });
+			const { suggestions } = computeLinkSuggestions({
+				posts,
+				outboundMap: {},
+			});
 			assert.equal(suggestions.s1, undefined);
 		});
 
@@ -517,7 +540,10 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 				},
 				{ slug: "target", title: "开发日志：构建提速", raw: "" },
 			];
-			const { suggestions } = computeLinkSuggestions({ posts, outboundMap: {} });
+			const { suggestions } = computeLinkSuggestions({
+				posts,
+				outboundMap: {},
+			});
 			const list = suggestions.source;
 			assert.equal(list.length, 1);
 			assert.equal(list[0].slug, "target");
@@ -528,11 +554,18 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 
 		it("通用副标题前缀跨条目冲突时应整体弃用该变体", () => {
 			const posts = [
-				{ slug: "source", title: "来源文章", raw: "提到 开发日志 与 构建提速 两处。" },
+				{
+					slug: "source",
+					title: "来源文章",
+					raw: "提到 开发日志 与 构建提速 两处。",
+				},
 				{ slug: "target-a", title: "开发日志：构建提速", raw: "" },
 				{ slug: "target-b", title: "开发日志：部署复盘", raw: "" },
 			];
-			const { suggestions } = computeLinkSuggestions({ posts, outboundMap: {} });
+			const { suggestions } = computeLinkSuggestions({
+				posts,
+				outboundMap: {},
+			});
 			const list = suggestions.source;
 			// 「开发日志」歧义弃用；「构建提速」仍唯一指向 target-a
 			assert.ok(list.some((item) => item.slug === "target-a"));
@@ -567,8 +600,14 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 				"",
 				"正文",
 			].join("\n");
-			assert.deepEqual(extractRelatedSlugs(raw, "self-slug"), ["alpha", "beta"]);
-			assert.deepEqual(extractRelatedSlugs("无 frontmatter 正文", "self-slug"), []);
+			assert.deepEqual(extractRelatedSlugs(raw, "self-slug"), [
+				"alpha",
+				"beta",
+			]);
+			assert.deepEqual(
+				extractRelatedSlugs("无 frontmatter 正文", "self-slug"),
+				[],
+			);
 		});
 
 		it("mergeSeeAlsoLinks 应以 kind:seealso 并入出链，并避免与正文内链重复", () => {
@@ -576,12 +615,17 @@ describe("维基百科式特殊页面索引生成套件 (Special Pages Indexer)"
 				alpha: [{ slug: "beta", count: 2 }],
 				gamma: [],
 			};
-			mergeSeeAlsoLinks(outbound, { alpha: ["beta", "delta"], gamma: ["alpha"] });
+			mergeSeeAlsoLinks(outbound, {
+				alpha: ["beta", "delta"],
+				gamma: ["alpha"],
+			});
 			assert.deepEqual(outbound.alpha, [
 				{ slug: "beta", count: 2 },
 				{ slug: "delta", count: 1, kind: "seealso" },
 			]);
-			assert.deepEqual(outbound.gamma, [{ slug: "alpha", count: 1, kind: "seealso" }]);
+			assert.deepEqual(outbound.gamma, [
+				{ slug: "alpha", count: 1, kind: "seealso" },
+			]);
 		});
 
 		it("validateRelatedLinks 应告警未知名目与已发布→draft 目标，draft 源不受限", () => {

@@ -5,9 +5,9 @@
 	"scripts": {
 		"dev": "node scripts/generate-wiki-history.mjs && node scripts/generate-official-seal.mjs && node scripts/generate-wiki-special.mjs && astro dev",
 		"start": "node scripts/generate-wiki-history.mjs && node scripts/generate-official-seal.mjs && node scripts/generate-wiki-special.mjs && astro dev",
-		"prebuild": "(git rev-parse --is-shallow-repository 2>/dev/null | grep -q true && (git fetch --unshallow || git fetch --depth=2000 origin HEAD) || true) && node scripts/generate-wiki-history.mjs && node scripts/generate-official-seal.mjs && node scripts/content-quality-gate.mjs && node scripts/generate-wiki-special.mjs",
+		"prebuild": "node scripts/ensure-full-history.mjs && node scripts/generate-wiki-history.mjs && node scripts/generate-official-seal.mjs && node scripts/content-quality-gate.mjs && node scripts/generate-wiki-special.mjs",
 		"build": "astro build",
-		"cf:build": "(git rev-parse --is-shallow-repository 2>/dev/null | grep -q true && (git fetch --unshallow || git fetch --depth=2000 origin HEAD) || true) && pnpm run build",
+		"cf:build": "node scripts/ensure-full-history.mjs && pnpm run build",
 		"wiki:history": "node scripts/generate-wiki-history.mjs",
 		"wiki:special": "node scripts/generate-wiki-special.mjs",
 		"seal": "node scripts/generate-official-seal.mjs",
@@ -21,9 +21,9 @@
 		"submit-urls:all": "node scripts/submit-urls.js --all",
 		"clean": "node scripts/clean-unused-images.js",
 		"del-space": "node scripts/del-space.js",
-		"upload-bili": "node scripts/upload-bili.js",
-		"format": "biome format --write ./src",
-		"lint": "biome check --write ./src"
+		"format": "biome format --write ./src ./scripts ./tests",
+		"lint": "biome check --write ./src ./scripts ./tests",
+		"lint:ci": "biome check ./src ./scripts ./tests astro.config.mjs"
 	},
 	"dependencies": {
 		"@astrojs/check": "^0.9.4",
@@ -86,7 +86,6 @@
 		"@types/mdast": "^4.0.4",
 		"@types/sanitize-html": "^2.15.0",
 		"postcss-import": "^16.1.0",
-		"postcss-nesting": "^13.0.1",
 		"rehype": "^13.0.2"
 	},
 	"packageManager": "pnpm@9.14.4",

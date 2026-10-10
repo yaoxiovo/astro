@@ -6,11 +6,11 @@ import "@fontsource/roboto/700.css";
 
 import { profileConfig, siteConfig } from "@/config";
 import ConfigCarrier from "@components/ConfigCarrier.astro";
-import ReadingProgress from "@components/control/ReadingProgress.astro";
 import CookieConsent from "@components/CookieConsent.astro";
-import YaoxiAuth from "@components/YaoxiAuth.astro";
 import EasterEggEngine from "@components/EasterEggEngine.astro";
 import ReadingFootprint from "@components/ReadingFootprint.astro";
+import YaoxiAuth from "@components/YaoxiAuth.astro";
+import ReadingProgress from "@components/control/ReadingProgress.astro";
 import { Icon } from "astro-icon/components";
 import {
 	AUTO_MODE,
@@ -88,28 +88,31 @@ if (!description) {
 	description = siteConfig.description || pageTitle;
 }
 
-const canonicalPath = Astro.url.pathname.endsWith('/') ? Astro.url.pathname : `${Astro.url.pathname}/`;
+const canonicalPath = Astro.url.pathname.endsWith("/")
+	? Astro.url.pathname
+	: `${Astro.url.pathname}/`;
 const canonicalURL = new URL(canonicalPath, Astro.site).href;
 
 // ogImage selection with absolute path check
 // NOTE: banner 是装饰性壁纸（banner.enable=false 时 src 可能指向不存在的图），
 // 只有 banner 功能启用时才参与 og:image，否则回退到 avatar，避免 og:image 404
-let ogImage = image || (siteConfig.banner.enable ? banner : null) || profileConfig.avatar;
-if (ogImage && ogImage.startsWith("/")) {
+let ogImage =
+	image || (siteConfig.banner.enable ? banner : null) || profileConfig.avatar;
+if (ogImage?.startsWith("/")) {
 	ogImage = new URL(ogImage, Astro.site).href;
 }
 
 const defaultJsonLd = {
 	"@context": "https://schema.org",
 	"@type": "WebSite",
-	"name": siteConfig.title,
-	"url": Astro.site,
-	"description": description,
-	"author": {
+	name: siteConfig.title,
+	url: Astro.site,
+	description: description,
+	author: {
 		"@type": "Person",
-		"name": profileConfig.name
+		name: profileConfig.name,
 	},
-	"sameAs": profileConfig.links
+	sameAs: profileConfig.links
 		?.map((link) => link.url)
 		.filter((url) => typeof url === "string" && url.startsWith("http")),
 };

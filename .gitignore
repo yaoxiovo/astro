@@ -1,6 +1,12 @@
 # build output
 dist/
 
+# wiki 修订历史与质量报告 —— 纯构建产物，prebuild/dev 时由脚本重新生成。
+# 提交会因 git 历史增长反复产生噪声 diff（checkedAt 时间戳、新增修订等），
+# 故只保留空目录说明文件，实际数据在每次构建时生成。
+src/data/wiki/
+public/api/wiki/
+
 # generated types
 .astro/
 
@@ -16,6 +22,10 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.production
+
+# Cloudflare Workers 本地密钥文件（wrangler dev 用；切勿提交）
+.dev.vars
+.dev.vars.*
 
 # macOS-specific files
 .DS_Store

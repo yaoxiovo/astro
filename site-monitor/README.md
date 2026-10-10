@@ -13,7 +13,7 @@
 | 图床 | https://png.yaoxi.wiki/ | 200 |
 | 状态页 | https://status.yaoxi.wiki/ | 200 |
 
-> 拨测周期：每 5 分钟（cron `*/5 * * * *`）；也可用 `Authorization: Bearer <ADMIN_TOKEN>` 头访问 `GET /api/run` 手动触发一轮检测。
+> 拨测周期：每 1 分钟（cron `* * * * *`）；也可用 `Authorization: Bearer <ADMIN_TOKEN>` 头访问 `GET /api/run` 手动触发一轮检测。
 
 ## 告警通道
 
@@ -51,7 +51,8 @@
 |---|---|
 | `GET /` | **自写状态页**（复刻快猫星云 UI：整体徽章 + 组件列表 + uptime% + 响应曲线 + 故障时间线，60s 轮询，自动明暗模式） |
 | `GET /api/status` | 公开状态 JSON（各站点 state/since/lastCheck/lastMs，widget 兼容） |
-| `GET /api/history?days=30&site=xxx` | 🔒 需 ADMIN_TOKEN · 历史数据：uptime% / 采样点 / 故障事件（自动从快照推导） |
+| `GET /api/status-history?days=30` | 公开历史数据（uptime% / 采样点 / 故障事件），供状态页使用；days 硬限制 ≤ 30 天 |
+| `GET /api/history?days=30&site=xxx` | 🔒 需 ADMIN_TOKEN · 历史数据：uptime% / 采样点 / 故障事件（自动从快照推导，最长 90 天） |
 | `GET /api/sp-test` | 🔒 需 ADMIN_TOKEN · Flashduty 连通性测试 |
 | `GET /api/diag` | 🔒 需 ADMIN_TOKEN · 状态页诊断信息 |
 | `GET /api/run` | 🔒 需 ADMIN_TOKEN · 手动触发一轮检测 |
@@ -64,7 +65,7 @@
 
 ## 调度
 
-Cron `*/5 * * * *`（每 5 分钟），6 站点 × 288 次/天 ≈ 1.7k 请求，远低于免费额度 10 万/天。
+Cron `* * * * *`（每 1 分钟），6 站点 × 1440 次/天 ≈ 8.6k 请求，远低于免费额度 10 万/天。
 
 ## 测试
 

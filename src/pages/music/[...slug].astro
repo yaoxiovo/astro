@@ -1,16 +1,16 @@
 ---
-import MainGridLayout from "@layouts/MainGridLayout.astro";
-import MusicCard from "@components/widget/MusicCard.astro";
-import { Icon } from "astro-icon/components";
-import { profileConfig } from "@/config";
 import { getCollection } from "astro:content";
+import { profileConfig } from "@/config";
+import MusicCard from "@components/widget/MusicCard.astro";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
 
 export async function getStaticPaths() {
-  const musicEntries = await getCollection("music");
-  return musicEntries.map((entry) => ({
-    params: { slug: entry.slug },
-    props: { entry },
-  }));
+	const musicEntries = await getCollection("music");
+	return musicEntries.map((entry) => ({
+		params: { slug: entry.slug },
+		props: { entry },
+	}));
 }
 
 const { entry } = Astro.props;

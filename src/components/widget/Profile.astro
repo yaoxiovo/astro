@@ -1,7 +1,7 @@
 ---
-import { Icon } from "astro-icon/components";
 import { getCollection } from "astro:content";
-import { profileConfig, siteConfig, umamiConfig, quotes } from "../../config";
+import { Icon } from "astro-icon/components";
+import { profileConfig, quotes, siteConfig, umamiConfig } from "../../config";
 
 const config = profileConfig;
 const allPosts = await getCollection("posts");

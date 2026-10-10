@@ -1,37 +1,43 @@
 ---
-import MainGridLayout from "@layouts/MainGridLayout.astro";
-import MusicCard from "@components/widget/MusicCard.astro";
-import { Icon } from "astro-icon/components";
-import { profileConfig, siteConfig } from "@/config";
 import { getCollection } from "astro:content";
+import { profileConfig, siteConfig } from "@/config";
+import MusicCard from "@components/widget/MusicCard.astro";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
 
 const musicMoments = (await getCollection("music")).sort(
-  (a, b) => b.data.published.valueOf() - a.data.published.valueOf()
+	(a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
 );
 
 // 热歌 TOP 3：按 likes 降序（并列时按发布时间倒序）
 const topSongs = [...musicMoments]
-  .sort((a, b) => (b.data.likes || 0) - (a.data.likes || 0) || b.data.published.valueOf() - a.data.published.valueOf())
-  .slice(0, 3);
+	.sort(
+		(a, b) =>
+			(b.data.likes || 0) - (a.data.likes || 0) ||
+			b.data.published.valueOf() - a.data.published.valueOf(),
+	)
+	.slice(0, 3);
 
 function getFriendlyTime(date: Date) {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+	const now = new Date();
+	const diffMs = now.getTime() - date.getTime();
+	const diffMins = Math.floor(diffMs / (1000 * 60));
+	const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffMins < 60) {
-    return diffMins <= 1 ? "刚刚" : `${diffMins} 分钟前`;
-  } else if (diffHours < 24) {
-    return `${diffHours} 小时前`;
-  } else if (diffDays === 1) {
-    return "昨天";
-  } else if (diffDays === 2) {
-    return "前天";
-  } else {
-    return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
-  }
+	if (diffMins < 60) {
+		return diffMins <= 1 ? "刚刚" : `${diffMins} 分钟前`;
+	}
+	if (diffHours < 24) {
+		return `${diffHours} 小时前`;
+	}
+	if (diffDays === 1) {
+		return "昨天";
+	}
+	if (diffDays === 2) {
+		return "前天";
+	}
+	return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
 }
 ---
 

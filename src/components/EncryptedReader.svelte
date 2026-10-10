@@ -1,99 +1,126 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import {
-    unlockPrivateKeyVault,
-    decryptArticleContent,
-    type EncryptedArticlePayload,
-    type VaultData
-  } from '../utils/crypto';
+import { onMount } from "svelte";
+import {
+	type EncryptedArticlePayload,
+	type VaultData,
+	decryptArticleContent,
+	unlockPrivateKeyVault,
+} from "../utils/crypto";
 
-  export let rawPayloadJson: string = '';
+export let rawPayloadJson = "";
 
-  let payload: EncryptedArticlePayload | null = null;
-  let decryptedMarkdown = '';
-  let masterPassword = '';
-  let showModal = false;
-  let isDecrypting = false;
-  let errorMsg = '';
-  let currentUserId = '';
-  let hasMatchingEnvelope = false;
+let payload: EncryptedArticlePayload | null = null;
+let decryptedMarkdown = "";
+let masterPassword = "";
+let showModal = false;
+let isDecrypting = false;
+let errorMsg = "";
+let currentUserId = "";
+let hasMatchingEnvelope = false;
 
-  const API_BASE = 'https://zk-api.yaoxi.cloud';
+const API_BASE = "https://zk-api.yaoxi.cloud";
 
-  onMount(() => {
-    try {
-      if (typeof rawPayloadJson === 'string') {
-        payload = JSON.parse(rawPayloadJson);
-      } else {
-        payload = rawPayloadJson;
-      }
+onMount(() => {
+	try {
+		if (typeof rawPayloadJson === "string") {
+			payload = JSON.parse(rawPayloadJson);
+		} else {
+			payload = rawPayloadJson;
+		}
 
-      let uid = localStorage.getItem('yaoxi_user_id') || localStorage.getItem('user_id') || '';
-      if (!uid) {
-        try {
-          const authUser = JSON.parse(localStorage.getItem('yaoxi_auth_user') || localStorage.getItem('user_profile') || '{}');
-          uid = authUser.sub || authUser.id || '';
-        } catch {}
-      }
-      currentUserId = uid;
+		let uid =
+			localStorage.getItem("yaoxi_user_id") ||
+			localStorage.getItem("user_id") ||
+			"";
+		if (!uid) {
+			try {
+				const authUser = JSON.parse(
+					localStorage.getItem("yaoxi_auth_user") ||
+						localStorage.getItem("user_profile") ||
+						"{}",
+				);
+				uid = authUser.sub || authUser.id || "";
+			} catch {}
+		}
+		currentUserId = uid;
 
-      if (payload && currentUserId) {
-        hasMatchingEnvelope = payload.envelopes.some(e => e.user_id === currentUserId);
-      }
-    } catch {
-      errorMsg = '文章加密数据解析异常，可能格式已损坏 喵！';
-    }
-  });
+		if (payload && currentUserId) {
+			hasMatchingEnvelope = payload.envelopes.some(
+				(e) => e.user_id === currentUserId,
+			);
+		}
+	} catch {
+		errorMsg = "文章加密数据解析异常，可能格式已损坏 喵！";
+	}
+});
 
-  const handleUnlock = async () => {
-    if (!masterPassword.trim()) {
-      errorMsg = '请输入您的阅读主密码 喵！';
-      return;
-    }
+const handleUnlock = async () => {
+	if (!masterPassword.trim()) {
+		errorMsg = "请输入您的阅读主密码 喵！";
+		return;
+	}
 
-    if (!payload) {
-      errorMsg = '未检测到有效的加密正文载荷 喵！';
-      return;
-    }
+	if (!payload) {
+		errorMsg = "未检测到有效的加密正文载荷 喵！";
+		return;
+	}
 
-    isDecrypting = true;
-    errorMsg = '';
+	isDecrypting = true;
+	errorMsg = "";
 
-    try {
-      const token = localStorage.getItem('yaoxi_access_token') || localStorage.getItem('access_token') || localStorage.getItem('yaoxi_auth_token') || localStorage.getItem('yaoxi_client_token');
-      if (!token) {
-        throw new Error('未检测到登录授权凭据，请先在右上角完成统一身份认证 喵！');
-      }
+	try {
+		const token =
+			localStorage.getItem("yaoxi_access_token") ||
+			localStorage.getItem("access_token") ||
+			localStorage.getItem("yaoxi_auth_token") ||
+			localStorage.getItem("yaoxi_client_token");
+		if (!token) {
+			throw new Error(
+				"未检测到登录授权凭据，请先在右上角完成统一身份认证 喵！",
+			);
+		}
 
-      // 1. 从 Worker BFF 安全拉取当前读者的私钥密文 Vault
-      const res = await fetch(`${API_BASE}/api/user/vault`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+		// 1. 从 Worker BFF 安全拉取当前读者的私钥密文 Vault
+		const res = await fetch(`${API_BASE}/api/user/vault`, {
+			headers: { Authorization: `Bearer ${token}` },
+		});
 
-      if (!res.ok) {
-        if (res.status === 404) {
-          throw new Error('您还未初始化密钥库：请先前往【读者中心】生成属于你的密钥对，再回来解密阅读 喵！');
-        }
-        throw new Error('云端密钥库检索失败，请稍后重试 喵！');
-      }
+		if (!res.ok) {
+			if (res.status === 404) {
+				throw new Error(
+					"您还未初始化密钥库：请先前往【读者中心】生成属于你的密钥对，再回来解密阅读 喵！",
+				);
+			}
+			throw new Error("云端密钥库检索失败，请稍后重试 喵！");
+		}
 
-      const vaultData: VaultData = await res.json();
+		const vaultData: VaultData = await res.json();
 
-      // 2. 本地内存执行 PBKDF2(100k, SHA-256) 派生对称密钥，解锁出 RSA-OAEP 私钥
-      const userPrivateKey = await unlockPrivateKeyVault(vaultData, masterPassword);
+		// 2. 本地内存执行 PBKDF2(100k, SHA-256) 派生对称密钥，解锁出 RSA-OAEP 私钥
+		const userPrivateKey = await unlockPrivateKeyVault(
+			vaultData,
+			masterPassword,
+		);
 
-      // 3. 拆封专属数字信封，解出一次性 CEK 并还原 Markdown 正文
-      decryptedMarkdown = await decryptArticleContent(payload, userPrivateKey, currentUserId);
+		// 3. 拆封专属数字信封，解出一次性 CEK 并还原 Markdown 正文
+		decryptedMarkdown = await decryptArticleContent(
+			payload,
+			userPrivateKey,
+			currentUserId,
+		);
 
-      // 4. 立即清理主密码内存
-      masterPassword = '';
-      showModal = false;
-    } catch (err: any) {
-      errorMsg = err.message || '解密失败：主密码校验未通过 喵！';
-    } finally {
-      isDecrypting = false;
-    }
-  };
+		// 4. 立即清理主密码内存
+		masterPassword = "";
+		showModal = false;
+	} catch (err: unknown) {
+		errorMsg =
+			err instanceof Error && err.message
+				? err.message
+				: "解密失败：主密码校验未通过 喵！";
+	} finally {
+		isDecrypting = false;
+	}
+};
 </script>
 
 {#if decryptedMarkdown}

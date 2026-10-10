@@ -3,9 +3,9 @@
  * 触发方式：GitHub Actions 或本地 `node scripts/broadcast-post.js [--file=xxx] [--preview]`
  */
 
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
 
 const API_BASE = process.env.BLOG_API_BASE || "https://blog-api.yaoxi.cloud";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
@@ -59,10 +59,13 @@ function detectChangedPostFromGit(postsDir) {
 		const beforeSha = process.env.BEFORE_SHA;
 		if (beforeSha && beforeSha !== "0000000000000000000000000000000000000000") {
 			try {
-				const rangeDiff = execSync(`git diff --name-only ${beforeSha} HEAD -- src/content/posts`, {
-					encoding: "utf-8",
-					stdio: ["ignore", "pipe", "ignore"],
-				}).trim();
+				const rangeDiff = execSync(
+					`git diff --name-only ${beforeSha} HEAD -- src/content/posts`,
+					{
+						encoding: "utf-8",
+						stdio: ["ignore", "pipe", "ignore"],
+					},
+				).trim();
 				if (rangeDiff) {
 					for (const line of rangeDiff.split("\n")) {
 						const trimmed = line.trim();
@@ -76,10 +79,13 @@ function detectChangedPostFromGit(postsDir) {
 
 		// 2. 检查当前 HEAD commit 的变动文件（git diff-tree）
 		if (candidates.size === 0) {
-			const diffTree = execSync("git diff-tree --no-commit-id --name-only -r HEAD -- src/content/posts", {
-				encoding: "utf-8",
-				stdio: ["ignore", "pipe", "ignore"],
-			}).trim();
+			const diffTree = execSync(
+				"git diff-tree --no-commit-id --name-only -r HEAD -- src/content/posts",
+				{
+					encoding: "utf-8",
+					stdio: ["ignore", "pipe", "ignore"],
+				},
+			).trim();
 			if (diffTree) {
 				for (const line of diffTree.split("\n")) {
 					const trimmed = line.trim();
@@ -91,10 +97,13 @@ function detectChangedPostFromGit(postsDir) {
 		// 3. 检查 HEAD~1 到 HEAD 的差异
 		if (candidates.size === 0) {
 			try {
-				const diffHead = execSync("git diff --name-only HEAD~1 HEAD -- src/content/posts", {
-					encoding: "utf-8",
-					stdio: ["ignore", "pipe", "ignore"],
-				}).trim();
+				const diffHead = execSync(
+					"git diff --name-only HEAD~1 HEAD -- src/content/posts",
+					{
+						encoding: "utf-8",
+						stdio: ["ignore", "pipe", "ignore"],
+					},
+				).trim();
 				if (diffHead) {
 					for (const line of diffHead.split("\n")) {
 						const trimmed = line.trim();
@@ -106,10 +115,13 @@ function detectChangedPostFromGit(postsDir) {
 
 		// 4. 回退：git log -1
 		if (candidates.size === 0) {
-			const logOut = execSync("git log -1 --name-only --pretty='' -- src/content/posts", {
-				encoding: "utf-8",
-				stdio: ["ignore", "pipe", "ignore"],
-			}).trim();
+			const logOut = execSync(
+				"git log -1 --name-only --pretty='' -- src/content/posts",
+				{
+					encoding: "utf-8",
+					stdio: ["ignore", "pipe", "ignore"],
+				},
+			).trim();
 			if (logOut) {
 				for (const line of logOut.split("\n")) {
 					const trimmed = line.trim();
@@ -206,14 +218,17 @@ async function main() {
 		return;
 	}
 	if (fm.encrypted === true) {
-		console.log(`文章 ${targetFile} 为端到端加密文章(encrypted: true)，跳过全员邮件广播。`);
+		console.log(
+			`文章 ${targetFile} 为端到端加密文章(encrypted: true)，跳过全员邮件广播。`,
+		);
 		return;
 	}
 
 	const slug = targetFile.replace(/\.md$/, "");
 	const postUrl = `${BLOG_ORIGIN}/posts/${slug}/`;
 	const title = fm.title || slug;
-	const summary = fm.description || "瑶曦 Blog 发布了最新文章，点击前往阅读全文。";
+	const summary =
+		fm.description || "瑶曦 Blog 发布了最新文章，点击前往阅读全文。";
 	const pubDate = fm.published || new Date().toISOString();
 	const tags = Array.isArray(fm.tags) ? fm.tags : [];
 
@@ -223,7 +238,9 @@ async function main() {
 	console.log(`模式：${isPreview ? "仅预览测试 (preview)" : "正式群发"}`);
 
 	if (!ADMIN_TOKEN && !isPreview) {
-		console.warn("⚠️ 未配置 ADMIN_TOKEN 环境变量，无法向 API 鉴权。跳过正式发信。");
+		console.warn(
+			"⚠️ 未配置 ADMIN_TOKEN 环境变量，无法向 API 鉴权。跳过正式发信。",
+		);
 		return;
 	}
 
@@ -255,7 +272,9 @@ async function main() {
 			console.error("❌ 广播请求失败：", result.message || result.error);
 			process.exitCode = 1;
 		} else {
-			console.log(`✅ 发信完成！总订阅者：${result.total ?? 0}，成功送达：${result.sent ?? 0}，失败：${result.failed ?? 0}`);
+			console.log(
+				`✅ 发信完成！总订阅者：${result.total ?? 0}，成功送达：${result.sent ?? 0}，失败：${result.failed ?? 0}`,
+			);
 		}
 	} catch (err) {
 		console.error("❌ 发送异常：", err);

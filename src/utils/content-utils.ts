@@ -1,4 +1,5 @@
 import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
 
 /**
  * 获取已排序的朋友圈动态（所有朋友圈相关页面统一使用）
@@ -6,7 +7,9 @@ import { getCollection } from "astro:content";
  * - 排序：置顶优先，再按发布时间倒序
  * 注意：本函数通过 import 引用，Astro 5.7 构建时 getStaticPaths 提取后依然可用
  */
-export async function getSortedMoments() {
+export async function getSortedMoments(): Promise<
+	CollectionEntry<"moments">[]
+> {
 	const all = await getCollection("moments");
 	const now = new Date();
 	return all
@@ -23,12 +26,12 @@ export async function getSortedMoments() {
 }
 
 /** 统一 id 解析：只剥掉内容扩展名，文件名内其他点号原样保留 */
-export function stripMomentId(id = "") {
+export function stripMomentId(id = ""): string {
 	return id.replace(/\.(md|mdx)$/, "");
 }
 
 /** Markdown 正文 -> 纯文本（max > 0 时截断） */
-export function momentToText(body = "", max = 0) {
+export function momentToText(body = "", max = 0): string {
 	const text = (body || "")
 		.replace(/```[\s\S]*?```/g, " ") // 代码块
 		.replace(/!\[[^\]]*\]\([^)]*\)/g, " ") // 图片
@@ -40,24 +43,48 @@ export function momentToText(body = "", max = 0) {
 }
 
 /** 从正文提取 hashtag 标签（跳过代码块、去重） */
-export function extractMomentTags(body = "") {
+export function extractMomentTags(body = ""): string[] {
 	const text = (body || "").replace(/```[\s\S]*?```/g, " ");
 	const matches = text.match(/#[\p{L}\p{N}_-]+/gu) || [];
 	return [...new Set(matches.map((t) => t.slice(1)))];
+}
+
+export interface MomentStats {
+	total: number;
+	replies: number;
+	totalWords: number;
+	avgWords: number;
+	totalImages: number;
+	totalVideos: number;
+	firstDate: string | null;
+	lastDate: string | null;
+	years: Array<{ year: number; count: number }>;
+	months: Array<{ month: string; count: number }>;
+	weekdays: Array<{ day: number; label: string; count: number }>;
+	tags: Array<{ tag: string; count: number }>;
+	longest: { slug: string; words: number } | null;
 }
 
 /**
  * 朋友圈统计（统计页与 /api/moments/stats.json 共用，保证数据口径一致）
  * 输入：getSortedMoments() 的结果（已过滤时间胶囊、已排序）
  */
-export function computeMomentStats(moments: any[]) {
+export function computeMomentStats(
+	moments: CollectionEntry<"moments">[],
+): MomentStats {
 	const top = moments.filter((m) => !m.data.replyTo);
 	const replies = moments.length - top.length;
 
 	const texts = top.map((m) => momentToText(m.body));
 	const totalWords = texts.reduce((sum, t) => sum + t.length, 0);
-	const totalImages = top.reduce((sum, m) => sum + (m.data.images || []).length, 0);
-	const totalVideos = top.reduce((sum, m) => sum + (m.data.videos || []).length, 0);
+	const totalImages = top.reduce(
+		(sum, m) => sum + (m.data.images || []).length,
+		0,
+	);
+	const totalVideos = top.reduce(
+		(sum, m) => sum + (m.data.videos || []).length,
+		0,
+	);
 
 	// 年月分布
 	const monthMap = new Map<string, number>();
@@ -86,7 +113,9 @@ export function computeMomentStats(moments: any[]) {
 		weekdayCount[d.getDay()] += 1;
 		yearMap.set(d.getFullYear(), (yearMap.get(d.getFullYear()) || 0) + 1);
 
-		extractMomentTags(m.body).forEach((t) => tagMap.set(t, (tagMap.get(t) || 0) + 1));
+		for (const t of extractMomentTags(m.body)) {
+			tagMap.set(t, (tagMap.get(t) || 0) + 1);
+		}
 
 		const words = momentToText(m.body).length;
 		if (!longest || words > longest.words) {
@@ -109,15 +138,15 @@ export function computeMomentStats(moments: any[]) {
 
 	return {
 		total: top.length,
-		replies,
-		totalWords,
+		replies: replies,
+		totalWords: totalWords,
 		avgWords: top.length ? Math.round(totalWords / top.length) : 0,
-		totalImages,
-		totalVideos,
-		firstDate,
-		lastDate,
-		years,
-		months,
+		totalImages: totalImages,
+		totalVideos: totalVideos,
+		firstDate: firstDate,
+		lastDate: lastDate,
+		years: years,
+		months: months,
 		weekdays: [
 			{ day: 0, label: "周日", count: weekdayCount[0] },
 			{ day: 1, label: "周一", count: weekdayCount[1] },
@@ -127,12 +156,12 @@ export function computeMomentStats(moments: any[]) {
 			{ day: 5, label: "周五", count: weekdayCount[5] },
 			{ day: 6, label: "周六", count: weekdayCount[6] },
 		],
-		tags,
-		longest,
+		tags: tags,
+		longest: longest,
 	};
 }
 
-export async function getSortedPosts() {
+export async function getSortedPosts(): Promise<CollectionEntry<"posts">[]> {
 	const allBlogPosts = await getCollection("posts", ({ data }) => {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});

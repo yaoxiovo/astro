@@ -49,7 +49,9 @@ async function handleSubmit(e: Event) {
 		const data = await res.json();
 		if (res.ok && data.ok) {
 			status = "success";
-			resultMsg = data.message || "留言已成功送达！站长已收到通知，我们已向您的邮箱发送了自动回执。";
+			resultMsg =
+				data.message ||
+				"留言已成功送达！站长已收到通知，我们已向您的邮箱发送了自动回执。";
 		} else {
 			status = "error";
 			resultMsg = data.message || "提交失败，请稍后重试。";

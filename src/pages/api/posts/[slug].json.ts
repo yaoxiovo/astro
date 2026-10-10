@@ -16,20 +16,23 @@ const mdToText = (body = "", max = 0) => {
 /** 统一 id 解析：只剥掉内容扩展名（posts 的 id 通常已不带扩展名，兼容处理） */
 const stripId = (id = "") => id.replace(/\.(md|mdx)$/, "");
 
-export const getStaticPaths = (async () => {
+export const getStaticPaths: GetStaticPaths = async () => {
 	const posts = await getSortedPosts();
 	return posts.map((post) => ({ params: { slug: stripId(post.id) } }));
-}) satisfies GetStaticPaths;
+};
 
 export const GET: APIRoute = async ({ params }) => {
 	const posts = await getSortedPosts();
 	const post = posts.find((p) => stripId(p.id) === params.slug);
 
 	if (!post) {
-		return new Response(JSON.stringify({ error: "not found", slug: params.slug }), {
-			status: 404,
-			headers: { "Content-Type": "application/json; charset=utf-8" },
-		});
+		return new Response(
+			JSON.stringify({ error: "not found", slug: params.slug }),
+			{
+				status: 404,
+				headers: { "Content-Type": "application/json; charset=utf-8" },
+			},
+		);
 	}
 
 	const isEncrypted = post.data.encrypted === true;
@@ -53,13 +56,19 @@ export const GET: APIRoute = async ({ params }) => {
 			lang: data.lang || "",
 			pinned: data.pinned || false,
 			// 前后篇导航（getSortedPosts 已填充）
-			prev: data.prevSlug ? { slug: data.prevSlug, title: data.prevTitle } : null,
-			next: data.nextSlug ? { slug: data.nextSlug, title: data.nextTitle } : null,
+			prev: data.prevSlug
+				? { slug: data.prevSlug, title: data.prevTitle }
+				: null,
+			next: data.nextSlug
+				? { slug: data.nextSlug, title: data.nextTitle }
+				: null,
 			// 统计
 			wordCount,
 			readingTime: isEncrypted ? 0 : Math.max(1, Math.round(wordCount / 400)), // 中文约 400 字/分钟
 			// 摘要：frontmatter description 优先，否则取正文前 200 字
-			excerpt: data.description || (isEncrypted ? "[本文受端到端加密保护]" : mdToText(post.body, 200)),
+			excerpt:
+				data.description ||
+				(isEncrypted ? "[本文受端到端加密保护]" : mdToText(post.body, 200)),
 			// 纯文本正文（供第三方/AI/小程序直接消费）
 			text,
 		}),

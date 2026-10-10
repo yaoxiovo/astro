@@ -39,12 +39,17 @@ jobs:
           BLOG_API_BASE: "https://blog-api.yaoxi.cloud"
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
           BEFORE_SHA: ${{ github.event.before }}
+          # 经 env 传入而非直接插值进 run：workflow_dispatch 的输入来自用户，
+          # 直接拼进 shell 会成为命令注入点。此处仅作为数据传递，shell 内始终加引号引用。
+          # 非 workflow_dispatch 触发（push）时该值为空字符串，下面的 -n 判断会自动跳过。
+          INPUT_PREVIEW: ${{ github.event.inputs.preview }}
+          INPUT_FILE: ${{ github.event.inputs.file }}
         run: |
           ARGS=""
-          if [ "${{ github.event.inputs.preview }}" = "true" ]; then
+          if [ "$INPUT_PREVIEW" = "true" ]; then
             ARGS="$ARGS --preview"
           fi
-          if [ -n "${{ github.event.inputs.file }}" ]; then
-            ARGS="$ARGS --file=${{ github.event.inputs.file }}"
+          if [ -n "$INPUT_FILE" ]; then
+            ARGS="$ARGS --file=$INPUT_FILE"
           fi
           node scripts/broadcast-post.js $ARGS

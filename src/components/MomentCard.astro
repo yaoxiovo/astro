@@ -1,11 +1,18 @@
 ---
-import { profileConfig, momentsImageConfig } from '../config';
-import { Icon } from 'astro-icon/components';
-import authorsConfig from '../content/moments/authors.json';
+import type { CollectionEntry } from "astro:content";
+import { Icon } from "astro-icon/components";
+import { momentsImageConfig, profileConfig } from "../config";
+import authorsConfig from "../content/moments/authors.json";
+
+interface AuthorRole {
+	avatar?: string;
+	verifyType?: "blue" | "yellow" | "none" | string;
+	verifySubject?: string;
+}
 
 interface Props {
-  moment: any;
-  isDetail?: boolean;
+	moment: CollectionEntry<"moments">;
+	isDetail?: boolean;
 }
 
 const { moment, isDetail = false } = Astro.props;
@@ -13,100 +20,116 @@ const momentId = moment.id.replace(/\.(md|mdx)$/, "");
 const { data } = moment;
 
 const author = data.author || profileConfig.name;
-const roleDefaults = (authorsConfig as any)[author] || {};
+const roleDefaults =
+	(authorsConfig as Record<string, AuthorRole | undefined>)[author] || {};
 
 const avatar = data.avatar || roleDefaults.avatar || profileConfig.avatar;
-const verifyType = (data.verifyType && data.verifyType !== 'none') ? data.verifyType : (roleDefaults.verifyType || 'none');
-const verifySubject = data.verifySubject || roleDefaults.verifySubject || '';
+const verifyType =
+	data.verifyType && data.verifyType !== "none"
+		? data.verifyType
+		: roleDefaults.verifyType || "none";
+const verifySubject = data.verifySubject || roleDefaults.verifySubject || "";
 const images = data.images || [];
 const videos = data.videos || [];
 
 // 格式化发表日期为 YYYY-MM-DD
 const dateObj = new Date(data.published);
 const year = dateObj.getFullYear();
-const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-const day = String(dateObj.getDate()).padStart(2, '0');
+const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+const day = String(dateObj.getDate()).padStart(2, "0");
 const dateStr = `${year}-${month}-${day}`;
 
 // 智能图片 URL 转换器（自动拼接发表日期目录与域名）
 const processedImages = images.map((img) => {
-  const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;
-  
-  // 1. 如果是绝对路径且不属于我们的 Moments raw/webp 前缀目录，直接原样返回
-  if ((img.startsWith('http://') || img.startsWith('https://')) && !img.startsWith(rawUrlPrefix) && !img.startsWith(webpUrlPrefix)) {
-    return { original: img, thumbnail: img };
-  }
-  
-  let cleanPath = img;
-  if (img.startsWith(rawUrlPrefix)) {
-    cleanPath = img.substring(rawUrlPrefix.length);
-  } else if (img.startsWith(webpUrlPrefix)) {
-    cleanPath = img.substring(webpUrlPrefix.length);
-  } else if (img.startsWith('/astro/raw/')) {
-    cleanPath = img.substring('/astro/raw/'.length);
-  } else if (img.startsWith('/astro/webp/')) {
-    cleanPath = img.substring('/astro/webp/'.length);
-  }
-  
-  if (cleanPath.startsWith('/')) {
-    cleanPath = cleanPath.substring(1);
-  }
-  
-  // 匹配是否已指定日期目录
-  const dateFolderRegex = /^(\d{4}-\d{2}-\d{2})\/(.+)$/;
-  const match = cleanPath.match(dateFolderRegex);
-  
-  let folder = dateStr;
-  let filename = cleanPath;
-  
-  if (match) {
-    folder = match[1];
-    filename = match[2];
-  }
-  
-  const original = `${rawUrlPrefix}/${folder}/${filename}`;
-  const webpFilename = filename.replace(/\.[^.]+$/, '.webp');
-  const thumbnail = `${webpUrlPrefix}/${folder}/${webpFilename}`;
-  
-  return { original, thumbnail };
+	const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;
+
+	// 1. 如果是绝对路径且不属于我们的 Moments raw/webp 前缀目录，直接原样返回
+	if (
+		(img.startsWith("http://") || img.startsWith("https://")) &&
+		!img.startsWith(rawUrlPrefix) &&
+		!img.startsWith(webpUrlPrefix)
+	) {
+		return { original: img, thumbnail: img };
+	}
+
+	let cleanPath = img;
+	if (img.startsWith(rawUrlPrefix)) {
+		cleanPath = img.substring(rawUrlPrefix.length);
+	} else if (img.startsWith(webpUrlPrefix)) {
+		cleanPath = img.substring(webpUrlPrefix.length);
+	} else if (img.startsWith("/astro/raw/")) {
+		cleanPath = img.substring("/astro/raw/".length);
+	} else if (img.startsWith("/astro/webp/")) {
+		cleanPath = img.substring("/astro/webp/".length);
+	}
+
+	if (cleanPath.startsWith("/")) {
+		cleanPath = cleanPath.substring(1);
+	}
+
+	// 匹配是否已指定日期目录
+	const dateFolderRegex = /^(\d{4}-\d{2}-\d{2})\/(.+)$/;
+	const match = cleanPath.match(dateFolderRegex);
+
+	let folder = dateStr;
+	let filename = cleanPath;
+
+	if (match) {
+		folder = match[1];
+		filename = match[2];
+	}
+
+	const original = `${rawUrlPrefix}/${folder}/${filename}`;
+	const webpFilename = filename.replace(/\.[^.]+$/, ".webp");
+	const thumbnail = `${webpUrlPrefix}/${folder}/${webpFilename}`;
+
+	return { original, thumbnail };
 });
 
 // 智能视频 URL 转换器（自动拼接发表日期目录与域名）
 const processedVideos = videos.map((vid) => {
-  const { videoUrlPrefix } = momentsImageConfig;
-  
-  // 1. 如果是绝对路径且不属于我们的 Moments video 前缀目录，直接原样返回
-  if ((vid.startsWith('http://') || vid.startsWith('https://')) && !vid.startsWith(videoUrlPrefix)) {
-    return vid;
-  }
-  
-  let cleanPath = vid;
-  if (vid.startsWith(videoUrlPrefix)) {
-    cleanPath = vid.substring(videoUrlPrefix.length);
-  } else if (vid.startsWith('/astro/video/')) {
-    cleanPath = vid.substring('/astro/video/'.length);
-  }
-  
-  if (cleanPath.startsWith('/')) {
-    cleanPath = cleanPath.substring(1);
-  }
-  
-  const dateFolderRegex = /^(\d{4}-\d{2}-\d{2})\/(.+)$/;
-  const match = cleanPath.match(dateFolderRegex);
-  
-  let folder = dateStr;
-  let filename = cleanPath;
-  
-  if (match) {
-    folder = match[1];
-    filename = match[2];
-  }
-  
-  return `${videoUrlPrefix}/${folder}/${filename}`;
+	const { videoUrlPrefix } = momentsImageConfig;
+
+	// 1. 如果是绝对路径且不属于我们的 Moments video 前缀目录，直接原样返回
+	if (
+		(vid.startsWith("http://") || vid.startsWith("https://")) &&
+		!vid.startsWith(videoUrlPrefix)
+	) {
+		return vid;
+	}
+
+	let cleanPath = vid;
+	if (vid.startsWith(videoUrlPrefix)) {
+		cleanPath = vid.substring(videoUrlPrefix.length);
+	} else if (vid.startsWith("/astro/video/")) {
+		cleanPath = vid.substring("/astro/video/".length);
+	}
+
+	if (cleanPath.startsWith("/")) {
+		cleanPath = cleanPath.substring(1);
+	}
+
+	const dateFolderRegex = /^(\d{4}-\d{2}-\d{2})\/(.+)$/;
+	const match = cleanPath.match(dateFolderRegex);
+
+	let folder = dateStr;
+	let filename = cleanPath;
+
+	if (match) {
+		folder = match[1];
+		filename = match[2];
+	}
+
+	return `${videoUrlPrefix}/${folder}/${filename}`;
 });
 
 // Calculate image grid columns
-const gridCols = processedImages.length === 1 ? 'grid-cols-1' : processedImages.length === 2 || processedImages.length === 4 ? 'grid-cols-2' : 'grid-cols-3';
+const gridCols =
+	processedImages.length === 1
+		? "grid-cols-1"
+		: processedImages.length === 2 || processedImages.length === 4
+			? "grid-cols-2"
+			: "grid-cols-3";
 
 const { Content } = await moment.render();
 ---

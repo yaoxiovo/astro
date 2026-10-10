@@ -2,11 +2,11 @@
 import { Icon } from "astro-icon/components";
 
 interface Props {
-  src: string;       // 音频链接
-  title: string;     // 歌曲标题
-  artist: string;    // 艺术家
-  cover?: string;    // 封面图片 URL (可选，默认黑胶盘)
-  lrc?: string;      // 歌词文件 URL 或内联 LRC 文本
+	src: string; // 音频链接
+	title: string; // 歌曲标题
+	artist: string; // 艺术家
+	cover?: string; // 封面图片 URL (可选，默认黑胶盘)
+	lrc?: string; // 歌词文件 URL 或内联 LRC 文本
 }
 
 const { src, title, artist, cover = "/favicon.svg", lrc } = Astro.props;

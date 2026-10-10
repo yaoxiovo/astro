@@ -117,8 +117,7 @@ onMount(() => {
 	activeKey = "gb";
 });
 
-$: activeCitation =
-	formats.find((f) => f.key === activeKey)?.text || "";
+$: activeCitation = formats.find((f) => f.key === activeKey)?.text || "";
 
 async function copyText(key: string, text: string) {
 	if (!text) return;

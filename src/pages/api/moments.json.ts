@@ -1,12 +1,13 @@
+import type { CollectionEntry } from "astro:content";
 import {
+	extractMomentTags,
 	getSortedMoments,
 	momentToText,
-	extractMomentTags,
 	stripMomentId,
 } from "@/utils/content-utils";
 import type { APIRoute } from "astro";
 
-const serialize = (m: any) => ({
+const serialize = (m: CollectionEntry<"moments">) => ({
 	slug: stripMomentId(m.id),
 	published: m.data.published,
 	author: m.data.author || null,
@@ -24,7 +25,10 @@ const serialize = (m: any) => ({
 export const GET: APIRoute = async () => {
 	const moments = await getSortedMoments();
 	return new Response(
-		JSON.stringify({ updated: new Date().toISOString(), moments: moments.map(serialize) }),
+		JSON.stringify({
+			updated: new Date().toISOString(),
+			moments: moments.map(serialize),
+		}),
 		{ headers: { "Content-Type": "application/json; charset=utf-8" } },
 	);
 };

@@ -1,7 +1,7 @@
 import {
+	extractMomentTags,
 	getSortedMoments,
 	momentToText,
-	extractMomentTags,
 	stripMomentId,
 } from "@/utils/content-utils";
 import type { APIRoute } from "astro";

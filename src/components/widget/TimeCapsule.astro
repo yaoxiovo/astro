@@ -4,15 +4,15 @@ import { Icon } from "astro-icon/components";
 
 const posts = await getSortedPosts();
 // 生成包含精简信息的数据集，用于客户端计算
-const historyData = posts.map(post => {
-  const d = new Date(post.data.published);
-  return {
-    title: post.data.title,
-    url: `/posts/${post.id}/`,
-    year: d.getFullYear(),
-    month: d.getMonth() + 1,
-    date: d.getDate(),
-  };
+const historyData = posts.map((post) => {
+	const d = new Date(post.data.published);
+	return {
+		title: post.data.title,
+		url: `/posts/${post.id}/`,
+		year: d.getFullYear(),
+		month: d.getMonth() + 1,
+		date: d.getDate(),
+	};
 });
 ---
 

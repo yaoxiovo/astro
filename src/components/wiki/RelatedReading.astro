@@ -1,15 +1,16 @@
 ---
+import type { CollectionEntry } from "astro:content";
+import { formatDateToYYYYMMDD } from "@utils/date-utils";
+import { getPostUrlBySlug } from "@utils/url-utils";
 // RelatedReading.astro - 编辑编排的站内延伸阅读指引（互链 / 单向指引）
 // 数据源：frontmatter `related: ["slug", ...]`
 // 可见性：仅渲染当前构建可见的条目（生产环境自动过滤 draft 目标）
 import { Icon } from "astro-icon/components";
-import { formatDateToYYYYMMDD } from "@utils/date-utils";
-import { getPostUrlBySlug } from "@utils/url-utils";
 
 interface Props {
 	slug: string;
 	related?: string[];
-	allPosts: any[];
+	allPosts: CollectionEntry<"posts">[];
 }
 
 const { slug, related = [], allPosts } = Astro.props;
@@ -19,7 +20,9 @@ function normalizeSlug(value: string): string {
 }
 
 const currentSlug = normalizeSlug(slug);
-const visiblePosts = new Map(allPosts.map((post) => [normalizeSlug(post.id), post]));
+const visiblePosts = new Map(
+	allPosts.map((post) => [normalizeSlug(post.id), post]),
+);
 
 const entries: {
 	slug: string;

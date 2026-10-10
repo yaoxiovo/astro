@@ -1,6 +1,6 @@
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
 import { createDeltaPatch } from "../src/utils/delta-core.mjs";
 
 const POSTS_DIR = path.resolve("src/content/posts");
@@ -125,7 +125,7 @@ for (const file of postFiles) {
 	try {
 		const content = fs.readFileSync(filePath, "utf-8");
 		const titleMatch = content.match(/^title:\s*(?:['"]?)(.*?)(?:['"]?)\s*$/m);
-		if (titleMatch && titleMatch[1]) {
+		if (titleMatch?.[1]) {
 			title = titleMatch[1].trim();
 		}
 	} catch (e) {
@@ -199,7 +199,7 @@ for (const file of postFiles) {
 						stdio: ["ignore", "pipe", "ignore"],
 					},
 				).trim();
-				byteSize = parseInt(sizeStr, 10) || 0;
+				byteSize = Number.parseInt(sizeStr, 10) || 0;
 			} catch {
 				// fallback
 			}
@@ -214,8 +214,8 @@ for (const file of postFiles) {
 			).trim();
 			if (numstat) {
 				const parts = numstat.split(/\s+/);
-				linesAdded = parseInt(parts[0], 10) || 0;
-				linesDeleted = parseInt(parts[1], 10) || 0;
+				linesAdded = Number.parseInt(parts[0], 10) || 0;
+				linesDeleted = Number.parseInt(parts[1], 10) || 0;
 			}
 		} catch {
 			// ignore

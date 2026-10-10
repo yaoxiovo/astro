@@ -1,7 +1,10 @@
 ---
-import MainGridLayout from '../../layouts/MainGridLayout.astro';
-import MomentsClient from '../../components/MomentsClient.astro';
-import { getSortedMoments, computeMomentStats } from '../../utils/content-utils';
+import MomentsClient from "../../components/MomentsClient.astro";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import {
+	computeMomentStats,
+	getSortedMoments,
+} from "../../utils/content-utils";
 
 const allMoments = await getSortedMoments();
 const stats = computeMomentStats(allMoments);
@@ -11,7 +14,7 @@ const maxTagCount = Math.max(1, ...stats.tags.map((t) => t.count));
 const maxWeekdayCount = Math.max(1, ...stats.weekdays.map((w) => w.count));
 
 const fmtDate = (iso: string | null) =>
-    iso ? new Date(iso).toISOString().slice(0, 10) : '—';
+	iso ? new Date(iso).toISOString().slice(0, 10) : "—";
 ---
 
 <MainGridLayout title="朋友圈统计" description="朋友圈数据统计" noindex>

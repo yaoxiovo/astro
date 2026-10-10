@@ -1,9 +1,0 @@
-{
-  "sha": "d1790a21eb89d89ed2bd91f264bbae582f561f7d",
-  "shortSha": "d1790a2",
-  "date": "2026-05-10T04:20:42Z",
-  "author": "yaoxiovo",
-  "message": "chore: 关闭置顶公告并批量将科幻文章设为草稿",
-  "slug": "neuro1",
-  "content": "---\ntitle: neuro-sama小剧场第1集\npublished: 2026-03-21\ndescription: neuro-sama小剧场第1集\ntags:\n  - Neuro-sama\n  - 小剧场\ncategory: 记录\ndraft: true\nlang: \"\"\n---\n![](../assets/images/4.webp)\n"
-}

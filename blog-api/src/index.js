@@ -1078,6 +1078,16 @@ async function handleDDoS(request, env, url) {
 	}
 
 	// 2. 真实查询 Cloudflare 日志 (支持请求头透传 Token 与 Worker Secrets 自动回退)
+	// 安全约束：真实查询会消耗 Worker 自身的 Cloudflare 凭据，必须要求管理员身份，
+	// 否则任何匿名访客都能借本站配额去查询 Cloudflare 安全日志。
+	// 演示模式 (demo=true) 返回的是合成数据，无需鉴权。
+	if (!requireAdmin(request, env)) {
+		return json({
+			error: "unauthorized",
+			message: "真实 DDoS 日志查询需要管理员权限；如需查看演示数据请加 ?demo=true",
+		}, 401);
+	}
+
 	const clientToken = request?.headers ? (request.headers.get("x-cf-token") || request.headers.get("cf-api-token")) : null;
 	const clientZoneId = request?.headers ? (request.headers.get("x-cf-zone-id") || request.headers.get("cf-zone-id")) : null;
 	const cfToken = clientToken || env.CF_API_TOKEN || env.CLOUDFLARE_API_TOKEN;
@@ -1517,7 +1527,7 @@ export default {
 				mailGateway: "https://mail-api.yaoxi.cloud",
 				endpoints: {
 					"GET /api/moments": "参数化朋友圈查询",
-					"GET /api/ddos": "Cloudflare DDoS 实时告警与安全防御日志查询",
+					"GET /api/ddos": "Cloudflare DDoS 实时告警与安全防御日志查询（?demo=true 可匿名查看演示数据，真实查询需 ADMIN_TOKEN）",
 					"POST /api/newsletter/subscribe": "读者邮箱订阅（发送 Double Opt-in 激活邮件）",
 					"GET /api/newsletter/verify": "激活订阅链接（通过邮件中的 Token 激活）",
 					"GET /api/newsletter/unsubscribe": "一键退订链接",

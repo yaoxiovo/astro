@@ -50,7 +50,8 @@ export const EASTER_EGGS: EasterEggEvent[] = [
 		effect: {
 			hue: 330,
 			decoration: "fireworks",
-			banner: "🎂 站庆时间到！瑶曦的这个小站已经陪伴大家 {n} 年了，感谢每一次相遇喵~",
+			banner:
+				"🎂 站庆时间到！瑶曦的这个小站已经陪伴大家 {n} 年了，感谢每一次相遇喵~",
 			notFound: "这个页面大概也去参加站庆派对啦，等它回来再试吧喵~",
 		},
 	},

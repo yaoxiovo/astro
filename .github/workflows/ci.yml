@@ -1,0 +1,78 @@
+# CI 质量门禁：单元测试 + TypeScript 类型检查
+#
+# 与 deploy.yml 的分工：
+#   - 本工作流只做「快速反馈」——pnpm test 与 pnpm run type-check，不跑 pnpm run build。
+#   - 完整构建（含 prebuild 的内容质量门禁、wiki 历史生成、官印签发）与
+#     Firebase Hosting 部署由 deploy.yml 负责，构建耗时较长，不在这里重复执行。
+#   - 因此部署能否通过由 deploy.yml 判定；这里只保证测试与类型不回归。
+#
+# 说明：
+#   - fetch-depth: 0 —— 构建与 wiki 历史生成依赖完整 git 历史（见 scripts/ensure-full-history.mjs、
+#     scripts/generate-wiki-history.mjs），即使当前不跑 build，也保持与 deploy.yml 一致的环境假设。
+#   - 包管理器统一为 pnpm：package.json 的 packageManager 声明 pnpm@9.14.4，仓库只提交 pnpm-lock.yaml，
+#     且 pnpm.patchedDependencies 对 astro 的补丁（patches/astro.patch）只有 pnpm 会应用 ——
+#     npm 不认识该字段，会静默跳过补丁、使 CI 构建语义与本地分叉，故不再使用 npm。
+#   - 用 Node 自带的 corepack 解析 packageManager，无需第三方 action，版本与声明天然一致。
+#   - --frozen-lockfile：CI 不改写 lockfile；lockfile 与 package.json 不同步时明确失败而非静默漂移。
+#   - 不使用任何容错/忽略失败的开关或 shell 兜底：任何一步失败都必须让工作流变红。
+
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+# 最小权限：只读仓库内容
+permissions:
+  contents: read
+
+# 同一 ref 的新运行会取消尚未完成的旧运行，避免浪费
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Test & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # corepack 在非交互环境下下载 packageManager 指定的 pnpm 前会要求确认，
+    # 置 0 关闭该提示；这不影响任何步骤的退出码，失败仍会让工作流变红。
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack (pnpm via packageManager)
+        run: corepack enable
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Biome 门禁：覆盖 src/、scripts/、tests/ 与 astro.config.mjs。
+      # 此前 package.json 的 lint 脚本只作用于 ./src，导致 scripts/ 与 tests/
+      # 从未被检查，累计出 68 个错误（本次已全部修复）。此步骤防止再次积累。
+      - name: Lint (Biome)
+        run: pnpm run lint:ci
+
+      # .astro/ 被 .gitignore 忽略，全新检出时不存在。缺少它会让 `astro:content`
+      # 的类型定义缺失，type-check 凭空多报约 28 个 TS7006/TS7031/TS18046 等错误
+      # （实测：无 .astro/ 时 28 个错误，astro sync 后 0 个）。因此必须先同步。
+      - name: Astro Sync (generate .astro/ types)
+        run: pnpm exec astro sync
+
+      - name: Run Unit Tests
+        run: pnpm test
+
+      - name: Type Check
+        run: pnpm run type-check

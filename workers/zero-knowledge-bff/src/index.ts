@@ -56,20 +56,33 @@ export function getAuthCenterRole(user: JWTPayload): UserRole {
 
 const app = new Hono<{ Bindings: Env; Variables: { user: JWTPayload; userRole: UserRole } }>();
 
-// 启用全局 CORS 允许 Astro 前端及任意调试客户端安全跨域
+// 允许跨域的官方域名后缀（前导点保证 evil-yaoxi.wiki / yaoxi.wiki.attacker.com 不匹配）
+const ALLOWED_ORIGIN_SUFFIXES = ['.yaoxi.wiki', '.yaoxi.cloud'];
+// 本地调试主机白名单：必须整体相等，绝不做子串匹配
+const LOCAL_DEV_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+const DEFAULT_ORIGIN = 'https://blog.yaoxi.wiki';
+
+/**
+ * 解析请求 Origin，仅放行官方域名后缀与本地调试主机。
+ * 先前使用 origin.includes('localhost') 会被 https://notlocalhost.evil.com 绕过，
+ * 故此处改为解析 URL 后对 hostname 做精确比对。
+ */
+function resolveCorsOrigin(origin: string | undefined): string {
+  if (!origin) return DEFAULT_ORIGIN;
+  try {
+    const { protocol, hostname } = new URL(origin);
+    if (protocol !== 'https:' && protocol !== 'http:') return DEFAULT_ORIGIN;
+    if (ALLOWED_ORIGIN_SUFFIXES.some((suffix) => hostname.endsWith(suffix))) return origin;
+    if (LOCAL_DEV_HOSTS.has(hostname)) return origin;
+  } catch {
+    // Origin 非法，回落到默认站点
+  }
+  return DEFAULT_ORIGIN;
+}
+
+// 启用全局 CORS 允许 Astro 前端及本地调试客户端安全跨域
 app.use('*', cors({
-  origin: (origin) => {
-    if (!origin) return 'https://blog.yaoxi.wiki';
-    if (
-      origin.endsWith('.yaoxi.wiki') ||
-      origin.endsWith('.yaoxi.cloud') ||
-      origin.includes('localhost') ||
-      origin.includes('127.0.0.1')
-    ) {
-      return origin;
-    }
-    return 'https://blog.yaoxi.wiki';
-  },
+  origin: (origin) => resolveCorsOrigin(origin),
   allowMethods: ['GET', 'POST', 'PUT', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposeHeaders: ['Content-Length'],
@@ -77,55 +90,94 @@ app.use('*', cors({
 }));
 
 // ============================================================
-// 1. 通用身份认证中间件：校验认证中心密码学签名，提取下发的身份信息
+// 1. 通用身份认证核心：校验认证中心密码学签名，提取下发的身份信息
 // ============================================================
-const requireAuth = async (c: any, next: () => Promise<void>) => {
+/** 认证失败的结构化原因，供中间件与内联校验共用 */
+type AuthFailure =
+  | { ok: false; status: 401 | 503; message: string }
+  | { ok: true; user: JWTPayload; role: UserRole };
+
+/**
+ * 纯函数式验签：不写响应、不改上下文，仅返回结论。
+ * 中间件与路由内联校验（如 /api/ddos 需在 demo 分支之后才校验）共用同一实现，
+ * 避免两处鉴权逻辑各自漂移。
+ */
+async function authenticateRequest(c: any): Promise<AuthFailure> {
   const authHeader = c.req.header('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return c.json({ error: 'Unauthorized', message: '缺少有效的 Authorization 认证头 喵！' }, 401);
+    return { ok: false, status: 401, message: '缺少有效的 Authorization 认证头 喵！' };
   }
 
   const token = authHeader.substring(7).trim();
   if (!token) {
-    return c.json({ error: 'Unauthorized', message: 'Bearer Token 为空 喵！' }, 401);
+    return { ok: false, status: 401, message: 'Bearer Token 为空 喵！' };
   }
 
-  let user: JWTPayload | null = null;
   const secretsToTry: string[] = [
     c.env.JWT_SECRET,
     c.env.AUTH_SECRET,
     c.env.SSO_SECRET,
   ].filter(Boolean);
 
+  // 安全约束：未配置任何验签密钥时必须拒绝，绝不回退到硬编码常量。
+  // 否则任何持有该公开常量的人都能伪造 role:"admin" 的 Token 取得完整管理员权限。
   if (secretsToTry.length === 0) {
-    secretsToTry.push('fallback_secret_for_local_dev_only');
+    return {
+      ok: false,
+      status: 503,
+      message: '服务端未配置验签密钥 (JWT_SECRET / AUTH_SECRET / SSO_SECRET)，拒绝所有请求 喵！',
+    };
   }
 
   // 严格尝试密码学验签
-  let verified = false;
+  let user: JWTPayload | null = null;
   for (const s of secretsToTry) {
     try {
       const secretKey = new TextEncoder().encode(s);
       const { payload } = await jwtVerify(token, secretKey);
       user = payload as unknown as JWTPayload;
-      verified = true;
       break;
     } catch {
       // 秘钥不匹配，继续尝试下一个候选秘钥
     }
   }
 
-  if (!verified || !user) {
-    return c.json({
-      error: 'Unauthorized',
-      message: 'Token 密码学校验失败或签名无效，拒绝访问 喵！',
-    }, 401);
+  if (!user) {
+    return { ok: false, status: 401, message: 'Token 密码学校验失败或签名无效，拒绝访问 喵！' };
   }
 
-  // 由认证中心下发的 Claims 动态解析是成员还是管理员
-  const userRole = getAuthCenterRole(user);
-  c.set('user', user);
-  c.set('userRole', userRole);
+  // 时效强校验：拒绝无 exp 的永不过期凭证（与 blog-api/src/jwt.js 语义对齐）
+  const now = Math.floor(Date.now() / 1000);
+  const CLOCK_TOLERANCE_SEC = 60;
+  if (typeof user.exp !== 'number' || now > user.exp + CLOCK_TOLERANCE_SEC) {
+    return { ok: false, status: 401, message: 'Token 已过期或缺少 exp 时效声明，拒绝访问 喵！' };
+  }
+  if (typeof user.nbf === 'number' && now + CLOCK_TOLERANCE_SEC < user.nbf) {
+    return { ok: false, status: 401, message: 'Token 尚未生效 (nbf)，拒绝访问 喵！' };
+  }
+
+  return { ok: true, user, role: getAuthCenterRole(user) };
+}
+
+/** 布尔式管理员判定，供不便使用中间件的路由内联调用 */
+async function isAdminRequest(c: any): Promise<boolean> {
+  const result = await authenticateRequest(c);
+  return result.ok && result.role === 'admin';
+}
+
+// ============================================================
+// 1.1 通用身份认证中间件：验签失败即返回对应错误
+// ============================================================
+const requireAuth = async (c: any, next: () => Promise<void>) => {
+  const result = await authenticateRequest(c);
+  if (result.ok === false) {
+    return c.json(
+      { error: result.status === 503 ? 'ServiceUnavailable' : 'Unauthorized', message: result.message },
+      result.status,
+    );
+  }
+  c.set('user', result.user);
+  c.set('userRole', result.role);
   await next();
 };
 
@@ -265,19 +317,25 @@ ${content.trim()}
   }
 
   // 3. 将 Markdown 完整内容编码为 UTF-8 Base64 并调用 GitHub Contents API
+  //
+  // 实现说明（勿改回 Buffer）：
+  //   - 这里刻意只使用 Workers 运行时本身就保证存在的 TextEncoder + btoa（Web 标准 API），
+  //     而不再探测 Node 的 Buffer。本 worker 是 ESM 模块，Buffer 并非 Web 标准 API，
+  //     其可用性取决于 nodejs_compat 兼容标志；@cloudflare/workers-types 也刻意不声明
+  //     任何 Node 全局量，因此使用 Buffer 会让 tsc 报 TS2591 且无法被 CI 守住。
+  //   - 原实现为 Buffer.from(...) -> TextEncoder+btoa -> unescape(encodeURIComponent(...)) 三层回退。
+  //     第一层与第二层对任意输入产出完全相同的标准 Base64；第二层在 Workers 上不会抛错，
+  //     故第一层从未被实际命中，删除它不改变运行时行为。
+  //   - 保留最外层 try/catch 作为最后兜底，行为与原先一致。
   let base64Content: string;
   try {
-    if (typeof Buffer !== 'undefined') {
-      base64Content = Buffer.from(finalMarkdown, 'utf-8').toString('base64');
-    } else {
-      const utf8Bytes = new TextEncoder().encode(finalMarkdown);
-      let binary = '';
-      const len = utf8Bytes.byteLength;
-      for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(utf8Bytes[i]);
-      }
-      base64Content = btoa(binary);
+    const utf8Bytes = new TextEncoder().encode(finalMarkdown);
+    let binary = '';
+    const len = utf8Bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(utf8Bytes[i]);
     }
+    base64Content = btoa(binary);
   } catch (e: any) {
     base64Content = btoa(unescape(encodeURIComponent(finalMarkdown)));
   }
@@ -536,6 +594,8 @@ ${momentText}
     commit_url: commitData.commit.html_url,
     message: 'Moment successfully committed. Cloudflare Pages build triggered.',
   });
+});
+
 // ============================================================
 // 2. 认证中心凭据自动下发端点 (GET /api/credentials) - 仅限认证中心管理员
 // 随统一认证中心登录状态一并下发操作密钥，免除站长每次手动填写 Token 喵！
@@ -677,6 +737,16 @@ app.get('/api/ddos', async (c) => {
       cfConnected: true,
       updatedAt: new Date().toISOString(),
     });
+  }
+
+  // 安全约束：真实查询会消耗本 Worker 自身的 Cloudflare 凭据，必须要求管理员身份，
+  // 否则任何匿名访客都能借本站配额去查询 Cloudflare 安全日志。
+  // 演示模式 (demo=true) 返回合成数据，无需鉴权。
+  if (!(await isAdminRequest(c))) {
+    return c.json({
+      error: 'Unauthorized',
+      message: '真实 DDoS 日志查询需要管理员权限；如需查看演示数据请加 ?demo=true',
+    }, 401);
   }
 
   const clientToken = c.req.header('x-cf-token') || c.req.header('cf-api-token');

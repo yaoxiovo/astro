@@ -11,12 +11,12 @@ export interface FootprintItem {
 	slug: string;
 	title: string;
 	progress: number; // 0-100 最大阅读进度
-	active: number;   // 累计活跃秒数（页面可见时）
-	reads: number;    // 有效阅读次数（单次 ≥10s 计 1 次）
-	first: number;    // 首次阅读时间戳 (ms)
-	last: number;     // 最近阅读时间戳 (ms)
+	active: number; // 累计活跃秒数（页面可见时）
+	reads: number; // 有效阅读次数（单次 ≥10s 计 1 次）
+	first: number; // 首次阅读时间戳 (ms)
+	last: number; // 最近阅读时间戳 (ms)
 	tags: string[];
-	pub?: string;     // 文章发布日期 ISO
+	pub?: string; // 文章发布日期 ISO
 }
 
 export interface FootprintBucket {
@@ -35,7 +35,7 @@ export const GUEST_BUCKET = "guest";
 export const MAX_ITEMS = 500;
 export const MAX_DAYS = 420;
 
-export function todayKey(d = new Date()): string {
+export function todayKey(d: Date = new Date()): string {
 	const y = d.getFullYear();
 	const m = String(d.getMonth() + 1).padStart(2, "0");
 	const day = String(d.getDate()).padStart(2, "0");
@@ -44,9 +44,15 @@ export function todayKey(d = new Date()): string {
 
 export function resolveBucketId(): string {
 	try {
-		let uid = localStorage.getItem("yaoxi_user_id") || localStorage.getItem("user_id") || "";
+		let uid =
+			localStorage.getItem("yaoxi_user_id") ||
+			localStorage.getItem("user_id") ||
+			"";
 		if (!uid) {
-			const raw = localStorage.getItem("yaoxi_auth_user") || localStorage.getItem("user_profile") || "";
+			const raw =
+				localStorage.getItem("yaoxi_auth_user") ||
+				localStorage.getItem("user_profile") ||
+				"";
 			if (raw) {
 				const u = JSON.parse(raw);
 				uid = u?.sub || u?.id || "";
@@ -67,7 +73,12 @@ export function loadStore(): FootprintStore {
 		const raw = localStorage.getItem(FOOTPRINT_KEY);
 		if (raw) {
 			const parsed = JSON.parse(raw);
-			if (parsed && parsed.v === 1 && parsed.buckets && typeof parsed.buckets === "object") {
+			if (
+				parsed &&
+				parsed.v === 1 &&
+				parsed.buckets &&
+				typeof parsed.buckets === "object"
+			) {
 				return parsed as FootprintStore;
 			}
 		}
@@ -86,19 +97,29 @@ export function getBucket(store: FootprintStore, id: string): FootprintBucket {
 	return store.buckets[id];
 }
 
-export function mergeBuckets(dst: FootprintBucket, src: FootprintBucket): FootprintBucket {
+export function mergeBuckets(
+	dst: FootprintBucket,
+	src: FootprintBucket,
+): FootprintBucket {
 	for (const [slug, item] of Object.entries(src.items || {})) {
 		const cur = dst.items[slug];
 		if (!cur) {
-			dst.items[slug] = { ...item, tags: Array.isArray(item.tags) ? [...item.tags] : [] };
+			dst.items[slug] = {
+				...item,
+				tags: Array.isArray(item.tags) ? [...item.tags] : [],
+			};
 		} else {
 			cur.progress = Math.max(cur.progress || 0, item.progress || 0);
 			cur.active = (cur.active || 0) + (item.active || 0);
 			cur.reads = (cur.reads || 0) + (item.reads || 0);
-			cur.first = Math.min(cur.first || item.first || Date.now(), item.first || cur.first || Date.now());
+			cur.first = Math.min(
+				cur.first || item.first || Date.now(),
+				item.first || cur.first || Date.now(),
+			);
 			cur.last = Math.max(cur.last || 0, item.last || 0);
 			if (!cur.title && item.title) cur.title = item.title;
-			if ((!cur.tags || cur.tags.length === 0) && Array.isArray(item.tags)) cur.tags = [...item.tags];
+			if ((!cur.tags || cur.tags.length === 0) && Array.isArray(item.tags))
+				cur.tags = [...item.tags];
 			if (!cur.pub && item.pub) cur.pub = item.pub;
 		}
 	}
@@ -109,7 +130,10 @@ export function mergeBuckets(dst: FootprintBucket, src: FootprintBucket): Footpr
 	return dst;
 }
 
-export function pruneBucket(bucket: FootprintBucket, keepSlugs: string[] = []): void {
+export function pruneBucket(
+	bucket: FootprintBucket,
+	keepSlugs: string[] = [],
+): void {
 	const entries = Object.entries(bucket.items);
 	if (entries.length > MAX_ITEMS) {
 		const keep = new Set(keepSlugs);
@@ -124,7 +148,8 @@ export function pruneBucket(bucket: FootprintBucket, keepSlugs: string[] = []): 
 	const days = Object.keys(bucket.days);
 	if (days.length > MAX_DAYS) {
 		days.sort();
-		for (const d of days.slice(0, days.length - MAX_DAYS)) delete bucket.days[d];
+		for (const d of days.slice(0, days.length - MAX_DAYS))
+			delete bucket.days[d];
 	}
 }
 
@@ -152,7 +177,8 @@ export function formatDuration(totalSec: number): string {
 	if (min < 60) return `${min} 分钟`;
 	const hours = Math.floor(min / 60);
 	const remMin = min % 60;
-	if (hours < 24) return remMin > 0 ? `${hours} 小时 ${remMin} 分` : `${hours} 小时`;
+	if (hours < 24)
+		return remMin > 0 ? `${hours} 小时 ${remMin} 分` : `${hours} 小时`;
 	const days = Math.floor(hours / 24);
 	const remHours = hours % 24;
 	return remHours > 0 ? `${days} 天 ${remHours} 小时` : `${days} 天`;
@@ -165,11 +191,16 @@ export function formatDate(ts: number): string {
 }
 
 /** 登录时把游客桶合并进用户桶，成功合并返回 true */
-export function mergeGuestInto(store: FootprintStore, bucketId: string): boolean {
+export function mergeGuestInto(
+	store: FootprintStore,
+	bucketId: string,
+): boolean {
 	if (bucketId === GUEST_BUCKET) return false;
 	const guest = store.buckets[GUEST_BUCKET];
 	if (!guest) return false;
-	const hasContent = Object.keys(guest.items || {}).length > 0 || Object.keys(guest.days || {}).length > 0;
+	const hasContent =
+		Object.keys(guest.items || {}).length > 0 ||
+		Object.keys(guest.days || {}).length > 0;
 	if (!hasContent) {
 		delete store.buckets[GUEST_BUCKET];
 		return false;

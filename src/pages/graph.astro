@@ -6,39 +6,51 @@ import { Icon } from "astro-icon/components";
 const posts = await getSortedPosts();
 
 // 组装节点和连线数据
-const nodes: any[] = [];
-const links: any[] = [];
+interface GraphNode {
+	id: string;
+	name: string;
+	group: number;
+	val: number;
+	url?: string;
+}
+interface GraphLink {
+	source: string;
+	target: string;
+}
+
+const nodes: GraphNode[] = [];
+const links: GraphLink[] = [];
 const tagSet = new Set<string>();
 
-posts.forEach(post => {
-  // 添加文章节点 (组1)
-  nodes.push({ 
-    id: post.id, 
-    name: post.data.title, 
-    group: 1, 
-    val: 6, // 节点大小权重
-    url: `/posts/${post.id}/` 
-  });
-  
-  // 添加标签节点并连线
-  post.data.tags.forEach(tag => {
-    if (!tagSet.has(tag)) {
-      tagSet.add(tag);
-      // 标签节点 (组2)
-      nodes.push({ 
-        id: `tag-${tag}`, 
-        name: `#${tag}`, 
-        group: 2, 
-        val: 3 
-      });
-    }
-    // 连线：文章 -> 标签
-    links.push({ 
-      source: post.id, 
-      target: `tag-${tag}` 
-    });
-  });
-});
+for (const post of posts) {
+	// 添加文章节点 (组1)
+	nodes.push({
+		id: post.id,
+		name: post.data.title,
+		group: 1,
+		val: 6, // 节点大小权重
+		url: `/posts/${post.id}/`,
+	});
+
+	// 添加标签节点并连线
+	for (const tag of post.data.tags) {
+		if (!tagSet.has(tag)) {
+			tagSet.add(tag);
+			// 标签节点 (组2)
+			nodes.push({
+				id: `tag-${tag}`,
+				name: `#${tag}`,
+				group: 2,
+				val: 3,
+			});
+		}
+		// 连线：文章 -> 标签
+		links.push({
+			source: post.id,
+			target: `tag-${tag}`,
+		});
+	}
+}
 
 const graphData = JSON.stringify({ nodes, links });
 ---

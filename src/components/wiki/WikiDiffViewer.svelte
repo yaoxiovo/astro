@@ -38,7 +38,9 @@ async function copyPermalink() {
 	try {
 		await navigator.clipboard.writeText(window.location.href);
 		copiedLink = true;
-		setTimeout(() => (copiedLink = false), 1500);
+		setTimeout(() => {
+			copiedLink = false;
+		}, 1500);
 	} catch {
 		alert("复制失败，请手动复制地址栏链接 喵~");
 	}

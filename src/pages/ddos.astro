@@ -1,10 +1,11 @@
 ---
+import { siteConfig } from "@/config";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { Icon } from "astro-icon/components";
-import { siteConfig } from "@/config";
 
 const pageTitle = "DDoS 告警与实时防御中心";
-const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追踪 HTTP Flood、L7 DDoS 与异常并发攻击事件";
+const pageDescription =
+	"直连 Cloudflare 边缘安全智能分析 · 实时追踪 HTTP Flood、L7 DDoS 与异常并发攻击事件";
 ---
 
 <MainGridLayout title={pageTitle} description={pageDescription} noindex={true}>
@@ -574,6 +575,24 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
       return localStorage.getItem(STORAGE_KEY_TOKEN) || "";
     }
 
+    /**
+     * 解析统一认证中心下发的 SSO 访问令牌。
+     * 真实 DDoS 日志查询在后端要求管理员身份（防止匿名访客借本站
+     * Cloudflare 凭据与配额查询安全日志），故此处需随请求携带 Authorization 头。
+     */
+    function resolveSsoToken() {
+      if (typeof window !== "undefined" && window.yaoxiAuth && typeof window.yaoxiAuth.getToken === "function") {
+        const t = window.yaoxiAuth.getToken();
+        if (t) return t;
+      }
+      return (
+        localStorage.getItem("yaoxi_access_token") ||
+        localStorage.getItem("access_token") ||
+        localStorage.getItem("yaoxi_auth_token") ||
+        ""
+      );
+    }
+
     function updateSettingBadges() {
       const hasToken = !!resolveCfToken();
       if (badgeAutoToken) {
@@ -738,6 +757,7 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
     try {
       let data = null;
       let usedDirectCF = false;
+      let authHint = "";
 
       // 如果用户持有 Token（随统一认证中心下发或手动填写），尝试本地直接访问 CF GraphQL
       if (customToken && !isDemoMode) {
@@ -755,10 +775,27 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
         const reqHeaders = { "Content-Type": "application/json" };
         if (customToken) reqHeaders["x-cf-token"] = customToken;
         if (customZone) reqHeaders["x-cf-zone-id"] = customZone;
+        // 真实查询需管理员身份；demo 模式后端公开放行，无需该头
+        const ssoToken = resolveSsoToken();
+        if (ssoToken && !isDemoMode) reqHeaders["Authorization"] = `Bearer ${ssoToken}`;
 
         const res = await fetch(apiUrl, { headers: reqHeaders });
         if (res.ok) {
           data = await res.json();
+        } else if (res.status === 401 || res.status === 403) {
+          // 后端要求管理员身份：给出可操作的提示，而不是笼统的“获取失败”
+          if (!isDemoMode) {
+            authHint = "需要管理员登录后才能查看真实安全日志；可点击右上角「演练模拟」查看演示数据。";
+          }
+          // 备用：尝试回退到 zk-api
+          if (!endpoint.includes("zk-api.yaoxi.cloud")) {
+            const fallbackUrl = `https://zk-api.yaoxi.cloud/api/ddos?hours=${currentHours}&limit=100${isDemoMode ? "&demo=1" : ""}`;
+            const fbRes = await fetch(fallbackUrl, { headers: reqHeaders });
+            if (fbRes.ok) {
+              data = await fbRes.json();
+              authHint = "";
+            }
+          }
         } else {
           // 备用：尝试回退到 zk-api
           if (!endpoint.includes("zk-api.yaoxi.cloud")) {
@@ -770,7 +807,7 @@ const pageDescription = "直连 Cloudflare 边缘安全智能分析 · 实时追
       }
 
       if (!data) {
-        throw new Error("未能从网关获取到 DDoS 响应");
+        throw new Error(authHint || "未能从网关获取到 DDoS 响应");
       }
 
       renderPageData(data, usedDirectCF);

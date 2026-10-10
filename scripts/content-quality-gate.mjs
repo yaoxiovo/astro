@@ -20,8 +20,8 @@ const POSTS_DIR = path.join(ROOT_DIR, "src/content/posts");
 const QUALITY_DIR = path.join(ROOT_DIR, "src/data/wiki/quality");
 const PUBLIC_QUALITY_DIR = path.join(ROOT_DIR, "public/api/wiki/quality");
 
-fs.mkdirSync(QUALITY_DIR, { recursive: true });
-fs.mkdirSync(PUBLIC_QUALITY_DIR, { recursive: true });
+// 注意：目录创建与报告落盘只在 runQualityGate 的写盘模式下执行（见 options.write），
+// 以便测试可以 import 本模块而不产生任何文件系统副作用。
 
 // GitHub / Astro 默认标题 Slugify 生成规则
 export function slugifyHeading(text) {
@@ -156,8 +156,11 @@ export function inspectCjkTypography(lines) {
 		// 盘古之白 1: 中文接英文/数字无空格，例如 "学习React"
 		// 匹配: 中文字符直接跟随英文字母或数字（排除已标记为占位符的 [CODE] 等）
 		const cjkFollowedByAlnum = /([\u4e00-\u9fa5])([a-zA-Z0-9]+)/g;
-		let match;
-		while ((match = cjkFollowedByAlnum.exec(cleanText)) !== null) {
+		for (
+			let match = cjkFollowedByAlnum.exec(cleanText);
+			match !== null;
+			match = cjkFollowedByAlnum.exec(cleanText)
+		) {
 			// 过滤形如 "第1章" 的数字情况可选允许，但这里记录优化建议
 			const word = match[2];
 			if (word === "CODE" || word === "IMAGE" || word === "MATH") continue;
@@ -173,7 +176,11 @@ export function inspectCjkTypography(lines) {
 
 		// 盘古之白 2: 英文/数字接中文无空格，例如 "React很棒"
 		const alnumFollowedByCjk = /([a-zA-Z0-9]+)([\u4e00-\u9fa5])/g;
-		while ((match = alnumFollowedByCjk.exec(cleanText)) !== null) {
+		for (
+			let match = alnumFollowedByCjk.exec(cleanText);
+			match !== null;
+			match = alnumFollowedByCjk.exec(cleanText)
+		) {
 			const word = match[1];
 			if (word === "CODE" || word === "IMAGE" || word === "MATH") continue;
 			issues.push({
@@ -189,7 +196,11 @@ export function inspectCjkTypography(lines) {
 		// 全半角标点漂移拦截 (Punctuation Drift)
 		// 中文后面的半角逗号: 汉字接英文逗号再接文字
 		const halfCommaAfterCjk = /([\u4e00-\u9fa5]),/g;
-		while ((match = halfCommaAfterCjk.exec(cleanText)) !== null) {
+		for (
+			let match = halfCommaAfterCjk.exec(cleanText);
+			match !== null;
+			match = halfCommaAfterCjk.exec(cleanText)
+		) {
 			issues.push({
 				type: "punctuation_drift",
 				severity: "warning",
@@ -202,7 +213,11 @@ export function inspectCjkTypography(lines) {
 
 		// 中文后面的半角句号: 汉字接英文句点且后面不是数字或字母 (如 "很好." 或 "很好. 然后")
 		const halfPeriodAfterCjk = /([\u4e00-\u9fa5])\.(?:\s|$|[\u4e00-\u9fa5])/g;
-		while ((match = halfPeriodAfterCjk.exec(cleanText)) !== null) {
+		for (
+			let match = halfPeriodAfterCjk.exec(cleanText);
+			match !== null;
+			match = halfPeriodAfterCjk.exec(cleanText)
+		) {
 			issues.push({
 				type: "punctuation_drift",
 				severity: "warning",
@@ -215,7 +230,11 @@ export function inspectCjkTypography(lines) {
 
 		// 中文后面的半角分号
 		const halfSemicolonAfterCjk = /([\u4e00-\u9fa5]);/g;
-		while ((match = halfSemicolonAfterCjk.exec(cleanText)) !== null) {
+		for (
+			let match = halfSemicolonAfterCjk.exec(cleanText);
+			match !== null;
+			match = halfSemicolonAfterCjk.exec(cleanText)
+		) {
 			issues.push({
 				type: "punctuation_drift",
 				severity: "info",
@@ -239,8 +258,11 @@ export function inspectLinksAndAnchors(rawMarkdown, currentSlug, allPostSlugs) {
 	// 1. 提取文档内部所有标题锚点
 	const headings = [];
 	const headingRegex = /^(#{1,6})\s+(.+)$/gm;
-	let hMatch;
-	while ((hMatch = headingRegex.exec(rawMarkdown)) !== null) {
+	for (
+		let hMatch = headingRegex.exec(rawMarkdown);
+		hMatch !== null;
+		hMatch = headingRegex.exec(rawMarkdown)
+	) {
 		const level = hMatch[1].length;
 		const rawTitle = hMatch[2].trim();
 		const slug = slugifyHeading(rawTitle);
@@ -252,10 +274,13 @@ export function inspectLinksAndAnchors(rawMarkdown, currentSlug, allPostSlugs) {
 	// 2. 提取所有链接和图片
 	// Markdown 链接: [text](target)
 	const linkRegex = /\[([^\]]*)\]\(([^)"]+)(?:(?:\s+["'][^"']*["'])?)\)/g;
-	let lMatch;
 	const links = [];
 
-	while ((lMatch = linkRegex.exec(rawMarkdown)) !== null) {
+	for (
+		let lMatch = linkRegex.exec(rawMarkdown);
+		lMatch !== null;
+		lMatch = linkRegex.exec(rawMarkdown)
+	) {
 		links.push({
 			text: lMatch[1],
 			url: lMatch[2].trim(),
@@ -387,7 +412,7 @@ export function analyzeCognitiveComplexity(rawMarkdown, parsedLines, headings) {
 	}
 
 	// 2. 统计字数与代码行
-	let totalLines = parsedLines.length;
+	const totalLines = parsedLines.length;
 	let codeLines = 0;
 	let cjkChars = 0;
 	let englishWords = 0;
@@ -591,9 +616,29 @@ export function computeScorecard(
 	};
 }
 
-// 主流程执行函数
+/**
+ * 枚举待巡检的博文文件（唯一的文章发现规则）
+ * 规则：src/content/posts 目录下的一级 *.md 文件，忽略以 "." 开头的隐藏文件。
+ * 说明：draft: true 的文章同样参与巡检（仅在 analyzeCognitiveComplexity 中豁免 thin_content 提示），
+ * 因此调用方不需要也不应该自行按 draft 过滤。
+ */
+export function listPostFiles() {
+	return fs
+		.readdirSync(POSTS_DIR)
+		.filter((f) => f.endsWith(".md") && !f.startsWith("."));
+}
+
+/**
+ * 主流程执行函数
+ * @param {object} [options]
+ * @param {boolean} [options.verbose=true] 是否输出巡检日志
+ * @param {boolean} [options.write=true] 是否把质量报告落盘到 src/data/wiki/quality 与
+ *   public/api/wiki/quality。默认 true（保持 npm run check:quality 与 prebuild 的原行为）；
+ *   传 false 时只做内存中的静态分析并返回结果，不创建目录、不写入任何文件（测试专用）。
+ */
 export function runQualityGate(options = {}) {
 	const verbose = options.verbose ?? true;
+	const write = options.write ?? true;
 	if (verbose) {
 		console.log(
 			"🚀 [Content Quality Gate] 启动工业级 Markdown 静态分析巡检矩阵...",
@@ -601,12 +646,18 @@ export function runQualityGate(options = {}) {
 	}
 	const startTime = Date.now();
 
-	const allFiles = fs
-		.readdirSync(POSTS_DIR)
-		.filter((f) => f.endsWith(".md") && !f.startsWith("."));
+	// 只有需要落盘时才创建输出目录
+	if (write) {
+		fs.mkdirSync(QUALITY_DIR, { recursive: true });
+		fs.mkdirSync(PUBLIC_QUALITY_DIR, { recursive: true });
+	}
+
+	const allFiles = listPostFiles();
 
 	const allPostSlugs = new Set(allFiles.map((f) => f.replace(/\.md$/, "")));
 	const summaryMatrix = {};
+	// 单篇完整报告（内存副本），使调用方（如测试）无需读盘即可校验报告 Schema
+	const reports = {};
 
 	let totalPassedS = 0;
 	let totalPassedA = 0;
@@ -623,7 +674,7 @@ export function runQualityGate(options = {}) {
 		const titleMatch = rawContent.match(
 			/^title:\s*(?:['"]?)(.*?)(?:['"]?)\s*$/m,
 		);
-		if (titleMatch && titleMatch[1]) {
+		if (titleMatch?.[1]) {
 			title = titleMatch[1].trim();
 		}
 
@@ -670,42 +721,46 @@ export function runQualityGate(options = {}) {
 			issuesCount: scorecard.issuesCount,
 			metrics: scorecard.metrics,
 		};
+		reports[slug] = report;
 
 		if (scorecard.grade === "S") totalPassedS++;
 		else if (scorecard.grade === "A") totalPassedA++;
 		totalWarnings += scorecard.issuesCount.warnings;
 		totalFatalErrors += scorecard.issuesCount.errors;
 
-		// 单独写入每篇博文的质量体检报告
-		fs.writeFileSync(
-			path.join(QUALITY_DIR, `${slug}.json`),
-			JSON.stringify(report, null, 2),
-		);
-		fs.writeFileSync(
-			path.join(PUBLIC_QUALITY_DIR, `${slug}.json`),
-			JSON.stringify(report, null, 2),
-		);
+		// 单独写入每篇博文的质量体检报告（write: false 时跳过，保证测试零副作用）
+		if (write) {
+			fs.writeFileSync(
+				path.join(QUALITY_DIR, `${slug}.json`),
+				JSON.stringify(report, null, 2),
+			);
+			fs.writeFileSync(
+				path.join(PUBLIC_QUALITY_DIR, `${slug}.json`),
+				JSON.stringify(report, null, 2),
+			);
+		}
 	}
 
 	// 汇总写入矩阵报告
-	fs.writeFileSync(
-		path.join(QUALITY_DIR, "matrix.json"),
-		JSON.stringify(summaryMatrix, null, 2),
-	);
-	fs.writeFileSync(
-		path.join(PUBLIC_QUALITY_DIR, "matrix.json"),
-		JSON.stringify(summaryMatrix, null, 2),
-	);
+	if (write) {
+		fs.writeFileSync(
+			path.join(QUALITY_DIR, "matrix.json"),
+			JSON.stringify(summaryMatrix, null, 2),
+		);
+		fs.writeFileSync(
+			path.join(PUBLIC_QUALITY_DIR, "matrix.json"),
+			JSON.stringify(summaryMatrix, null, 2),
+		);
+	}
 
 	const duration = Date.now() - startTime;
 	if (verbose) {
 		console.log(
-			`\n✨ [Content Quality Gate] 巡检完成！耗时 ${duration}ms 喵！` +
-				`\n📊 巡检博文总数: ${allFiles.length} 篇` +
-				`\n🏆 S 级卓越文章: ${totalPassedS} 篇 | A 级优质文章: ${totalPassedA} 篇` +
-				`\n🛡️ 拦截致命死链/断裂资源: ${totalFatalErrors} 处` +
-				`\n💡 发现排版优化建议: ${totalWarnings} 处` +
-				`\n📦 报告已成功沉淀至 src/data/wiki/quality/ 与 public/api/wiki/quality/ 喵呜~\n`,
+			`\n✨ [Content Quality Gate] 巡检完成！耗时 ${duration}ms 喵！\n📊 巡检博文总数: ${allFiles.length} 篇\n🏆 S 级卓越文章: ${totalPassedS} 篇 | A 级优质文章: ${totalPassedA} 篇\n🛡️ 拦截致命死链/断裂资源: ${totalFatalErrors} 处\n💡 发现排版优化建议: ${totalWarnings} 处${
+				write
+					? "\n📦 报告已成功沉淀至 src/data/wiki/quality/ 与 public/api/wiki/quality/ 喵呜~\n"
+					: "\n🧪 已启用 write: false，本次为只读巡检，未写入任何报告文件喵~\n"
+			}`,
 		);
 	}
 
@@ -716,7 +771,9 @@ export function runQualityGate(options = {}) {
 		totalPassedA,
 		totalWarnings,
 		totalFatalErrors,
+		wrote: write,
 		summaryMatrix,
+		reports,
 	};
 }
 
@@ -725,5 +782,6 @@ if (
 	process.argv[1] &&
 	fileURLToPath(import.meta.url) === path.resolve(process.argv[1])
 ) {
-	runQualityGate();
+	// 默认写盘；显式传入 --no-write 可做只读巡检（不产生任何文件系统副作用）
+	runQualityGate({ write: !process.argv.includes("--no-write") });
 }

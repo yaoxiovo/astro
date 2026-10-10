@@ -1,0 +1,36 @@
+# 统一行尾为 LF，保证 Biome 格式检查在任意平台都能通过
+#
+# 背景：本仓库提交进 git 的内容全部是 LF（实测 HEAD blob：191 LF / 0 CRLF），
+# 但本机 git 配置了 core.autocrlf=true，会在检出时把工作区文件转成 CRLF。
+# 而 Biome 1.9.4 的 formatter.lineEnding 只接受 lf / crlf / cr（没有 auto），
+# 默认值为 lf —— 于是同一份内容在 CRLF 工作区下必然被判定为「格式不符」，
+# 导致 `biome check` 在 Windows 上永远无法通过（实测：同一文件 LF 退出 0、CRLF 退出 1）。
+#
+# 这里显式声明 eol=lf，使检出到工作区的文件保持 LF，从而：
+#   1. Biome 检查与格式化结果在 Windows / Linux / macOS 上一致；
+#   2. CI（Linux runner）与本地（Windows）行为不再分叉；
+#   3. 避免 git 在提交时反复转换行尾产生噪声 diff。
+#
+# 注意：.gitattributes 只影响此后的检出行为。已存在于工作区的 CRLF 文件
+# 需要重新检出（删除后 git checkout -- <path>）才会变为 LF。
+* text=auto eol=lf
+
+# 二进制文件不做行尾转换
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.mp3 binary
+*.mp4 binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.zip binary
+*.pdf binary
+
+# 这些文件按字面量处理，避免被误判为文本
+*.patch -text
+*.pem -text

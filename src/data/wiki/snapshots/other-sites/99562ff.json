@@ -1,9 +1,0 @@
-{
-  "sha": "99562ffc9bd83038acdfa18e096ef969870719f1",
-  "shortSha": "99562ff",
-  "date": "2026-01-18T12:59:08+08:00",
-  "author": "yaoxiovo",
-  "message": "Update 1 file: other-sites.md",
-  "slug": "other-sites",
-  "content": "---\ntitle: 其他网站\npublished: 1999-01-01T19:25:08\ndescription: 'AcoFork 的其他网站'\nimage: ''\n\ndraft: false \nlang: ''\n---\n\n::url{href=\"https://yaoxi.xyz\"}"
-}

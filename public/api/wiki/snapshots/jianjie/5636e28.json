@@ -1,9 +1,0 @@
-{
-  "sha": "5636e288539472f04ffd73b0e8710f041eba66d7",
-  "shortSha": "5636e28",
-  "date": "2026-01-01T23:00:39+08:00",
-  "author": "yaoxiovo",
-  "message": "Update 143 files: config.ts, 163-free-domain-email.md, acg-randompic-api.md, across-nat.md, aicode-prompt.md, alist-for-aliyun.md, alist-web.md, anuneko.md, asf.md, astrov3-redirects.md, atpx-fun-blog.md, auto-icp-query.md, ...omitted 131 file(s)",
-  "slug": "jianjie",
-  "content": "---\ntitle: 网站简介\npublished: 2025-12-04\ndescription: 我的博客网站简介。\ntags:\n  - Cloudflare\n  - 域名解析\n  - CDN\n  - 网站加速\ncategory: 记录\ndraft: false\nlang: \"\"\n---\n# 搭建：\n1. cdn提供商：cloudflare Tencent\n2. dns提供商：cloudflare aliyun\n3. 源站：托管式（GitHub作为仓库）由边缘安全加速平台eo提供pages托管服务\n优点：零成本建站， eo+cf 天下无敌\n\n## 维护：\n1. 加载变慢属于不可避免的问题，增加加载速度成本较高，不适宜\n2. 过几年提升速度，按照Tencent政策，如果pages长期免费开放，理论说这网站能开到天荒地老\n"
-}

@@ -2,15 +2,16 @@
  * Site Monitor — 网站存活监控 Worker（免费版快猫星云平替喵）
  *
  * 功能：
- *  - 每 5 分钟拨测站点列表（HTTP 状态码 + 响应时间 + 可选关键字校验）
+ *  - 每 1 分钟拨测站点列表（HTTP 状态码 + 响应时间 + 可选关键字校验）
  *  - 状态机去重：DOWN 时只告警一次，恢复 UP 时再通知（不刷屏）
  *  - 告警主通道：快猫星云 Flashduty 标准告警（故障 Critical / 恢复 Ok，自动恢复）
  *  - 可选旁路：Telegram 通知（配置 BOT_TOKEN/CHAT_ID 即启用）
  *  - GET / 自写状态页（复刻快猫星云 UI，全自动），GET /api/status 状态 JSON
- *  - GET /api/history?days=30&site=xxx 历史数据（uptime% + 曲线 + 故障事件）
- *  - GET /api/run?secret=xxx 手动触发一轮检测
+ *  - GET /api/status-history?days=30 公开历史数据（状态页专用，窗口 ≤ 30 天）
+ *  - GET /api/history?days=30&site=xxx 历史数据（需 ADMIN_TOKEN，最长 90 天）
+ *  - GET /api/run 手动触发一轮检测（需 ADMIN_TOKEN）
  *
- * 免费额度：Workers Free 10 万请求/天，本监控 5 站点 × 288 次/天 ≈ 1.4k，完全够用
+ * 免费额度：Workers Free 10 万请求/天，本监控 6 站点 × 1440 次/天 ≈ 8.6k，完全够用
  */
 
 const DEFAULT_SITES = [
@@ -28,6 +29,10 @@ const STATE_PREFIX = "site:state:";
 const SP_INCIDENT_PREFIX = "sp:incident:";
 const SP_DIAG_KEY = "sp:diag";
 const FLASHCAT_API_HOST = "https://api.flashcat.cloud";
+// 公开历史端点的最大回溯天数（管理端点仍可到 90 天）
+const PUBLIC_HISTORY_MAX_DAYS = 30;
+// 历史查询分批读取 KV 的批大小（防子请求数超限）
+const KV_GET_BATCH = 120;
 
 // ---- 管理端点鉴权 ----
 function unauthorized() {
@@ -64,6 +69,16 @@ export default {
 		// 公开状态 JSON（widget 兼容）— 公开
 		if (url.pathname === "/api/status") {
 			return jsonResponse(await collectStatus(env));
+		}
+
+		// 状态页专用的公开历史数据（uptime% + 采样曲线 + 故障事件）— 公开
+		// 状态页是公开页面，此数据本就不含任何机密；此前状态页直接请求需鉴权的
+		// /api/history，导致永远 401、页面组件列表与曲线无法渲染。
+		// 为限制滥用，公开端点把窗口硬限制在 30 天内。
+		if (url.pathname === "/api/status-history") {
+			const days = parseInt(url.searchParams.get("days") || "30", 10);
+			const safeDays = Math.min(Math.max(Number.isFinite(days) ? days : 30, 1), PUBLIC_HISTORY_MAX_DAYS);
+			return jsonResponse(await collectHistory(env, "", safeDays));
 		}
 
 		// 快猫星云 widget 兼容 API（博客首页嵌入用）— 公开
@@ -808,7 +823,13 @@ async function collectHistory(env, siteFilter, days) {
 		const dayStart = now - (now % 86400000) - d * 86400000;
 		for (let h = 0; h < 24; h++) keys.push(histKey(dayStart + h * 3600000));
 	}
-	const raws = await Promise.all(keys.map((k) => env.MONITOR_KV.get(k)));
+	// 分批读取：一次性并发最多 2160 个 KV get 会撞上 Worker 子请求上限，
+	// 故按 KV_GET_BATCH 分片串行推进，单批内部仍保持并发。
+	const raws = [];
+	for (let i = 0; i < keys.length; i += KV_GET_BATCH) {
+		const batch = keys.slice(i, i + KV_GET_BATCH);
+		raws.push(...(await Promise.all(batch.map((k) => env.MONITOR_KV.get(k)))));
+	}
 	for (const raw of raws) {
 		if (!raw) continue;
 		const parsed = parseJson(raw);
@@ -883,7 +904,7 @@ footer { text-align:center; color:var(--muted); font-size:12px; margin-top:30px;
 <div class="wrap">
 <header>
 <h1>Yaoxi Status</h1>
-<p class="sub">网站运行状态 · 每 5 分钟自动检测 · Powered by Cloudflare Worker</p>
+<p class="sub">网站运行状态 · 每 1 分钟自动检测 · Powered by Cloudflare Worker</p>
 </header>
 <div class="banner" id="banner"><h2>加载中…</h2><p>正在获取最新状态</p></div>
 <div class="card"><h3>系统状态 System Status</h3><div id="sites"></div></div>
@@ -893,7 +914,7 @@ footer { text-align:center; color:var(--muted); font-size:12px; margin-top:30px;
 </div>
 <script>
 var STATUS_URL = "/api/status";
-var HISTORY_URL = "/api/history?days=30";
+var HISTORY_URL = "/api/status-history?days=30";
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 function fmt(ts){ if(!ts) return "-"; var d=new Date(ts+8*3600*1000); var p=function(n){return String(n).padStart(2,"0");}; return d.getUTCFullYear()+"-"+p(d.getUTCMonth()+1)+"-"+p(d.getUTCDate())+" "+p(d.getUTCHours())+":"+p(d.getUTCMinutes()); }
 function dur(ms){ if(ms==null) return "进行中"; var m=Math.round(ms/60000); if(m<60) return m+" 分钟"; var h=Math.floor(m/60); var mm=m%60; return mm? h+" 小时 "+mm+" 分" : h+" 小时"; }

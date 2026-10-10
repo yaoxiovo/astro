@@ -3,9 +3,9 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { Icon } from "astro-icon/components";
 import { buildPayloadFromRaw } from "@utils/seal-core.mjs";
-import { getSealManifest } from "@utils/seal-loader";
+import { type SealEntry, getSealManifest } from "@utils/seal-loader";
+import { Icon } from "astro-icon/components";
 
 export async function getStaticPaths() {
 	const manifest = getSealManifest();
@@ -13,6 +13,10 @@ export async function getStaticPaths() {
 		params: { slug: seal.slug },
 		props: { seal },
 	}));
+}
+
+interface Props {
+	seal: SealEntry;
 }
 
 const { seal } = Astro.props;
@@ -38,8 +42,8 @@ try {
 	} else {
 		buildVerifyError = "公钥缺失，无法校验";
 	}
-} catch (e: any) {
-	buildVerifyError = e?.message || String(e);
+} catch (e: unknown) {
+	buildVerifyError = e instanceof Error ? e.message : String(e);
 }
 
 const payloadJson = JSON.stringify({

@@ -15,7 +15,7 @@ const imagesGlob = import.meta.glob<{ default: ImageMetadata }>(
 	"/src/content/**/*.{jpeg,jpg,png,gif,webp}", // include posts and assets
 );
 
-export async function GET(context: APIContext) {
+export async function GET(context: APIContext): Promise<Response> {
 	if (!context.site) {
 		throw Error("site not set");
 	}
@@ -25,8 +25,12 @@ export async function GET(context: APIContext) {
 		return import.meta.env.PROD ? data.draft !== true : true;
 	});
 	const posts = allPosts
-		.filter((post) => !(post.data as any).encrypted)
-		.sort((a, b) => new Date(b.data.published).getTime() - new Date(a.data.published).getTime());
+		.filter((post) => !post.data.encrypted)
+		.sort(
+			(a, b) =>
+				new Date(b.data.published).getTime() -
+				new Date(a.data.published).getTime(),
+		);
 	const feed: RSSFeedItem[] = [];
 
 	for (const post of posts) {

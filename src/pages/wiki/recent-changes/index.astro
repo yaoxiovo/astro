@@ -1,8 +1,8 @@
 ---
-import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { Icon } from "astro-icon/components";
 import RecentChangesFeed from "@components/wiki/RecentChangesFeed.svelte";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getRecentChangesSync } from "@utils/wiki-special-loader";
+import { Icon } from "astro-icon/components";
 
 const data = getRecentChangesSync();
 const totalEntries = data?.totalEntries || 0;

@@ -1,49 +1,54 @@
 ---
-import MainGridLayout from '../../../../layouts/MainGridLayout.astro';
-import MomentCard from '../../../../components/MomentCard.astro';
-import MomentsClient from '../../../../components/MomentsClient.astro';
-import Pagination from '../../../../components/control/Pagination.astro';
-import { getSortedMoments } from '../../../../utils/content-utils';
+import MomentCard from "../../../../components/MomentCard.astro";
+import MomentsClient from "../../../../components/MomentsClient.astro";
+import Pagination from "../../../../components/control/Pagination.astro";
+import MainGridLayout from "../../../../layouts/MainGridLayout.astro";
+import { getSortedMoments } from "../../../../utils/content-utils";
 
 export async function getStaticPaths({ paginate }) {
-    // 注意：getStaticPaths 会被 Astro 独立提取执行，不能引用模块顶层变量，必须自包含
-    // 与服务端/客户端统一的 hashtag 规则：字母/数字/下划线/连字符（含 CJK），不吞中文标点
-    const TAG_RE = /#[\p{L}\p{N}_-]+/gu;
+	// 注意：getStaticPaths 会被 Astro 独立提取执行，不能引用模块顶层变量，必须自包含
+	// 与服务端/客户端统一的 hashtag 规则：字母/数字/下划线/连字符（含 CJK），不吞中文标点
+	const TAG_RE = /#[\p{L}\p{N}_-]+/gu;
 
-    function escapeRegExp(s) {
-        return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
+	function escapeRegExp(s) {
+		return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	}
 
-    const allMoments = await getSortedMoments();
-    
-    // Filter out replies, only show top-level moments on homepage
-    const topLevelMoments = allMoments.filter((moment) => !moment.data.replyTo);
+	const allMoments = await getSortedMoments();
 
-    // Extract all unique tags using a regex on the raw content
-    const tags = new Set();
-    topLevelMoments.forEach(m => {
-        const matches = m.body.match(TAG_RE);
-        if (matches) {
-            matches.forEach(tag => tags.add(tag.substring(1)));
-        }
-    });
+	// Filter out replies, only show top-level moments on homepage
+	const topLevelMoments = allMoments.filter((moment) => !moment.data.replyTo);
 
-    return Array.from(tags).flatMap(tag => {
-        // 精确匹配 tag（后面不能紧跟标签字符），避免 #开发 误匹配 #开发日志
-        const tagRe = new RegExp(`#${escapeRegExp(tag)}(?![\\p{L}\\p{N}_-])`, 'u');
-        const filteredMoments = topLevelMoments.filter(m => tagRe.test(m.body));
-        
-        const sortedMoments = filteredMoments.sort((a, b) => {
-            if (a.data.pinned && !b.data.pinned) return -1;
-            if (!a.data.pinned && b.data.pinned) return 1;
-            return new Date(b.data.published).getTime() - new Date(a.data.published).getTime();
-        });
-        
-        return paginate(sortedMoments, {
-            params: { tag },
-            pageSize: 10
-        });
-    });
+	// Extract all unique tags using a regex on the raw content
+	const tags = new Set<string>();
+	for (const m of topLevelMoments) {
+		const matches = m.body.match(TAG_RE);
+		if (matches) {
+			for (const tag of matches) {
+				tags.add(tag.substring(1));
+			}
+		}
+	}
+
+	return Array.from(tags).flatMap((tag) => {
+		// 精确匹配 tag（后面不能紧跟标签字符），避免 #开发 误匹配 #开发日志
+		const tagRe = new RegExp(`#${escapeRegExp(tag)}(?![\\p{L}\\p{N}_-])`, "u");
+		const filteredMoments = topLevelMoments.filter((m) => tagRe.test(m.body));
+
+		const sortedMoments = filteredMoments.sort((a, b) => {
+			if (a.data.pinned && !b.data.pinned) return -1;
+			if (!a.data.pinned && b.data.pinned) return 1;
+			return (
+				new Date(b.data.published).getTime() -
+				new Date(a.data.published).getTime()
+			);
+		});
+
+		return paginate(sortedMoments, {
+			params: { tag },
+			pageSize: 10,
+		});
+	});
 }
 
 const { page } = Astro.props;

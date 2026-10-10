@@ -147,4 +147,3 @@ export type MomentsImageConfig = {
 	webpUrlPrefix: string;
 	videoUrlPrefix: string;
 };
-

@@ -1,61 +1,73 @@
 ---
+import { momentsImageConfig } from "../../config";
 // 朋友圈图片墙：聚合所有顶层动态的图片，CSS 多列瀑布流 + fancybox 画廊
-import MainGridLayout from '../../layouts/MainGridLayout.astro';
-import { momentsImageConfig } from '../../config';
-import { getSortedMoments } from '../../utils/content-utils';
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import { getSortedMoments } from "../../utils/content-utils";
 
 const allMoments = await getSortedMoments();
 
 // 与 MomentCard 保持一致的智能图片 URL 转换（内联自包含，避免跨文件依赖）
 const { rawUrlPrefix, webpUrlPrefix } = momentsImageConfig;
 const toThumb = (img: string, dateStr: string) => {
-  // 外部绝对路径（非本 Moments 前缀目录）原样返回
-  if ((img.startsWith('http://') || img.startsWith('https://')) && !img.startsWith(rawUrlPrefix) && !img.startsWith(webpUrlPrefix)) {
-    return { original: img, thumbnail: img };
-  }
-  let cleanPath = img;
-  if (img.startsWith(rawUrlPrefix)) cleanPath = img.substring(rawUrlPrefix.length);
-  else if (img.startsWith(webpUrlPrefix)) cleanPath = img.substring(webpUrlPrefix.length);
-  else if (img.startsWith('/astro/raw/')) cleanPath = img.substring('/astro/raw/'.length);
-  else if (img.startsWith('/astro/webp/')) cleanPath = img.substring('/astro/webp/'.length);
-  if (cleanPath.startsWith('/')) cleanPath = cleanPath.substring(1);
+	// 外部绝对路径（非本 Moments 前缀目录）原样返回
+	if (
+		(img.startsWith("http://") || img.startsWith("https://")) &&
+		!img.startsWith(rawUrlPrefix) &&
+		!img.startsWith(webpUrlPrefix)
+	) {
+		return { original: img, thumbnail: img };
+	}
+	let cleanPath = img;
+	if (img.startsWith(rawUrlPrefix))
+		cleanPath = img.substring(rawUrlPrefix.length);
+	else if (img.startsWith(webpUrlPrefix))
+		cleanPath = img.substring(webpUrlPrefix.length);
+	else if (img.startsWith("/astro/raw/"))
+		cleanPath = img.substring("/astro/raw/".length);
+	else if (img.startsWith("/astro/webp/"))
+		cleanPath = img.substring("/astro/webp/".length);
+	if (cleanPath.startsWith("/")) cleanPath = cleanPath.substring(1);
 
-  const match = cleanPath.match(/^(\d{4}-\d{2}-\d{2})\/(.+)$/);
-  const folder = match ? match[1] : dateStr;
-  const filename = match ? match[2] : cleanPath;
-  return {
-    original: `${rawUrlPrefix}/${folder}/${filename}`,
-    thumbnail: `${webpUrlPrefix}/${folder}/${filename.replace(/\.[^.]+$/, '.webp')}`,
-  };
+	const match = cleanPath.match(/^(\d{4}-\d{2}-\d{2})\/(.+)$/);
+	const folder = match ? match[1] : dateStr;
+	const filename = match ? match[2] : cleanPath;
+	return {
+		original: `${rawUrlPrefix}/${folder}/${filename}`,
+		thumbnail: `${webpUrlPrefix}/${folder}/${filename.replace(/\.[^.]+$/, ".webp")}`,
+	};
 };
 
 // Markdown -> 纯文本摘要
 const toText = (body: string, max = 60) =>
-  (body || '')
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/[#>*_`~|-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, max);
+	(body || "")
+		.replace(/```[\s\S]*?```/g, " ")
+		.replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+		.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+		.replace(/[#>*_`~|-]/g, " ")
+		.replace(/\s+/g, " ")
+		.trim()
+		.slice(0, max);
 
 // 聚合所有顶层动态的图片（按发布时间倒序）
 const items = allMoments
-  .filter((m) => !m.data.replyTo)
-  .sort((a, b) => new Date(b.data.published).getTime() - new Date(a.data.published).getTime())
-  .flatMap((m) => {
-    const dateStr = new Date(m.data.published).toISOString().slice(0, 10);
-    const slug = m.id.replace(/\.(md|mdx)$/, '');
-    const text = toText(m.body);
-    return (m.data.images || []).map((img, idx) => ({
-      ...toThumb(img, dateStr),
-      slug,
-      date: dateStr,
-      text,
-      idx,
-    }));
-  });
+	.filter((m) => !m.data.replyTo)
+	.sort(
+		(a, b) =>
+			new Date(b.data.published).getTime() -
+			new Date(a.data.published).getTime(),
+	)
+	.flatMap((m) => {
+		const dateStr = new Date(m.data.published).toISOString().slice(0, 10);
+		const slug = m.id.replace(/\.(md|mdx)$/, "");
+		const text = toText(m.body);
+		return (m.data.images || []).map((img, idx) => ({
+			...toThumb(img, dateStr),
+			slug,
+			date: dateStr,
+			text,
+			idx,
+		}));
+	});
 
 const totalImages = items.length;
 const momentCount = new Set(items.map((i) => i.slug)).size;

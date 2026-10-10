@@ -2,11 +2,11 @@
 // MomentsClient.astro — 朋友圈客户端逻辑（列表 / 标签 / 详情页共用）
 // 重构自三份重复内联脚本；修复：30 天统计滚动归零、Observer 泄漏、
 // 重复上报、hashtag 吞标点/误匹配、无限滚动新卡片灯箱失效、分享按钮重复克隆等。
-import { umamiConfig } from '../config';
+import { umamiConfig } from "../config";
 
 interface Props {
-  // 详情页传 false：避免 View 事件与 data-umami-event 属性重复计数
-  trackViews?: boolean;
+	// 详情页传 false：避免 View 事件与 data-umami-event 属性重复计数
+	trackViews?: boolean;
 }
 
 const { trackViews = true } = Astro.props;

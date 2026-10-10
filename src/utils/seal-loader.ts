@@ -36,7 +36,10 @@ let cache: SealManifest | null = null;
 export function getSealManifest(): SealManifest {
 	if (cache) return cache;
 	try {
-		const manifestPath = path.join(process.cwd(), "src/data/seal/manifest.json");
+		const manifestPath = path.join(
+			process.cwd(),
+			"src/data/seal/manifest.json",
+		);
 		cache = JSON.parse(fs.readFileSync(manifestPath, "utf-8")) as SealManifest;
 	} catch {
 		cache = EMPTY_MANIFEST;

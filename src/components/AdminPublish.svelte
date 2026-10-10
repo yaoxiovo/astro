@@ -1,120 +1,163 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { encryptArticleContent, type AuthorizedRecipient } from '../utils/crypto';
+import { onMount } from "svelte";
+import {
+	type AuthorizedRecipient,
+	encryptArticleContent,
+} from "../utils/crypto";
 
-  let slug = '';
-  let title = '';
-  let markdown = '';
-  let tags = '技术,安全,架构';
-  let category = '安全实践';
-  let enableEncryption = true;
+let slug = "";
+let title = "";
+let markdown = "";
+let tags = "技术,安全,架构";
+let category = "安全实践";
+let enableEncryption = true;
 
-  interface UserKeyItem {
-    id: string;
-    username: string;
-    public_key_jwk: JsonWebKey;
-  }
+interface UserKeyItem {
+	id: string;
+	username: string;
+	public_key_jwk: JsonWebKey;
+}
 
-  let recipients: UserKeyItem[] = [];
-  let selectedRecipientIds: string[] = [];
+interface JwtPayload {
+	role?: string;
+	roles?: unknown[];
+	is_admin?: boolean;
+}
 
-  let token = '';
-  let statusText = '';
-  let isPublishing = false;
-  let deployStatus = 'idle'; // 'idle' | 'queued' | 'building' | 'success' | 'failure'
-  let currentStage = '';
-  let pollInterval: any = null;
+let recipients: UserKeyItem[] = [];
+let selectedRecipientIds: string[] = [];
 
-  const API_BASE = 'https://zk-api.yaoxi.cloud'; // 或你的 Worker 自定义域名
+let token = "";
+let statusText = "";
+let isPublishing = false;
+let deployStatus = "idle"; // 'idle' | 'queued' | 'building' | 'success' | 'failure'
+let currentStage = "";
+let pollInterval: ReturnType<typeof setInterval> | null = null;
 
-  const escapeYaml = (str: string) => (str || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r?\n/g, ' ');
+const API_BASE = "https://zk-api.yaoxi.cloud"; // 或你的 Worker 自定义域名
 
-  onMount(async () => {
-    token = localStorage.getItem('yaoxi_access_token') || localStorage.getItem('access_token') || localStorage.getItem('yaoxi_auth_token') || localStorage.getItem('yaoxi_client_token') || '';
-    if (!token) {
-      statusText = '⚠️ 未检测到有效登录凭据，请先在右上角完成统一身份认证 喵！';
-      return;
-    }
+const escapeYaml = (str: string) =>
+	(str || "")
+		.replace(/\\/g, "\\\\")
+		.replace(/"/g, '\\"')
+		.replace(/\r?\n/g, " ");
 
-    // 由认证中心下发的身份信息判断权限
-    try {
-      const parts = token.split('.');
-      if (parts.length >= 2) {
-        const payload = JSON.parse(decodeURIComponent(escape(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))));
-        const role = String(payload.role || '').toLowerCase();
-        const roles = Array.isArray(payload.roles) ? payload.roles.map((r: any) => String(r).toLowerCase()) : [];
-        const isAdmin = role === 'admin' || roles.includes('admin') || payload.is_admin === true;
-        if (!isAdmin) {
-          statusText = 'ℹ️ 当前认证中心下发身份为【成员 (Member)】，发布文章需要管理员权限 喵！';
-        }
-      }
-    } catch {}
+onMount(async () => {
+	token =
+		localStorage.getItem("yaoxi_access_token") ||
+		localStorage.getItem("access_token") ||
+		localStorage.getItem("yaoxi_auth_token") ||
+		localStorage.getItem("yaoxi_client_token") ||
+		"";
+	if (!token) {
+		statusText = "⚠️ 未检测到有效登录凭据，请先在右上角完成统一身份认证 喵！";
+		return;
+	}
 
-    try {
-      const res = await fetch(`${API_BASE}/api/user/keys`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        recipients = data.users || [];
-        selectedRecipientIds = recipients.map(r => r.id);
-      } else {
-        statusText = '⚠️ 暂未获取到读者公钥库（请确认已有读者初始化过密钥保险库）喵。';
-      }
-    } catch {
-      statusText = '⚠️ 连接密钥后端超时，请检查网络配置 喵。';
-    }
-  });
+	// 由认证中心下发的身份信息判断权限
+	try {
+		const parts = token.split(".");
+		if (parts.length >= 2) {
+			const payload = JSON.parse(
+				decodeURIComponent(
+					escape(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))),
+				),
+			) as JwtPayload;
+			const role = String(payload.role || "").toLowerCase();
+			const roles = Array.isArray(payload.roles)
+				? payload.roles.map((r: unknown) => String(r).toLowerCase())
+				: [];
+			const isAdmin =
+				role === "admin" ||
+				roles.includes("admin") ||
+				payload.is_admin === true;
+			if (!isAdmin) {
+				statusText =
+					"ℹ️ 当前认证中心下发身份为【成员 (Member)】，发布文章需要管理员权限 喵！";
+			}
+		}
+	} catch {}
 
-  const handlePublish = async () => {
-    if (!slug.trim() || !title.trim() || !markdown.trim()) {
-      alert('请完整填写文章 Slug、标题和 Markdown 内容 喵！');
-      return;
-    }
+	try {
+		const res = await fetch(`${API_BASE}/api/user/keys`, {
+			headers: { Authorization: `Bearer ${token}` },
+		});
+		if (res.ok) {
+			const data = await res.json();
+			recipients = data.users || [];
+			selectedRecipientIds = recipients.map((r) => r.id);
+		} else {
+			statusText =
+				"⚠️ 暂未获取到读者公钥库（请确认已有读者初始化过密钥保险库）喵。";
+		}
+	} catch {
+		statusText = "⚠️ 连接密钥后端超时，请检查网络配置 喵。";
+	}
+});
 
-    // 校验认证中心下发的身份是否为管理员
-    try {
-      const parts = token.split('.');
-      if (parts.length >= 2) {
-        const payload = JSON.parse(decodeURIComponent(escape(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))));
-        const role = String(payload.role || '').toLowerCase();
-        const roles = Array.isArray(payload.roles) ? payload.roles.map((r: any) => String(r).toLowerCase()) : [];
-        const isAdmin = role === 'admin' || roles.includes('admin') || payload.is_admin === true;
-        if (!isAdmin) {
-          alert('权限不足：当前认证中心下发的身份为【成员】，文章发布仅限【管理员】使用 喵！');
-          return;
-        }
-      }
-    } catch {}
+const handlePublish = async () => {
+	if (!slug.trim() || !title.trim() || !markdown.trim()) {
+		alert("请完整填写文章 Slug、标题和 Markdown 内容 喵！");
+		return;
+	}
 
-    if (enableEncryption && selectedRecipientIds.length === 0) {
-      alert('已开启端到端加密，请至少勾选一位授权读者 喵！');
-      return;
-    }
+	// 校验认证中心下发的身份是否为管理员
+	try {
+		const parts = token.split(".");
+		if (parts.length >= 2) {
+			const payload = JSON.parse(
+				decodeURIComponent(
+					escape(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))),
+				),
+			) as JwtPayload;
+			const role = String(payload.role || "").toLowerCase();
+			const roles = Array.isArray(payload.roles)
+				? payload.roles.map((r: unknown) => String(r).toLowerCase())
+				: [];
+			const isAdmin =
+				role === "admin" ||
+				roles.includes("admin") ||
+				payload.is_admin === true;
+			if (!isAdmin) {
+				alert(
+					"权限不足：当前认证中心下发的身份为【成员】，文章发布仅限【管理员】使用 喵！",
+				);
+				return;
+			}
+		}
+	} catch {}
 
-    isPublishing = true;
-    deployStatus = 'idle';
-    statusText = '🔐 正在前端内存执行 Web Crypto 混合加密与数字信封封签...';
+	if (enableEncryption && selectedRecipientIds.length === 0) {
+		alert("已开启端到端加密，请至少勾选一位授权读者 喵！");
+		return;
+	}
 
-    try {
-      let finalMarkdownFile = '';
+	isPublishing = true;
+	deployStatus = "idle";
+	statusText = "🔐 正在前端内存执行 Web Crypto 混合加密与数字信封封签...";
 
-      if (enableEncryption) {
-        const authorized: AuthorizedRecipient[] = recipients
-          .filter(r => selectedRecipientIds.includes(r.id))
-          .map(r => ({
-            user_id: r.id,
-            public_key_jwk: r.public_key_jwk,
-          }));
+	try {
+		let finalMarkdownFile = "";
 
-        const payload = await encryptArticleContent(markdown, authorized);
+		if (enableEncryption) {
+			const authorized: AuthorizedRecipient[] = recipients
+				.filter((r) => selectedRecipientIds.includes(r.id))
+				.map((r) => ({
+					user_id: r.id,
+					public_key_jwk: r.public_key_jwk,
+				}));
 
-        const tagsArray = tags.split(',').map(t => t.trim()).filter(Boolean);
-        const tagsYaml = tagsArray.map(t => `  - ${escapeYaml(t)}`).join('\n');
+			const payload = await encryptArticleContent(markdown, authorized);
 
-        finalMarkdownFile = `---
+			const tagsArray = tags
+				.split(",")
+				.map((t) => t.trim())
+				.filter(Boolean);
+			const tagsYaml = tagsArray.map((t) => `  - ${escapeYaml(t)}`).join("\n");
+
+			finalMarkdownFile = `---
 title: "${escapeYaml(title)}"
-published: "${new Date().toISOString().split('T')[0]}"
+published: "${new Date().toISOString().split("T")[0]}"
 description: "本文受端到端零知识混合加密保护"
 tags:
 ${tagsYaml}
@@ -127,13 +170,16 @@ draft: false
 ${JSON.stringify(payload, null, 2)}
 \`\`\`
 `;
-      } else {
-        const tagsArray = tags.split(',').map(t => t.trim()).filter(Boolean);
-        const tagsYaml = tagsArray.map(t => `  - ${escapeYaml(t)}`).join('\n');
+		} else {
+			const tagsArray = tags
+				.split(",")
+				.map((t) => t.trim())
+				.filter(Boolean);
+			const tagsYaml = tagsArray.map((t) => `  - ${escapeYaml(t)}`).join("\n");
 
-        finalMarkdownFile = `---
+			finalMarkdownFile = `---
 title: "${escapeYaml(title)}"
-published: "${new Date().toISOString().split('T')[0]}"
+published: "${new Date().toISOString().split("T")[0]}"
 description: "${escapeYaml(title)}"
 tags:
 ${tagsYaml}
@@ -144,70 +190,76 @@ draft: false
 
 ${markdown}
 `;
-      }
+		}
 
-      statusText = '🚀 正在通过 Worker BFF 向 GitHub Repos API 提交加密 Commit...';
+		statusText =
+			"🚀 正在通过 Worker BFF 向 GitHub Repos API 提交加密 Commit...";
 
-      const pubRes = await fetch(`${API_BASE}/api/publish`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          slug: slug.trim(),
-          title: title.trim(),
-          fileContent: finalMarkdownFile,
-        }),
-      });
+		const pubRes = await fetch(`${API_BASE}/api/publish`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify({
+				slug: slug.trim(),
+				title: title.trim(),
+				fileContent: finalMarkdownFile,
+			}),
+		});
 
-      if (!pubRes.ok) {
-        const errJson = await pubRes.json().catch(() => ({ message: '发布网络请求失败' }));
-        throw new Error(errJson.message || errJson.details || '发布异常');
-      }
+		if (!pubRes.ok) {
+			const errJson = await pubRes
+				.json()
+				.catch(() => ({ message: "发布网络请求失败" }));
+			throw new Error(errJson.message || errJson.details || "发布异常");
+		}
 
-      const pubData = await pubRes.json();
-      statusText = `✅ Commit 已提交 (${pubData.commit_sha?.substring(0, 7)})！启动 Cloudflare Pages 部署状态探针...`;
-      deployStatus = 'queued';
+		const pubData = await pubRes.json();
+		statusText = `✅ Commit 已提交 (${pubData.commit_sha?.substring(0, 7)})！启动 Cloudflare Pages 部署状态探针...`;
+		deployStatus = "queued";
 
-      startPollingDeploy();
-    } catch (err: any) {
-      statusText = `❌ 发布失败: ${err.message}`;
-      isPublishing = false;
-    }
-  };
+		startPollingDeploy();
+	} catch (err: unknown) {
+		const message = err instanceof Error ? err.message : String(err);
+		statusText = `❌ 发布失败: ${message}`;
+		isPublishing = false;
+	}
+};
 
-  const startPollingDeploy = () => {
-    if (pollInterval) clearInterval(pollInterval);
+const startPollingDeploy = () => {
+	if (pollInterval) clearInterval(pollInterval);
 
-    pollInterval = setInterval(async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/deploy-status`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+	pollInterval = setInterval(async () => {
+		try {
+			const res = await fetch(`${API_BASE}/api/deploy-status`, {
+				headers: { Authorization: `Bearer ${token}` },
+			});
 
-        if (res.ok) {
-          const data = await res.json();
-          deployStatus = data.status || 'building';
-          currentStage = data.current_stage || 'build';
+			if (res.ok) {
+				const data = await res.json();
+				deployStatus = data.status || "building";
+				currentStage = data.current_stage || "build";
 
-          if (deployStatus === 'success') {
-            statusText = `🎉 恭喜！Cloudflare Pages 构建成功并已完成全球边缘多活发布 喵！`;
-            clearInterval(pollInterval);
-            isPublishing = false;
-          } else if (deployStatus === 'failure') {
-            statusText = `❌ Cloudflare Pages 部署失败，请检查 Actions/Pages 构建日志 喵！`;
-            clearInterval(pollInterval);
-            isPublishing = false;
-          } else {
-            statusText = `⏳ 部署中... 状态: ${deployStatus.toUpperCase()} (阶段: ${currentStage}) 喵...`;
-          }
-        }
-      } catch {
-        statusText = '⚠️ 探针轮询响应微超时，后台继续重试中 喵...';
-      }
-    }, 3000);
-  };
+				if (deployStatus === "success") {
+					statusText =
+						"🎉 恭喜！Cloudflare Pages 构建成功并已完成全球边缘多活发布 喵！";
+					clearInterval(pollInterval);
+					isPublishing = false;
+				} else if (deployStatus === "failure") {
+					statusText =
+						"❌ Cloudflare Pages 部署失败，请检查 Actions/Pages 构建日志 喵！";
+					clearInterval(pollInterval);
+					isPublishing = false;
+				} else {
+					statusText = `⏳ 部署中... 状态: ${deployStatus.toUpperCase()} (阶段: ${currentStage}) 喵...`;
+				}
+			}
+		} catch {
+			statusText = "⚠️ 探针轮询响应微超时，后台继续重试中 喵...";
+		}
+	}, 3000);
+};
 </script>
 
 <div class="card bg-base-100 shadow-xl border border-base-200 p-6 max-w-4xl mx-auto my-8">

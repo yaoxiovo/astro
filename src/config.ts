@@ -1,20 +1,20 @@
 export const quotes = [
-  "欲买桂花同载酒，终不似，少年游。",
-  "热爱可抵岁月漫长。",
-  "世界并不温柔，但你可以。",
-  "代码写不动的时候，先活着。",
-  "保持浪漫，持续理性。",
-];
+	"欲买桂花同载酒，终不似，少年游。",
+	"热爱可抵岁月漫长。",
+	"世界并不温柔，但你可以。",
+	"代码写不动的时候，先活着。",
+	"保持浪漫，持续理性。",
+] as const;
 import type {
 	ExpressiveCodeConfig,
 	GitHubEditConfig,
 	ImageFallbackConfig,
 	LicenseConfig,
+	MomentsImageConfig,
 	NavBarConfig,
 	ProfileConfig,
 	SiteConfig,
 	UmamiConfig,
-	MomentsImageConfig,
 } from "./types/config";
 import { LinkPreset } from "./types/config";
 
@@ -24,10 +24,20 @@ export const siteConfig: SiteConfig = {
 	description:
 		"《瑶佳乐 blog》瑶曦的个人空间：深度聚焦 Astro 框架开发、AI 技术探索与生活实践感悟，致力于构建一个纯净、理性的技术分享与成长记录平台。 ",
 
-	keywords: ["瑶曦","Yaoxi","Astro","前端开发","AI实践","个人博客","抽象"],
+	keywords: [
+		"瑶曦",
+		"Yaoxi",
+		"Astro",
+		"前端开发",
+		"AI实践",
+		"个人博客",
+		"抽象",
+	],
 	lang: "zh_CN", // 'en','zh_CN','zh_TW','ja','ko','es','th'
 	themeColor: {
-		hue: 361, // Default hue for the theme color, from 0 to 360. e.g. red: 0, teal: 200, cyan: 250, pink: 345
+		// 色相角，取值 0-360。原值 361 超出声明范围（361 ≡ 1 mod 360，视觉效果等同于 1），
+		// 此处收敛到合法区间内等价的 1，保持原有观感不变。
+		hue: 1,
 		fixed: false, // Hide the theme color picker for visitors
 		forceDarkMode: false, // Force dark mode and hide theme switcher
 	},
@@ -57,8 +67,8 @@ export const siteConfig: SiteConfig = {
 		depth: 2, // Maximum heading depth to show in the table, from 1 to 3
 	},
 	notice: {
-    enable: false,
-    content: `
+		enable: false,
+		content: `
         <div style="margin-bottom: 12px; border: 1px solid #1a73e8; background: rgba(26, 115, 232, 0.05); padding: 12px; border-radius: 8px;">
             <div style="color: #1a73e8; font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 5px;">
                 <span>🇨🇳</span> 政治立场与意识形态安全最高声明
@@ -76,10 +86,8 @@ export const siteConfig: SiteConfig = {
             </div>
         </div>
     `,
-    level: "warning",
-},
-
-
+		level: "warning",
+	},
 
 	favicon: [
 		// Leave this array empty to use the default favicon
@@ -89,13 +97,10 @@ export const siteConfig: SiteConfig = {
 			//   sizes: '32x32',              // (Optional) Size of the favicon, set only if you have favicons of different sizes
 		},
 	],
-	officialSites: [
-		{ url: "https://blog.yaoxi.wiki", alias: "CN" },
-	],
-	server: [
-		{ url: "", text: "博客本体节点" },
-	],
-	googleClientId: "218053004391-td65pfifej0a2rs85qbag13vns31l350.apps.googleusercontent.com",
+	officialSites: [{ url: "https://blog.yaoxi.wiki", alias: "CN" }],
+	server: [{ url: "", text: "博客本体节点" }],
+	googleClientId:
+		"218053004391-td65pfifej0a2rs85qbag13vns31l350.apps.googleusercontent.com",
 	sso: {
 		enable: true,
 		authUrl: "https://accounts.yaoxi.cloud",
@@ -177,17 +182,24 @@ export const profileConfig: ProfileConfig = {
 	],
 };
 
-export const authorRoles: Record<string, {avatar: string; verifyType: "blue"|"yellow"|"none"; verifySubject: string}> = {
-	"瑶曦": {
+export const authorRoles: Record<
+	string,
+	{
+		avatar: string;
+		verifyType: "blue" | "yellow" | "none";
+		verifySubject: string;
+	}
+> = {
+	瑶曦: {
 		avatar: profileConfig.avatar || "",
 		verifyType: "yellow",
 		verifySubject: "知名科技领域生活UP主",
 	},
-	"瑶曦网络科技官方": {
+	瑶曦网络科技官方: {
 		avatar: profileConfig.avatar || "",
 		verifyType: "blue",
 		verifySubject: "瑶曦网络科技有限公司",
-	}
+	},
 };
 
 export const licenseConfig: LicenseConfig = {
@@ -225,4 +237,3 @@ export const momentsImageConfig: MomentsImageConfig = {
 	webpUrlPrefix: "https://png.yaoxi.wiki/astro/webp",
 	videoUrlPrefix: "https://png.yaoxi.wiki/astro/video",
 };
-

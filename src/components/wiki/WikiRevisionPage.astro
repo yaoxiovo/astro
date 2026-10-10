@@ -22,7 +22,9 @@ interface Props {
 const { entry, revision, history } = Astro.props;
 const slug = entry.id.replace(/\.[^/.]+$/, "");
 
-const siteUrlBase = (Astro.site ?? new URL("https://blog.yaoxi.wiki")).href.replace(/\/$/, "");
+const siteUrlBase = (
+	Astro.site ?? new URL("https://blog.yaoxi.wiki")
+).href.replace(/\/$/, "");
 const publishedISO = entry.data.published?.toISOString() || "";
 
 // 查找上一版本与下一版本（revisions 为倒序）
