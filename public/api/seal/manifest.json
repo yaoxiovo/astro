@@ -118,8 +118,8 @@
         "教程",
         "Web 开发"
       ],
-      "hash": "cefc392cce6d1adc8e4cb332b9208dc13a44f165693c0161fa3265e386a18ce8",
-      "signature": "oWMP87VI3/4djCuVW2uZtDG+jtgn2MVTzCF5LXSi9kEFUPV0e8Ad/Rngtq67ffn/3hL6UlB5hBABcAvXYrH+BA=="
+      "hash": "cfa6a009d4c399a0230b17cfa58d44bae3760bc248f00bf2eaa98f1d3ff05eb4",
+      "signature": "0ChK2UhSzzaQpSkp3ETHS5rSZbzuuCt5N7Ol6b4+RKkCjGrb67rfC+0di7RIz1SNrn0hpYawyKAj3iA0JQqeBQ=="
     },
     {
       "slug": "blog-dev-logs",
@@ -206,6 +206,21 @@
       ],
       "hash": "105511c054991a30325379f0758e742c53a95b73a94090e4bde12e3d7365504b",
       "signature": "ZC4zOSAlVZ5OU27elk5zRF4aOuQLe1KC/c7GxU5vhnwmGXqNx50c86bQSvjOomjtW8Qtqdylzsdf/jMIaPTfCQ=="
+    },
+    {
+      "slug": "digital-sovereign-blog-architecture-philosophy",
+      "title": "我的博客为何如此复杂？一座数字主权堡垒的架构哲学与功能存在之辩",
+      "published": "2026-10-10",
+      "encrypted": false,
+      "tags": [
+        "架构哲学",
+        "全栈开发",
+        "Astro",
+        "独立博客",
+        "数字主权"
+      ],
+      "hash": "b09a401f0bab8fb15f396e24818137e37a2d7f61de096a6ae810f8599f9b2a6c",
+      "signature": "t23rhvN/jY7DTiD9cnMugYOu2581lwFPo6ZnBSTo+QKiSnIMUuU9NlXHctIkOWM3KoF1Q43sRhNeH7ZAtSRwAA=="
     },
     {
       "slug": "domain-connect-cloudflare",
