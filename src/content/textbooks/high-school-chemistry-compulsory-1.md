@@ -19,6 +19,7 @@ published: 2026-10-17T03:00:00Z
 order: 4
 difficulty: "intermediate"
 draft: false
+externalUrl: "https://image.yaoxi.cloud/textbooks/high-school-chemistry-compulsory-1.pdf"
 ---
 
 # 普通高中教科书·化学 必修 第一册 —— 全景深度浓缩总结

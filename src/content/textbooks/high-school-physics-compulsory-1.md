@@ -17,6 +17,7 @@ published: 2026-10-16T18:00:00Z
 order: 2
 difficulty: intermediate
 draft: false
+externalUrl: "https://image.yaoxi.cloud/textbooks/high-school-physics-compulsory-1-summary.md"
 ---
 
 # 普通高中教科书·物理 必修 第一册 —— 全景深度浓缩总结

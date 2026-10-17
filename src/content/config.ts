@@ -94,17 +94,36 @@ const textbooksCollection = defineCollection({
 	}),
 });
 
+const novelsCollection = defineCollection({
+	schema: z.object({
+		title: z.string(),
+		description: z.string().optional().default(""),
+		author: z.string().optional().default("瑶曦"),
+		cover: z.string().optional().default(""),
+		status: z.enum(["ongoing", "completed"]).optional().default("ongoing"),
+		tags: z.array(z.string()).optional().default([]),
+		category: z.string().optional().default("玄幻"),
+		published: z.date(),
+		updated: z.date().optional(),
+		wordsCount: z.number().optional().default(0),
+		order: z.number().optional().default(0),
+		draft: z.boolean().optional().default(false),
+	}),
+});
+
 export const collections: {
 	posts: ReturnType<typeof defineCollection>;
 	assets: ReturnType<typeof defineCollection>;
 	moments: ReturnType<typeof defineCollection>;
 	music: ReturnType<typeof defineCollection>;
 	textbooks: ReturnType<typeof defineCollection>;
+	novels: ReturnType<typeof defineCollection>;
 } = {
 	posts: postsCollection,
 	assets: assetsCollection,
 	moments: momentsCollection,
 	music: musicCollection,
 	textbooks: textbooksCollection,
+	novels: novelsCollection,
 };
 

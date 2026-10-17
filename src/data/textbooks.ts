@@ -414,4 +414,88 @@ $$\\text{MnO}_4^- + \\text{H}_2\\text{C}_2\\text{O}_4 + \\text{H}^+ \\to \\text{
 		updatedAt: "2026-03-30",
 		author: "瑶曦",
 	},
+	{
+		id: "high-school-math-compulsory-1",
+		title: "普通高中教科书·数学（A版）必修 第一册 —— 全景深度浓缩总结",
+		subject: "math",
+		subjectLabel: "数学",
+		type: "hybrid",
+		grade: "高中 / 必修第一册",
+		chapter: "全册全景架构（集合逻辑、不等式、函数模型与三角函数）",
+		summary:
+			"人教A版高中数学必修一核心知识网络：集合逻辑基石、基本不等式最值、函数单调性奇偶性模型、指数对数运算律及三角函数全景精解与解题SOP。",
+		tags: ["高中数学", "必修第一册", "函数性质", "基本不等式", "三角函数", "指对数运算"],
+		coverImage:
+			"https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1200&auto=format&fit=crop&q=80",
+		imageUrl:
+			"https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1200&auto=format&fit=crop&q=80",
+		articleUrl: "/textbook/high-school-math-compulsory-1",
+		externalUrl: "https://image.yaoxi.cloud/textbooks/high-school-math-compulsory-1.pdf",
+		keyPoints: [
+			"以集合与数理逻辑为底层通信协议，严格区分充分必要条件与量词转化",
+			"基本不等式 a+b >= 2√ab 求解最值三要素：一正二定三相等",
+			"函数单调性判定与对称性/奇偶性代数方程特征统一分析",
+			"初等超越函数（指数、对数、幂函数）图像性质与换底公式计算范式",
+			"任意角三角函数定义与同角三角基本关系式推导",
+		],
+		difficulty: "medium",
+		updatedAt: "2026-10-17",
+		author: "瑶曦",
+	},
+	{
+		id: "high-school-physics-compulsory-1",
+		title: "普通高中教科书·物理 必修 第一册 —— 全景深度浓缩总结",
+		subject: "physics",
+		subjectLabel: "物理",
+		type: "hybrid",
+		grade: "高中 / 必修第一册",
+		chapter: "全册全景核心架构（运动学与牛顿动力学）",
+		summary:
+			"经典力学奠基全景梳理：从运动学的时空几何描述（Kinematics，怎么动）到动力学的因果律探寻（Dynamics，为何动）的完整逻辑闭环与防坑指南。",
+		tags: ["高中物理", "必修第一册", "质点运动学", "牛顿运动定律", "受力分析与平衡"],
+		coverImage:
+			"https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=1200&auto=format&fit=crop&q=80",
+		imageUrl:
+			"https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=1200&auto=format&fit=crop&q=80",
+		articleUrl: "/textbook/high-school-physics-compulsory-1",
+		externalUrl: "https://image.yaoxi.cloud/textbooks/high-school-physics-compulsory-1-summary.md",
+		keyPoints: [
+			"质点与参考系：运动描述的相对性与几何坐标系选择",
+			"匀变速直线运动四大基本公式与 v-t 图像面积斜率物理意义",
+			"力的合成与分解：正交分解法求解共点力静态平衡",
+			"牛顿第二定律 F_合 = ma：连接运动学与动力学的因果纽带",
+			"超重与失重的加速度动力学本质及牛顿第三定律相互作用力",
+		],
+		difficulty: "medium",
+		updatedAt: "2026-10-17",
+		author: "瑶曦",
+	},
+	{
+		id: "high-school-chemistry-compulsory-1",
+		title: "普通高中教科书·化学 必修 第一册 —— 全景深度浓缩总结",
+		subject: "chemistry",
+		subjectLabel: "化学",
+		type: "hybrid",
+		grade: "高中 / 必修第一册",
+		chapter: "全册全景架构（物质分类、微观计量、氯钠金属与元素周期律）",
+		summary:
+			"人教版高中化学必修一核心反应网络：离子反应与氧化还原电子转移、物质的量核心计量公式链、钠氯金属转化与元素周期律微观模型精解与解题SOP。",
+		tags: ["高中化学", "必修第一册", "氧化还原反应", "物质的量", "钠与氯", "铁三角", "元素周期律"],
+		coverImage:
+			"https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1200&auto=format&fit=crop&q=80",
+		imageUrl:
+			"https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1200&auto=format&fit=crop&q=80",
+		articleUrl: "/textbook/high-school-chemistry-compulsory-1",
+		externalUrl: "https://image.yaoxi.cloud/textbooks/high-school-chemistry-compulsory-1.pdf",
+		keyPoints: [
+			"胶体丁达尔效应与分散系微粒直径尺度关系（1~100 nm）",
+			"氧化还原反应本质：电子得失或共用电子对偏移，化合价升降守恒",
+			"物质的量 n = m/M = V/Vm = N/NA = cV 五大核心计量转换链条",
+			"钠、氯元素及其化合物特性：过氧化钠强供氧与次氯酸漂白",
+			"铁三角 Fe、Fe²⁺、Fe³⁺ 氧化还原转化与元素周期律微观模型",
+		],
+		difficulty: "medium",
+		updatedAt: "2026-10-17",
+		author: "瑶曦",
+	},
 ];
