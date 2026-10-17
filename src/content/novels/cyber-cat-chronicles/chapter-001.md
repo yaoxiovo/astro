@@ -1,16 +1,10 @@
 ---
+type: "chapter"
 title: "赛博修真：赛博猫娘的重构纪元"
-description: "在霓虹闪烁的赛博高武纪元，瑶曦手握量子断代刃与终端重构编译器，踏上了破解天道防火墙的飞升之路。"
-author: "瑶曦"
-cover: "/images/home_top.webp"
-status: "ongoing"
-tags: ["赛博朋克", "东方修真", "猫娘", "系统流"]
-category: "玄幻"
+novelSlug: "cyber-cat-chronicles"
+chapterTitle: "第一章：天道核心转储，赛博猫耳初醒"
+chapterOrder: 1
 published: 2026-10-17
-updated: 2026-10-17
-wordsCount: 2333
-order: 1
-draft: false
 ---
 
 # 第一章：天道核心转储，赛博猫耳初醒

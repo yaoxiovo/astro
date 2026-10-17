@@ -96,6 +96,7 @@ const textbooksCollection = defineCollection({
 
 const novelsCollection = defineCollection({
 	schema: z.object({
+		type: z.enum(["index", "chapter"]).default("chapter"),
 		title: z.string(),
 		description: z.string().optional().default(""),
 		author: z.string().optional().default("瑶曦"),
@@ -108,6 +109,10 @@ const novelsCollection = defineCollection({
 		wordsCount: z.number().optional().default(0),
 		order: z.number().optional().default(0),
 		draft: z.boolean().optional().default(false),
+		// Chapter-only fields
+		chapterTitle: z.string().optional().default(""),
+		chapterOrder: z.number().optional().default(0),
+		novelSlug: z.string().optional().default(""),
 	}),
 });
 

@@ -6,91 +6,271 @@ import Markdown from "@components/misc/Markdown.astro";
 import { formatDateToYYYYMMDD } from "@utils/date-utils";
 
 export async function getStaticPaths() {
-	const novels = await getCollection("novels", ({ data }) => !data.draft);
-	return novels.map((novel) => ({
-		params: { slug: novel.slug },
-		props: { novel },
-	}));
+	const allNovels = await getCollection("novels", ({ data }) => !data.draft);
+	const indexes = allNovels.filter((e) => e.data.type === "index");
+	const chapters = allNovels.filter((e) => e.data.type === "chapter");
+
+	const paths = [];
+
+	// 每本书的章节列表页 /novels/[book-slug]
+	for (const book of indexes) {
+		const bookSlug = book.id
+			.replace(/\/index\.md$/, "")
+			.replace(/\/index$/, "");
+		const bookChapters = chapters
+			.filter((c) => c.id.startsWith(bookSlug + "/"))
+			.sort((a, b) => (a.data.chapterOrder ?? 0) - (b.data.chapterOrder ?? 0));
+		paths.push({
+			params: { slug: bookSlug },
+			props: { mode: "toc", book, chapters: bookChapters, chapter: null, prevChapter: null, nextChapter: null },
+		});
+	}
+
+	// 每个章节的正文页 /novels/[book-slug]/[chapter-slug]
+	for (const chapter of chapters) {
+		const cleanId = chapter.id.replace(/\.md$/, "");
+		const parts = cleanId.split("/");
+		const bookSlug = parts[0];
+		const chapterSlug = parts[1];
+		const book = indexes.find(
+			(b) =>
+				b.id.replace(/\/index\.md$/, "").replace(/\/index$/, "") === bookSlug,
+		) ?? null;
+		const bookChapters = chapters
+			.filter((c) => c.id.startsWith(bookSlug + "/"))
+			.sort((a, b) => (a.data.chapterOrder ?? 0) - (b.data.chapterOrder ?? 0));
+		const chapterIndex = bookChapters.findIndex((c) => c.id === chapter.id);
+		const prevChapter = bookChapters[chapterIndex - 1] ?? null;
+		const nextChapter = bookChapters[chapterIndex + 1] ?? null;
+		paths.push({
+			params: { slug: `${bookSlug}/${chapterSlug}` },
+			props: { mode: "chapter", book, chapter, chapters: bookChapters, prevChapter, nextChapter },
+		});
+	}
+
+	return paths;
 }
 
-const { novel } = Astro.props;
-const { Content } = await novel.render();
+const { mode, book, chapter, chapters, prevChapter, nextChapter } = Astro.props;
+
+function getBookSlug(entry: typeof book) {
+	return entry?.id.replace(/\/index\.md$/, "").replace(/\/index$/, "") ?? "";
+}
+function getChapterSlug(entry: typeof chapter) {
+	return entry?.id.replace(/\.md$/, "").split("/")[1] ?? "";
+}
+
+const bookSlug = book ? getBookSlug(book) : "";
+
+let Content: any = null;
+if (mode === "chapter" && chapter) {
+	const rendered = await chapter.render();
+	Content = rendered.Content;
+}
 ---
 
-<MainGridLayout
-  title={`${novel.data.title} - 小说专栏`}
-  description={novel.data.description || novel.data.title}
->
-  <div class="space-y-6">
-    <!-- 顶部导航与元信息 -->
-    <div class="card-base px-6 md:px-8 py-6 bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl shadow-sm">
-      <div class="flex items-center justify-between pb-4 border-b border-[var(--line-divider)] mb-4">
+{mode === "toc" && book ? (
+  <MainGridLayout
+    title={`${book.data.title} — 章节目录`}
+    description={book.data.description || book.data.title}
+  >
+    <div class="space-y-5">
+      <!-- 返回书架 -->
+      <div>
         <a
           href="/novels/"
-          class="inline-flex items-center gap-1.5 text-xs md:text-sm font-semibold text-black/60 dark:text-white/60 hover:text-[var(--primary)] transition-colors"
+          class="inline-flex items-center gap-1.5 text-sm font-medium text-black/50 dark:text-white/50 hover:text-[var(--primary)] transition-colors"
         >
           <Icon name="material-symbols:arrow-back-rounded" class="text-base" />
-          返回小说书架
+          返回书架
         </a>
-        <div class="flex items-center gap-2">
-          <span class={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
-            novel.data.status === 'completed'
-              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
-          }`}>
-            {novel.data.status === 'completed' ? '已完结' : '连载中'}
-          </span>
-          {novel.data.category && (
-            <span class="text-[11px] font-medium px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/5 text-black/60 dark:text-white/60">
-              {novel.data.category}
-            </span>
+      </div>
+
+      <!-- 书籍信息卡 -->
+      <div class="card-base px-6 md:px-8 py-7 bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl shadow-sm">
+        <div class="flex flex-col sm:flex-row gap-6">
+          <!-- 封面 -->
+          {book.data.cover ? (
+            <div class="flex-shrink-0 w-32 md:w-40 mx-auto sm:mx-0">
+              <img
+                src={book.data.cover}
+                alt={book.data.title}
+                class="w-full aspect-[3/4] object-cover rounded-xl shadow-lg border border-black/5 dark:border-white/10"
+              />
+            </div>
+          ) : (
+            <div class="flex-shrink-0 w-32 md:w-40 mx-auto sm:mx-0 aspect-[3/4] rounded-xl bg-gradient-to-br from-[var(--primary)]/30 to-[var(--primary)]/5 flex items-center justify-center shadow-lg border border-black/5 dark:border-white/10">
+              <Icon name="material-symbols:auto-stories-rounded" class="text-4xl text-[var(--primary)]/60" />
+            </div>
           )}
-        </div>
-      </div>
 
-      <h1 class="text-2xl md:text-3xl font-black text-black/90 dark:text-white/90 tracking-tight mb-3">
-        {novel.data.title}
-      </h1>
+          <!-- 信息 -->
+          <div class="flex-1 min-w-0 flex flex-col gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl md:text-3xl font-black text-black/90 dark:text-white/90 tracking-tight">
+                {book.data.title}
+              </h1>
+              <span class={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                book.data.status === "completed"
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+              }`}>
+                {book.data.status === "completed" ? "已完结" : "连载中"}
+              </span>
+            </div>
 
-      <div class="flex flex-wrap items-center gap-4 text-xs text-black/50 dark:text-white/50 mb-3">
-        <div class="flex items-center gap-1">
-          <Icon name="material-symbols:person-rounded" class="text-sm" />
-          <span>作者：{novel.data.author || "瑶曦"}</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <Icon name="material-symbols:calendar-today-rounded" class="text-sm" />
-          <span>更新于：{formatDateToYYYYMMDD(novel.data.updated || novel.data.published)}</span>
-        </div>
-        {novel.data.wordsCount ? (
-          <div class="flex items-center gap-1">
-            <Icon name="material-symbols:format-size-rounded" class="text-sm" />
-            <span>约 {novel.data.wordsCount} 字</span>
+            <div class="flex flex-wrap gap-3 text-xs text-black/50 dark:text-white/50">
+              <span class="flex items-center gap-1">
+                <Icon name="material-symbols:person-rounded" class="text-sm" />
+                {book.data.author || "瑶曦"}
+              </span>
+              <span class="flex items-center gap-1">
+                <Icon name="material-symbols:category-rounded" class="text-sm" />
+                {book.data.category}
+              </span>
+              <span class="flex items-center gap-1">
+                <Icon name="material-symbols:list-alt-rounded" class="text-sm" />
+                共 {chapters.length} 章
+              </span>
+            </div>
+
+            {book.data.description && (
+              <p class="text-sm text-black/70 dark:text-white/70 leading-relaxed line-clamp-4">
+                {book.data.description}
+              </p>
+            )}
+
+            {book.data.tags && book.data.tags.length > 0 && (
+              <div class="flex flex-wrap gap-1.5">
+                {book.data.tags.map((tag: string) => (
+                  <span class="text-[10px] px-2 py-0.5 rounded-md bg-[var(--primary)]/10 text-[var(--primary)]">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
-        ) : null}
+        </div>
       </div>
 
-      {novel.data.description && (
-        <p class="text-xs md:text-sm text-black/70 dark:text-white/70 bg-black/5 dark:bg-white/5 p-3.5 rounded-xl border border-black/5 dark:border-white/5 leading-relaxed">
-          {novel.data.description}
-        </p>
-      )}
-
-      {novel.data.tags && novel.data.tags.length > 0 && (
-        <div class="flex flex-wrap gap-1.5 mt-3">
-          {novel.data.tags.map((tag: string) => (
-            <span class="text-[10px] px-2 py-0.5 rounded-md bg-[var(--primary)]/10 text-[var(--primary)]">
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
+      <!-- 章节列表 -->
+      <div class="card-base px-6 md:px-8 py-6 bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl shadow-sm">
+        <h2 class="text-base font-bold text-black/80 dark:text-white/80 mb-4 flex items-center gap-2">
+          <Icon name="material-symbols:format-list-bulleted-rounded" class="text-[var(--primary)]" />
+          章节目录
+        </h2>
+        {chapters.length === 0 ? (
+          <p class="text-sm text-black/40 dark:text-white/40 py-6 text-center">暂无章节</p>
+        ) : (
+          <div class="space-y-2">
+            {chapters.map((ch, i) => (
+              <a
+                href={`/novels/${bookSlug}/${getChapterSlug(ch)}/`}
+                class="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-[var(--primary)]/5 border border-transparent hover:border-[var(--primary)]/15 transition-all group"
+              >
+                <div class="flex items-center gap-3">
+                  <span class="text-xs font-mono font-bold w-7 text-center text-[var(--primary)]/60 group-hover:text-[var(--primary)] transition-colors">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span class="text-sm font-medium text-black/80 dark:text-white/80 group-hover:text-[var(--primary)] transition-colors">
+                    {ch.data.chapterTitle || ch.data.title}
+                  </span>
+                </div>
+                <div class="flex items-center gap-3 text-xs text-black/40 dark:text-white/40 flex-shrink-0">
+                  <span>{formatDateToYYYYMMDD(ch.data.published)}</span>
+                  <Icon name="material-symbols:chevron-right-rounded" class="text-base group-hover:text-[var(--primary)] transition-colors" />
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
+  </MainGridLayout>
+) : mode === "chapter" && chapter && book && Content ? (
+  <MainGridLayout
+    title={`${chapter.data.chapterTitle || chapter.data.title} — ${book.data.title}`}
+    description={book.data.description || book.data.title}
+  >
+    <div class="space-y-5">
+      <!-- 面包屑导航 -->
+      <nav class="flex items-center gap-1.5 text-xs text-black/50 dark:text-white/50 flex-wrap">
+        <a href="/novels/" class="hover:text-[var(--primary)] transition-colors">书架</a>
+        <Icon name="material-symbols:chevron-right-rounded" class="text-sm" />
+        <a href={`/novels/${bookSlug}/`} class="hover:text-[var(--primary)] transition-colors">
+          {book.data.title}
+        </a>
+        <Icon name="material-symbols:chevron-right-rounded" class="text-sm" />
+        <span class="text-black/70 dark:text-white/70 font-medium">
+          {chapter.data.chapterTitle || chapter.data.title}
+        </span>
+      </nav>
 
-    <!-- 正文阅读容器 -->
-    <article class="card-base px-6 md:px-10 py-8 bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl shadow-sm leading-loose">
-      <Markdown class="novel-content text-[15px] md:text-base selection:bg-[var(--primary)]/20">
-        <Content />
-      </Markdown>
-    </article>
-  </div>
-</MainGridLayout>
+      <!-- 正文卡片（使用博客文章同款风格） -->
+      <article class="card-base px-6 md:px-10 py-8 bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl shadow-sm">
+        <!-- 章节标题 -->
+        <h1 class="text-2xl md:text-3xl font-black text-black/90 dark:text-white/90 tracking-tight mb-2">
+          {chapter.data.chapterTitle || chapter.data.title}
+        </h1>
+        <div class="flex items-center gap-3 text-xs text-black/40 dark:text-white/40 mb-8 pb-6 border-b border-[var(--line-divider)]">
+          <span class="flex items-center gap-1">
+            <Icon name="material-symbols:person-rounded" class="text-sm" />
+            {book.data.author || "瑶曦"}
+          </span>
+          <span class="flex items-center gap-1">
+            <Icon name="material-symbols:calendar-today-rounded" class="text-sm" />
+            {formatDateToYYYYMMDD(chapter.data.published)}
+          </span>
+        </div>
+
+        <!-- 正文渲染（使用博客文章同款 Markdown 组件） -->
+        <Markdown class="novel-reader">
+          <Content />
+        </Markdown>
+      </article>
+
+      <!-- 上一章 / 下一章导航 -->
+      <div class="grid grid-cols-2 gap-3">
+        {prevChapter ? (
+          <a
+            href={`/novels/${bookSlug}/${getChapterSlug(prevChapter)}/`}
+            class="card-base px-4 py-3 bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-xl hover:border-[var(--primary)]/30 transition-all group flex items-center gap-2"
+          >
+            <Icon name="material-symbols:arrow-back-rounded" class="text-base text-black/40 group-hover:text-[var(--primary)] transition-colors flex-shrink-0" />
+            <div class="min-w-0">
+              <div class="text-[10px] text-black/40 dark:text-white/40">上一章</div>
+              <div class="text-xs font-medium text-black/70 dark:text-white/70 truncate group-hover:text-[var(--primary)] transition-colors">
+                {prevChapter.data.chapterTitle || prevChapter.data.title}
+              </div>
+            </div>
+          </a>
+        ) : <div />}
+        {nextChapter ? (
+          <a
+            href={`/novels/${bookSlug}/${getChapterSlug(nextChapter)}/`}
+            class="card-base px-4 py-3 bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-xl hover:border-[var(--primary)]/30 transition-all group flex items-center justify-end gap-2 text-right"
+          >
+            <div class="min-w-0">
+              <div class="text-[10px] text-black/40 dark:text-white/40">下一章</div>
+              <div class="text-xs font-medium text-black/70 dark:text-white/70 truncate group-hover:text-[var(--primary)] transition-colors">
+                {nextChapter.data.chapterTitle || nextChapter.data.title}
+              </div>
+            </div>
+            <Icon name="material-symbols:arrow-forward-rounded" class="text-base text-black/40 group-hover:text-[var(--primary)] transition-colors flex-shrink-0" />
+          </a>
+        ) : <div />}
+      </div>
+
+      <!-- 返回目录 -->
+      <div class="text-center">
+        <a
+          href={`/novels/${bookSlug}/`}
+          class="inline-flex items-center gap-1.5 text-sm font-medium text-black/50 dark:text-white/50 hover:text-[var(--primary)] transition-colors"
+        >
+          <Icon name="material-symbols:format-list-bulleted-rounded" class="text-base" />
+          返回章节目录
+        </a>
+      </div>
+    </div>
+  </MainGridLayout>
+) : null}
