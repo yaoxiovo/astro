@@ -73,14 +73,38 @@ const musicCollection = defineCollection({
 	}),
 });
 
+const textbooksCollection = defineCollection({
+	schema: z.object({
+		title: z.string(),
+		subject: z.string(),
+		grade: z.string().optional().default(""),
+		chapter: z.string().optional().default(""),
+		type: z.enum(["article", "image", "hybrid"]).optional().default("hybrid"),
+		imageUrl: z.string().optional().default(""),
+		imageAlt: z.string().optional().default(""),
+		tags: z.array(z.string()).optional().default([]),
+		description: z.string().optional().default(""),
+		externalUrl: z.string().optional().default(""),
+		published: z.date(),
+		updated: z.date().optional(),
+		order: z.number().optional().default(0),
+		difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional().default("intermediate"),
+		draft: z.boolean().optional().default(false),
+		icon: z.string().optional().default(""),
+	}),
+});
+
 export const collections: {
 	posts: ReturnType<typeof defineCollection>;
 	assets: ReturnType<typeof defineCollection>;
 	moments: ReturnType<typeof defineCollection>;
 	music: ReturnType<typeof defineCollection>;
+	textbooks: ReturnType<typeof defineCollection>;
 } = {
 	posts: postsCollection,
 	assets: assetsCollection,
 	moments: momentsCollection,
 	music: musicCollection,
+	textbooks: textbooksCollection,
 };
+

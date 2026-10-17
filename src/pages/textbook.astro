@@ -1,0 +1,83 @@
+---
+import TextbookApp from "@components/textbook/TextbookApp.svelte";
+import { TEXTBOOK_ITEMS } from "@/data/textbooks";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { Icon } from "astro-icon/components";
+
+const totalItems = TEXTBOOK_ITEMS.length;
+const imageCount = TEXTBOOK_ITEMS.filter((it) => it.type === "image").length;
+const articleCount = TEXTBOOK_ITEMS.filter(
+	(it) => it.type === "article",
+).length;
+const subjectCount = new Set(TEXTBOOK_ITEMS.map((it) => it.subject)).size;
+---
+
+<MainGridLayout
+  title="教材与知识库"
+  description="瑶曦的结构化教材与知识图解库 — 涵盖数学、物理、化学、计算机与工程深度讲义及高清思维导图拓扑。"
+>
+  <div class="space-y-6">
+    <!-- 头部 Hero 状态卡片 -->
+    <div class="card-base px-6 md:px-8 py-6 bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl shadow-sm">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="h-12 w-12 rounded-2xl bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/80 flex-shrink-0 shadow-md">
+            <Icon name="material-symbols:menu-book-rounded" class="text-[1.85rem]" />
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-2xl md:text-3xl font-black text-black/90 dark:text-white/90 tracking-tight">
+                教材与知识库
+              </h1>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--primary)]/15 text-[var(--primary)] border border-[var(--primary)]/20 uppercase">
+                Knowledge Matrix
+              </span>
+            </div>
+            <p class="text-xs md:text-sm text-black/50 dark:text-white/50 mt-1">
+              系统化学科知识拓扑 · 核心考点速记 · 高清图解导图 · 深度算法原理剖析
+            </p>
+          </div>
+        </div>
+
+        <!-- 聚合指标标签组 -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-black/70 dark:text-white/70">
+            <Icon name="material-symbols:category-outline-rounded" class="text-sm text-[var(--primary)]" />
+            <span>{subjectCount} 门学科</span>
+          </div>
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-black/70 dark:text-white/70">
+            <Icon name="material-symbols:schema-rounded" class="text-sm text-amber-500" />
+            <span>{imageCount} 幅思维导图</span>
+          </div>
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-black/70 dark:text-white/70">
+            <Icon name="material-symbols:article-outline-rounded" class="text-sm text-blue-500" />
+            <span>{articleCount} 篇精编讲义</span>
+          </div>
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 font-semibold">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-ping"></span>
+            <span>共收录 {totalItems} 单元</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Svelte 驱动的高性能多维筛选与即时搜索组件 -->
+    <TextbookApp client:load textbooks={TEXTBOOK_ITEMS} />
+
+    <!-- 无 JS 环境降级 SEO 索引内容 -->
+    <noscript>
+      <div class="card-base p-6 bg-[var(--card-bg)] border border-black/10 dark:border-white/10 rounded-2xl">
+        <h2 class="text-lg font-bold mb-4">全部收录教材与知识点列表 (静态索引)</h2>
+        <ul class="space-y-3">
+          {TEXTBOOK_ITEMS.map((item) => (
+            <li class="border-b border-black/5 dark:border-white/5 pb-2">
+              <span class="font-bold">[{item.subjectLabel}] {item.title}</span> -
+              <span class="text-xs text-black/60 dark:text-white/60"> {item.grade} · {item.chapter}</span>
+              <p class="text-xs mt-1">{item.summary}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </noscript>
+  </div>
+</MainGridLayout>
