@@ -1,0 +1,277 @@
+---
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getCollection } from "astro:content";
+import { Icon } from "astro-icon/components";
+import { formatDateToYYYYMMDD } from "@utils/date-utils";
+
+const allNovels = await getCollection("novels");
+
+// 只取 type === "index" 的条目作为书本列表
+const books = allNovels
+  .filter((e) => e.data.type === "index")
+  .sort((a, b) => (b.data.order ?? 0) - (a.data.order ?? 0));
+
+// 章节条目，用于统计各书字数等
+const chapters = allNovels.filter((e) => e.data.type === "chapter");
+
+const totalCount = books.length;
+const ongoingCount = books.filter((b) => b.data.status === "ongoing").length;
+const completedCount = books.filter((b) => b.data.status === "completed").length;
+
+// 每本书解析 slug（去掉 /index 后缀）
+function getBookSlug(entry: (typeof books)[number]) {
+  return entry.id
+    .replace(/\/index\.md$/, "")
+    .replace(/\/index$/, "");
+}
+
+const categories = Array.from(
+  new Set(books.map((b) => b.data.category).filter(Boolean))
+);
+---
+
+<MainGridLayout
+  title="小说书架"
+  description="瑶曦的原创小说书架 — 赛博修真、意识上传、算法天道，沉浸式多卷长篇连载。"
+>
+  <div class="space-y-6">
+    <!-- 头部 Hero 状态卡片 -->
+    <div class="card-base px-6 md:px-8 py-7 bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl shadow-sm relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-44 h-44 rounded-full bg-[var(--primary)]/5 blur-2xl pointer-events-none"></div>
+
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <div class="flex items-start md:items-center gap-4">
+          <div class="h-14 w-14 rounded-2xl bg-[var(--primary)] flex items-center justify-center text-white dark:text-black/85 flex-shrink-0 shadow-lg shadow-[var(--primary)]/20">
+            <Icon name="material-symbols:auto-stories-rounded" class="text-3xl" />
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl md:text-3xl font-black text-black/90 dark:text-white/90 tracking-tight">
+                小说书架
+              </h1>
+              <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[var(--primary)]/15 text-[var(--primary)] border border-[var(--primary)]/25 uppercase tracking-wider">
+                Novel Shelf
+              </span>
+            </div>
+            <p class="text-xs md:text-sm text-black/60 dark:text-white/60 mt-1.5 leading-relaxed">
+              赛博修真 · 意识上传 · 算法天道 · 沉浸式多卷长篇小说
+            </p>
+          </div>
+        </div>
+
+        <!-- 聚合指标标签组 -->
+        <div class="flex flex-wrap items-center gap-2.5 text-xs">
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-black/75 dark:text-white/75 font-medium">
+            <Icon name="material-symbols:book-2-outline-rounded" class="text-base text-[var(--primary)]" />
+            <span>收录 {totalCount} 部作品</span>
+          </div>
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-black/75 dark:text-white/75 font-medium">
+            <Icon name="material-symbols:pending-actions-rounded" class="text-base text-emerald-500" />
+            <span>连载中 {ongoingCount} 部</span>
+          </div>
+          {completedCount > 0 && (
+            <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/5 text-black/75 dark:text-white/75 font-medium">
+              <Icon name="material-symbols:check-circle-outline-rounded" class="text-base text-blue-500" />
+              <span>已完结 {completedCount} 部</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <!-- 分类筛选栏 -->
+    {categories.length > 0 && (
+      <div class="card-base p-4 bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl flex flex-wrap items-center gap-3 text-xs">
+        <div class="flex flex-wrap items-center gap-1.5" id="category-filter-group">
+          <span class="text-black/40 dark:text-white/40 mr-1 font-semibold">分类:</span>
+          <button class="novel-filter-btn px-3 py-1 rounded-lg transition-all active-filter bg-[var(--primary)] text-white dark:text-black/90 font-medium" data-val="all">全部</button>
+          {categories.map((cat) => (
+            <button class="novel-filter-btn px-3 py-1 rounded-lg transition-all bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black/70 dark:text-white/70" data-val={cat}>{cat}</button>
+          ))}
+        </div>
+        <div class="flex items-center gap-1.5 ml-auto" id="status-filter-group">
+          <span class="text-black/40 dark:text-white/40 mr-1 font-semibold">状态:</span>
+          <button class="novel-status-btn px-3 py-1 rounded-lg transition-all active-filter bg-[var(--primary)] text-white dark:text-black/90 font-medium" data-val="all">全部</button>
+          <button class="novel-status-btn px-3 py-1 rounded-lg transition-all bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black/70 dark:text-white/70" data-val="ongoing">连载中</button>
+          <button class="novel-status-btn px-3 py-1 rounded-lg transition-all bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black/70 dark:text-white/70" data-val="completed">已完结</button>
+        </div>
+      </div>
+    )}
+
+    <!-- 书本网格 -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5" id="novel-shelf-grid">
+      {books.map((book) => {
+        const bookSlug = getBookSlug(book);
+        const isOngoing = book.data.status === "ongoing";
+        // 统计该书总字数
+        const bookChapters = chapters.filter((c) =>
+          c.id.startsWith(bookSlug + "/")
+        );
+        const totalWords = bookChapters.reduce(
+          (acc, c) => acc + (c.data.wordsCount || 0),
+          0
+        );
+
+        return (
+          <div
+            class="novel-card card-base bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl overflow-hidden hover:shadow-lg hover:border-[var(--primary)]/30 transition-all duration-300 flex flex-col group"
+            data-category={book.data.category}
+            data-status={book.data.status}
+          >
+            <!-- 封面图 -->
+            <div class="relative h-48 w-full bg-black/5 dark:bg-white/5 overflow-hidden flex-shrink-0">
+              {book.data.cover ? (
+                <img
+                  src={book.data.cover}
+                  alt={book.data.title}
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+              ) : (
+                <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--primary)]/10 to-indigo-500/10">
+                  <Icon name="material-symbols:auto-stories-rounded" class="text-5xl text-[var(--primary)]/40" />
+                </div>
+              )}
+              <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none"></div>
+
+              <!-- 连载状态徽章 -->
+              <div class="absolute top-3 left-3 flex items-center gap-1.5">
+                <span class={`text-[11px] font-bold px-2.5 py-1 rounded-lg backdrop-blur-md shadow-sm flex items-center gap-1 ${
+                  isOngoing
+                    ? "bg-emerald-500/80 text-white"
+                    : "bg-blue-600/80 text-white"
+                }`}>
+                  <span class={`w-1.5 h-1.5 rounded-full ${isOngoing ? "bg-white animate-pulse" : "bg-white"}`}></span>
+                  {isOngoing ? "连载中" : "已完结"}
+                </span>
+                {book.data.category && (
+                  <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-white/90">
+                    {book.data.category}
+                  </span>
+                )}
+              </div>
+
+              <!-- 底部作者 -->
+              <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white/90 drop-shadow">
+                <span class="flex items-center gap-1 font-medium">
+                  <Icon name="material-symbols:person-outline-rounded" class="text-sm text-[var(--primary)]" />
+                  {book.data.author || "瑶曦"}
+                </span>
+                {totalWords > 0 && (
+                  <span class="flex items-center gap-1">
+                    <Icon name="material-symbols:format-list-numbered-rounded" class="text-sm" />
+                    {totalWords.toLocaleString()} 字
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <!-- 卡片主体 -->
+            <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+              <div class="space-y-2.5">
+                <h2 class="text-base font-bold text-black/90 dark:text-white/90 group-hover:text-[var(--primary)] transition-colors line-clamp-1">
+                  <a href={`/novels/${bookSlug}/`}>{book.data.title}</a>
+                </h2>
+
+                <p class="text-xs text-black/60 dark:text-white/60 line-clamp-3 leading-relaxed">
+                  {book.data.description || "暂无简介~ 点击进入即刻开始沉浸式阅览！"}
+                </p>
+
+                {book.data.tags && book.data.tags.length > 0 && (
+                  <div class="flex flex-wrap gap-1.5 pt-1">
+                    {book.data.tags.map((tag: string) => (
+                      <span class="text-[10px] px-2 py-0.5 rounded-md bg-black/5 dark:bg-white/5 text-black/60 dark:text-white/60 border border-black/5 dark:border-white/5">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <!-- 底部操作栏 -->
+              <div class="pt-3 border-t border-black/5 dark:border-white/5 flex items-center justify-between text-xs">
+                <span class="text-black/40 dark:text-white/40 flex items-center gap-1">
+                  <Icon name="material-symbols:update-rounded" class="text-sm" />
+                  {formatDateToYYYYMMDD(book.data.updated || book.data.published)}
+                </span>
+                <a
+                  href={`/novels/${bookSlug}/`}
+                  class="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-[var(--primary)]/10 hover:bg-[var(--primary)] text-[var(--primary)] hover:text-white dark:hover:text-black/90 font-semibold transition-all duration-200"
+                >
+                  <span>进入书架</span>
+                  <Icon name="material-symbols:arrow-forward-rounded" class="text-sm" />
+                </a>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    <!-- 无结果占位 -->
+    <div id="no-novels-tip" class="hidden card-base p-8 text-center bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl">
+      <Icon name="material-symbols:auto-stories-outline-rounded" class="text-4xl text-black/30 dark:text-white/30 mx-auto mb-2" />
+      <p class="text-sm text-black/50 dark:text-white/50">没有找到符合筛选条件的小说~</p>
+    </div>
+  </div>
+</MainGridLayout>
+
+<script>
+  function setupNovelFilter() {
+    const categoryButtons = document.querySelectorAll<HTMLButtonElement>(".novel-filter-btn");
+    const statusButtons = document.querySelectorAll<HTMLButtonElement>(".novel-status-btn");
+    const novelCards = document.querySelectorAll<HTMLElement>(".novel-card");
+    const noTip = document.getElementById("no-novels-tip");
+
+    let currentCategory = "all";
+    let currentStatus = "all";
+
+    function applyFilter() {
+      let visibleCount = 0;
+      novelCards.forEach((card) => {
+        const cat = card.getAttribute("data-category") || "";
+        const status = card.getAttribute("data-status") || "";
+        const matchCategory = currentCategory === "all" || cat === currentCategory;
+        const matchStatus = currentStatus === "all" || status === currentStatus;
+        if (matchCategory && matchStatus) {
+          card.classList.remove("hidden");
+          visibleCount++;
+        } else {
+          card.classList.add("hidden");
+        }
+      });
+      if (noTip) {
+        noTip.classList.toggle("hidden", visibleCount > 0);
+      }
+    }
+
+    categoryButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        categoryButtons.forEach((b) => {
+          b.classList.remove("bg-[var(--primary)]", "text-white", "dark:text-black/90", "font-medium");
+          b.classList.add("bg-black/5", "dark:bg-white/5", "text-black/70", "dark:text-white/70");
+        });
+        btn.classList.add("bg-[var(--primary)]", "text-white", "dark:text-black/90", "font-medium");
+        btn.classList.remove("bg-black/5", "dark:bg-white/5", "text-black/70", "dark:text-white/70");
+        currentCategory = btn.getAttribute("data-val") || "all";
+        applyFilter();
+      });
+    });
+
+    statusButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        statusButtons.forEach((b) => {
+          b.classList.remove("bg-[var(--primary)]", "text-white", "dark:text-black/90", "font-medium");
+          b.classList.add("bg-black/5", "dark:bg-white/5", "text-black/70", "dark:text-white/70");
+        });
+        btn.classList.add("bg-[var(--primary)]", "text-white", "dark:text-black/90", "font-medium");
+        btn.classList.remove("bg-black/5", "dark:bg-white/5", "text-black/70", "dark:text-white/70");
+        currentStatus = btn.getAttribute("data-val") || "all";
+        applyFilter();
+      });
+    });
+  }
+
+  setupNovelFilter();
+  document.addEventListener("astro:page-load", setupNovelFilter);
+</script>

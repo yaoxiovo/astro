@@ -226,6 +226,9 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(
       <button type="button" id="tab-mode-moment" class="px-4 py-2 rounded-xl text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
         <span>💬 发朋友圈 / 胶囊 (Moment & Capsule)</span>
       </button>
+      <button type="button" id="tab-mode-novel" class="px-4 py-2 rounded-xl text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
+        <span>📖 小说连载发布 (Novel)</span>
+      </button>
       <button type="button" id="tab-mode-analytics" class="px-4 py-2 rounded-xl text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
         <span>📊 流量大盘 (Live Analytics)</span>
       </button>
@@ -517,6 +520,90 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(
             </div>
             <div class="text-xs text-black/80 dark:text-white/80 leading-relaxed whitespace-pre-wrap font-sans" id="preview-moment-text">等待输入动态内容...</div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 小说连载发布专属区域 (默认隐藏) -->
+    <div id="panel-novel" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- 左侧：小说基本元信息与控制 (1 列) -->
+      <div class="lg:col-span-1 space-y-5">
+        <div class="p-5 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)]">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-black/60 dark:text-white/60 mb-4 flex items-center justify-between">
+            <span>📖 小说元信息 (Novel Info)</span>
+          </h2>
+
+          <div class="space-y-4">
+            <!-- 小说标题 -->
+            <div>
+              <label for="novel-title" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">小说标题 (novel-title) *</label>
+              <input type="text" id="novel-title" placeholder="如 银河纪元：星辰之子" class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] focus:bg-white dark:focus:bg-black/40 text-sm outline-none transition-all" />
+            </div>
+
+            <!-- 文件名标识 Slug -->
+            <div>
+              <label for="novel-slug" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">标识/文件名 Slug (novel-slug) *</label>
+              <div class="relative">
+                <input type="text" id="novel-slug" placeholder="如 galaxy-chronicles" class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] focus:bg-white dark:focus:bg-black/40 text-sm font-mono outline-none transition-all pr-12" />
+                <span class="absolute right-3 top-3 text-xs text-black/30 dark:text-white/30 font-mono">.md</span>
+              </div>
+            </div>
+
+            <!-- 作者与分类 -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="novel-author" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">作者 (novel-author)</label>
+                <input type="text" id="novel-author" value="瑶曦" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] text-xs outline-none" />
+              </div>
+              <div>
+                <label for="novel-category" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">分类 (novel-category)</label>
+                <input type="text" id="novel-category" value="科幻" placeholder="如 玄幻/科幻/都市" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] text-xs outline-none" />
+              </div>
+            </div>
+
+            <!-- 连载状态与标签 -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="novel-status" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">连载状态 (novel-status)</label>
+                <select id="novel-status" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] text-xs outline-none cursor-pointer">
+                  <option value="ongoing">连载中 (ongoing)</option>
+                  <option value="completed">已完结 (completed)</option>
+                </select>
+              </div>
+              <div>
+                <label for="novel-tags" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">标签 (novel-tags)</label>
+                <input type="text" id="novel-tags" placeholder="逗号分隔，如: 星际, 机甲" class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] text-xs outline-none" />
+              </div>
+            </div>
+
+            <!-- 封面链接 -->
+            <div>
+              <label for="novel-cover" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">封面图片链接 (novel-cover)</label>
+              <input type="text" id="novel-cover" placeholder="https://... 或图片 CDN 地址" class="w-full px-3.5 py-2.5 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] text-xs font-mono outline-none" />
+            </div>
+
+            <!-- 小说简介 -->
+            <div>
+              <label for="novel-desc" class="block text-xs font-medium text-black/70 dark:text-white/70 mb-1.5">简介/故事梗概 (novel-desc)</label>
+              <textarea id="novel-desc" rows="3" placeholder="作品简述或章节摘要..." class="w-full px-3 py-2 rounded-xl bg-black/5 dark:bg-white/10 border border-transparent focus:border-[var(--primary)] text-xs outline-none resize-none"></textarea>
+            </div>
+
+            <!-- 快捷发布按钮 -->
+            <button type="button" id="btn-publish-novel" class="w-full py-3 rounded-xl bg-[var(--primary)] text-white dark:text-black font-semibold text-xs shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer mt-4">
+              <span>🚀 立即提交发布小说 (Publish Novel)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：章节正文输入 (2 列) -->
+      <div class="lg:col-span-2 flex flex-col space-y-4">
+        <div class="p-5 rounded-2xl bg-black/5 dark:bg-white/5 border border-[var(--line-divider)] flex-1 flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <label for="novel-content" class="text-xs font-semibold text-black/70 dark:text-white/70">章节内容编辑器 / Markdown (novel-content) *</label>
+            <span class="text-[11px] text-black/40 dark:text-white/40 font-mono">存储路径: src/content/novels/[slug].md</span>
+          </div>
+          <textarea id="novel-content" rows="18" placeholder="在此输入小说正文或章节 Markdown 内容..." class="w-full p-4 rounded-xl bg-white dark:bg-black/40 border border-[var(--line-divider)] text-sm font-sans outline-none focus:border-[var(--primary)] leading-relaxed resize-y flex-1"></textarea>
         </div>
       </div>
     </div>
@@ -956,11 +1043,14 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(
     const tabModePost = document.getElementById('tab-mode-post');
     const tabModeManage = document.getElementById('tab-mode-manage');
     const tabModeMoment = document.getElementById('tab-mode-moment');
+    const tabModeNovel = document.getElementById('tab-mode-novel');
     const tabModeAnalytics = document.getElementById('tab-mode-analytics');
     const panelPostEditor = document.getElementById('panel-post-editor');
     const panelPostManage = document.getElementById('panel-post-manage');
     const panelMomentEditor = document.getElementById('panel-moment-editor');
+    const panelNovel = document.getElementById('panel-novel');
     const panelAnalytics = document.getElementById('panel-analytics');
+    const btnPublishNovel = document.getElementById('btn-publish-novel');
 
     // 编辑模式指示横幅 DOM 元素
     const editingModeBanner = document.getElementById('editing-mode-banner');
@@ -2471,12 +2561,14 @@ ${content.trim()}
       if (tabModePost) tabModePost.className = mode === 'post' ? tabActiveClass : tabInactiveClass;
       if (tabModeManage) tabModeManage.className = mode === 'manage' ? tabActiveClass : tabInactiveClass;
       if (tabModeMoment) tabModeMoment.className = mode === 'moment' ? tabActiveClass : tabInactiveClass;
+      if (tabModeNovel) tabModeNovel.className = mode === 'novel' ? tabActiveClass : tabInactiveClass;
       if (tabModeAnalytics) tabModeAnalytics.className = mode === 'analytics' ? tabActiveClass : tabInactiveClass;
 
       if (mode === 'post') {
         panelPostEditor?.classList.remove('hidden');
         panelPostManage?.classList.add('hidden');
         panelMomentEditor?.classList.add('hidden');
+        panelNovel?.classList.add('hidden');
         panelAnalytics?.classList.add('hidden');
         btnPublish?.classList.remove('hidden');
         btnPublishText.textContent = isEditingMode ? '保存修改并部署' : '发布文章并构建';
@@ -2485,6 +2577,7 @@ ${content.trim()}
         panelPostManage?.classList.remove('hidden');
         panelPostEditor?.classList.add('hidden');
         panelMomentEditor?.classList.add('hidden');
+        panelNovel?.classList.add('hidden');
         panelAnalytics?.classList.add('hidden');
         btnPublish?.classList.add('hidden');
         populateCategoryFilter();
@@ -2493,15 +2586,26 @@ ${content.trim()}
         panelMomentEditor?.classList.remove('hidden');
         panelPostEditor?.classList.add('hidden');
         panelPostManage?.classList.add('hidden');
+        panelNovel?.classList.add('hidden');
         panelAnalytics?.classList.add('hidden');
         btnPublish?.classList.remove('hidden');
         btnPublishText.textContent = '发布动态并构建';
         btnContinueWriting.textContent = '再发一条新动态';
+      } else if (mode === 'novel') {
+        panelNovel?.classList.remove('hidden');
+        panelPostEditor?.classList.add('hidden');
+        panelPostManage?.classList.add('hidden');
+        panelMomentEditor?.classList.add('hidden');
+        panelAnalytics?.classList.add('hidden');
+        btnPublish?.classList.remove('hidden');
+        btnPublishText.textContent = '发布小说并构建';
+        btnContinueWriting.textContent = '再写一本小说';
       } else if (mode === 'analytics') {
         panelAnalytics?.classList.remove('hidden');
         panelPostEditor?.classList.add('hidden');
         panelPostManage?.classList.add('hidden');
         panelMomentEditor?.classList.add('hidden');
+        panelNovel?.classList.add('hidden');
         btnPublish?.classList.add('hidden');
         loadUmamiAnalytics();
       }
@@ -2510,7 +2614,9 @@ ${content.trim()}
     tabModePost?.addEventListener('click', () => setEditorMode('post'));
     tabModeManage?.addEventListener('click', () => setEditorMode('manage'));
     tabModeMoment?.addEventListener('click', () => setEditorMode('moment'));
+    tabModeNovel?.addEventListener('click', () => setEditorMode('novel'));
     tabModeAnalytics?.addEventListener('click', () => setEditorMode('analytics'));
+    btnPublishNovel?.addEventListener('click', () => publishNovel());
 
     // 初始化时预填充文章分类下拉框
     populateCategoryFilter();
@@ -2915,6 +3021,130 @@ ${content.trim()}
       }
     }
 
+    // 8.5 小说连载发布引擎 (Novel Publishing Engine)
+    async function publishNovel() {
+      const title = (document.getElementById('novel-title')?.value || '').trim();
+      let slug = (document.getElementById('novel-slug')?.value || '').trim();
+      const author = (document.getElementById('novel-author')?.value || '').trim() || '瑶曦';
+      const category = (document.getElementById('novel-category')?.value || '').trim() || '小说';
+      const status = document.getElementById('novel-status')?.value || 'ongoing';
+      const rawTags = (document.getElementById('novel-tags')?.value || '').trim();
+      const cover = (document.getElementById('novel-cover')?.value || '').trim();
+      const description = (document.getElementById('novel-desc')?.value || '').trim();
+      const content = (document.getElementById('novel-content')?.value || '').trim();
+
+      if (!title) {
+        alert('请填写小说标题 喵！');
+        return;
+      }
+      if (!slug) {
+        slug = title.toLowerCase().replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '') || `novel-${Date.now()}`;
+      }
+      if (!content) {
+        alert('请填写小说章节正文内容 (novel-content) 喵！');
+        return;
+      }
+
+      const token = getAdminToken();
+      if (!token) {
+        alert('尚未获取到有效认证 Token！请先一键登录或在“鉴权凭据”中填入 Token 喵！');
+        modalAuth?.classList.remove('hidden');
+        return;
+      }
+
+      if (!checkUserIsAdmin(getAdminUser())) {
+        alert('权限不足：发布小说仅限认证中心授权的【管理员 (admin)】喵！');
+        return;
+      }
+
+      const apiBase = (localStorage.getItem(API_ENDPOINT_KEY) || 'https://zk-api.yaoxi.cloud').replace(/\/$/, '');
+      let githubPat = resolveGithubPat();
+
+      if (!githubPat && typeof window.yaoxiSyncCredentials === 'function') {
+        try {
+          const creds = await window.yaoxiSyncCredentials();
+          if (creds && creds.github_pat) {
+            githubPat = creds.github_pat;
+            if (inputGithubToken) inputGithubToken.value = creds.github_pat;
+          }
+        } catch (e) {}
+      }
+
+      if (!githubPat) {
+        alert('未获取到 GitHub PAT 凭据！请在右上角【鉴权凭据】中填入具备 contents:write 权限的 GitHub PAT 喵！');
+        modalAuth?.classList.remove('hidden');
+        return;
+      }
+
+      btnPublish.disabled = true;
+      publishSpinner.classList.remove('hidden');
+      publishIcon.classList.add('hidden');
+      btnPublishText.textContent = '正在发布小说...';
+
+      deployPanel.classList.remove('hidden');
+      deploySuccessLinks.classList.add('hidden');
+      deployProgressBar.style.width = '20%';
+      deployProgressBar.className = 'h-full bg-[var(--primary)] transition-all duration-500 ease-out rounded-full';
+      deployTitle.textContent = '正在向 GitHub 提交小说 Commit...';
+      deploySubtitle.textContent = `生成小说文件: src/content/novels/${slug}.md`;
+      deployBadge.textContent = 'PUBLISHING';
+      deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20';
+      deployStageInfo.textContent = '阶段: GitHub API 直连提交';
+
+      deploySeconds = 0;
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        deploySeconds++;
+        deployTimer.textContent = `耗时: ${deploySeconds}s`;
+      }, 1000);
+
+      try {
+        const nowIso = new Date().toISOString();
+        const tagsList = rawTags ? rawTags.split(/[,，\s]+/).map(t => t.trim()).filter(Boolean) : [];
+        const tagsYaml = tagsList.length > 0 ? `tags:\n${tagsList.map(t => `  - "${t.replace(/"/g, '\\"')}"`).join('\n')}\n` : 'tags: []\n';
+
+        const novelFile = `---
+title: "${title.replace(/"/g, '\\"')}"
+published: ${nowIso}
+author: "${author.replace(/"/g, '\\"')}"
+status: "${status}"
+category: "${category.replace(/"/g, '\\"')}"
+${tagsYaml}cover: "${cover.replace(/"/g, '\\"')}"
+description: "${description.replace(/"/g, '\\"')}"
+---
+
+${content}
+`;
+
+        const filePath = `src/content/novels/${slug}.md`;
+        const res = await commitDirectToGitHub(githubPat, filePath, novelFile, `feat(novel): publish novel ${title} (${slug}) via Admin Studio`);
+        const commitSha = res.commit_sha;
+
+        deployProgressBar.style.width = '40%';
+        deployTitle.textContent = `GitHub 小说提交成功 (${commitSha.substring(0, 7)})`;
+        deploySubtitle.textContent = '等待 Cloudflare Pages 启动自动化构建流水线...';
+        deployBadge.textContent = 'QUEUED';
+        deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-amber-500/10 text-amber-500 border border-amber-500/20';
+
+        pollDeployStatus(apiBase, token, commitSha, slug, 'novel');
+        alert(`🎉 小说《${title}》发布提交成功 喵！\nCommit SHA: ${commitSha.substring(0, 7)}\n文件路径: ${filePath}`);
+      } catch (err) {
+        clearInterval(timerInterval);
+        console.error('[Novel Publish Error]', err);
+        deployTitle.textContent = '小说提交失败 喵！';
+        deployBadge.textContent = 'ERROR';
+        deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-red-500/10 text-red-500 border border-red-500/20';
+        deployProgressBar.style.width = '100%';
+        deployProgressBar.className = 'h-full bg-red-500 rounded-full';
+        deploySubtitle.textContent = err.message || '未知异常，请检查网络或控制台输出';
+        btnPublish.disabled = false;
+        publishSpinner.classList.add('hidden');
+        publishIcon.classList.remove('hidden');
+        btnPublishText.textContent = '重新发布小说';
+        alert(`小说提交失败 喵：${err.message}`);
+      }
+    }
+
     // 9. 智能多通道部署状态探测引擎 (Multi-Engine Deploy Probe)
     function pollDeployStatus(apiBase, token, commitSha, slug, targetType = 'post') {
       if (deployPollTimer) clearInterval(deployPollTimer);
@@ -3105,6 +3335,11 @@ ${content.trim()}
             linkLivePost.href = `/moments/`;
             const liveText = linkLivePost.querySelector('span');
             if (liveText) liveText.textContent = '前往朋友圈查看动态';
+          } else if (targetType === 'novel') {
+            deployTitle.textContent = '🎉 全球边缘发布完成！小说已正式上线 喵！';
+            linkLivePost.href = `/novels/${cleanSlug}/`;
+            const liveText = linkLivePost.querySelector('span');
+            if (liveText) liveText.textContent = '在新标签页阅读小说';
           } else if (targetType === 'delete') {
             deployTitle.textContent = '🎉 全球边缘更新完成！文章已成功从线上彻底移除 喵！';
             linkLivePost.href = `/admin/`;
@@ -3160,7 +3395,7 @@ ${content.trim()}
       }, 3000);
     }
 
-    // 再写一篇 / 再发一条
+    // 再写一篇 / 再发一条 / 再写一本小说
     btnContinueWriting.addEventListener('click', () => {
       if (currentEditorMode === 'post') {
         exitEditingMode();
@@ -3171,6 +3406,20 @@ ${content.trim()}
         contentEl.value = '';
         isAutoSlug = true;
         btnPublishText.textContent = '发布文章并构建';
+      } else if (currentEditorMode === 'novel') {
+        const nt = document.getElementById('novel-title');
+        const ns = document.getElementById('novel-slug');
+        const nd = document.getElementById('novel-desc');
+        const nc = document.getElementById('novel-content');
+        const ntags = document.getElementById('novel-tags');
+        const ncover = document.getElementById('novel-cover');
+        if (nt) nt.value = '';
+        if (ns) ns.value = '';
+        if (nd) nd.value = '';
+        if (nc) nc.value = '';
+        if (ntags) ntags.value = '';
+        if (ncover) ncover.value = '';
+        btnPublishText.textContent = '发布小说并构建';
       } else {
         if (momentContentEl) momentContentEl.value = '';
         if (momentSlugEl) momentSlugEl.value = '';
@@ -3193,6 +3442,8 @@ ${content.trim()}
       }
       if (currentEditorMode === 'post') {
         publishPost();
+      } else if (currentEditorMode === 'novel') {
+        publishNovel();
       } else {
         publishMoment();
       }

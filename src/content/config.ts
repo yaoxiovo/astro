@@ -73,14 +73,62 @@ const musicCollection = defineCollection({
 	}),
 });
 
+const textbooksCollection = defineCollection({
+	schema: z.object({
+		title: z.string(),
+		subject: z.string(),
+		grade: z.string().optional().default(""),
+		chapter: z.string().optional().default(""),
+		type: z.enum(["article", "image", "hybrid"]).optional().default("hybrid"),
+		imageUrl: z.string().optional().default(""),
+		imageAlt: z.string().optional().default(""),
+		tags: z.array(z.string()).optional().default([]),
+		description: z.string().optional().default(""),
+		externalUrl: z.string().optional().default(""),
+		published: z.date(),
+		updated: z.date().optional(),
+		order: z.number().optional().default(0),
+		difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional().default("intermediate"),
+		draft: z.boolean().optional().default(false),
+		icon: z.string().optional().default(""),
+	}),
+});
+
+const novelsCollection = defineCollection({
+	schema: z.object({
+		type: z.enum(["index", "chapter"]).default("chapter"),
+		title: z.string(),
+		description: z.string().optional().default(""),
+		author: z.string().optional().default("瑶曦"),
+		cover: z.string().optional().default(""),
+		status: z.enum(["ongoing", "completed"]).optional().default("ongoing"),
+		tags: z.array(z.string()).optional().default([]),
+		category: z.string().optional().default("玄幻"),
+		published: z.date(),
+		updated: z.date().optional(),
+		wordsCount: z.number().optional().default(0),
+		order: z.number().optional().default(0),
+		draft: z.boolean().optional().default(false),
+		// Chapter-only fields
+		chapterTitle: z.string().optional().default(""),
+		chapterOrder: z.number().optional().default(0),
+		novelSlug: z.string().optional().default(""),
+	}),
+});
+
 export const collections: {
 	posts: ReturnType<typeof defineCollection>;
 	assets: ReturnType<typeof defineCollection>;
 	moments: ReturnType<typeof defineCollection>;
 	music: ReturnType<typeof defineCollection>;
+	textbooks: ReturnType<typeof defineCollection>;
+	novels: ReturnType<typeof defineCollection>;
 } = {
 	posts: postsCollection,
 	assets: assetsCollection,
 	moments: momentsCollection,
 	music: musicCollection,
+	textbooks: textbooksCollection,
+	novels: novelsCollection,
 };
+

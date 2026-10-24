@@ -315,24 +315,26 @@ curl https://blog-api.yaoxi.cloud/
 
 ---
 
-## 七、站点监控 API（site-monitor Worker）
+## 七、站点监控 API（site-monitor Worker · 已下线）
 
-监控 Worker 提供公开状态查询（数据来自每 5 分钟一轮的拨测）：
+> [!WARNING]
+> **服务下线归档说明**：站点拨测 Worker（`site-monitor`）与监控看板（`https://status.yaoxi.wiki`）已完成物理拔除与下线归档，相关端点不再提供在线服务。以下接口定义仅保留供历史演进参考。
 
-| 端点 | 说明 |
-|---|---|
-| `GET /api/status` | 实时状态（各站点 up/down/响应时长） |
-| `GET /api/history?days=30&site=博客主站` | 历史数据（uptime%、采样曲线、故障事件，最长 90 天） |
-| `GET /api/widget/v1/summary.json` | 快猫星云 widget 兼容格式（博客首页状态徽标/横幅数据源） |
-| `GET /api/run?secret=xxx` | 手动触发一轮检测（需 MONITOR_SECRET） |
-| `GET /api/sp-test`、`GET /api/diag` | Flashduty 状态页诊断（脱敏） |
+| 端点 | 状态 | 说明 |
+|---|---|---|
+| `GET /api/status` | 🛑 已下线 | 实时状态（历史数据源自每 5 分钟一轮的拨测） |
+| `GET /api/history?days=30&site=博客主站` | 🛑 已下线 | 历史数据（uptime%、采样曲线、故障事件，最长 90 天） |
+| `GET /api/widget/v1/summary.json` | 🛑 已下线 | 快猫星云 widget 兼容格式（历史博客首页状态徽标数据源） |
+| `GET /api/run?secret=xxx` | 🛑 已下线 | 手动触发一轮检测（需 MONITOR_SECRET） |
+| `GET /api/sp-test`、`GET /api/diag` | 🛑 已下线 | Flashduty 状态页诊断（脱敏） |
 
 ```bash
+# （注：以下端点已下线，仅作归档记录）
 curl https://status.yaoxi.wiki/api/status
 curl "https://status.yaoxi.wiki/api/history?days=30"
 ```
 
-**响应示例（/api/status）：**
+**历史响应示例（/api/status）：**
 
 ```json
 {
@@ -413,7 +415,7 @@ for m in data["moments"]:
 2. **Worker API 有 120s 缓存**：极端情况下数据可能滞后约 2 分钟，但可承受高频轮询（不消耗源站）
 3. **媒体拼接**：`images` / `videos` 是文件名，需要按上文规则拼 CDN 前缀
 4. **限流**：暂无硬性限流，请勿高频恶意请求（数据量小，正常使用无压力）
-5. **`/api/run`、`/webhook` 等内部端点需要密钥**，请勿公开传播密钥
+5. **`/webhook` 等内部端点需要密钥**，请勿公开传播密钥（原站点拨测 `/api/run` 已随服务下线物理拔除）
 
 ---
 
@@ -432,7 +434,7 @@ for m in data["moments"]:
 | 9 | `GET /api/moments?参数` | Worker | 参数化查询 ⭐ |
 | 10 | `GET /` | Worker | API 文档 ⭐ |
 | 11 | `GET /rss.xml`、`/moments/rss.xml` | RSS | 订阅 |
-| 12 | `GET /api/status` 等 | Worker | 站点监控 |
+| 12 | `GET /api/status` 等 | Worker | 站点监控（已下线归档） |
 | 13 | `POST /webhook` 等 | Worker | Telegram Bot |
 
 > 本文档随博客更新：所有静态 API 的数据结构与返回内容，以线上实际响应为准。
