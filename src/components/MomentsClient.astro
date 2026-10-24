@@ -84,7 +84,8 @@ const { trackViews = true } = Astro.props;
     });
   }
 
-  // ---------- 工具：富媒体嵌入（Bilibili / YouTube / 网易云） ----------
+  // ---------- 工具：富媒体嵌入（Bilibili / YouTube） ----------
+  // 注：已移除网易云音乐 outchain 外链播放器（music.163.com），避免第三方外部依赖。
   function processMediaEmbeds(root) {
     root.querySelectorAll('.moment-content').forEach((el) => {
       if (el.dataset.mediaProcessed) return;
@@ -93,7 +94,6 @@ const { trackViews = true } = Astro.props;
       el.querySelectorAll('a').forEach((a) => {
         const url = a.href;
         let iframeSrc = null;
-        let isMusic = false;
 
         const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
         if (ytMatch) iframeSrc = `https://www.youtube.com/embed/${ytMatch[1]}`;
@@ -101,17 +101,11 @@ const { trackViews = true } = Astro.props;
         const biliMatch = url.match(/bilibili\.com\/video\/(BV[\w]+)/);
         if (biliMatch) iframeSrc = `//player.bilibili.com/player.html?bvid=${biliMatch[1]}&page=1&high_quality=1&as_wide=1&allowfullscreen=true`;
 
-        const musicMatch = url.match(/music\.163\.com\/.*id=(\d+)/);
-        if (musicMatch) {
-          iframeSrc = `//music.163.com/outchain/player?type=2&id=${musicMatch[1]}&auto=0&height=66`;
-          isMusic = true;
-        }
-
         if (iframeSrc) {
           const iframe = document.createElement('iframe');
           iframe.src = iframeSrc;
           iframe.className = 'w-full rounded-xl mt-3 shadow-sm border border-black/5 dark:border-white/5';
-          iframe.style.height = isMusic ? '86px' : '220px';
+          iframe.style.height = '220px';
           iframe.allowFullscreen = true;
 
           if (a.parentNode.tagName === 'P' && a.parentNode.textContent.trim() === a.textContent.trim()) {

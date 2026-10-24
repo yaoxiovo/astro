@@ -84,9 +84,9 @@ related: ["blog-api-guide"]
 
 ### 3. 根除新文章邮件广播始终误发置顶文章缺陷 (10-03 19:15 ~ 19:30)
 - **做了什么**：
-  1. 重构 [`scripts/broadcast-post.js`](file:///root/blog/scripts/broadcast-post.js)，接入 `git diff ${BEFORE_SHA} HEAD` 与 `git diff-tree`，精准锁定本次 Commit 真正新增/改动的文章，不再依赖 GitHub Actions 虚拟环境中相同的不可靠 `mtime` 文件修改时间喵。
-  2. 重构 [`src/pages/rss.xml.ts`](file:///root/blog/src/pages/rss.xml.ts)，彻底解耦 RSS 订阅流与主页置顶逻辑，统一根据 `pubDate`（发布日期）严格倒序输出，防止 RSS 广播首篇被置顶文章永久霸占喵。
-  3. 更新 [`.github/workflows/broadcast-newsletter.yml`](file:///root/blog/.github/workflows/broadcast-newsletter.yml)，增加 `fetch-depth: 2` 与 `BEFORE_SHA` 环境变量注入喵。
+  1. 重构 `scripts/broadcast-post.js`，接入 `git diff ${BEFORE_SHA} HEAD` 与 `git diff-tree`，精准锁定本次 Commit 真正新增/改动的文章，不再依赖 GitHub Actions 虚拟环境中相同的不可靠 `mtime` 文件修改时间喵。
+  2. 重构 `src/pages/rss.xml.ts`，彻底解耦 RSS 订阅流与主页置顶逻辑，统一根据 `pubDate`（发布日期）严格倒序输出，防止 RSS 广播首篇被置顶文章永久霸占喵。
+  3. 更新 `.github/workflows/broadcast-newsletter.yml`，增加 `fetch-depth: 2` 与 `BEFORE_SHA` 环境变量注入喵。
 - **效果**：无论是 Git 自动化推送还是 RSS 邮件订阅，次次精准锁定真正最新发表的文章，彻底告别误发置顶文章的历史喵！
 
 ### 4. /admin 后台前置身份门禁与非管理员直接拦截 (10-03 19:35 ~ 19:45)

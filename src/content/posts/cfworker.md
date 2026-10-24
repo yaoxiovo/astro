@@ -29,7 +29,7 @@ related: ["domain-connect-cloudflare", "cf-worker-reverse-proxy"]
 2. 能正常登录 Cloudflare 控制台
 
 
-3. 一个你想要代理的网站（例如：https://example.com）
+3. 一个你想要代理的网站（例如：`https://example.com`）
 
 
 

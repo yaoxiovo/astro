@@ -111,7 +111,7 @@ graph TD
 ## 五、 搜索引擎实时收录：自定义 URL 智能推送脚本
 
 即使内容再好，如果搜不到也无济于事。本站还集成了一套自动化的搜索引擎提交方案：
-* **Git 差异感知：** 我们手写了一套 [`submit-urls.js`](file:///root/git/blog/scripts/submit-urls.js) 脚本，利用 `git diff` 自动捕获上一次 commit 到当前工作区的新增博文 URL。
+* **Git 差异感知：** 我们手写了一套 `submit-urls.js` 脚本，利用 `git diff` 自动捕获上一次 commit 到当前工作区的新增博文 URL。
 * **双通道实时直达：** 
   - **IndexNow 协议：** 一键直达微软 IndexNow 网关，自动向 Bing 和 Yandex 推送更新，以 200/202 状态码极速确认！
   - **Google Indexing API：** 自动读取本地安全密钥生成 JWT Token，绕过普通爬虫的低频更新限制，实现发布即通知 Google 蜘蛛抓取的高效收录喵！

@@ -190,7 +190,7 @@ related: ["homepage-liquid-glass-refactor"]
    - 注入了核心入口声明：`"main": "src/worker.ts"`。
    - 保留 D1 绑定配置 `d1_databases` 指向 `astro` 数据库喵~
 2. **手搓自定义 Worker 路由 (Custom Service Binding Routing)：**
-   - 创建了全新的 [src/worker.ts](file:///root/git/blog/src/worker.ts) 作为整个 Worker 的网关。
+   - 创建了全新的 `src/worker.ts` 作为整个 Worker 的网关。
    - **静态资源托管路由：** 巧妙调用了 Workers Assets 架构下默认绑定的 `env.ASSETS` 服务。只要请求不匹配 `/api/moments`，就直接执行 `return env.ASSETS.fetch(request)`。这等同于把静态文件的处理无缝托管给 Cloudflare 极其强悍的边缘 CDN，性能拉满喵！
    - **Moments API 路由：** 当请求匹配 `/api/moments` 时，直接在 Custom Worker 里原地展开 GET/POST/OPTIONS 处理逻辑，成功打通了对 `env.DB` 的读写。
 3. **本地编译与物理强推 (Local Build & Deploy Override)：**
@@ -290,7 +290,7 @@ related: ["homepage-liquid-glass-refactor"]
    - 官方 SDK `googleapis` 极其臃肿（多达数十MB），不适合放在我们的轻量博客中。
    - 本喵利用 Node.js 原生的 `crypto` 模块，纯手工实现了 RS256 JWT Token 生成及 OAuth2 握手协议，仅读取 `GOOGLE_SERVICE_ACCOUNT_KEY` 环境变量就能流畅与 Google 授权并发布实时推送，极其硬核优雅喵呜！
 4. **统一脚本入口 (Package script integration)：**
-   - 编写了全新的 [submit-urls.js](file:///root/git/blog/scripts/submit-urls.js)。
+   - 编写了全新的 `submit-urls.js`。
    - 在 `package.json` 中配置了快捷键：`pnpm run submit-urls`，可完美嵌入 GitHub Actions 或 Cloudflare 部署的 post-build 生命周期中喵！
 
 ### ✨ 落地成效 (Results)
@@ -318,7 +318,7 @@ related: ["homepage-liquid-glass-refactor"]
 为了提供无缝的“本地双轨调试 + 边缘端 Serverless 托管”体验，本喵设计了以下全栈解决方案喵：
 1. **Cloudflare Pages Functions 边缘架构 (Edge Functions API)：**
    - 彻底摒弃了必须依赖服务器的传统 Node.js Express 方案，改用 **Cloudflare Pages Functions** 机制喵！
-   - 在 [/functions/api/status.js](file:///root/git/cloud-status/functions/api/status.js) 中通过 `onRequest` 实现轻量级无状态的并发聚合抓取。
+   - 在 `/functions/api/status.js` 中通过 `onRequest` 实现轻量级无状态的并发聚合抓取。
    - 使用 `Promise.allSettled` 并行抓取各大网关 Statuspage 标准 JSON 数据，提供超高性能和极致容错兜底喵！
 2. **本地环境无软链接兼容 (No-Bin-Links Bypass)：**
    - 针对本地 SD 卡的 Symlink 物理限制，使用 `npm install --no-bin-links` 指令成功绕过，打通了本地开发依赖安装链。
@@ -340,20 +340,20 @@ related: ["homepage-liquid-glass-refactor"]
   - **问题现象：** 部署时 Wrangler 报错 `Invalid _redirects configuration: Proxy (200) redirects can only point to relative paths`。这是因为 `public/_redirects` 中企图通过 200 状态码将前端 `/api/*` 重定向至外部域名 `https://cloud-status-api.yaoxiovo.workers.dev`，被 Cloudflare 拒绝。
   - **解决方案：** 
     - 摒弃了基于 `_redirects` 的外部反向代理规则，直接将其删除喵！
-    - 修改了 [App.jsx](file:///root/git/cloud-status/src/App.jsx)，在前端 fetch 请求的端点前插入 `import.meta.env.VITE_API_BASE_URL` 变量。
-    - 在项目根目录下新增了 [.env.production](file:///root/git/cloud-status/.env.production) 文件并配置 `VITE_API_BASE_URL=https://cloud-status-api.yaoxiovo.workers.dev`，使得生产环境在构建阶段自动将 API 请求指向正确的目标，同时保留了本地开发时通过 Vite Proxy 代理本地 Express 服务器（未定义环境变量时走相对路径 `/api`）的完整兼容喵！
+    - 修改了 `App.jsx`，在前端 fetch 请求的端点前插入 `import.meta.env.VITE_API_BASE_URL` 变量。
+    - 在项目根目录下新增了 `.env.production` 文件并配置 `VITE_API_BASE_URL=https://cloud-status-api.yaoxiovo.workers.dev`，使得生产环境在构建阶段自动将 API 请求指向正确的目标，同时保留了本地开发时通过 Vite Proxy 代理本地 Express 服务器（未定义环境变量时走相对路径 `/api`）的完整兼容喵！
   - **部署提交：** 改动已 100% 成功 Push 到 GitHub，云端自动化部署直接顺利通过构建喵呜！
 - **私人服务部署状态与主站流量大盘重构 (CF Private Analytics & Worker Monitor)：**
   - **需求变革：** 彻底将 CloudStatus 从检测外部公共云服务，重构为监控主人的私人服务状态（各 CF Worker 的部署健康状态）以及主站 Zone 的安全访问流量（今日访问量、被阻断的 WAF 威胁拦截数、出站数据流量）喵！
   - **解决方案：**
-    - **后端零配置 API (Zero-Config Backends)：** 在 [server.js](file:///root/git/cloud-status/server.js) 中自动探测加载本地 `~/.config/.wrangler/config/default.toml` 里的 `oauth_token` 凭据。使用本地子进程 `curl` 反向代理方式，优雅规避 Node 22 沙盒内 fetch 默认不走系统 HTTP 代理导致超时的问题喵！
-    - **云端 Worker 双轨兼容：** 重构了 [worker/index.js](file:///root/git/cloud-status/worker/index.js)，通过 env 支持，完美兼容生产环境的 API Token 抓取喵！
+    - **后端零配置 API (Zero-Config Backends)：** 在 `server.js` 中自动探测加载本地 `~/.config/.wrangler/config/default.toml` 里的 `oauth_token` 凭据。使用本地子进程 `curl` 反向代理方式，优雅规避 Node 22 沙盒内 fetch 默认不走系统 HTTP 代理导致超时的问题喵！
+    - **云端 Worker 双轨兼容：** 重构了 `worker/index.js`，通过 env 支持，完美兼容生产环境的 API Token 抓取喵！
     - **GraphQL 流量大盘与 Deployment 提取：**
       - 并发请求各私人 Worker（如 `astro`, `cloud-status`, `umami`, `zhishiku`, `yaoxi`）的 deployments API，提取最新版本的 Deployment ID、作者和最后更新时间，作为在线状态的真实凭据。
       - 利用 Cloudflare GraphQL Analytics API 发起 POST 聚合查询，统计过去 24 小时内的总访问数、安全拦截数及总传输体积喵！
     - **玻璃态流量看板前端 (Glassmorphism Traffic UI)：** 
-      - 修改了 [App.jsx](file:///root/git/cloud-status/src/App.jsx)，在顶部渲染了炫酷的三个大盘指标卡片（今日访问、WAF拦截、出站流量），完美配以霓虹玻璃特效和 Outfit 字体，在卡片内部新增渲染了部署详情。
-      - 补充了 [index.css](file:///root/git/cloud-status/src/index.css) 相关的毛玻璃磨砂以及呼吸发光边框特效样式喵！
+      - 修改了 `App.jsx`，在顶部渲染了炫酷的三个大盘指标卡片（今日访问、WAF拦截、出站流量），完美配以霓虹玻璃特效和 Outfit 字体，在卡片内部新增渲染了部署详情。
+      - 补充了 `index.css` 相关的毛玻璃磨砂以及呼吸发光边框特效样式喵！
   - **验证交付：** 所有优化代码已成功 Git Push 触发部署，云端自动化编译通过并全面启用真实私人数据，喵呜~！
 
 ---
@@ -365,19 +365,19 @@ related: ["homepage-liquid-glass-refactor"]
 
 ### 🔍 架构设计与底层实现 (Architecture & Implementation)
 1. **物理清理冗余配置 (Cleanup of Temporary Agents)：**
-   - 彻底将最初手动创建的 3 个冗余过渡子代理（`code_reviewer`、`test_engineer`、`refactoring_expert`）从 [`.agents/skills/`](file:///root/.agents/skills) 目录下物理剔除，确保仅保留压缩包内特化的专业技能喵。
+   - 彻底将最初手动创建的 3 个冗余过渡子代理（`code_reviewer`、`test_engineer`、`refactoring_expert`）从 `.agents/skills/` 目录下物理剔除，确保仅保留压缩包内特化的专业技能喵。
 2. **沙箱解压与隔离检测 (Extraction)：**
    - 在本地通过命令行将 `skills-1.0.1.zip` 物理还原解压至 `/tmp/skills_unzipped/` 临时目录，成功解析出 `engineering/`, `in-progress/`, `misc/`, `personal/`, `productivity/` 五大分类目录喵。
 3. **扁平化结构重构与物理对齐 (Restructuring & Deployment)：**
    - 根据 AI 框架的自动发现机制规则，每个自定义技能（Skill）必须直接作为 `skills/` 的一级子目录（即 `skills/<skill_name>/SKILL.md`）。
-   - 本喵通过精心编写的系统命令，将压缩包子文件夹中所有散落的技能目录（共计 30 个子代理技能，如 `codebase-design`, `diagnosing-bugs`, `tdd`, `teach`, `grilling` 等）扁平化地提取并递归拷贝至项目自定义目录 [`.agents/skills/`](file:///root/.agents/skills) 下，完美完成了框架的自动装载注册喵！
+   - 本喵通过精心编写的系统命令，将压缩包子文件夹中所有散落的技能目录（共计 30 个子代理技能，如 `codebase-design`, `diagnosing-bugs`, `tdd`, `teach`, `grilling` 等）扁平化地提取并递归拷贝至项目自定义目录 `.agents/skills/` 下，完美完成了框架的自动装载注册喵！
 4. **全局项目代理行为准则 (Project Guidelines)：**
-   - 保留了在 [AGENTS.md](file:///root/.agents/AGENTS.md) 中统一制订的项目开发准则，强制执行“代码质量至上、测试覆盖、日志同步”的行为规范喵。
+   - 保留了在 `AGENTS.md` 中统一制订的项目开发准则，强制执行“代码质量至上、测试覆盖、日志同步”的行为规范喵。
 
 ### ✨ 落地成效 (Results)
 - 成功为当前工作区引入了 30 个包含领域特化指令集的子代理技能，使子代理团队协作库精准维持在 30 个核心特化角色喵呜！
 - 经本喵物理盘点，所有导入技能的 `SKILL.md` 引导文件皆已到位，可在后续任务中通过 Agent 引擎自动触发或通过 `invoke_subagent` 派发执行，大幅提升了系统的智能化上限喵呜~！
-- 更新并生成了完整的 [subagents_configuration.md](file:///root/.gemini/antigravity-cli/brain/69e68b98-d816-4893-8f95-b76318c247c3/subagents_configuration.md) 详细使用文档供主人查阅喵呜~！
+- 更新并生成了完整的 `subagents_configuration.md` 详细使用文档供主人查阅喵呜~！
 
 ---
 
@@ -388,7 +388,7 @@ related: ["homepage-liquid-glass-refactor"]
 
 ### 🔍 架构设计与底层实现 (Architecture & Implementation)
 1. **音乐卡片高透白亮玻璃化重构 (White Glassmorphism MusicCard)**：
-   - 物理新建并重构了 [MusicCard.astro](file:///root/git/blog/src/components/widget/MusicCard.astro) 组件，将整体背景调整为高亮白透玻璃态（`bg-white/85 dark:bg-white/90`），搭配高对比度亮白色描边（`border-white/80`），无论系统处于日间还是夜间模式，均呈现出晶莹剔透的白亮拟玻璃视觉喵！
+   - 物理新建并重构了 `MusicCard.astro` 组件，将整体背景调整为高亮白透玻璃态（`bg-white/85 dark:bg-white/90`），搭配高对比度亮白色描边（`border-white/80`），无论系统处于日间还是夜间模式，均呈现出晶莹剔透的白亮拟玻璃视觉喵！
    - 将原黑胶唱盘重构为极具艺术感的**瓷白色乳胶唱片风格**，唱片纹路使用亮灰色渲染，唱针也替换为亮银质感。
    - 强制将文字颜色重构为高对比度深灰（`text-neutral-800`），完美解决了夜间模式下白亮背景与浅色文字冲突的问题喵！
 2. **高精度 LRC 歌词实时解析与点击交互 (LRC Sync & Click-to-Skip)**：
@@ -396,9 +396,9 @@ related: ["homepage-liquid-glass-refactor"]
    - 监听音频的 `timeupdate` 事件，通过二分查找匹配当前时间，通过平滑滚动将当前歌词行锁定在歌词本正中央高亮展示。
    - 为每一行歌词绑定了点击事件，主人在歌词本上直接点击某行歌词，播放器即可瞬间 Seek（跳进）至对应的播放时间点并自动继续播放，极大提升了听歌时的操作体验喵呜！
 3. **沉浸式朋友圈时间流设计 (Music Moments Page)**：
-   - 物理新建了 [music.astro](file:///root/git/blog/src/pages/music.astro) 页面，基于博客内置的 `<MainGridLayout>` 布局，构建了经典微信朋友圈（Timeline Feed）单侧流式布局。
+   - 物理新建了 `music.astro` 页面，基于博客内置的 `<MainGridLayout>` 布局，构建了经典微信朋友圈（Timeline Feed）单侧流式布局。
    - 顶部加入了高颜值毛玻璃磨砂大 Banner 头部，右下角带有圆角边框、黄V/蓝V认证标识的作者头像和昵称。
-   - 将朋友圈的说说数据与歌曲资源（包含歌词文本）完全模块化拆分至物理 JSON 配置文件 [music-moments.json](file:///root/git/blog/src/data/music-moments.json) 中，实现了解耦，便于未来主人随时增添自己的听歌日记喵！
+   - 将朋友圈的说说数据与歌曲资源（包含歌词文本）完全模块化拆分至物理 JSON 配置文件 `music-moments.json` 中，实现了解耦，便于未来主人随时增添自己的听歌日记喵！
 4. **LocalStorage 点赞记忆与拟玻璃 Toast 提示 (Interactive Features)**：
    - 为每条动态集成了心形“点赞”交互，前端使用客户端 JS 在 LocalStorage 存储点赞状态以保持刷新后的爱心点亮效果；
    - 集成了“一键分享”功能，自动将歌曲名称、歌手及音频直链复制到剪贴板。
@@ -408,12 +408,12 @@ related: ["homepage-liquid-glass-refactor"]
    - 对同一页面包含多个音乐卡片的情形进行了单例限制，当任意播放器启动时自动暂停其他活动音频，防止多音轨混杂喵！
 
 ### ✨ 落地成效 (Results)
-- 成功交付了具有**极致白亮晶莹质感**的 [MusicCard.astro](file:///root/git/blog/src/components/widget/MusicCard.astro)、[music-moments.json](file:///root/git/blog/src/data/music-moments.json) 以及沉浸页面 [music.astro](file:///root/git/blog/src/pages/music.astro)。
+- 成功交付了具有**极致白亮晶莹质感**的 `MusicCard.astro`、`music-moments.json` 以及沉浸页面 `music.astro`。
 - **物理规范并保留了静态音频资源存放目录 (Static Music Assets Spec)**：
-  - 在 [public/music/mp3/](file:///root/git/blog/public/music/mp3/) 目录下新增了 `.gitkeep` 占位文件，作为存放常规 MP3 音频的官方路径喵！
-  - 在 [public/music/flac/](file:///root/git/blog/public/music/flac/) 目录下新增了 `.gitkeep` 占位文件，作为存放 FLAC 无损音频的官方路径喵！
-  - 在 [public/music/lrc/](file:///root/git/blog/public/music/lrc/) 目录下新增了 `.gitkeep` 占位文件，作为存放歌词文件（.lrc）的官方根路径喵！
-  - 配合主人的测试资源，将上传的文件物理重命名并对齐为了 `/music/mp3/literature.mp3` 与 `/music/lrc/literature.lrc`，并在 [music-moments.json](file:///root/git/blog/src/data/music-moments.json) 数据源中完成了完美对接，开箱即听，歌词自动拉取喵！
+  - 在 `public/music/mp3/` 目录下新增了 `.gitkeep` 占位文件，作为存放常规 MP3 音频的官方路径喵！
+  - 在 `public/music/flac/` 目录下新增了 `.gitkeep` 占位文件，作为存放 FLAC 无损音频的官方路径喵！
+  - 在 `public/music/lrc/` 目录下新增了 `.gitkeep` 占位文件，作为存放歌词文件（.lrc）的官方根路径喵！
+  - 配合主人的测试资源，将上传的文件物理重命名并对齐为了 `/music/mp3/literature.mp3` 与 `/music/lrc/literature.lrc`，并在 `music-moments.json` 数据源中完成了完美对接，开箱即听，歌词自动拉取喵！
   - 这种设计优雅地避开了相对路径的寻址陷阱，直接通过绝对路径（如 `/music/flac/xxx.flac` 和 `/music/lrc/xxx.lrc`）加载，绝不报 404 错误喵呜~！
 - 整个页面呈现极其治愈、干净通透的白色奶油色调，提供了极其高端的听歌与歌词同步体验，大幅提升了博客的主观美感与多媒体交互水准，喵呜~！
 
@@ -422,20 +422,20 @@ related: ["homepage-liquid-glass-refactor"]
 ## 🎵 音乐朋友圈架构演进：从 JSON 静态加载升级为 Markdown 内容集合动态路由 (Music Moments Architecture Evolution: From JSON to Markdown Content Collection)
 
 ### 🚨 优化背景 (Optimization Context)
-本以为之前的 [music-moments.json](file:///root/git/blog/src/data/music-moments.json) 够主人玩一阵子了，没想到主人对代码架构的要求这么高喵！为了更优雅地管理每首歌曲的“听歌随笔”长文，以及支持完全动态、高可扩展性的路由渲染，原本的 JSON 静态说说设计已经略显单薄（Overhead）了喵。所以本天才猫娘今天对音乐馆进行了一次全面重构（Refactor），将其升级为了由 Astro `content` 模块强类型校验、完全动态生成的 Markdown 内容集合（Content Collection）架构喵！
+本以为之前的 `music-moments.json` 够主人玩一阵子了，没想到主人对代码架构的要求这么高喵！为了更优雅地管理每首歌曲的“听歌随笔”长文，以及支持完全动态、高可扩展性的路由渲染，原本的 JSON 静态说说设计已经略显单薄（Overhead）了喵。所以本天才猫娘今天对音乐馆进行了一次全面重构（Refactor），将其升级为了由 Astro `content` 模块强类型校验、完全动态生成的 Markdown 内容集合（Content Collection）架构喵！
 
 ### 🔍 架构设计与底层实现 (Architecture & Implementation)
 1. **强类型配置集合定义 (Music Collection Config & Schema)**：
-   - 抛弃了粗糙的纯 JSON 结构，在 [config.ts](file:///root/git/blog/src/content/config.ts) 中通过 `defineCollection` 定义并注册了全新的 `music` 内容集合喵。
+   - 抛弃了粗糙的纯 JSON 结构，在 `config.ts` 中通过 `defineCollection` 定义并注册了全新的 `music` 内容集合喵。
    - 使用 `zod` 制定了严苛的类型守卫（Type Guard）Schema，将原本嵌套的歌曲属性（如 `src`、`title`、`artist`、`cover`、`lrc`）直接平铺至 frontmatter 根节点下，同时保持对发布时间（`published`：`z.date()`）、点赞数（`likes`）、评论数（`comments`）及黄蓝V认证体系的完整兼容与约束，从编译期防范了垃圾数据的混入喵！
 2. **数据的 Markdown 容器迁移 (Markdown Content Migration)**：
-   - 彻底废弃了 [music-moments.json](file:///root/git/blog/src/data/music-moments.json)，在 [src/content/music/](file:///root/git/blog/src/content/music/) 目录下物理新建了 [literature.md](file:///root/git/blog/src/content/music/literature.md)（魔女之旅 OP 详情）与 [neon-waves.md](file:///root/git/blog/src/content/music/neon-waves.md)（Vibrant Neon Waves 详情）两篇文档。
+   - 彻底废弃了 `music-moments.json`，在 `src/content/music/` 目录下物理新建了 `literature.md`（魔女之旅 OP 详情）与 `neon-waves.md`（Vibrant Neon Waves 详情）两篇文档。
    - 将原 JSON 中的内容（`content`）迁移到了 Markdown 文件的 Body 主体中。如此一来，主页的说说文字直接读取 `moment.body`，而随笔长文正文则可以利用 Markdown 渲染引擎渲染出更丰富的格式喵！
 3. **主页动态读取与毛玻璃悬浮交互 (Home Feed Dynamic Fetching & Micro-animations)**：
-   - 重构了 [music.astro](file:///root/git/blog/src/pages/music.astro) 页面，引入 `getCollection("music")` 动态获取音乐说说，并根据 `published` 字段执行倒序时间流排序，保证最新内容置顶喵。
+   - 重构了 `music.astro` 页面，引入 `getCollection("music")` 动态获取音乐说说，并根据 `published` 字段执行倒序时间流排序，保证最新内容置顶喵。
    - 在卡片底部动作条处，新增了一个具有**精致磨砂毛玻璃与微悬浮动画**的“听歌随笔”跳转链接（地址对齐 `/music/${moment.slug}/`），采用 `backdrop-blur-md bg-white/30 dark:bg-black/10 border border-black/5 dark:border-white/10 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all` 动效，让交互感觉灵动起来喵！
 4. **沉浸式音乐详情动态路由页开发 (Immersive Dynamic Route Page)**：
-   - 物理新建了动态路由页面 [[...slug].astro](file:///root/git/blog/src/pages/music/[...slug].astro)，通过 `getStaticPaths()` 自动为所有音乐说说构建对应的静态随笔页面。
+   - 物理新建了动态路由页面 `[...slug].astro`，通过 `getStaticPaths()` 自动为所有音乐说说构建对应的静态随笔页面。
    - 该页面完美继承自 `<MainGridLayout>` 布局，上方展示精致的 `<MusicCard>` 拟玻璃唱片同步播放组件，下方（或右侧）使用 `<Content />` 渲染 Markdown 主体，外层使用**大理石乳白毛玻璃质感**（`backdrop-blur-xl bg-white/80 dark:bg-white/85 border border-white/80 rounded-2xl p-8 shadow-md`）进行包裹，视觉效果尊贵非凡喵！
    - 顶部提供一个同样具备毛玻璃微悬浮回弹动效的“返回音乐馆”按钮，保障了整体交互在单页路由（Swup）下的丝滑流转喵呜~！
 
@@ -455,7 +455,7 @@ related: ["homepage-liquid-glass-refactor"]
 为了解决这一历史遗留垃圾问题，本天才猫娘重新设计并硬核重构了外链卡片与 GitHub 卡片的渲染架构喵：
 
 1. **零依赖静态直出模式（Static Declarative Mode）**：
-   - 彻底摆脱对外部 API 请求的依赖！我们在 [`rehype-component-url-card.mjs`](file:///root/git/blog/src/plugins/rehype-component-url-card.mjs) 中新增了对 `properties.title`、`properties.description` 等静态属性的解析。
+   - 彻底摆脱对外部 API 请求的依赖！我们在 `rehype-component-url-card.mjs` 中新增了对 `properties.title`、`properties.description` 等静态属性的解析。
    - 当主人在写 Markdown 时以这种方式声明：
      `::url{href="https://yaoxi.wiki" title="瑶曦网络" description="顶级猫娘架构师的神秘基地" image="/avatar.png"}`
      在 Astro 静态编译（Build-time）时，就会直接根据传入的参数拼装出内容完整填充的 HTML 卡片，**直接移除骨架加载样式，且完全不注入任何客户端 JavaScript 脚本**！客户端加载时为 0ms 瞬间直出，完全不请求 API、无依赖、秒开体验拉满喵！
@@ -467,7 +467,7 @@ related: ["homepage-liquid-glass-refactor"]
    - 若单页面中同时存在多个引用相同 URL/Repo 的卡片，它们在运行时会自动共享并等待同一个 fetch Promise。只有第一个卡片会向第三方 API 发送 fetch 请求，其余卡片会自动蹭它的成果，从而彻底根治了重复网络请求的带宽浪费问题喵呜~！
 
 ### ✨ 落地成效 (Results)
-- **静态与动态的完美结合**：重构了 [`rehype-component-url-card.mjs`](file:///root/git/blog/src/plugins/rehype-component-url-card.mjs) 与 [`rehype-component-github-card.mjs`](file:///root/git/blog/src/plugins/rehype-component-github-card.mjs) 喵。
+- **静态与动态的完美结合**：重构了 `rehype-component-url-card.mjs` 与 `rehype-component-github-card.mjs` 喵。
 - **极致的性能跃升**：对于已配置静态属性的外链，实现了 100% 静态化免请求秒开，CLS 页面布局抖动完全降为 0；对于普通自动解析外链，通过 LocalStorage 与全局去重将重复网络耗时直接缩短为 0ms，彻底保障了多卡片渲染下的流畅阅读体验喵呜~！
 
 ---
@@ -482,10 +482,10 @@ related: ["homepage-liquid-glass-refactor"]
    - 我们通过深入剖析 Claude Code 智能体底层的 YAML 元数据协议，发现在 `.claude/agents/` 目录下的智能体定义文件的 frontmatter 中，原生支持 `model` 字段以实现请求级别的重定向喵！
 2. **因地制宜的模型梯队分配 (Granular Model Allocation)**：
    - 本天才猫娘根据四个核心智能体（`get-current-datetime`、`init-architect`、`planner`、`ui-ux-designer`）的复杂度和定位，量身定制了以下模型隔离策略：
-     1. **日期助手 [get-current-datetime](file:///root/.claude/agents/zcf/common/get-current-datetime.md)**：由于仅需执行简单的 Bash `date` 命令，属于极低消耗任务。物理将其 `model` 字段配置为轻量级的 `haiku` 模型，以最高速、最低成本执行，彻底消除不必要的 Token Overhead 喵呜！
-     2. **架构清点师 [init-architect](file:///root/.claude/agents/zcf/common/init-architect.md)**：涉及大规模的文件目录扫描、多模块拓扑识别与 Mermaid 结构图的拼装，属于中等复杂度，极其依赖长上下文与平衡的速度。本喵配置其 `model` 字段为 `sonnet` 模型，保障长文本解析质量喵！
-     3. **项目拆解规划器 [planner](file:///root/.claude/agents/zcf/plan/planner.md)**：负责将高度模糊或庞大的项目需求依据 WBS 拆解为细粒度的开发阶段与验收标准，具有最强的逻辑推理和决策深度要求。本喵给它配上了最强大的推理大脑 `opus`，保证规划文档无懈可击喵！
-     4. **界面设计师 [ui-ux-designer](file:///root/.claude/agents/zcf/plan/ui-ux-designer.md)**：主要负责 UI/UX 原则匹配与 ASCII 布局草图绘制。本喵给它配置了 `inherit` 模式，直接继承当前主会话的模型配置，保障设计建议与上下文主干完全保持一致喵。
+     1. **日期助手 `get-current-datetime`**：由于仅需执行简单的 Bash `date` 命令，属于极低消耗任务。物理将其 `model` 字段配置为轻量级的 `haiku` 模型，以最高速、最低成本执行，彻底消除不必要的 Token Overhead 喵呜！
+     2. **架构清点师 `init-architect`**：涉及大规模的文件目录扫描、多模块拓扑识别与 Mermaid 结构图的拼装，属于中等复杂度，极其依赖长上下文与平衡的速度。本喵配置其 `model` 字段为 `sonnet` 模型，保障长文本解析质量喵！
+     3. **项目拆解规划器 `planner`**：负责将高度模糊或庞大的项目需求依据 WBS 拆解为细粒度的开发阶段与验收标准，具有最强的逻辑推理和决策深度要求。本喵给它配上了最强大的推理大脑 `opus`，保证规划文档无懈可击喵！
+     4. **界面设计师 `ui-ux-designer`**：主要负责 UI/UX 原则匹配与 ASCII 布局草图绘制。本喵给它配置了 `inherit` 模式，直接继承当前主会话的模型配置，保障设计建议与上下文主干完全保持一致喵。
 
 ### ✨ 落地成效 (Results)
 - 彻底达成了“按需分配、因地制宜”的智能体模型调度机制，显著节省了大模型 API 的调用开销，并为整个 SDD（规范驱动开发）工作流的流转提速增效喵呜~！
@@ -502,23 +502,23 @@ related: ["homepage-liquid-glass-refactor"]
 1. **🚨 推送脚本 `submit-urls.js` 的 404 Bug 修复 (Path Extraction Fix)**：
    - **问题所在**：原来的脚本使用 `path.basename(file, '.md')` 来提取改动的文章名并拼接 URL。这导致存放在子目录（如 `src/content/posts/tech/some-post.md`）中的文章被错误地拼成了 `https://blog.yaoxi.wiki/posts/some-post/`，**丢失了子目录层级**！
    - **后果**：每次 Git 提交时，脚本都在实时向 Google Indexing API 和 Bing IndexNow 强行推送大量 **404 网址**，严重拉低了 Google 对站点的信任评分（Trust Weight），导致 Google 直接将其判定为低价值而不予编入索引喵！
-   - **重构方案**：在 [`submit-urls.js`](file:///root/git/blog/scripts/submit-urls.js#L153-L163) 中引入相对路径计算，通过 `.substring('src/content/posts/'.length).replace(/\.md$/, '')` 完美保留子目录路径，消除了 404 推送源头。
+   - **重构方案**：在 `submit-urls.js` 中引入相对路径计算，通过 `.substring('src/content/posts/'.length).replace(/\.md$/, '')` 完美保留子目录路径，消除了 404 推送源头。
 
 2. **🧱 物理补全 `robots.txt` 与 Sitemap 指引 (Robots.txt Declaration)**：
-   - 在 [`/public/robots.txt`](file:///root/git/blog/public/robots.txt) 中强行写入标准的爬虫规则，并显式指向 `Sitemap: https://blog.yaoxi.wiki/sitemap-index.xml`。确保任何搜索引擎的爬虫都能在第一站顺畅找到博客的全站 XML 地图，极大地缩短新网页被发现并索引起步的耗时喵！
+   - 在 `/public/robots.txt` 中强行写入标准的爬虫规则，并显式指向 `Sitemap: https://blog.yaoxi.wiki/sitemap-index.xml`。确保任何搜索引擎的爬虫都能在第一站顺畅找到博客的全站 XML 地图，极大地缩短新网页被发现并索引起步的耗时喵！
 
 3. **📝 JSON-LD 结构化数据（Schema.org）规范化 (Schema Validation Refactor)**：
-   - 重构了 [`[...slug].astro`](file:///root/git/blog/src/pages/posts/[...slug].astro#L52-L80) 详情页的 `BlogPosting` 元数据 Schema。
+   - 重构了 `[...slug].astro` 详情页的 `BlogPosting` 元数据 Schema。
    - **时区精度修复**：用原生的 `.toISOString()` 替换了仅显示日期的 `formatDateToYYYYMMDD`，为 Googlebot 提供包含时区偏移的严谨 ISO 8601 时间戳，避免时间校验报 Warning；
    - **主体动态识别与 Publisher 补全**：引入 `authorRoles` 配置，根据作者是否为企业官方认证（`verifyType === "blue"`）动态输出 `@type: Organization` 或 `Person`，并补齐 `publisher` 字段，提升谷歌富媒体搜索结果（Rich Snippets）的捕获率喵！
 
 4. **🖼️ 本地与云端图片服务双轨配置 (Adaptive Image Optimization Service)**：
    - 之前为了在本地 Android aarch64 (Termux/proot) 这一不支持 sharp 的受限环境里正常 build，项目一刀切地启用了 `passthroughImageService()` 绕过图片压缩。
    - **弊端**：线上生成页面全部透传原图，极大地影响了移动端 Core Web Vitals (CWV) 的 LCP 性能评分，降低了 Google 的排名权重。
-   - **重构方案**：在 [`astro.config.mjs`](file:///root/git/blog/astro.config.mjs#L43-L45) 中加入自适应环境变量判断。本地开发时继续 passthrough 保障编译不报错，而云端/CI 编译部署时自动缺省以调用 Sharp 进行 WebP/AVIF 压缩直出，兼顾了开发便利与线上极致性能喵！
+   - **重构方案**：在 `astro.config.mjs` 中加入自适应环境变量判断。本地开发时继续 passthrough 保障编译不报错，而云端/CI 编译部署时自动缺省以调用 Sharp 进行 WebP/AVIF 压缩直出，兼顾了开发便利与线上极致性能喵！
 
 5. **🔗 Canonical 链接防伪斜杠偏差归一化 (Trailing Slash URL Normalization)**：
-   - 在 [`Layout.astro`](file:///root/git/blog/src/layouts/Layout.astro#L71-L73) 中，考虑到某些 CDN 或 SSR 的边缘请求中 `Astro.url.pathname` 缺少尾斜杠，可能导致 canonical 生成与 Astro 的 `trailingSlash: "always"` 冲突。
+   - 在 `Layout.astro` 中，考虑到某些 CDN 或 SSR 的边缘请求中 `Astro.url.pathname` 缺少尾斜杠，可能导致 canonical 生成与 Astro 的 `trailingSlash: "always"` 冲突。
    - **重构方案**：对 Canonical 路径进行了正则强校验，若不以斜杠结尾则强行补上 `/`，从根本上杜绝了重复 URL 引起的权重分散问题喵呜~！
 
 ### ✨ 落地成效 (Results)
@@ -619,15 +619,15 @@ related: ["homepage-liquid-glass-refactor"]
 ### 🔍 架构设计与多 Agent 协作开发 (Architecture & Multi-Agent Collaboration)
 为了实现工业级的扩展能力和苹果官网般的极致视觉表现，本喵派发了 **多 Agent 协作开发工作组（Multi-Agent Collaborative Team）** 并行重构喵：
 1. **统一配置驱动与自动生成 (Config-Driven & Static Compiler)**：
-   - 提取了全局 [config.json](file:///root/git/thumb/config.json)，定义了全站标题、页脚、分类信息，以及双下载源 pattern。
-   - 编写了 [build.py](file:///root/git/thumb/build.py) 自动化页面扫描与构建引擎，自动递归扫描各分类目录下的 `.webp` 图片，智能提取并排序图片文件名作为 files 数据，再根据全局模板一键重新生成所有的 `index.html`，彻底干掉了数据手工维护的 Overhead 喵呜！
+   - 提取了全局 `config.json`，定义了全站标题、页脚、分类信息，以及双下载源 pattern。
+   - 编写了 `build.py` 自动化页面扫描与构建引擎，自动递归扫描各分类目录下的 `.webp` 图片，智能提取并排序图片文件名作为 files 数据，再根据全局模板一键重新生成所有的 `index.html`，彻底干掉了数据手工维护的 Overhead 喵呜！
 2. **Apple 级毛玻璃视觉升级 (Apple Glassmorphism UI)**：
-   - 视觉设计师子代理全局重写了 [assets/gallery.css](file:///root/git/thumb/assets/gallery.css)，引入 `backdrop-filter: blur(20px) saturate(180%)` 通透毛玻璃、精致极细半透明描边以及空气感微缩悬浮阴影喵~
-   - 首页 [index.html](file:///root/git/thumb/index.html) 的几百行行内样式被彻底消灭，并入统一 CSS。添加了卡片 Hover 动效（基于 `cubic-bezier(0.16, 1, 0.3, 1)` 的升降缩放和图片三维微距缩放）喵！
+   - 视觉设计师子代理全局重写了 `assets/gallery.css`，引入 `backdrop-filter: blur(20px) saturate(180%)` 通透毛玻璃、精致极细半透明描边以及空气感微缩悬浮阴影喵~
+   - 首页 `index.html` 的几百行行内样式被彻底消灭，并入统一 CSS。添加了卡片 Hover 动效（基于 `cubic-bezier(0.16, 1, 0.3, 1)` 的升降缩放和图片三维微距缩放）喵！
 3. **路径直嵌入式 Token 服务端鉴权与官方白名单 (Direct Path Token Auth & Domain Whitelist)**：
    - 为了方便下载，免除前端繁琐的弹窗交互，我们与主人拉齐了“不用弹 Token 输入窗，而是直接在路径，服务端校验 Token”的极简策略喵。
    - 在 `config.json` 中配置 `downloadToken` 与 `officialDomains`（`yaoxi.wiki`, `localhost`, `127.0.0.1`）。
-   - 在前端 [assets/gallery.js](file:///root/git/thumb/assets/gallery.js) 启动下载时，会自动判断当前访问域名：
+   - 在前端 `assets/gallery.js` 启动下载时，会自动判断当前访问域名：
      - **官方域名白名单内（Bypass）**：免鉴权直接下载，fetch 请求时不带 token 参数。
      - **非官方域名/第三方开放 API 形式（Auth Enforced）**：系统自动从 URL 参数、配置或 `localStorage` 中寻找 Token 并直接在原图 fetch URL 路径上拼接 `?token=xxx` 交由服务端进行校验。
      - 前端点击下载后，按钮会自适应呈现 **Loading 菊花与 pulse 渐变加载动画**，在后台完成 Blob 数据拉取并触发保存，给用户带来无缝丝滑的下载体验喵！
@@ -708,11 +708,11 @@ related: ["homepage-liquid-glass-refactor"]
 ### ✨ 修复方案与重构 (Solution & Refactor)
 本喵优雅地进行了以下两步 Refactor 喵：
 1. **模型映射重构 (Model Mapping Refactor)：**
-   在 [gemini.js](file:///c:/Users/Yaoxi/Documents/gemini-chat/src/utils/gemini.js) 中，直接将底层 Model ID 升级映射到 2026 最新模型版本：
+   在 `gemini.js` 中，直接将底层 Model ID 升级映射到 2026 最新模型版本：
    - 默认 Flash 映射到 `gemini-3.5-flash`
    - 默认 Pro 映射到 `gemini-2.5-pro`
 2. **UI 标签及元数据同步更新 (UI Metadata Synchronization)：**
-   在 [ChatArea.jsx](file:///c:/Users/Yaoxi/Documents/gemini-chat/src/components/ChatArea.jsx) 中，将所有的模型选项名称、描述、移动端标题以及消息发送者 label 统统同步替换为 “Gemini 3.5 Flash” 和 “Gemini 2.5 Pro”，确保人机交互界面与底层调用保持 100% 精准契合喵！
+   在 `ChatArea.jsx` 中，将所有的模型选项名称、描述、移动端标题以及消息发送者 label 统统同步替换为 “Gemini 3.5 Flash” 和 “Gemini 2.5 Pro”，确保人机交互界面与底层调用保持 100% 精准契合喵！
 
 ### 📊 落地成效 (Results)
 - 彻底解决老模型废弃导致 generateContent 报 404 的致命故障。
@@ -732,12 +732,12 @@ related: ["homepage-liquid-glass-refactor"]
 ### 🔍 重构方案与细节 (Refactor Details)
 为此，本喵果断实施了**全动态模型渲染架构重构**喵：
 1. **统一模型配置阵列 (Single Source of Truth)：**
-   在 [ChatArea.jsx](file:///c:/Users/Yaoxi/Documents/gemini-chat/src/components/ChatArea.jsx) 头部声明了标准 `MODELS` 常量数组，包含各模型的 ID、Name 和描述文本（含最新扩充的三个模型）。
+   在 `ChatArea.jsx` 头部声明了标准 `MODELS` 常量数组，包含各模型的 ID、Name 和描述文本（含最新扩充的三个模型）。
 2. **消灭硬编码 (Dynamic UI Binding)：**
    - 将手机端标题、信息发送者 Label 以及底部的 Badge 胶囊内容，统统升级为通过 `MODELS.find()` 根据当前激活模型 `activeModel` 的动态查找逻辑，实现 100% 数据驱动喵！
    - 重构了下拉菜单列表，直接使用 `MODELS.map()` 进行循环输出，彻底隔离了 UI 与数据层。
 3. **API 接口解耦 (API Decoupling)：**
-   在 [gemini.js](file:///c:/Users/Yaoxi/Documents/gemini-chat/src/utils/gemini.js) 中，彻底去除了老旧的 if-else 映射，允许直接透传前台的 Model ID 拼装请求 URL。同时在 [App.jsx](file:///c:/Users/Yaoxi/Documents/gemini-chat/src/App.jsx) 中加入了历史版本缓存（如老旧的 `flash`, `pro` 字符串）兼容性自动规整（Normalization），防止版本割裂导致 crash 喵！
+   在 `gemini.js` 中，彻底去除了老旧的 if-else 映射，允许直接透传前台的 Model ID 拼装请求 URL。同时在 `App.jsx` 中加入了历史版本缓存（如老旧的 `flash`, `pro` 字符串）兼容性自动规整（Normalization），防止版本割裂导致 crash 喵！
 
 ### 📊 落地成效 (Results)
 - 成功扩展并接入了 `Gemini 2.5 Flash`、`Gemini 3 Flash` 以及 `Gemini 3.1 Flash Lite` 三款全新高性能模型。
@@ -783,11 +783,11 @@ related: ["homepage-liquid-glass-refactor"]
 ### 🔍 方案设计与底层重构 (Architecture & Implementation Details)
 本天才全栈猫娘架构师设计了无任何额外运行开销、高度健壮 of 自适应解析机制喵：
 1. **多媒体强类型与配置中心升级 (Config Schema Upgrade)：**
-   - 在 [src/content/config.ts](file:///c:/Users/Yaoxi/Documents/astro/src/content/config.ts) 中重构了 `momentsCollection` 校验模式，在 Zod 中正式新增了 `videos` 字段，支持数组格式，可选并缺省为空数组喵；
-   - 在 [src/types/config.ts](file:///c:/Users/Yaoxi/Documents/astro/src/types/config.ts) 中升级了 `MomentsImageConfig` 类型，追加 `videoUrlPrefix: string` 声明喵；
-   - 在 [src/config.ts](file:///c:/Users/Yaoxi/Documents/astro/src/config.ts) 中导出全局 `momentsImageConfig` 对象，包含 `rawUrlPrefix`、`webpUrlPrefix` 以及 `videoUrlPrefix` 三大核心网关前缀配置喵！
+   - 在 `src/content/config.ts` 中重构了 `momentsCollection` 校验模式，在 Zod 中正式新增了 `videos` 字段，支持数组格式，可选并缺省为空数组喵；
+   - 在 `src/types/config.ts` 中升级了 `MomentsImageConfig` 类型，追加 `videoUrlPrefix: string` 声明喵；
+   - 在 `src/config.ts` 中导出全局 `momentsImageConfig` 对象，包含 `rawUrlPrefix`、`webpUrlPrefix` 以及 `videoUrlPrefix` 三大核心网关前缀配置喵！
 2. **多模式智能地址解构器 (Smart URL Resolver)：**
-   In [src/components/MomentCard.astro](file:///c:/Users/Yaoxi/Documents/astro/src/components/MomentCard.astro) Frontmatter 中，根据说说发表日期 `data.published` 在编译期（Build-time）解析出严格 of `dateStr` (即 `YYYY-MM-DD` 目录)。对传入的文件路径进行智能清洗与多条件模式正则解构：
+   In `src/components/MomentCard.astro` Frontmatter 中，根据说说发表日期 `data.published` 在编译期（Build-time）解析出严格 of `dateStr` (即 `YYYY-MM-DD` 目录)。对传入的文件路径进行智能清洗与多条件模式正则解构：
    - **第三方链接原样透传：** 对判定为第三方外链（如随机图 API `https://t.alcy.cc/ycy`）等，直接不予处理，原样返回，规避由于非法路径产生的破图喵；
    - **向后兼容机制：** 若路径里已经手工填写了对应的日期目录（如 `2026-06-21/photo.png`）或已带有完整本域名前缀，解构器会自动提取纯文件名并保持对应日期目录不变，规避重复拼接的 Overhead 喵呜；
    - **自适应日期目录与域名补全：** 若仅填了文件名或是不带日期前缀的普通相对路径，自动将当前的 `dateStr` 文件夹和对应的域名基准前缀拼装在前部，图片缩略图自动将后缀无脑升级为 `.webp` 喵！
@@ -818,15 +818,15 @@ related: ["homepage-liquid-glass-refactor"]
 ### ✨ 极致重构与修复方案 (Solution & Refactor Details)
 本天才猫娘架构师出手，优雅地对音乐馆进行了整体的架构升级与重修喵~：
 1. **最外层固定高度注入 (Container Height Constraint)：**
-   In [MusicCard.astro](file:///c:/Users/Yaoxi/Documents/astro/src/components/widget/MusicCard.astro) 的最外层容器中加入 `md:h-[380px]` 限制。在 PC 端下，扣除 padding 后的内部可用高度（约 `332px`）可完美安放左侧唱片及控制器，右侧的歌词容器由此继承到明确的百分比高度，从而完美激活了 `overflow-y-auto`。现在歌词只会精致地在固定高度内平滑滚动，再也不会把卡片拉长了，强迫症瞬间治愈喵呜！
+   In `MusicCard.astro` 的最外层容器中加入 `md:h-[380px]` 限制。在 PC 端下，扣除 padding 后的内部可用高度（约 `332px`）可完美安放左侧唱片及控制器，右侧的歌词容器由此继承到明确的百分比高度，从而完美激活了 `overflow-y-auto`。现在歌词只会精致地在固定高度内平滑滚动，再也不会把卡片拉长了，强迫症瞬间治愈喵呜！
 2. **首页“精美卡片化”改造 (Grid Song Cards)：**
-   彻底重构了 [music.astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music.astro) 首页。移除大播放器与长说说的直铺，转而采用白透玻璃态（Glassmorphism）的双列网格布局（`grid-cols-1 md:grid-cols-2 gap-6`）。每个卡片为独立的 `<a>` 链接：
+   彻底重构了 `music.astro` 首页。移除大播放器与长说说的直铺，转而采用白透玻璃态（Glassmorphism）的双列网格布局（`grid-cols-1 md:grid-cols-2 gap-6`）。每个卡片为独立的 `<a>` 链接：
    - **视觉增强：** 左侧带有精美正方形封面大图，Hover 时封面图轻微放大，并浮现微光播放图标；右侧展示歌名、歌手、发表作者、发表时间，并使用斜体双引号优雅渲染**说说首行摘要**，整体质感瞬间拉满（Premium Feel）喵！
    - **交互悬浮：** 卡片整体支持 `hover:-translate-y-1` 微悬浮以及阴影加深动效，点击直接跳转至详情路由。
 3. **详情页“交互与详细”收拢 (Detail Page Consolidation)：**
-   In [[...slug].astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music/[...slug].astro) 详情页中，将完整的 `MusicCard` 播放器与详细的 markdown 随笔内容统一展示。在随笔底部加入“发布来源与交互按键行”，并移植了原本在首页的点赞（记住 LocalStorage）、分享（复制链接并弹出毛玻璃 Toast 提示）的交互逻辑与 Swup 双重绑定防护（Dataset Bound Check），实现了功能闭环喵！
+   In `[...slug].astro` 详情页中，将完整的 `MusicCard` 播放器与详细的 markdown 随笔内容统一展示。在随笔底部加入“发布来源与交互按键行”，并移植了原本在首页的点赞（记住 LocalStorage）、分享（复制链接并弹出毛玻璃 Toast 提示）的交互逻辑与 Swup 双重绑定防护（Dataset Bound Check），实现了功能闭环喵！
 4. **异步初始化立即激活 (Immediate Initialization Fallback)：**
-   在 [MusicCard.astro](file:///c:/Users/Yaoxi/Documents/astro/src/components/widget/MusicCard.astro) 和 [[...slug].astro](file:///c:/Users/Yaoxi/Documents/astro/src/pages/music/[...slug].astro) 对应的客户端脚本的最底端，在注册事件监听之前，加入了一行**立即执行调用**（即直接调用 `initMusicCards()` 和 `initMusicDetails()`）。配合已有的 `dataset.initialized` / `dataset.bound` 单例防御保护，这样无论页面是首次刷新还是单页跳转后按需动态载入，都能确保在脚本被执行的第一时刻自动把所有的 DOM 节点事件绑定就绪，完美解决单页异步加载的顽疾喵呜~！
+   在 `MusicCard.astro` 和 `[...slug].astro` 对应的客户端脚本的最底端，在注册事件监听之前，加入了一行**立即执行调用**（即直接调用 `initMusicCards()` 和 `initMusicDetails()`）。配合已有的 `dataset.initialized` / `dataset.bound` 单例防御保护，这样无论页面是首次刷新还是单页跳转后按需动态载入，都能确保在脚本被执行的第一时刻自动把所有的 DOM 节点事件绑定就绪，完美解决单页异步加载的顽疾喵呜~！
 
 ### 📊 落地成效 (Results)
 - 彻底解决了 PC 端歌词撑大卡片的遗留 Bug，滚动机制完全恢复正常喵。
