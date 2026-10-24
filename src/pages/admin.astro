@@ -3244,67 +3244,6 @@ ${content}
           }
         }
 
-        // 通道 3: 目标页面 HTTP 原生端到端探活 (Live Edge Probe)
-        // 直接向 blog.yaoxi.wiki 发起带时间戳无缓存请求，检测页面是否已在 CDN 边缘生效
-        if (status !== 'success' && status !== 'failure' && cleanSlug && targetType === 'post') {
-          try {
-            const probeTarget = `/posts/${cleanSlug}/?_edge_probe=${Date.now()}`;
-            const liveRes = await fetch(probeTarget, {
-              method: 'GET',
-              cache: 'no-store',
-              headers: { 'Cache-Control': 'no-cache, no-store' }
-            });
-            // 只要返回 200 且不是 404 错误页，证明页面已完成静态编译并发布上线
-            if (liveRes.ok && liveRes.status === 200) {
-              const htmlText = await liveRes.text();
-              if (!htmlText.includes('404') && !htmlText.includes('页面未找到')) {
-                status = 'success';
-                stage = 'CDN Edge Live 200 OK';
-              }
-            }
-          } catch (liveErr) {
-            // ignore
-          }
-        }
-
-        // 文章删除的原生端到端探活 (检测是否已返回 404 或下线)
-        if (status !== 'success' && status !== 'failure' && cleanSlug && targetType === 'delete') {
-          try {
-            const probeTarget = `/posts/${cleanSlug}/?_edge_probe=${Date.now()}`;
-            const liveRes = await fetch(probeTarget, {
-              method: 'GET',
-              cache: 'no-store',
-              headers: { 'Cache-Control': 'no-cache, no-store' }
-            });
-            if (liveRes.status === 404) {
-              status = 'success';
-              stage = 'CDN Edge 404 (Removed)';
-            } else if (liveRes.ok) {
-              const htmlText = await liveRes.text();
-              if (htmlText.includes('404') || htmlText.includes('页面未找到') || htmlText.includes('Page Not Found')) {
-                status = 'success';
-                stage = 'CDN Edge 404 (Removed)';
-              }
-            }
-          } catch (e) {}
-        }
-
-        // 朋友圈动态的端到端探活 (通过 /api/moments.json 检查是否收录)
-        if (status !== 'success' && status !== 'failure' && targetType === 'moment' && cleanSlug) {
-          try {
-            const momentsRes = await fetch(`/api/moments.json?_edge_probe=${Date.now()}`, {
-              cache: 'no-store'
-            });
-            if (momentsRes.ok) {
-              const momentsList = await momentsRes.json();
-              if (Array.isArray(momentsList) && momentsList.some((m) => m.slug === cleanSlug)) {
-                status = 'success';
-                stage = 'CDN Moments Live';
-              }
-            }
-          } catch (e) {}
-        }
-
         // 状态平滑渲染
         if (status === 'queued') {
           deployProgressBar.style.width = '35%';
@@ -3378,18 +3317,18 @@ ${content}
           publishIcon.classList.remove('hidden');
           btnPublishText.textContent = '重试发布';
         } else {
-          // 兜底心跳态：逐步动态增加进度条，让用户明确感知探针在积极探活
+          // 兜底心跳态：逐步动态增加进度条，让用户明确感知轮询在正常工作
           const estimatedProgress = Math.min(85, 30 + Math.floor(pollAttempts * 2));
           deployProgressBar.style.width = `${estimatedProgress}%`;
           deployBadge.textContent = 'PROBING';
           deployBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-blue-500/10 text-blue-500 border border-blue-500/20 animate-pulse';
-          deployTitle.textContent = 'GitHub Commit 提交成功，正在探活 Cloudflare Pages 编译状态...';
-          deployStageInfo.textContent = `探针第 ${pollAttempts} 次轮询 (${deploySeconds}s) · 正在多通道验证`;
+          deployTitle.textContent = 'GitHub Commit 提交成功，正在查询 Cloudflare Pages 编译状态...';
+          deployStageInfo.textContent = `第 ${pollAttempts} 次轮询 (${deploySeconds}s) · 正在验证部署状态`;
 
           // 超时（例如 90s 以上）提供直接验证跳转兜底
           if (pollAttempts >= 30) {
             const directTarget = targetType === 'moment' ? '/moments/' : (targetType === 'delete' ? '/admin/' : `/posts/${cleanSlug}/`);
-            deploySubtitle.innerHTML = `Commit: ${commitSha ? commitSha.substring(0, 7) : 'HEAD'} · Pages 正在后台编译分发中。<br/><a href="${directTarget}" target="_blank" class="mt-2 inline-flex items-center gap-1 text-[var(--primary)] font-bold underline hover:opacity-80"><span>🚀 探活超时，点击直接打开目标页面验证 喵</span></a>`;
+            deploySubtitle.innerHTML = `Commit: ${commitSha ? commitSha.substring(0, 7) : 'HEAD'} · Pages 正在后台编译分发中。<br/><a href="${directTarget}" target="_blank" class="mt-2 inline-flex items-center gap-1 text-[var(--primary)] font-bold underline hover:opacity-80"><span>🚀 轮询超时，点击直接打开目标页面验证 喵</span></a>`;
           }
         }
       }, 3000);
