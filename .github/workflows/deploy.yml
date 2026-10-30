@@ -87,7 +87,8 @@ jobs:
           echo "Deployment to Linux Server completed successfully!"
 
       - name: Deploy to Firebase (Optional)
-        if: ${{ env.FIREBASE_TOKEN != '' }}
+        if: ${{ secrets.FIREBASE_TOKEN != '' }}
+        continue-on-error: true
         uses: w9jds/firebase-action@v2.2.2
         with:
           args: deploy --only hosting
