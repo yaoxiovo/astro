@@ -50,21 +50,30 @@ jobs:
             exit 1
           fi
 
-          echo "Setting up SSH key..."
+          echo "Setting up SSH deploy key..."
           mkdir -p ~/.ssh
-          if echo "$SERVER_SSH_KEY" | grep -q "BEGIN"; then
-            echo "$SERVER_SSH_KEY" > ~/.ssh/deploy_key
-          else
-            echo "$SERVER_SSH_KEY" | base64 -d > ~/.ssh/deploy_key
-          fi
+          python3 -c '
+          import sys, base64
+          raw = sys.stdin.read().strip()
+          if "BEGIN" in raw:
+              raw = raw.replace("\\n", "\n")
+              out = raw.strip() + "\n"
+          else:
+              out = base64.b64decode(raw).decode("utf-8").strip() + "\n"
+          with open("/tmp/deploy_key", "w") as f:
+              f.write(out)
+          ' <<< "$SERVER_SSH_KEY"
+          mv /tmp/deploy_key ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
+
+          echo "Testing SSH connection to $SERVER_HOST..."
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 $SERVER_USER@$SERVER_HOST "uname -a"
 
           echo "Synchronizing static dist artifacts to $SERVER_HOST:$SERVER_TARGET_DIR..."
-          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" dist/ $SERVER_USER@$SERVER_HOST:$SERVER_TARGET_DIR/
+          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15" dist/ $SERVER_USER@$SERVER_HOST:$SERVER_TARGET_DIR/
 
           echo "Setting file permissions on remote server..."
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new $SERVER_USER@$SERVER_HOST "chown -R www:www $SERVER_TARGET_DIR && chmod -R 755 $SERVER_TARGET_DIR"
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 $SERVER_USER@$SERVER_HOST "chown -R www:www $SERVER_TARGET_DIR && chmod -R 755 $SERVER_TARGET_DIR"
 
           echo "Deployment to Linux Server completed successfully!"
 

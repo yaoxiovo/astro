@@ -56,12 +56,9 @@ export {
  * 将 Astro CollectionEntry 转换为统一强类型 TextbookItem
  */
 export function mapEntryToTextbookItem(
-	entry: CollectionEntry<"textbooks"> | Record<string, unknown>,
+	entry: CollectionEntry<"textbooks">,
 ): TextbookItem {
-	const rawData =
-		(entry as CollectionEntry<"textbooks">).data ||
-		(entry as Record<string, unknown>) ||
-		{};
+	const rawData = entry.data;
 	const frontmatter: TextbookFrontmatter = {
 		title: String(rawData.title || "未命名知识点"),
 		subject: (rawData.subject || "other") as SubjectType,
