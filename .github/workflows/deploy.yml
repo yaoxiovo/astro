@@ -59,15 +59,24 @@ jobs:
               raw = raw.replace("\\n", "\n")
               out = raw.strip() + "\n"
           else:
-              out = base64.b64decode(raw).decode("utf-8").strip() + "\n"
+              try:
+                  out = base64.b64decode(raw).decode("utf-8").strip() + "\n"
+              except Exception:
+                  out = raw.strip() + "\n"
           with open("/tmp/deploy_key", "w") as f:
               f.write(out)
           ' <<< "$SERVER_SSH_KEY"
           mv /tmp/deploy_key ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-          echo "Testing SSH connection to $SERVER_HOST..."
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 $SERVER_USER@$SERVER_HOST "uname -a"
+          echo "Validating deploy key format..."
+          ssh-keygen -l -f ~/.ssh/deploy_key || { echo "::error::Private key format is invalid! Please verify SERVER_SSH_KEY secret."; exit 1; }
+
+          echo "Testing SSH connection to $SERVER_USER@$SERVER_HOST..."
+          ssh -v -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o BatchMode=yes $SERVER_USER@$SERVER_HOST "uname -a" || {
+            echo "::error::SSH authentication failed! Please check if the private key matches ~/.ssh/authorized_keys on the server."
+            exit 1
+          }
 
           echo "Synchronizing static dist artifacts to $SERVER_HOST:$SERVER_TARGET_DIR..."
           rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15" dist/ $SERVER_USER@$SERVER_HOST:$SERVER_TARGET_DIR/
