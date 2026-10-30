@@ -1,9 +1,10 @@
-name: Deploy Astro to Firebase Hosting
+name: Build and Deploy Astro
 
 on:
   push:
     branches:
-      - main  # 如果主分支是 master 请改成 master
+      - main
+  workflow_dispatch:
 
 jobs:
   build_and_deploy:
@@ -37,7 +38,34 @@ jobs:
           # 官印签名私钥（Ed25519 PEM 或 base64(PEM)）；未配置时构建自动跳过签发并保留既有 manifest
           SEAL_PRIVATE_KEY: ${{ secrets.SEAL_PRIVATE_KEY }}
 
-      - name: Deploy to Firebase
+      - name: Deploy to Linux Server via Rsync
+        env:
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST || '43.128.137.8' }}
+          SERVER_USER: ${{ secrets.SERVER_USER || 'root' }}
+          SERVER_TARGET_DIR: ${{ secrets.SERVER_TARGET_DIR || '/www/wwwroot/astro' }}
+        run: |
+          if [ -z "$SERVER_SSH_KEY" ]; then
+            echo "::error::SERVER_SSH_KEY is not configured in GitHub Secrets! Please add it in Repository Settings."
+            exit 1
+          fi
+
+          echo "Setting up SSH key..."
+          mkdir -p ~/.ssh
+          echo "$SERVER_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
+
+          echo "Synchronizing static dist artifacts to $SERVER_HOST:$SERVER_TARGET_DIR..."
+          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" dist/ $SERVER_USER@$SERVER_HOST:$SERVER_TARGET_DIR/
+
+          echo "Setting file permissions on remote server..."
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new $SERVER_USER@$SERVER_HOST "chown -R www:www $SERVER_TARGET_DIR && chmod -R 755 $SERVER_TARGET_DIR"
+
+          echo "Deployment to Linux Server completed successfully!"
+
+      - name: Deploy to Firebase (Optional)
+        if: ${{ env.FIREBASE_TOKEN != '' }}
         uses: w9jds/firebase-action@v2.2.2
         with:
           args: deploy --only hosting
