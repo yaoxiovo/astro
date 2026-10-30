@@ -43,7 +43,7 @@ jobs:
           SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
           SERVER_HOST: ${{ secrets.SERVER_HOST || '43.128.137.8' }}
           SERVER_USER: ${{ secrets.SERVER_USER || 'root' }}
-          SERVER_TARGET_DIR: ${{ secrets.SERVER_TARGET_DIR || '/www/wwwroot/astro' }}
+          SERVER_TARGET_DIR: ${{ secrets.SERVER_TARGET_DIR || '/www/wwwroot/blog-api.yaoxi.wiki' }}
         run: |
           if [ -z "$SERVER_SSH_KEY" ]; then
             echo "::error::SERVER_SSH_KEY is not configured in GitHub Secrets! Please add it in Repository Settings."
