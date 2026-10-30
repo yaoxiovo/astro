@@ -10,7 +10,7 @@ import {
 export let item: TextbookItem;
 
 const dispatch = createEventDispatcher<{
-	close: void;
+	close: undefined;
 	showToast: string;
 	selectTag: string;
 }>();

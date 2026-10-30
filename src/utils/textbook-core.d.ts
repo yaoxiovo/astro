@@ -16,7 +16,9 @@ export declare const SUBJECT_METAS: Record<string, SubjectMeta>;
 
 export declare function getSubjectMeta(subject: string): SubjectMeta;
 export declare function stripTextbookSlug(id?: string): string;
-export declare function formatTextbookDate(dateInput: Date | string | number): string;
+export declare function formatTextbookDate(
+	dateInput: Date | string | number,
+): string;
 export declare function countTextbookWords(body?: string): number;
 export declare function estimateTextbookReadingTime(wordCount: number): number;
 export declare function validateImageUrl(url?: string): {
@@ -24,7 +26,7 @@ export declare function validateImageUrl(url?: string): {
 	normalized: string;
 	reason?: string;
 };
-export declare function validateTextbookSchema(item: any): {
+export declare function validateTextbookSchema(item: unknown): {
 	valid: boolean;
 	errors: string[];
 };

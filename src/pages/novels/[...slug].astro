@@ -1,9 +1,9 @@
 ---
-import MainGridLayout from "@layouts/MainGridLayout.astro";
-import { getCollection } from "astro:content";
-import { Icon } from "astro-icon/components";
+import { type CollectionEntry, getCollection } from "astro:content";
 import Markdown from "@components/misc/Markdown.astro";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { formatDateToYYYYMMDD } from "@utils/date-utils";
+import { Icon } from "astro-icon/components";
 
 export async function getStaticPaths() {
 	const allNovels = await getCollection("novels", ({ data }) => !data.draft);
@@ -18,11 +18,18 @@ export async function getStaticPaths() {
 			.replace(/\/index\.md$/, "")
 			.replace(/\/index$/, "");
 		const bookChapters = chapters
-			.filter((c) => c.id.startsWith(bookSlug + "/"))
+			.filter((c) => c.id.startsWith(`${bookSlug}/`))
 			.sort((a, b) => (a.data.chapterOrder ?? 0) - (b.data.chapterOrder ?? 0));
 		paths.push({
 			params: { slug: bookSlug },
-			props: { mode: "toc", book, chapters: bookChapters, chapter: null, prevChapter: null, nextChapter: null },
+			props: {
+				mode: "toc",
+				book,
+				chapters: bookChapters,
+				chapter: null,
+				prevChapter: null,
+				nextChapter: null,
+			},
 		});
 	}
 
@@ -32,19 +39,27 @@ export async function getStaticPaths() {
 		const parts = cleanId.split("/");
 		const bookSlug = parts[0];
 		const chapterSlug = parts[1];
-		const book = indexes.find(
-			(b) =>
-				b.id.replace(/\/index\.md$/, "").replace(/\/index$/, "") === bookSlug,
-		) ?? null;
+		const book =
+			indexes.find(
+				(b) =>
+					b.id.replace(/\/index\.md$/, "").replace(/\/index$/, "") === bookSlug,
+			) ?? null;
 		const bookChapters = chapters
-			.filter((c) => c.id.startsWith(bookSlug + "/"))
+			.filter((c) => c.id.startsWith(`${bookSlug}/`))
 			.sort((a, b) => (a.data.chapterOrder ?? 0) - (b.data.chapterOrder ?? 0));
 		const chapterIndex = bookChapters.findIndex((c) => c.id === chapter.id);
 		const prevChapter = bookChapters[chapterIndex - 1] ?? null;
 		const nextChapter = bookChapters[chapterIndex + 1] ?? null;
 		paths.push({
 			params: { slug: `${bookSlug}/${chapterSlug}` },
-			props: { mode: "chapter", book, chapter, chapters: bookChapters, prevChapter, nextChapter },
+			props: {
+				mode: "chapter",
+				book,
+				chapter,
+				chapters: bookChapters,
+				prevChapter,
+				nextChapter,
+			},
 		});
 	}
 
@@ -62,7 +77,8 @@ function getChapterSlug(entry: typeof chapter) {
 
 const bookSlug = book ? getBookSlug(book) : "";
 
-let Content: any = null;
+type RenderResult = Awaited<ReturnType<CollectionEntry<"novels">["render"]>>;
+let Content: RenderResult["Content"] | null = null;
 if (mode === "chapter" && chapter) {
 	const rendered = await chapter.render();
 	Content = rendered.Content;

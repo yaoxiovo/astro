@@ -18,7 +18,8 @@ export const SUBJECT_METADATA_MAP = {
 		icon: "material-symbols:functions",
 		color: "text-blue-500",
 		borderClass: "border-blue-500/20",
-		badgeClass: "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300",
+		badgeClass:
+			"bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300",
 		description:
 			"从微积分极限、偏导梯度、线性代数矩阵到概率论的核心数学推导与几何直观",
 		order: 1,
@@ -31,7 +32,8 @@ export const SUBJECT_METADATA_MAP = {
 		icon: "material-symbols:code-blocks",
 		color: "text-emerald-500",
 		borderClass: "border-emerald-500/20",
-		badgeClass: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300",
+		badgeClass:
+			"bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300",
 		description:
 			"算法与数据结构、动态规划、系统架构设计与底层并发高可用工程实践",
 		order: 2,
@@ -44,7 +46,8 @@ export const SUBJECT_METADATA_MAP = {
 		icon: "material-symbols:science",
 		color: "text-purple-500",
 		borderClass: "border-purple-500/20",
-		badgeClass: "bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300",
+		badgeClass:
+			"bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300",
 		description:
 			"牛顿力学、分析力学、拉格朗日量、变分原理与电磁场的自然物理建模",
 		order: 3,
@@ -57,7 +60,8 @@ export const SUBJECT_METADATA_MAP = {
 		icon: "material-symbols:history-edu",
 		color: "text-amber-500",
 		borderClass: "border-amber-500/20",
-		badgeClass: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300",
+		badgeClass:
+			"bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300",
 		description:
 			"先秦诸子风骨、文言文法考辨、古典诗词意象与传统哲学美学名篇精析",
 		order: 4,
@@ -70,7 +74,8 @@ export const SUBJECT_METADATA_MAP = {
 		icon: "material-symbols:translate",
 		color: "text-cyan-500",
 		borderClass: "border-cyan-500/20",
-		badgeClass: "bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-300",
+		badgeClass:
+			"bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-300",
 		description: "学术英语写作、词源语义演化与跨文化交际表达精要",
 		order: 5,
 	},
@@ -82,7 +87,8 @@ export const SUBJECT_METADATA_MAP = {
 		icon: "material-symbols:experiment",
 		color: "text-rose-500",
 		borderClass: "border-rose-500/20",
-		badgeClass: "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-300",
+		badgeClass:
+			"bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-300",
 		description: "无机化学构型、有机机理反应与物理化学动力学分析",
 		order: 6,
 	},
@@ -94,7 +100,8 @@ export const SUBJECT_METADATA_MAP = {
 		icon: "material-symbols:genetics",
 		color: "text-green-500",
 		borderClass: "border-green-500/20",
-		badgeClass: "bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-300",
+		badgeClass:
+			"bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-300",
 		description: "分子生物学、基因组学、细胞代谢机理与生态进化探秘",
 		order: 7,
 	},
@@ -106,7 +113,8 @@ export const SUBJECT_METADATA_MAP = {
 		icon: "material-symbols:psychology",
 		color: "text-indigo-500",
 		borderClass: "border-indigo-500/20",
-		badgeClass: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300",
+		badgeClass:
+			"bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300",
 		description: "数理逻辑、科学哲学、认识论与现代认知科学交叉思考",
 		order: 8,
 	},
@@ -118,7 +126,8 @@ export const SUBJECT_METADATA_MAP = {
 		icon: "material-symbols:menu-book",
 		color: "text-slate-500",
 		borderClass: "border-slate-500/20",
-		badgeClass: "bg-slate-50 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300",
+		badgeClass:
+			"bg-slate-50 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300",
 		description: "跨学科视野、科学学习方法论与通识综合素养",
 		order: 99,
 	},
@@ -245,7 +254,8 @@ export function getSubjectMeta(subject) {
 		icon: "material-symbols:menu-book",
 		color: "text-slate-500",
 		borderClass: "border-slate-500/20",
-		badgeClass: "bg-slate-50 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300",
+		badgeClass:
+			"bg-slate-50 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300",
 		description: `关于 ${subject} 的系统化知识整理与教材笔记`,
 		order: 50,
 	};
@@ -361,7 +371,11 @@ export function filterTextbooks(items = [], options = {}) {
 		}
 
 		// 学科过滤
-		const itemSubject = (item.subject || item.data?.subject || "").toLowerCase();
+		const itemSubject = (
+			item.subject ||
+			item.data?.subject ||
+			""
+		).toLowerCase();
 		if (subject && subject !== "all" && itemSubject !== subject.toLowerCase()) {
 			return false;
 		}
@@ -444,13 +458,21 @@ export function sortTextbooks(items = [], sortBy = "order") {
 	return [...items].sort((a, b) => {
 		switch (sortBy) {
 			case "date-desc": {
-				const dateA = new Date(a.updatedAt || a.published || a.data?.published || 0).getTime();
-				const dateB = new Date(b.updatedAt || b.published || b.data?.published || 0).getTime();
+				const dateA = new Date(
+					a.updatedAt || a.published || a.data?.published || 0,
+				).getTime();
+				const dateB = new Date(
+					b.updatedAt || b.published || b.data?.published || 0,
+				).getTime();
 				return dateB - dateA;
 			}
 			case "date-asc": {
-				const dateA = new Date(a.updatedAt || a.published || a.data?.published || 0).getTime();
-				const dateB = new Date(b.updatedAt || b.published || b.data?.published || 0).getTime();
+				const dateA = new Date(
+					a.updatedAt || a.published || a.data?.published || 0,
+				).getTime();
+				const dateB = new Date(
+					b.updatedAt || b.published || b.data?.published || 0,
+				).getTime();
 				return dateA - dateB;
 			}
 			case "title": {
@@ -458,15 +480,18 @@ export function sortTextbooks(items = [], sortBy = "order") {
 				const titleB = b.title || b.data?.title || "";
 				return titleA.localeCompare(titleB, "zh-CN");
 			}
-			case "order":
 			default: {
 				const orderA = a.order ?? a.data?.order ?? 0;
 				const orderB = b.order ?? b.data?.order ?? 0;
 				if (orderA !== orderB) {
 					return orderA - orderB;
 				}
-				const dateA = new Date(a.updatedAt || a.published || a.data?.published || 0).getTime();
-				const dateB = new Date(b.updatedAt || b.published || b.data?.published || 0).getTime();
+				const dateA = new Date(
+					a.updatedAt || a.published || a.data?.published || 0,
+				).getTime();
+				const dateB = new Date(
+					b.updatedAt || b.published || b.data?.published || 0,
+				).getTime();
 				return dateB - dateA;
 			}
 		}
@@ -561,7 +586,8 @@ export function calculateTextbookStats(items = []) {
 	let totalWords = 0;
 
 	for (const item of publishedItems) {
-		const words = item.wordCount || countTextbookWords(item.content || item.body || "");
+		const words =
+			item.wordCount || countTextbookWords(item.content || item.body || "");
 		totalWords += words;
 
 		const subj = (item.subject || item.data?.subject || "other").toLowerCase();
@@ -572,7 +598,11 @@ export function calculateTextbookStats(items = []) {
 			typeCounts[t]++;
 		}
 
-		const d = (item.difficulty || item.data?.difficulty || "intermediate").toLowerCase();
+		const d = (
+			item.difficulty ||
+			item.data?.difficulty ||
+			"intermediate"
+		).toLowerCase();
 		if (d in difficultyCounts) {
 			difficultyCounts[d]++;
 		}
@@ -604,16 +634,29 @@ export function validateTextbookSchema(data) {
 		errors.push("缺少必填字段: title (标题必须为非空字符串)");
 	}
 
-	if (!data.subject || typeof data.subject !== "string" || !data.subject.trim()) {
+	if (
+		!data.subject ||
+		typeof data.subject !== "string" ||
+		!data.subject.trim()
+	) {
 		errors.push("缺少必填字段: subject (学科必须为非空字符串)");
 	}
 
 	const validTypes = ["article", "image", "hybrid"];
 	if (data.type && !validTypes.includes(data.type)) {
-		errors.push(`非法 type 类型 '${data.type}', 必须是 [${validTypes.join(", ")}] 之一`);
+		errors.push(
+			`非法 type 类型 '${data.type}', 必须是 [${validTypes.join(", ")}] 之一`,
+		);
 	}
 
-	const validDifficulties = ["beginner", "intermediate", "advanced", "easy", "medium", "hard"];
+	const validDifficulties = [
+		"beginner",
+		"intermediate",
+		"advanced",
+		"easy",
+		"medium",
+		"hard",
+	];
 	if (data.difficulty && !validDifficulties.includes(data.difficulty)) {
 		errors.push(`非法 difficulty 等级 '${data.difficulty}'`);
 	}
@@ -647,7 +690,9 @@ export function validateTextbookSchema(data) {
 			description: data.description || data.summary || "",
 			imageUrl: data.imageUrl || data.coverImage || "",
 			imageAlt: data.imageAlt || "",
-			tags: Array.isArray(data.tags) ? data.tags.map((t) => String(t).trim()).filter(Boolean) : [],
+			tags: Array.isArray(data.tags)
+				? data.tags.map((t) => String(t).trim()).filter(Boolean)
+				: [],
 			externalUrl: data.externalUrl || data.articleUrl || "",
 			order: typeof data.order === "number" ? data.order : 0,
 			difficulty: data.difficulty || "intermediate",

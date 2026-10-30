@@ -32,7 +32,8 @@ const TEXTBOOKS_DIR = path.join(ROOT_DIR, "src/content/textbooks");
 describe("教材展示页知识库与外链图片核心测试套件 (Textbook Core Test Suite)", () => {
 	describe("1. 外链图片 URL 安全校验与 Fallback 兜底机制 (validateImageUrl)", () => {
 		it("合法 HTTPS 外链图片应直接通过校验", () => {
-			const url = "https://images.unsplash.com/photo-1635070041078-e363dbe005cb";
+			const url =
+				"https://images.unsplash.com/photo-1635070041078-e363dbe005cb";
 			const res = validateImageUrl(url);
 			assert.strictEqual(res.valid, true);
 			assert.strictEqual(res.url, url);
@@ -99,7 +100,8 @@ describe("教材展示页知识库与外链图片核心测试套件 (Textbook Co
 				grade: "大学本科 / 计算机数学基础",
 				chapter: "第1章 多元微积分与优化",
 				type: "hybrid",
-				imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb",
+				imageUrl:
+					"https://images.unsplash.com/photo-1635070041078-e363dbe005cb",
 				tags: ["微积分", "数学", "梯度下降", "AI数学基础"],
 				order: 1,
 			};
@@ -164,7 +166,8 @@ describe("教材展示页知识库与外链图片核心测试套件 (Textbook Co
 				title: "高中物理：牛顿运动定律与质点动力学",
 				subject: "physics",
 				type: "image",
-				imageUrl: "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa",
+				imageUrl:
+					"https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa",
 				tags: ["物理", "经典力学"],
 				description: "牛顿三定律知识结构脑图思维导图",
 				body: "力的合成与分解、牛顿第一、第二、第三定律图谱。",
@@ -280,12 +283,19 @@ describe("教材展示页知识库与外链图片核心测试套件 (Textbook Co
 	describe("5. 真实落地 Markdown 教材内容巡检 (Real Content Verification)", () => {
 		it("src/content/textbooks 目录下应至少包含 4 篇跨学科知识点文档", () => {
 			assert.ok(fs.existsSync(TEXTBOOKS_DIR), "教材内容目录不存在");
-			const files = fs.readdirSync(TEXTBOOKS_DIR).filter((f) => f.endsWith(".md"));
-			assert.ok(files.length >= 4, `实际只有 ${files.length} 篇文档，少于 4 篇基线`);
+			const files = fs
+				.readdirSync(TEXTBOOKS_DIR)
+				.filter((f) => f.endsWith(".md"));
+			assert.ok(
+				files.length >= 4,
+				`实际只有 ${files.length} 篇文档，少于 4 篇基线`,
+			);
 		});
 
 		it("每篇教材 Markdown 的 Frontmatter 与外链图片均须 100% 合规", () => {
-			const files = fs.readdirSync(TEXTBOOKS_DIR).filter((f) => f.endsWith(".md"));
+			const files = fs
+				.readdirSync(TEXTBOOKS_DIR)
+				.filter((f) => f.endsWith(".md"));
 
 			for (const file of files) {
 				const fullPath = path.join(TEXTBOOKS_DIR, file);

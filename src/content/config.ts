@@ -88,7 +88,10 @@ const textbooksCollection = defineCollection({
 		published: z.date(),
 		updated: z.date().optional(),
 		order: z.number().optional().default(0),
-		difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional().default("intermediate"),
+		difficulty: z
+			.enum(["beginner", "intermediate", "advanced"])
+			.optional()
+			.default("intermediate"),
 		draft: z.boolean().optional().default(false),
 		icon: z.string().optional().default(""),
 	}),
@@ -131,4 +134,3 @@ export const collections: {
 	textbooks: textbooksCollection,
 	novels: novelsCollection,
 };
-

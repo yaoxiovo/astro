@@ -11,7 +11,7 @@ export let item: TextbookItem;
 export let allImageItems: TextbookItem[] = [];
 
 const dispatch = createEventDispatcher<{
-	close: void;
+	close: undefined;
 	showToast: string;
 	navigate: TextbookItem;
 }>();

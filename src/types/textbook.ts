@@ -39,7 +39,13 @@ export type TextbookType = "article" | "image" | "hybrid";
 export type KnowledgeTypeFilter = "all" | TextbookType;
 
 /** 难度等级定义 */
-export type DifficultyLevel = "beginner" | "intermediate" | "advanced" | "easy" | "medium" | "hard";
+export type DifficultyLevel =
+	| "beginner"
+	| "intermediate"
+	| "advanced"
+	| "easy"
+	| "medium"
+	| "hard";
 
 /** 知识点完成/状态标记 */
 export type TextbookStatus = "completed" | "in-progress" | "archived";
@@ -120,8 +126,10 @@ export const SUBJECT_METAS: Record<string, SubjectMeta> = {
 		icon: "material-symbols:functions",
 		color: "text-blue-500",
 		borderClass: "border-blue-500/20",
-		badgeClass: "bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300",
-		description: "从微积分极限、偏导梯度、线性代数矩阵到概率论的核心数学推导与几何直观",
+		badgeClass:
+			"bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300",
+		description:
+			"从微积分极限、偏导梯度、线性代数矩阵到概率论的核心数学推导与几何直观",
 		order: 1,
 	},
 	cs: {
@@ -132,8 +140,10 @@ export const SUBJECT_METAS: Record<string, SubjectMeta> = {
 		icon: "material-symbols:code-blocks",
 		color: "text-emerald-500",
 		borderClass: "border-emerald-500/20",
-		badgeClass: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300",
-		description: "算法与数据结构、动态规划、系统架构设计与底层并发高可用工程实践",
+		badgeClass:
+			"bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300",
+		description:
+			"算法与数据结构、动态规划、系统架构设计与底层并发高可用工程实践",
 		order: 2,
 	},
 	physics: {
@@ -144,8 +154,10 @@ export const SUBJECT_METAS: Record<string, SubjectMeta> = {
 		icon: "material-symbols:science",
 		color: "text-purple-500",
 		borderClass: "border-purple-500/20",
-		badgeClass: "bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300",
-		description: "牛顿力学、分析力学、拉格朗日量、变分原理与电磁场的自然物理建模",
+		badgeClass:
+			"bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300",
+		description:
+			"牛顿力学、分析力学、拉格朗日量、变分原理与电磁场的自然物理建模",
 		order: 3,
 	},
 	chinese: {
@@ -156,8 +168,10 @@ export const SUBJECT_METAS: Record<string, SubjectMeta> = {
 		icon: "material-symbols:history-edu",
 		color: "text-amber-500",
 		borderClass: "border-amber-500/20",
-		badgeClass: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300",
-		description: "先秦诸子风骨、文言文法考辨、古典诗词意象与传统哲学美学名篇精析",
+		badgeClass:
+			"bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-300",
+		description:
+			"先秦诸子风骨、文言文法考辨、古典诗词意象与传统哲学美学名篇精析",
 		order: 4,
 	},
 	english: {
@@ -168,7 +182,8 @@ export const SUBJECT_METAS: Record<string, SubjectMeta> = {
 		icon: "material-symbols:translate",
 		color: "text-cyan-500",
 		borderClass: "border-cyan-500/20",
-		badgeClass: "bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-300",
+		badgeClass:
+			"bg-cyan-50 text-cyan-600 dark:bg-cyan-950/40 dark:text-cyan-300",
 		description: "学术英语写作、词源语义演化与跨文化交际表达精要",
 		order: 5,
 	},
@@ -180,7 +195,8 @@ export const SUBJECT_METAS: Record<string, SubjectMeta> = {
 		icon: "material-symbols:experiment",
 		color: "text-rose-500",
 		borderClass: "border-rose-500/20",
-		badgeClass: "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-300",
+		badgeClass:
+			"bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-300",
 		description: "无机化学构型、有机机理反应与物理化学动力学分析",
 		order: 6,
 	},
@@ -192,7 +208,8 @@ export const SUBJECT_METAS: Record<string, SubjectMeta> = {
 		icon: "material-symbols:genetics",
 		color: "text-green-500",
 		borderClass: "border-green-500/20",
-		badgeClass: "bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-300",
+		badgeClass:
+			"bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-300",
 		description: "分子生物学、基因组学、细胞代谢机理与生态进化探秘",
 		order: 7,
 	},
@@ -204,7 +221,8 @@ export const SUBJECT_METAS: Record<string, SubjectMeta> = {
 		icon: "material-symbols:psychology",
 		color: "text-indigo-500",
 		borderClass: "border-indigo-500/20",
-		badgeClass: "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300",
+		badgeClass:
+			"bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-300",
 		description: "数理逻辑、科学哲学、认识论与现代认知科学交叉思考",
 		order: 8,
 	},
@@ -216,7 +234,8 @@ export const SUBJECT_METAS: Record<string, SubjectMeta> = {
 		icon: "material-symbols:menu-book",
 		color: "text-slate-500",
 		borderClass: "border-slate-500/20",
-		badgeClass: "bg-slate-50 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300",
+		badgeClass:
+			"bg-slate-50 text-slate-600 dark:bg-slate-950/40 dark:text-slate-300",
 		description: "跨学科视野、科学学习方法论与通识综合素养",
 		order: 99,
 	},

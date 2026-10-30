@@ -1,32 +1,32 @@
 ---
-import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getCollection } from "astro:content";
-import { Icon } from "astro-icon/components";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { formatDateToYYYYMMDD } from "@utils/date-utils";
+import { Icon } from "astro-icon/components";
 
 const allNovels = await getCollection("novels");
 
 // 只取 type === "index" 的条目作为书本列表
 const books = allNovels
-  .filter((e) => e.data.type === "index")
-  .sort((a, b) => (b.data.order ?? 0) - (a.data.order ?? 0));
+	.filter((e) => e.data.type === "index")
+	.sort((a, b) => (b.data.order ?? 0) - (a.data.order ?? 0));
 
 // 章节条目，用于统计各书字数等
 const chapters = allNovels.filter((e) => e.data.type === "chapter");
 
 const totalCount = books.length;
 const ongoingCount = books.filter((b) => b.data.status === "ongoing").length;
-const completedCount = books.filter((b) => b.data.status === "completed").length;
+const completedCount = books.filter(
+	(b) => b.data.status === "completed",
+).length;
 
 // 每本书解析 slug（去掉 /index 后缀）
 function getBookSlug(entry: (typeof books)[number]) {
-  return entry.id
-    .replace(/\/index\.md$/, "")
-    .replace(/\/index$/, "");
+	return entry.id.replace(/\/index\.md$/, "").replace(/\/index$/, "");
 }
 
 const categories = Array.from(
-  new Set(books.map((b) => b.data.category).filter(Boolean))
+	new Set(books.map((b) => b.data.category).filter(Boolean)),
 );
 ---
 

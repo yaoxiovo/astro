@@ -72,7 +72,7 @@ export declare function calculateTextbookStats(
 export interface SchemaValidationResult {
 	valid: boolean;
 	errors: string[];
-	data?: any;
+	data?: unknown;
 }
 
 export declare function validateTextbookSchema(

@@ -1,8 +1,8 @@
 <script lang="ts">
 import Icon from "@iconify/svelte";
 import {
-	SUBJECT_METAS,
 	type KnowledgeTypeFilter,
+	SUBJECT_METAS,
 	type SubjectFilter,
 	type TextbookItem,
 	type TextbookSubjectId,
