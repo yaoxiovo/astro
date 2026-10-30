@@ -79,7 +79,7 @@ jobs:
           }
 
           echo "Synchronizing static dist artifacts to $SERVER_HOST:$SERVER_TARGET_DIR..."
-          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15" dist/ $SERVER_USER@$SERVER_HOST:$SERVER_TARGET_DIR/
+          rsync -avz --delete --exclude=".user.ini" --exclude=".htaccess" --exclude=".well-known" -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15" dist/ $SERVER_USER@$SERVER_HOST:$SERVER_TARGET_DIR/
 
           echo "Setting file permissions on remote server..."
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 $SERVER_USER@$SERVER_HOST "chown -R www:www $SERVER_TARGET_DIR && chmod -R 755 $SERVER_TARGET_DIR"
