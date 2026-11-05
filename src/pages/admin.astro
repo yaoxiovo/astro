@@ -39,7 +39,7 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(
         正在校验管理权限 喵...
       </h3>
       <p class="text-xs text-black/50 dark:text-white/50 leading-relaxed font-mono">
-        正在核验统一身份认证中心 (accounts.yaoxi.cloud) 下发的身份凭据与权限...
+        正在核验统一身份认证中心 (account.yaoxiovo.cn) 下发的身份凭据与权限...
       </p>
     </div>
 
@@ -57,9 +57,9 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(
         检测到未登录，正在跳转 喵！
       </h3>
       <p class="text-xs sm:text-sm text-black/60 dark:text-white/60 mb-6 leading-relaxed">
-        本后台仅限管理员访问。即将自动跳转至 <strong>耀西统一身份认证中心 (accounts.yaoxi.cloud)</strong> 完成登录喵呜~
+        本后台仅限管理员访问。即将自动跳转至 <strong>耀西统一身份认证中心 (account.yaoxiovo.cn)</strong> 完成登录喵呜~
       </p>
-      <a id="btn-manual-login" href="https://accounts.yaoxi.cloud" class="w-full py-2.5 px-4 rounded-xl bg-[var(--primary)] text-white dark:text-black font-semibold text-xs shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
+      <a id="btn-manual-login" href="https://account.yaoxiovo.cn" class="w-full py-2.5 px-4 rounded-xl bg-[var(--primary)] text-white dark:text-black font-semibold text-xs shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2">
         <span>🔑 若未自动跳转，点击此处手动前往登录 喵</span>
       </a>
     </div>
@@ -1203,7 +1203,7 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(
 
     /**
      * 校验当前用户是否具备系统管理员 (admin) 权限
-     * 权限严格由认证中心 (accounts.yaoxi.cloud) 下发，绝不自行越权！
+     * 权限严格由认证中心 (account.yaoxiovo.cn) 下发，绝不自行越权！
      */
     function checkUserIsAdmin(user) {
       if (!user || typeof user !== 'object') return false;
@@ -1255,7 +1255,7 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(
     }
 
     async function buildSsoLoginUrl() {
-      const authUrl = 'https://accounts.yaoxi.cloud';
+      const authUrl = 'https://account.yaoxiovo.cn';
       const clientId = 'yaoxi-blog';
       const targetDomain = window.location.hostname;
       const redirectUri = window.location.href.split('#')[0];
@@ -1425,7 +1425,7 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(
           modalSsoName.textContent = '未检测到 SSO 登录状态';
         }
         if (modalSsoSub) {
-          modalSsoSub.textContent = '点击右侧按钮调起 accounts.yaoxi.cloud 登录';
+          modalSsoSub.textContent = '点击右侧按钮调起 account.yaoxiovo.cn 登录';
         }
         if (btnModalSsoLogin) {
           btnModalSsoLogin.innerHTML = '<span>🔑 一键登录</span>';
@@ -1675,7 +1675,7 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(
             '💡 未在当前登录凭据中检测到最新平台 Token 喵！\n\n' +
             '【原因排查】\n' +
             '如果您是在认证中心后台刚刚配置或更新的 Token，由于浏览器持有的是此前签署的静态 JWT 会话，必须重新调起认证中心授权一次，才能签发并带出最新配置的 platform_tokens 喵。\n\n' +
-            '是否立即调起 accounts.yaoxi.cloud 一键刷新授权 喵？'
+            '是否立即调起 account.yaoxiovo.cn 一键刷新授权 喵？'
           );
 
           if (shouldReLogin && typeof window.yaoxiLogin === 'function') {

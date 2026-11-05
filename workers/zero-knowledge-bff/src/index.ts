@@ -41,7 +41,7 @@ interface JWTPayload {
 export type UserRole = 'admin' | 'member';
 
 /**
- * 依据认证中心 (SSO / accounts.yaoxi.cloud) 下发的 Token 身份信息判断权限
+ * 依据认证中心 (SSO / account.yaoxiovo.cn) 下发的 Token 身份信息判断权限
  * 纯粹由认证中心下发的信息决定是【管理员】还是【成员】，绝不硬编码在博客代码内！
  */
 export function getAuthCenterRole(user: JWTPayload): UserRole {
@@ -1175,7 +1175,7 @@ app.put('/api/user/vault', requireAuth, async (c) => {
 
   const jwkStr = typeof public_key_jwk === 'string' ? public_key_jwk : JSON.stringify(public_key_jwk);
   const safeUsername = String(user.username || user.name || `user_${user.sub}`);
-  const safeEmail = String(user.email || `${user.sub}@accounts.yaoxi.cloud`);
+  const safeEmail = String(user.email || `${user.sub}@account.yaoxiovo.cn`);
 
   // 保证 users 表记录存在并同步最新角色（避免外键约束报错与 INNER JOIN 遗漏）
   try {
@@ -1192,7 +1192,7 @@ app.put('/api/user/vault', requireAuth, async (c) => {
       await c.env.DB.prepare(`
         INSERT OR IGNORE INTO users (id, username, email, role, created_at)
         VALUES (?, ?, ?, ?, unixepoch())
-      `).bind(user.sub, `${safeUsername}_${user.sub.slice(0, 6)}`, `${user.sub}@accounts.yaoxi.cloud`, userRole).run();
+      `).bind(user.sub, `${safeUsername}_${user.sub.slice(0, 6)}`, `${user.sub}@account.yaoxiovo.cn`, userRole).run();
     } catch {}
   }
 

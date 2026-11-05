@@ -37,7 +37,7 @@ globalThis.fetch = async (url, opts = {}) => {
 				success: true,
 				result: [
 					{ id: "mock-zone-123456", name: "yaoxi.wiki" },
-					{ id: "mock-zone-cloud", name: "yaoxi.cloud" },
+					{ id: "mock-zone-cloud", name: "yaoxiovo.cn" },
 				],
 			}),
 		};
@@ -65,7 +65,7 @@ globalThis.fetch = async (url, opts = {}) => {
 					clientAsn: 4134,
 					clientCountryName: "China",
 					clientIP: "114.248.55.12",
-					clientRequestHTTPHost: "accounts.yaoxi.cloud",
+					clientRequestHTTPHost: "account.yaoxiovo.cn",
 					clientRequestHTTPMethodName: "POST",
 					clientRequestHTTPProtocol: "HTTP/2",
 					clientRequestPath: "/api/auth/token",
@@ -210,9 +210,9 @@ console.log("\n🧪 [测试 4] 随认证中心请求头携带 x-cf-token 透传�
 	const { status, body } = await call("/api/ddos?hours=24", emptyEnv, clientHeaders);
 	assert(status === 200, "HTTP 200");
 	assert(body.cfConnected === true, "透传 Token 成功连通 Cloudflare");
-	assert(body.target.includes("yaoxi.wiki") && body.target.includes("yaoxi.cloud"), "自动探测并聚合所有活跃域名");
+	assert(body.target.includes("yaoxi.wiki") && body.target.includes("yaoxiovo.cn"), "自动探测并聚合所有活跃域名");
 	assert(body.totalEvents === 2, "跨多 Zone 聚合拉取到全部 2 条防御事件");
-	assert(body.events.some((e) => e.host.includes("accounts.yaoxi.cloud")), "成功捕获 yaoxi.cloud 域名的防御日志");
+	assert(body.events.some((e) => e.host.includes("account.yaoxiovo.cn")), "成功捕获 yaoxiovo.cn 域名的防御日志");
 	assert(body.events.some((e) => e.host.includes("blog.yaoxi.wiki")), "成功捕获 yaoxi.wiki 域名的防御日志");
 }
 

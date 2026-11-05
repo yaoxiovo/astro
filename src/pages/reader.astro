@@ -32,7 +32,7 @@ import { Icon } from "astro-icon/components";
 						<Icon name="material-symbols:passkey" class="text-base"></Icon>
 						<span>通过认证中心登录</span>
 					</button>
-					<a href="https://accounts.yaoxi.cloud" target="_blank" rel="noopener" class="text-xs text-50 hover:text-[var(--primary)] hover:underline">什么是瑶曦通行证？</a>
+					<a href="https://account.yaoxiovo.cn" target="_blank" rel="noopener" class="text-xs text-50 hover:text-[var(--primary)] hover:underline">什么是瑶曦通行证？</a>
 				</div>
 			</div>
 
@@ -292,7 +292,7 @@ import { Icon } from "astro-icon/components";
 			const initial = String(user.name || user.username || user.sub || "U").trim().charAt(0).toUpperCase();
 			setText("rc-avatar", initial || "U");
 			setText("rc-name", user.name || user.username || user.sub || "读者");
-			setText("rc-email", user.email || user.sub || "accounts.yaoxi.cloud");
+			setText("rc-email", user.email || user.sub || "account.yaoxiovo.cn");
 			const roleEl = el("rc-role");
 			if (roleEl) {
 				const admin = isAdminRole(user);

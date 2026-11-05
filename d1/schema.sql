@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS user_vaults (
 
 -- 3. OAuth 客户端登记表 (OAuth Clients)
 -- ⚠️ 本表在当前仓库内【没有任何读取方】（全仓库检索不到引用它的代码/脚本/工作流）。
---    它的预期使用方是外部认证中心 accounts.yaoxi.cloud（OAuth 授权服务）：
+--    它的预期使用方是外部认证中心 account.yaoxiovo.cn（OAuth 授权服务）：
 --    由该服务读取 client_id / client_secret_hash / redirect_uri 完成客户端校验。
 --    保留此表是为了让外部认证中心的客户端登记与本库保持一致，
 --    请勿因为"仓库内无引用"而删除它。
@@ -89,7 +89,7 @@ VALUES ('user_admin_01', 'yaoxi', 'admin@yaoxi.wiki', 'admin');
 --      npx --yes bcryptjs "客户端明文密钥"        # 输出形如 $2b$10$...
 --    写入数据库（把 <BCRYPT_HASH> 换成上一步的输出）：
 --      npx wrangler d1 execute yaoxi-blog-d1 --remote --command "UPDATE oauth_clients SET client_secret_hash='<BCRYPT_HASH>' WHERE client_id='yaoxi-blog'"
---    明文密钥只应保存在外部认证中心（accounts.yaoxi.cloud）的密钥管理中，
+--    明文密钥只应保存在外部认证中心（account.yaoxiovo.cn）的密钥管理中，
 --    严禁提交进本仓库。
 INSERT OR IGNORE INTO oauth_clients (client_id, client_secret_hash, redirect_uri, name)
 VALUES ('yaoxi-blog', 'REPLACE_WITH_BCRYPT_HASH_OF_CLIENT_SECRET', 'https://blog.yaoxi.wiki/admin/callback', 'Yaoxi Astro Blog');

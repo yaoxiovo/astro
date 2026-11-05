@@ -1,10 +1,10 @@
 ---
-// YaoxiAuth.astro — 耀西统一身份认证 (accounts.yaoxi.cloud SSO) 客户端初始化与状态管理
+// YaoxiAuth.astro — 耀西统一身份认证 (account.yaoxiovo.cn SSO) 客户端初始化与状态管理
 import { siteConfig } from "@/config";
 
 const ssoConfig = siteConfig.sso || {
 	enable: true,
-	authUrl: "https://accounts.yaoxi.cloud",
+	authUrl: "https://account.yaoxiovo.cn",
 	clientId: "yaoxi-blog",
 };
 ---
@@ -23,7 +23,7 @@ const ssoConfig = siteConfig.sso || {
     if (!window.yaoxiAuth) {
       window.yaoxiAuth = new window.YaoxiAuth({
         clientId: ssoConfig.clientId || "yaoxi-blog",
-        authUrl: ssoConfig.authUrl || "https://accounts.yaoxi.cloud",
+        authUrl: ssoConfig.authUrl || "https://account.yaoxiovo.cn",
         mode: "popup",
         targetDomain: window.location.hostname,
         scope: "openid profile email admin",
@@ -128,7 +128,7 @@ const ssoConfig = siteConfig.sso || {
           const isAdmin = rawRole === "admin" || roles.includes("admin") || user.is_admin === true;
 
           if (userNameEl) userNameEl.textContent = user.name || user.username || user.sub || "用户";
-          if (userEmailEl) userEmailEl.textContent = user.email || user.sub || "accounts.yaoxi.cloud";
+          if (userEmailEl) userEmailEl.textContent = user.email || user.sub || "account.yaoxiovo.cn";
           if (userPanelAvatarEl) {
             const initial = (user.name || user.username || user.sub || "U").trim().charAt(0).toUpperCase();
             userPanelAvatarEl.textContent = initial;

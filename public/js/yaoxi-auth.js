@@ -12,7 +12,7 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const DEFAULT_SSO_URL = 'https://accounts.yaoxi.cloud';
+  const DEFAULT_SSO_URL = 'https://account.yaoxiovo.cn';
   const SSO_HANDSHAKE_SECRET = 'yaoxi_sso_handshake_secret_key_v1_auth_guard_2026';
 
   class YaoxiAuth {
@@ -95,11 +95,11 @@
         const handleMessage = (event) => {
           try {
             const expectedOrigin = new URL(this.authUrl).origin;
-            if (event.origin !== expectedOrigin && event.origin !== 'https://accounts.yaoxi.cloud') {
+            if (event.origin !== expectedOrigin && event.origin !== 'https://account.yaoxiovo.cn') {
               return;
             }
           } catch (e) {
-            if (event.origin !== 'https://accounts.yaoxi.cloud') return;
+            if (event.origin !== 'https://account.yaoxiovo.cn') return;
           }
 
           const data = event.data;

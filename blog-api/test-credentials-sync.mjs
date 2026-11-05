@@ -9,7 +9,7 @@ import { strict as assert } from 'node:assert';
 function createMockJwt(payload, secret = 'mock_secret') {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
   const body = Buffer.from(JSON.stringify({
-    iss: 'https://accounts.yaoxi.cloud',
+    iss: 'https://account.yaoxiovo.cn',
     aud: 'yaoxi-blog',
     exp: Math.floor(Date.now() / 1000) + 7200,
     ...payload,
