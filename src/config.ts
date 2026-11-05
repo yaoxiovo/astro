@@ -103,7 +103,7 @@ export const siteConfig: SiteConfig = {
 		"218053004391-td65pfifej0a2rs85qbag13vns31l350.apps.googleusercontent.com",
 	sso: {
 		enable: true,
-		authUrl: "https://accounts.yaoxi.cloud",
+		authUrl: "https://account.yaoxiovo.cn",
 		clientId: "yaoxi-blog",
 	},
 	comments: {

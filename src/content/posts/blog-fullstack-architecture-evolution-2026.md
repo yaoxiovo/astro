@@ -43,7 +43,7 @@ related: ["blog-api-guide"]
 ## 🛠️ 二、 功能新增清单：什么时候做了什么 (Features) 喵~
 
 ### 1. 🛡️ 零知识 BFF 边缘安全网关 (10-03 13:00 ~ 14:30)
-- **做了什么**：在 Cloudflare Workers 上架设 `zero-knowledge-bff` 网关，解耦主站与自研认证中心（SSO，`accounts.yaoxi.cloud`）喵。
+- **做了什么**：在 Cloudflare Workers 上架设 `zero-knowledge-bff` 网关，解耦主站与自研认证中心（SSO，`account.yaoxiovo.cn`）喵。
 - **效果**：浏览器端零暴露敏感凭据（如 GitHub PAT），所有文章与说说提交由边缘 Worker 统一代持并签发原子 Commit 喵。
 
 ### 2. 💬 后台长文 + 说说 + 时间胶囊即时发布流 (10-03 14:40 ~ 15:30)

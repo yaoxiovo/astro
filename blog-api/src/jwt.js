@@ -1,7 +1,7 @@
 /**
  * 瑶曦评论 · SSO 身份验签（零依赖 WebCrypto 实现）
  *
- * 目标：让 blog-api 也能验证认证中心（accounts.yaoxi.cloud）下发的读者 JWT，
+ * 目标：让 blog-api 也能验证认证中心（account.yaoxiovo.cn）下发的读者 JWT，
  *       为评论投稿绑定可信身份。验签语义与 zk-bff 的 requireAuth 严格对齐：
  *       候选密钥顺序 JWT_SECRET → AUTH_SECRET → SSO_SECRET，任一验签通过即为可信身份。
  *

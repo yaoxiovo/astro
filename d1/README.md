@@ -62,7 +62,7 @@ npx wrangler d1 execute yaoxi-blog-d1 --local --file=./d1/schema.sql
    改动 `users` / `user_vaults` 的列名或类型，必须同步修改该 Worker 代码，否则运行时报错。
 2. **`oauth_clients` 目前仓库内无读取方。**
    全仓库检索不到引用该表的代码/脚本/工作流；它的预期使用方是外部认证中心
-   `accounts.yaoxi.cloud`。**不要因为"没人用"就删表。**
+   `account.yaoxiovo.cn`。**不要因为"没人用"就删表。**
 3. **不要提交真实凭据。**
    `oauth_clients.client_secret_hash` 的种子值是必须替换的占位串
    `REPLACE_WITH_BCRYPT_HASH_OF_CLIENT_SECRET`，不是可用的 bcrypt hash。
