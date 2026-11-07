@@ -38,7 +38,7 @@ const backlinkWhitelist = new Set([
 	"png.yaoxi.wiki",
 	"api.blog.yaoxi.cloud",
 	"account.yaoxiovo.cn",
-	"umami.yaoxi.cloud",
+	"umami.yaoxi.wiki",
 	"yaoxi.xyz",
 ]);
 
