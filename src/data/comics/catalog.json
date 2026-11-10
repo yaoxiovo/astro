@@ -25,6 +25,18 @@
     "updatedAt": "2026-11-10",
     "source": "kkwebtoon 全彩条漫典藏镜像",
     "order": 100,
-    "imageBaseUrl": "https://yaoxi.hnxianxin.cn"
+    "imageBaseUrl": "https://yaoxi.hnxianxin.cn",
+    "imageSources": [
+      {
+        "id": "cdn",
+        "label": "yaoxi.hnxianxin.cn",
+        "baseUrl": "https://yaoxi.hnxianxin.cn"
+      },
+      {
+        "id": "r2",
+        "label": "blog-s3.yaoxiovo.cn",
+        "baseUrl": "https://blog-s3.yaoxiovo.cn"
+      }
+    ]
   }
 ]

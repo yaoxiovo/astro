@@ -51,6 +51,8 @@ export interface ComicChapterDetail extends ComicChapterSummary {
 export interface ComicSeriesMeta {
 	/** 自有图片资源域名；清单保留不含域名的规范路径 */
 	imageBaseUrl?: string;
+	/** 可由读者自主选择的自有图源 */
+	imageSources?: Array<{ id: string; label: string; baseUrl: string }>;
 	/** 漫画唯一标识（URL slug，如 "huyao-xiaohongniang"） */
 	slug: string;
 	/** 漫画主标题 */

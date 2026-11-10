@@ -176,6 +176,10 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 			assert.strictEqual(huyao.totalPages, 10405);
 			assert.ok(!("coverFallback" in huyao));
 			assert.ok(!("bannerFallback" in huyao));
+			assert.deepEqual(
+				huyao.imageSources.map((s) => s.baseUrl),
+				["https://yaoxi.hnxianxin.cn", "https://blog-s3.yaoxiovo.cn"],
+			);
 
 			const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
 			assert.strictEqual(manifest.chapters.length, 785);

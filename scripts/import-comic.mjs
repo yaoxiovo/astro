@@ -342,6 +342,18 @@ export function importComicDataset(options = {}) {
 		),
 		cover: `/comics/${slug}/cover.webp`,
 		imageBaseUrl: String(options.imageBaseUrl || "https://yaoxi.hnxianxin.cn"),
+		imageSources: [
+			{
+				id: "cdn",
+				label: "yaoxi.hnxianxin.cn",
+				baseUrl: "https://yaoxi.hnxianxin.cn",
+			},
+			{
+				id: "r2",
+				label: "blog-s3.yaoxiovo.cn",
+				baseUrl: "https://blog-s3.yaoxiovo.cn",
+			},
+		],
 		banner: `/comics/${slug}/banner.webp`,
 		totalChapters: summaryChapters.length,
 		mainChapters,

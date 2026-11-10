@@ -13,6 +13,7 @@ export interface ComicReaderPrefs {
 	widthPreset: ComicWidthPreset;
 	gapless: boolean;
 	showPageNums: boolean;
+	imageSource: string;
 }
 
 const DEFAULT_PREFS: ComicReaderPrefs = {
@@ -20,6 +21,7 @@ const DEFAULT_PREFS: ComicReaderPrefs = {
 	widthPreset: "standard",
 	gapless: true,
 	showPageNums: true,
+	imageSource: "cdn",
 };
 
 function readStorageJson<T>(key: string, fallback: T): T {
@@ -115,6 +117,11 @@ export function getComicReaderPrefs(): ComicReaderPrefs {
 			typeof saved.showPageNums === "boolean"
 				? saved.showPageNums
 				: DEFAULT_PREFS.showPageNums,
+		imageSource:
+			typeof saved.imageSource === "string" &&
+			/^[a-z0-9-]{1,40}$/.test(saved.imageSource)
+				? saved.imageSource
+				: DEFAULT_PREFS.imageSource,
 	};
 }
 

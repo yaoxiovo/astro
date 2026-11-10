@@ -9,6 +9,7 @@ import type {
 	ComicSeriesMeta,
 	ComicWidthPreset,
 } from "../../types/comic";
+import { resolveComicImageUrl } from "../../utils/comic-core.mjs";
 import {
 	getComicReaderPrefs,
 	markChapterAsRead,
@@ -25,6 +26,7 @@ let mode: ComicReadingMode = "scroll";
 let widthPreset: ComicWidthPreset = "standard";
 let gapless = true;
 let showPageNums = true;
+let imageSource = "cdn";
 
 let currentPage = 1;
 let immersive = false;
@@ -41,6 +43,9 @@ let pageSourceState: Record<number, "error"> = {};
 let observer: IntersectionObserver | null = null;
 
 $: pages = chapter.pages;
+$: imageSources = meta.imageSources?.length
+	? meta.imageSources
+	: [{ id: "cdn", label: "默认线路", baseUrl: meta.imageBaseUrl || "" }];
 $: totalPages = pages.length;
 $: currentPageObj = pages[currentPage - 1] ?? pages[0];
 $: progressPercent =
@@ -80,8 +85,20 @@ function handleRangeInput(event: Event) {
 	}
 }
 
-function resolveImageSrc(page: ComicPage): string {
-	return page.src;
+function resolveImageSrc(page: ComicPage, sourceId: string): string {
+	const source =
+		imageSources.find((item) => item.id === sourceId) || imageSources[0];
+	const pathname = new URL(page.src, "https://comic.invalid").pathname;
+	return resolveComicImageUrl(pathname, source?.baseUrl);
+}
+
+function setImageSource(event: Event) {
+	const value = (event.currentTarget as HTMLSelectElement).value;
+	if (!imageSources.some((source) => source.id === value)) return;
+	imageSource = value;
+	pageSourceState = {};
+	persistPrefs();
+	preloadAdjacentPages(currentPage);
 }
 
 function handleImageError(page: ComicPage) {
@@ -100,6 +117,7 @@ function persistPrefs() {
 		widthPreset,
 		gapless,
 		showPageNums,
+		imageSource,
 	});
 }
 
@@ -149,7 +167,7 @@ function preloadAdjacentPages(basePage: number) {
 	for (const offset of [1, 2]) {
 		const target = pages[basePage - 1 + offset];
 		if (!target) continue;
-		const src = resolveImageSrc(target);
+		const src = resolveImageSrc(target, imageSource);
 		if (!src) continue;
 		const img = new Image();
 		img.src = src;
@@ -349,6 +367,9 @@ onMount(() => {
 	widthPreset = prefs.widthPreset;
 	gapless = prefs.gapless;
 	showPageNums = prefs.showPageNums;
+	imageSource = imageSources.some((source) => source.id === prefs.imageSource)
+		? prefs.imageSource
+		: imageSources[0].id;
 
 	markChapterAsRead(meta.slug, chapter.slug);
 	syncProgress(1);
@@ -539,6 +560,17 @@ onDestroy(() => {
 					</div>
 				</div>
 
+                {#if imageSources.length > 1}
+                    <div class="space-y-1.5">
+                        <label for="comic-image-source" class="text-black/50 dark:text-white/50 font-semibold">图片线路</label>
+                        <select id="comic-image-source" value={imageSource} on:change={setImageSource} class="w-full rounded-lg bg-black/5 dark:bg-white/5 px-2.5 py-2 text-black/80 dark:text-white/80">
+                            {#each imageSources as source (source.id)}
+                                <option value={source.id}>{source.label}</option>
+                            {/each}
+                        </select>
+                    </div>
+                {/if}
+
 			</div>
 		{/if}
 	</div>
@@ -553,7 +585,7 @@ onDestroy(() => {
 				}`}
 			>
 				{#each pages as page, idx (page.page)}
-					{@const imgSrc = resolveImageSrc(page)}
+					{@const imgSrc = resolveImageSrc(page, imageSource)}
 					{@const isFailed = pageSourceState[page.page] === "error"}
 					<div
 						id={`comic-page-${page.page}`}
@@ -599,7 +631,7 @@ onDestroy(() => {
 			</div>
 		{:else if currentPageObj}
 			<!-- 单页翻阅模式 -->
-			{@const imgSrc = resolveImageSrc(currentPageObj)}
+			{@const imgSrc = resolveImageSrc(currentPageObj, imageSource)}
 			{@const isFailed = pageSourceState[currentPageObj.page] === "error"}
 			<div class="space-y-3">
 				<div
