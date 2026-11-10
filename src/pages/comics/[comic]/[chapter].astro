@@ -1,0 +1,84 @@
+---
+import type {
+	ComicChapterDetail,
+	ComicChapterSummary,
+	ComicSeriesMeta,
+} from "@/types/comic";
+import ComicReaderApp from "@components/comic/ComicReaderApp.svelte";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import {
+	getComicCatalog,
+	getComicChapterContext,
+	getComicManifest,
+} from "@utils/comic-utils";
+
+interface ChapterRouteProps {
+	meta: ComicSeriesMeta;
+	chapter: ComicChapterDetail;
+	prevChapter: ComicChapterSummary | null;
+	nextChapter: ComicChapterSummary | null;
+}
+
+export function getStaticPaths() {
+	const catalog = getComicCatalog();
+	const paths: Array<{
+		params: { comic: string; chapter: string };
+		props: ChapterRouteProps;
+	}> = [];
+
+	for (const entry of catalog) {
+		const manifest = getComicManifest(entry.slug);
+		if (!manifest) continue;
+		for (const ch of manifest.chapters) {
+			const ctx = getComicChapterContext(manifest, ch.slug);
+			if (!ctx.chapter) continue;
+			paths.push({
+				params: { comic: manifest.meta.slug, chapter: ch.slug },
+				props: {
+					meta: manifest.meta,
+					chapter: ctx.chapter,
+					prevChapter: ctx.prevChapter,
+					nextChapter: ctx.nextChapter,
+				},
+			});
+		}
+	}
+
+	return paths;
+}
+
+const { meta, chapter, prevChapter, nextChapter } = Astro.props;
+const pageTitle = `${chapter.title} — ${meta.title}`;
+const pageDescription = `${meta.title} 第 ${chapter.index} 话「${chapter.title}」（共 ${chapter.pageCount} 页）在线条漫阅读。`;
+---
+
+<MainGridLayout
+	title={pageTitle}
+	description={pageDescription}
+	image={meta.cover}
+	noindex
+>
+	<ComicReaderApp
+		client:load
+		meta={meta}
+		chapter={chapter}
+		prevChapter={prevChapter}
+		nextChapter={nextChapter}
+	/>
+
+	<noscript>
+		<div class="card-base p-4 bg-[var(--card-bg)] rounded-2xl space-y-2">
+			<h1 class="text-lg font-bold">{pageTitle}</h1>
+			{chapter.pages.map((page) => (
+				<img
+					src={page.src}
+					alt={`${meta.title} ${chapter.title} 第 ${page.page} 页`}
+					width={page.width}
+					height={page.height}
+					loading="lazy"
+					class="w-full h-auto block"
+				/>
+			))}
+		</div>
+	</noscript>
+</MainGridLayout>
