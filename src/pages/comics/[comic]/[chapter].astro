@@ -19,10 +19,7 @@ interface ChapterRouteProps {
 	nextChapter: ComicChapterSummary | null;
 }
 
-export function getStaticPaths(): Array<{
-	params: { comic: string; chapter: string };
-	props: ChapterRouteProps;
-}> {
+export function getStaticPaths() {
 	const catalog = getComicCatalog();
 	const paths: Array<{
 		params: { comic: string; chapter: string };

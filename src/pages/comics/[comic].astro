@@ -9,10 +9,7 @@ import {
 } from "@utils/comic-utils";
 import { Icon } from "astro-icon/components";
 
-export function getStaticPaths(): Array<{
-	params: { comic: string };
-	props: { series: ComicSeriesIndex };
-}> {
+export function getStaticPaths() {
 	const catalog = getComicCatalog();
 	const paths: Array<{
 		params: { comic: string };
