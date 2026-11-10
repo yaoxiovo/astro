@@ -1,0 +1,182 @@
+---
+import type { ComicSeriesIndex } from "@/types/comic";
+import ComicDirectoryApp from "@components/comic/ComicDirectoryApp.svelte";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import {
+	formatBytes,
+	getComicCatalog,
+	getComicIndex,
+} from "@utils/comic-utils";
+import { Icon } from "astro-icon/components";
+
+export function getStaticPaths(): Array<{
+	params: { comic: string };
+	props: { series: ComicSeriesIndex };
+}> {
+	const catalog = getComicCatalog();
+	const paths: Array<{
+		params: { comic: string };
+		props: { series: ComicSeriesIndex };
+	}> = [];
+	for (const item of catalog) {
+		const series = getComicIndex(item.slug);
+		if (series) {
+			paths.push({
+				params: { comic: item.slug },
+				props: { series },
+			});
+		}
+	}
+	return paths;
+}
+
+const { series } = Astro.props;
+const { meta, chapters } = series;
+const firstChapter = chapters[0];
+const latestChapter = chapters[chapters.length - 1];
+---
+
+<MainGridLayout
+	title={`${meta.title} — 漫画目录`}
+	description={meta.description}
+	image={meta.cover}
+>
+	<div class="space-y-5">
+		<!-- 面包屑返回 -->
+		<nav class="flex items-center gap-1.5 text-xs text-black/50 dark:text-white/50">
+			<a href="/comics/" class="inline-flex items-center gap-1 hover:text-[var(--primary)] transition-colors">
+				<Icon name="material-symbols:arrow-back-rounded" class="text-base" />
+				<span>漫画书架</span>
+			</a>
+			<Icon name="material-symbols:chevron-right-rounded" class="text-sm" />
+			<span class="text-black/80 dark:text-white/80 font-medium">{meta.title}</span>
+		</nav>
+
+		<!-- 漫画作品头卡（带柔和横幅暗纹背景） -->
+		<section class="card-base bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden relative">
+			{meta.banner && (
+				<div class="absolute inset-0 h-44 md:h-52 overflow-hidden pointer-events-none opacity-20 dark:opacity-15">
+					<img
+						src={meta.banner}
+						data-fallback={meta.bannerFallback || ""}
+						alt=""
+						class="w-full h-full object-cover blur-[2px] scale-105"
+						onerror="this.onerror=null;if(this.dataset.fallback && this.src !== this.dataset.fallback){this.src = this.dataset.fallback;}"
+					/>
+					<div class="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--card-bg)]/75 to-[var(--card-bg)]"></div>
+				</div>
+			)}
+
+			<div class="relative z-10 p-6 md:p-8 flex flex-col sm:flex-row gap-6">
+				<!-- 封面图 -->
+				<div class="flex-shrink-0 w-36 sm:w-44 mx-auto sm:mx-0">
+					<div class="aspect-[3/4] rounded-xl overflow-hidden shadow-lg border border-black/10 dark:border-white/15 bg-black/5 dark:bg-white/5">
+						<img
+							src={meta.cover}
+							data-fallback={meta.coverFallback || ""}
+							alt={`${meta.title} 封面`}
+							class="w-full h-full object-cover object-top"
+							onerror="this.onerror=null;if(this.dataset.fallback && this.src !== this.dataset.fallback){this.src = this.dataset.fallback;}"
+						/>
+					</div>
+				</div>
+
+				<!-- 作品元数据 -->
+				<div class="flex-1 min-w-0 flex flex-col justify-between gap-4">
+					<div class="space-y-3">
+						<div class="flex flex-wrap items-center gap-2">
+							<h1 class="text-2xl md:text-3xl font-black text-black/90 dark:text-white/90 tracking-tight">
+								{meta.title}
+							</h1>
+							<span class={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+								meta.status === "completed"
+									? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+									: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+							}`}>
+								{meta.status === "completed" ? "已完结" : "连载中"}
+							</span>
+							<span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20">
+								{meta.category}
+							</span>
+						</div>
+
+						{meta.subtitle && (
+							<div class="text-xs font-mono text-black/45 dark:text-white/45 -mt-1.5">
+								{meta.subtitle}
+							</div>
+						)}
+
+						<div class="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-black/60 dark:text-white/60">
+							<span class="flex items-center gap-1">
+								<Icon name="material-symbols:person-rounded" class="text-sm text-[var(--primary)]" />
+								{meta.author}
+							</span>
+							{meta.studio && (
+								<span class="flex items-center gap-1">
+									<Icon name="material-symbols:apartment-rounded" class="text-sm text-[var(--primary)]" />
+									{meta.studio}
+								</span>
+							)}
+							<span class="flex items-center gap-1 font-mono">
+								<Icon name="material-symbols:list-alt-rounded" class="text-sm text-[var(--primary)]" />
+								{meta.totalChapters} 话 · {meta.totalPages.toLocaleString()} 页 ({formatBytes(meta.totalBytes)})
+							</span>
+						</div>
+
+						<p class="text-xs md:text-sm text-black/70 dark:text-white/70 leading-relaxed">
+							{meta.description}
+						</p>
+
+						{meta.tags.length > 0 && (
+							<div class="flex flex-wrap gap-1.5">
+								{meta.tags.map((tag) => (
+									<span class="text-[11px] px-2.5 py-0.5 rounded-md bg-[var(--primary)]/10 text-[var(--primary)] font-medium">
+										#{tag}
+									</span>
+								))}
+							</div>
+						)}
+					</div>
+
+					<!-- 快捷开始 / 直达最新话 -->
+					<div class="flex flex-wrap items-center gap-3 pt-2">
+						{firstChapter && (
+							<a
+								href={`/comics/${meta.slug}/${firstChapter.slug}/`}
+								class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[var(--primary)] text-white dark:text-black/90 text-xs md:text-sm font-bold hover:opacity-90 active:scale-95 transition-all shadow-sm"
+							>
+								<Icon name="material-symbols:play-arrow-rounded" class="text-lg" />
+								<span>从第 1 话开始阅读</span>
+							</a>
+						)}
+						{latestChapter && (
+							<a
+								href={`/comics/${meta.slug}/${latestChapter.slug}/`}
+								class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-[var(--primary)]/15 text-black/75 dark:text-white/75 hover:text-[var(--primary)] text-xs md:text-sm font-semibold transition-all"
+							>
+								<Icon name="material-symbols:bolt-rounded" class="text-base text-[var(--primary)]" />
+								<span>最新：#{String(latestChapter.index).padStart(3, "0")} {latestChapter.title}</span>
+							</a>
+						)}
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Svelte 交互式章节目录（百话分卷 + 即时检索 + 已读记忆） -->
+		<ComicDirectoryApp client:load meta={meta} chapters={chapters} />
+
+		<noscript>
+			<div class="card-base p-6 bg-[var(--card-bg)] border border-black/10 dark:border-white/10 rounded-2xl">
+				<h2 class="text-base font-bold mb-3">静态章节索引</h2>
+				<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+					{chapters.map((ch) => (
+						<a href={`/comics/${meta.slug}/${ch.slug}/`} class="underline hover:text-[var(--primary)] truncate">
+							#{String(ch.index).padStart(3, "0")} · {ch.title} ({ch.pageCount}P)
+						</a>
+					))}
+				</div>
+			</div>
+		</noscript>
+	</div>
+</MainGridLayout>

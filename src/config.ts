@@ -127,6 +127,11 @@ export const navBarConfig: NavBarConfig = {
 			external: false,
 		},
 		{
+			name: "漫画",
+			url: "/comics/",
+			external: false,
+		},
+		{
 			name: "合规协议",
 			url: "/posts/diejia/", // Internal links should not include the base path, as it is automatically added
 			external: false, // Show an external link icon and will open in a new tab
