@@ -25,9 +25,6 @@ let mode: ComicReadingMode = "scroll";
 let widthPreset: ComicWidthPreset = "standard";
 let gapless = true;
 let showPageNums = true;
-let preferRemoteSource = false;
-let autoFallbackMode = false;
-let consecutiveLocalFailures = 0;
 
 let currentPage = 1;
 let immersive = false;
@@ -39,8 +36,8 @@ let drawerKeyword = "";
 let allChapters: ComicChapterSummary[] = [];
 let hasFetchedChapters = false;
 
-/** 每页当前生效的图片源状态（local / fallback / error） */
-let pageSourceState: Record<number, "local" | "fallback" | "error"> = {};
+/** 每页的本站图片加载状态 */
+let pageSourceState: Record<number, "error"> = {};
 let observer: IntersectionObserver | null = null;
 
 $: pages = chapter.pages;
@@ -84,34 +81,10 @@ function handleRangeInput(event: Event) {
 }
 
 function resolveImageSrc(page: ComicPage): string {
-	const forcedState = pageSourceState[page.page];
-	if (forcedState === "fallback" && page.fallbackUrl) {
-		return page.fallbackUrl;
-	}
-	if ((preferRemoteSource || autoFallbackMode) && page.fallbackUrl) {
-		return page.fallbackUrl;
-	}
 	return page.src;
 }
 
-function handleImageLoad(page: ComicPage, usedSrc: string) {
-	if (usedSrc === page.src) {
-		consecutiveLocalFailures = 0;
-	}
-}
-
 function handleImageError(page: ComicPage) {
-	const currentUsed = resolveImageSrc(page);
-	// 若当前用的是本地图片且存在远程兜底链接，则切换至远程图源
-	if (currentUsed === page.src && page.fallbackUrl) {
-		consecutiveLocalFailures += 1;
-		pageSourceState = { ...pageSourceState, [page.page]: "fallback" };
-		// 若连续两张本地图 404，自动为本话其余页启用远程兜底，避免无意义 404 探测
-		if (consecutiveLocalFailures >= 2) {
-			autoFallbackMode = true;
-		}
-		return;
-	}
 	pageSourceState = { ...pageSourceState, [page.page]: "error" };
 }
 
@@ -127,7 +100,6 @@ function persistPrefs() {
 		widthPreset,
 		gapless,
 		showPageNums,
-		preferRemoteSource,
 	});
 }
 
@@ -154,14 +126,6 @@ function toggleGapless() {
 
 function togglePageNums() {
 	showPageNums = !showPageNums;
-	persistPrefs();
-}
-
-function toggleRemoteSource() {
-	preferRemoteSource = !preferRemoteSource;
-	autoFallbackMode = false;
-	consecutiveLocalFailures = 0;
-	pageSourceState = {};
 	persistPrefs();
 }
 
@@ -385,7 +349,6 @@ onMount(() => {
 	widthPreset = prefs.widthPreset;
 	gapless = prefs.gapless;
 	showPageNums = prefs.showPageNums;
-	preferRemoteSource = prefs.preferRemoteSource;
 
 	markChapterAsRead(meta.slug, chapter.slug);
 	syncProgress(1);
@@ -576,35 +539,6 @@ onDestroy(() => {
 					</div>
 				</div>
 
-				<!-- 图源策略与快捷键提示 -->
-				<div class="space-y-1.5">
-					<div class="text-black/50 dark:text-white/50 font-semibold">图源路线</div>
-					<div class="flex flex-wrap items-center gap-2">
-						<button
-							type="button"
-							on:click={toggleRemoteSource}
-							class={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
-								preferRemoteSource || autoFallbackMode
-									? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 font-semibold"
-									: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 font-semibold"
-							}`}
-						>
-							<Icon
-								icon={preferRemoteSource || autoFallbackMode
-									? "material-symbols:cloud-outline"
-									: "material-symbols:hard-drive-outline"}
-								class="text-sm"
-							/>
-							<span>
-								{preferRemoteSource
-									? "强制云端图床"
-									: autoFallbackMode
-										? "已自动切云端兜底"
-										: "优先本地镜像"}
-							</span>
-						</button>
-					</div>
-				</div>
 			</div>
 		{/if}
 	</div>
@@ -651,7 +585,6 @@ onDestroy(() => {
 								loading={idx < 3 ? "eager" : "lazy"}
 								decoding="async"
 								class="w-full h-full block object-contain select-none"
-								on:load={() => handleImageLoad(page, imgSrc)}
 								on:error={() => handleImageError(page)}
 							/>
 						{/if}
@@ -692,7 +625,6 @@ onDestroy(() => {
 								height={currentPageObj.height}
 								decoding="async"
 								class="w-full h-full block object-contain select-none"
-								on:load={() => handleImageLoad(currentPageObj, imgSrc)}
 								on:error={() => handleImageError(currentPageObj)}
 							/>
 						{/if}

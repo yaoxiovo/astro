@@ -4,7 +4,7 @@
  * 适配海量章节漫画（如 700+ 话、10,000+ 页）的静态构建与按需加载架构：
  * - 书架目录与章节索引保持轻量（用于 `/comics/` 与 `/comics/[comic]/` 以及阅读器抽屉按需请求）
  * - 单话详情与图片页列表仅在对应 `/comics/[comic]/[chapter]/` 静态路由构建时注入
- * - 同时保留本地静态路径与原始图床兜底链接，兼顾本地自托管与无大文件仓库构建场景
+ * - 图片随仓库部署，仅使用本站静态路径
  */
 
 export type ComicStatus = "ongoing" | "completed" | "hiatus";
@@ -22,10 +22,8 @@ export interface ComicPage {
 	width: number;
 	/** 图片原始高度（px） */
 	height: number;
-	/** 主图片 URL（优先本地 /comics/... 静态资源） */
+	/** 自有图片 URL，路径与 R2 对象键保持一致 */
 	src: string;
-	/** 远程图床兜底 URL（本地图片缺失时自动回退） */
-	fallbackUrl?: string;
 	/** 文件体积（字节） */
 	bytes?: number;
 	/** 图片 SHA-256 校验值 */
@@ -43,8 +41,6 @@ export interface ComicChapterSummary {
 	kind: ComicChapterKind;
 	/** 本话总页数 */
 	pageCount: number;
-	/** 原站参考链接 */
-	sourceUrl?: string;
 }
 
 export interface ComicChapterDetail extends ComicChapterSummary {
@@ -53,6 +49,8 @@ export interface ComicChapterDetail extends ComicChapterSummary {
 }
 
 export interface ComicSeriesMeta {
+	/** 自有图片资源域名；清单保留不含域名的规范路径 */
+	imageBaseUrl?: string;
 	/** 漫画唯一标识（URL slug，如 "huyao-xiaohongniang"） */
 	slug: string;
 	/** 漫画主标题 */
@@ -73,12 +71,8 @@ export interface ComicSeriesMeta {
 	description: string;
 	/** 封面图 URL（本地静态路径） */
 	cover: string;
-	/** 封面图远程兜底 URL */
-	coverFallback?: string;
 	/** 详情页横幅背景图 URL */
 	banner?: string;
-	/** 横幅图远程兜底 URL */
-	bannerFallback?: string;
 	/** 总章节数（含番外与公告） */
 	totalChapters: number;
 	/** 正篇章节数 */

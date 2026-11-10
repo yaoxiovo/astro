@@ -15,9 +15,7 @@
     ],
     "description": "根据古典小说记载，世上有人有妖，妖会与人相恋。妖寿命千万年，人的寿命有限；人会投胎转世，但投胎以后不记得上辈子的爱。痴情的妖便会前往涂山向狐妖“购买”转世续缘之术，令转世后的恋人回忆起前世记忆。全彩典藏版完整收录全篇正传、番外剧场与创作公告。",
     "cover": "/comics/huyao-xiaohongniang/cover.webp",
-    "coverFallback": "https://s3-tbu-og.kkwebtoon.com//chapter/godmanga/155/919234/202512232552950.webp",
     "banner": "/comics/huyao-xiaohongniang/banner.webp",
-    "bannerFallback": "https://s3-tbu-og.kkwebtoon.com//chapter/godmanga/155/919231/202512232552862.webp",
     "totalChapters": 785,
     "mainChapters": 744,
     "extraChapters": 18,
@@ -26,6 +24,7 @@
     "totalBytes": 1469010808,
     "updatedAt": "2026-11-10",
     "source": "kkwebtoon 全彩条漫典藏镜像",
-    "order": 100
+    "order": 100,
+    "imageBaseUrl": "https://yaoxi.hnxianxin.cn"
   }
 ]

@@ -133,11 +133,11 @@ const categories = Array.from(
 							>
 								<img
 									src={comic.cover}
-									data-fallback={comic.coverFallback || ""}
+
 									alt={`${comic.title} 封面`}
 									class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
 									loading="lazy"
-									onerror="this.onerror=null;if(this.dataset.fallback && this.src !== this.dataset.fallback){this.src = this.dataset.fallback;}"
+
 								/>
 								<div class="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/20 pointer-events-none"></div>
 

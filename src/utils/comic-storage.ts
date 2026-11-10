@@ -13,7 +13,6 @@ export interface ComicReaderPrefs {
 	widthPreset: ComicWidthPreset;
 	gapless: boolean;
 	showPageNums: boolean;
-	preferRemoteSource: boolean;
 }
 
 const DEFAULT_PREFS: ComicReaderPrefs = {
@@ -21,7 +20,6 @@ const DEFAULT_PREFS: ComicReaderPrefs = {
 	widthPreset: "standard",
 	gapless: true,
 	showPageNums: true,
-	preferRemoteSource: false,
 };
 
 function readStorageJson<T>(key: string, fallback: T): T {
@@ -117,10 +115,6 @@ export function getComicReaderPrefs(): ComicReaderPrefs {
 			typeof saved.showPageNums === "boolean"
 				? saved.showPageNums
 				: DEFAULT_PREFS.showPageNums,
-		preferRemoteSource:
-			typeof saved.preferRemoteSource === "boolean"
-				? saved.preferRemoteSource
-				: DEFAULT_PREFS.preferRemoteSource,
 	};
 }
 

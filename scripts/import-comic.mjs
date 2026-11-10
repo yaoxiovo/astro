@@ -25,7 +25,6 @@ import {
 	padChapterSlug,
 	padPageFilename,
 	parseCsvRecords,
-	sanitizeComicUrl,
 } from "../src/utils/comic-core.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -144,7 +143,7 @@ export function importComicDataset(options = {}) {
 		throw new Error("CSV 数据为空，无法导入");
 	}
 
-	/** @type {Map<number, Array<{ page: number, width: number, height: number, bytes: number, ext: string, srcFile: string, fallbackUrl: string, sha256: string }>>} */
+	/** @type {Map<number, Array<{ page: number, width: number, height: number, bytes: number, ext: string, srcFile: string, sha256: string }>>} */
 	const pagesByChapter = new Map();
 
 	for (const row of downloadRows) {
@@ -182,7 +181,6 @@ export function importComicDataset(options = {}) {
 		const ext = (row.format || path.extname(srcFile).slice(1) || "webp")
 			.toLowerCase()
 			.replace(/[^a-z0-9]/g, "");
-		const fallbackUrl = sanitizeComicUrl(row.url);
 
 		const list = pagesByChapter.get(chapterIndex) || [];
 		list.push({
@@ -193,7 +191,6 @@ export function importComicDataset(options = {}) {
 				Number.isFinite(bytes) && bytes > 0 ? bytes : fs.statSync(srcFile).size,
 			ext: ext || "webp",
 			srcFile,
-			fallbackUrl,
 			sha256: (row.sha256 || "").trim(),
 		});
 		pagesByChapter.set(chapterIndex, list);
@@ -222,7 +219,6 @@ export function importComicDataset(options = {}) {
 		.map((r) => ({
 			index: Number.parseInt(r.chapter_index || "", 10),
 			title: (r.chapter_title || "").trim(),
-			sourceUrl: sanitizeComicUrl(r.chapter_url),
 		}))
 		.filter((c) => Number.isFinite(c.index) && c.index > 0)
 		.sort((a, b) => a.index - b.index);
@@ -266,7 +262,6 @@ export function importComicDataset(options = {}) {
 				width: p.width,
 				height: p.height,
 				src: buildLocalComicImagePath(slug, chapterSlug, filename),
-				...(p.fallbackUrl ? { fallbackUrl: p.fallbackUrl } : {}),
 				bytes: p.bytes,
 				...(p.sha256 ? { sha256: p.sha256 } : {}),
 			});
@@ -278,7 +273,6 @@ export function importComicDataset(options = {}) {
 			title: ch.title || `第 ${ch.index} 话`,
 			kind,
 			pageCount: pages.length,
-			...(ch.sourceUrl ? { sourceUrl: ch.sourceUrl } : {}),
 		};
 		summaryChapters.push(summary);
 		detailedChapters.push({
@@ -347,13 +341,8 @@ export function importComicDataset(options = {}) {
 				"根据古典小说记载，世上有人有妖，妖会与人相恋。妖寿命千万年，人的寿命有限；人会投胎转世，但投胎以后不记得上辈子的爱。痴情的妖便会前往涂山向狐妖“购买”转世续缘之术，令转世后的恋人回忆起前世记忆。全彩典藏版完整收录全篇正传、番外剧场与创作公告。",
 		),
 		cover: `/comics/${slug}/cover.webp`,
-		...(coverSource?.fallbackUrl
-			? { coverFallback: coverSource.fallbackUrl }
-			: {}),
+		imageBaseUrl: String(options.imageBaseUrl || "https://yaoxi.hnxianxin.cn"),
 		banner: `/comics/${slug}/banner.webp`,
-		...(bannerSource?.fallbackUrl
-			? { bannerFallback: bannerSource.fallbackUrl }
-			: {}),
 		totalChapters: summaryChapters.length,
 		mainChapters,
 		extraChapters,

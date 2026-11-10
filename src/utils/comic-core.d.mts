@@ -23,6 +23,11 @@ export declare function buildLocalComicImagePath(
 
 export declare function sanitizeComicUrl(rawUrl: unknown): string;
 
+export declare function resolveComicImageUrl(
+	pathname: string,
+	imageBaseUrl?: string,
+): string;
+
 export declare function classifyComicChapter(
 	title: string,
 	pageCount?: number,

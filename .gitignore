@@ -7,9 +7,7 @@ dist/
 src/data/wiki/
 public/api/wiki/
 
-# 漫画海量分话图片（本地自托管硬链接，约 1.4GB+ / 10,000+ 张 WebP）不直接入库；
-# 封面 cover.webp、横幅 banner.webp、章节目录 JSON 与远端兜底 URL 均入库保留，
-# 无本地章节目录时前端阅读器会自动无缝回退至远端 CDN 图源。
+# 章节图片由自有 R2 桶提供，不进入 Git 仓库或静态构建。
 public/comics/*/chapters/
 
 # generated types
@@ -55,3 +53,6 @@ ori
 # Obsidian
 .obsidian/
 .seal/
+
+# 旧资源分块草稿
+comic-assets/

@@ -7,6 +7,23 @@
  * - tests/comic.test.mjs（Node 原生单元测试）
  */
 
+/** Build an owned image URL without changing the canonical object path.
+ * @param {string} pathname
+ * @param {string | undefined} imageBaseUrl
+ * @returns {string}
+ */
+export function resolveComicImageUrl(pathname, imageBaseUrl) {
+	if (!pathname.startsWith("/comics/") || /[?#\\]/.test(pathname)) {
+		throw new Error("Comic images require a canonical /comics/ path");
+	}
+	if (!imageBaseUrl) return pathname;
+	const base = new URL(imageBaseUrl);
+	if (base.protocol !== "https:" || base.username || base.password) {
+		throw new Error("Comic image origin must use HTTPS without credentials");
+	}
+	return new URL(pathname, base.origin).href;
+}
+
 /**
  * RFC-4180 兼容 CSV 解析器（自动剔除 UTF-8 BOM）
  * @param {string} text

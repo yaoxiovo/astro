@@ -55,10 +55,10 @@ const latestChapter = chapters[chapters.length - 1];
 				<div class="absolute inset-0 h-44 md:h-52 overflow-hidden pointer-events-none opacity-20 dark:opacity-15">
 					<img
 						src={meta.banner}
-						data-fallback={meta.bannerFallback || ""}
+
 						alt=""
 						class="w-full h-full object-cover blur-[2px] scale-105"
-						onerror="this.onerror=null;if(this.dataset.fallback && this.src !== this.dataset.fallback){this.src = this.dataset.fallback;}"
+
 					/>
 					<div class="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--card-bg)]/75 to-[var(--card-bg)]"></div>
 				</div>
@@ -70,10 +70,10 @@ const latestChapter = chapters[chapters.length - 1];
 					<div class="aspect-[3/4] rounded-xl overflow-hidden shadow-lg border border-black/10 dark:border-white/15 bg-black/5 dark:bg-white/5">
 						<img
 							src={meta.cover}
-							data-fallback={meta.coverFallback || ""}
+
 							alt={`${meta.title} 封面`}
 							class="w-full h-full object-cover object-top"
-							onerror="this.onerror=null;if(this.dataset.fallback && this.src !== this.dataset.fallback){this.src = this.dataset.fallback;}"
+
 						/>
 					</div>
 				</div>

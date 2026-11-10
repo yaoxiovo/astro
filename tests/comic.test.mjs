@@ -13,6 +13,7 @@ import {
 	padChapterSlug,
 	padPageFilename,
 	parseCsvRecords,
+	resolveComicImageUrl,
 	sanitizeComicUrl,
 } from "../src/utils/comic-core.mjs";
 
@@ -53,6 +54,22 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 	});
 
 	describe("2. URL 安全校验 (sanitizeComicUrl)", () => {
+		it("自有资源域名应保留 Astro 路径并匹配 R2 对象键", () => {
+			const pathname =
+				"/comics/huyao-xiaohongniang/chapters/0001/page-0001.webp";
+			const url = resolveComicImageUrl(pathname, "https://yaoxi.hnxianxin.cn");
+			assert.strictEqual(url, `https://yaoxi.hnxianxin.cn${pathname}`);
+			assert.strictEqual(new URL(url).pathname.slice(1), pathname.slice(1));
+			assert.throws(() =>
+				resolveComicImageUrl(
+					"https://other.example/image.webp",
+					"https://yaoxi.hnxianxin.cn",
+				),
+			);
+			assert.throws(() =>
+				resolveComicImageUrl(pathname, "http://other.example"),
+			);
+		});
 		it("应放行合法 http(s) 与站内根相对路径", () => {
 			assert.strictEqual(
 				sanitizeComicUrl("https://s3-tbu-og.kkwebtoon.com/page.webp"),
@@ -157,6 +174,8 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 			assert.ok(huyao, "catalog.json 未包含 huyao-xiaohongniang");
 			assert.strictEqual(huyao.totalChapters, 785);
 			assert.strictEqual(huyao.totalPages, 10405);
+			assert.ok(!("coverFallback" in huyao));
+			assert.ok(!("bannerFallback" in huyao));
 
 			const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
 			assert.strictEqual(manifest.chapters.length, 785);
@@ -170,7 +189,8 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 					assert.ok(
 						page.src.startsWith("/comics/huyao-xiaohongniang/chapters/"),
 					);
-					assert.ok(page.fallbackUrl?.startsWith("https://"));
+					assert.ok(!("fallbackUrl" in page));
+					assert.ok(!("sourceUrl" in ch));
 				}
 			}
 			assert.strictEqual(countedPages, 10405);
