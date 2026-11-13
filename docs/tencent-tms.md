@@ -16,7 +16,7 @@
 
 ## 配置
 
-本机已复用此前保存的腾讯云凭据，写入被 Git 忽略的 `blog-api/.dev.vars` 与 `server/tms.env`（权限 0600，启用开关为 true）。密钥同时已同步到生产 Blog API Worker Secrets，仓库配置开启天御，通过远端 `Deploy Blog API` 工作流测试与部署。没有把密钥写入受版本控制的文件。已用短时 TC3 签名请求真实接口，测试文本返回 Pass；腾讯 SecretKey 未传到验证服务器。Linux 部署副本需另外同步环境，不随 Worker 发布自动更新。
+本机已复用此前保存的腾讯云凭据，写入被 Git 忽略的 `blog-api/.dev.vars` 与 `server/tms.env`（权限 0600，启用开关为 true）。域名 `blog-api.yaoxi.cloud` 实际指向 Linux 服务器 `43.128.137.8`，生产发布由远端 `Deploy Blog API` 工作流执行；Cloudflare Worker 仅保留备用副本，不能通过重新绑定域名覆盖现有 DNS。密钥未进入受版本控制的文件。已用短时 TC3 签名请求真实接口，测试文本返回 Pass。
 
 先在腾讯云开通文本内容安全服务，为后端配置可调用 `tms:TextModeration` 的凭据，并确认账号额度与所用地域可用。BizType 使用控制台实际策略编号；未设置时不发送该参数，使用服务默认策略。
 
@@ -32,13 +32,15 @@
 
 ### Cloudflare Worker
 
-在 GitHub Actions Secrets 中配置 SecretId、SecretKey，以及可选的 Token、BizType；`deploy-blog-api.yml` 已加入同步。也可以在 Worker 控制台直接配置这些 Secrets；CI 未提供的 Secret 不会被主动删除。使用长期密钥时应移除先前配置的临时 `TENCENTCLOUD_TOKEN`。
+备用 Worker 可在控制台直接配置 SecretId、SecretKey，以及可选的 Token、BizType。现有备用实例已同步这组凭据。使用长期密钥时应移除先前配置的临时 `TENCENTCLOUD_TOKEN`。
 
-配好后，将 `blog-api/wrangler.jsonc` 的 `TENCENT_TMS_ENABLED` 改为 `"true"`；如需修改地域，同步修改该文件的 REGION。通过远端 CI 部署。仅在控制台改 vars 会被下一次仓库部署覆盖，因此启用状态应保存在配置文件中。不要把密钥写入 vars、前端配置或仓库。
+`blog-api/wrangler.jsonc` 的 `TENCENT_TMS_ENABLED` 为 `"true"`；如需修改地域，同步修改该文件的 REGION。后续若恢复 Worker 发布，应使用远端 CI，并先核对域名归属。不要把密钥写入 vars、前端配置或仓库。
 
 ### Linux / Node.js
 
-在实际运行 Blog API 的受限环境文件中添加同名配置，例如现有迁移实例的 `/etc/yaoxi-workers/stage-blog-api.env`。该路径不属于仓库；按 `docs/worker-migration.md` 同步源码部署副本并重启对应服务后生效。不应为接入审核切换 DNS 或生产流量。
+生产环境为 `/opt/yaoxi-workers`、`/etc/yaoxi-workers/blog-api.env` 与 `local-workers@blog-api.service`。工作流复用主站的 SERVER_SSH_KEY / SERVER_HOST / SERVER_USER。首次发布以 `8dc110e6` 为代码基线，后续读取服务器 `.blog-api-deploy-sha`；仅对 `blog-api/src/` 应用提交差异，保留服务器上已有的运行适配修复。补丁上下文冲突时停止发布。
+
+部署脚本优先读取服务器既有 `/root/.config/lumitape/tencent-edgeone.json`，否则复用服务环境中已配置的腾讯凭据；只更新天御环境字段。部署前备份源码和环境文件到 `/var/backups/yaoxi-blog-api/`，检查 JavaScript 语法、真实天御 Pass、服务重启后的健康状态；失败则恢复备份。无需构建，不切换 DNS，不启停其他服务。
 
 本地直接运行 Node 适配入口时，可在已有业务环境变量基础上设置 `ENV_FILE=/root/astro/server/tms.env`，由 `server/main.mjs` 加载上述审核配置。该文件只包含天御配置，不能代替服务原有的 DB_PATH、鉴权和邮件等环境设置。
 

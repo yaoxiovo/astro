@@ -5,204 +5,67 @@ on:
     branches: [main]
     paths:
       - "blog-api/**"
+      - "scripts/deploy-blog-api.mjs"
       - ".github/workflows/deploy-blog-api.yml"
-  workflow_dispatch: # 手动触发：Actions 页面点 Run workflow
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-blog-api-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Deploy Blog API Worker
+    name: Test and deploy Blog API to Linux
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: blog-api
-
+    timeout-minutes: 15
+    env:
+      SERVER_HOST: ${{ secrets.SERVER_HOST || '43.128.137.8' }}
+      SERVER_USER: ${{ secrets.SERVER_USER || 'root' }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Test comment moderation
-        run: node --test ../tests/tencent-tms.test.mjs ../tests/comments.test.mjs ../tests/ddos-auth.test.mjs
+        run: node --test tests/tencent-tms.test.mjs tests/comments.test.mjs tests/ddos-auth.test.mjs
 
-      - name: Install wrangler
-        run: npm i -D wrangler --no-audit --no-fund
-
-      - name: Resolve or create rate-limit KV namespace
-        id: kv
+      - name: Configure SSH
+        env:
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
         run: |
-          if grep -q "REPLACE_WITH_KV_ID" wrangler.jsonc; then
-            API="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/storage/kv/namespaces"
-            NS_LIST=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$API")
-            ID=$(echo "$NS_LIST" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);const n=(j.result||[]).find(x=>x.title==='blog-api-rate-limit');if(n)console.log(n.id);else process.exit(1)}catch(e){process.exit(1)}})" 2>/dev/null || true)
-            if [ -z "$ID" ]; then
-              echo "Existing KV not found, creating a new one..."
-              CREATE_OUT=$(curl -s -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" "$API" -d '{"title":"blog-api-rate-limit"}')
-              ID=$(echo "$CREATE_OUT" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);if(j.success!==true){console.error(JSON.stringify(j.errors));process.exit(1)}console.log(j.result.id)}catch(e){process.exit(1)}})" 2>/dev/null || true)
-              if [ -z "$ID" ]; then
-                echo "::error::KV_CREATE_RESP=$(echo "$CREATE_OUT" | head -c 1200 | tr '\n' ' ')"
-                echo "### ❌ KV namespace 创建失败" >> $GITHUB_STEP_SUMMARY
-                echo '```' >> $GITHUB_STEP_SUMMARY
-                echo "$CREATE_OUT" >> $GITHUB_STEP_SUMMARY
-                echo '```' >> $GITHUB_STEP_SUMMARY
-                exit 1
-              fi
-            else
-              echo "Reusing existing KV: $ID"
-            fi
-            echo "KV ID: $ID"
-            sed -i "s/REPLACE_WITH_KV_ID/$ID/" wrangler.jsonc
-          else
-            echo "KV already configured."
-          fi
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          test -n "$SERVER_SSH_KEY" || { echo "::error::SERVER_SSH_KEY is required"; exit 1; }
+          mkdir -p ~/.ssh
+          python3 - <<'PY'
+          import os, base64
+          from pathlib import Path
+          raw = os.environ['SERVER_SSH_KEY'].strip()
+          value = raw.replace('\\n', '\n') if 'BEGIN' in raw else base64.b64decode(raw).decode()
+          p = Path.home() / '.ssh/deploy_key'
+          p.write_text(value.strip() + '\n')
+          p.chmod(0o600)
+          PY
+          ssh-keygen -l -f ~/.ssh/deploy_key
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
 
-      - name: Resolve D1 database (comments store)
+      # Production DNS points to Linux. Apply committed API changes without
+      # overwriting runtime migration fixes or existing service credentials.
+      - name: Deploy committed API changes and verify Tencent TMS
         run: |
-          if grep -q "REPLACE_WITH_D1_DATABASE_ID" wrangler.jsonc; then
-            API="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database"
-            DB_LIST=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$API")
-            ID=$(echo "$DB_LIST" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);const n=(j.result||[]).find(x=>x.name==='yaoxi-blog-d1');if(n)console.log(n.uuid);else process.exit(1)}catch(e){process.exit(1)}})" 2>/dev/null || true)
-            if [ -z "$ID" ]; then
-              echo "Existing D1 not found, creating a new one..."
-              CREATE_OUT=$(curl -s -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" "$API" -d '{"name":"yaoxi-blog-d1"}')
-              ID=$(echo "$CREATE_OUT" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);if(j.success!==true){console.error(JSON.stringify(j.errors));process.exit(1)}console.log(j.result.uuid)}catch(e){process.exit(1)}})" 2>/dev/null || true)
-              if [ -z "$ID" ]; then
-                echo "::error::D1_CREATE_RESP=$(echo "$CREATE_OUT" | head -c 1200 | tr '\n' ' ')"
-                echo "### ❌ D1 database 创建失败" >> $GITHUB_STEP_SUMMARY
-                echo '```' >> $GITHUB_STEP_SUMMARY
-                echo "$CREATE_OUT" >> $GITHUB_STEP_SUMMARY
-                echo '```' >> $GITHUB_STEP_SUMMARY
-                exit 1
-              fi
-            else
-              echo "Reusing existing D1: $ID"
-            fi
-            echo "D1 ID: $ID"
-            sed -i "s/REPLACE_WITH_D1_DATABASE_ID/$ID/" wrangler.jsonc
-          else
-            echo "D1 already configured."
-          fi
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Apply D1 migrations
-        run: npx wrangler d1 migrations apply yaoxi-blog-d1 --remote
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Sync Worker Secrets
-        run: |
-          # 密钥同步策略（两层）：
-          #   [必须] 安全关键密钥：不追加 `|| true`。GitHub Actions 的 bash 默认带 -e，
-          #          同步失败会立即以非零退出中断本次部署，避免线上运行时才发现鉴权/签名密钥缺失。
-          #   [可容忍] 保留 `|| true` 的密钥均有运行时兜底（见逐条注释），缺失只降级对应功能，
-          #          不影响鉴权与数据安全。
-          if [ -n "$MAIL_GATEWAY_TOKEN" ]; then
-            # [可容忍] 邮件网关 Token：缺失时 email-client.js 回退 AUTH_SECRET/ADMIN_TOKEN，
-            #          再退化为本地 mock 日志，不影响鉴权与数据安全。
-            echo "$MAIL_GATEWAY_TOKEN" | npx wrangler secret put MAIL_GATEWAY_TOKEN || true
-          elif [ -n "$AUTH_SECRET" ]; then
-            echo "$AUTH_SECRET" | npx wrangler secret put MAIL_GATEWAY_TOKEN || true
-          fi
-          if [ -n "$MAIL_GATEWAY_URL" ]; then
-            # [可容忍] 未配置时回退默认网关地址 https://mail-api.yaoxi.cloud。
-            echo "$MAIL_GATEWAY_URL" | npx wrangler secret put MAIL_GATEWAY_URL || true
-          fi
-          if [ -n "$RESEND_API_KEY" ]; then
-            # [可容忍] Resend 仅是自建邮件网关的兼容回退通道。
-            echo "$RESEND_API_KEY" | npx wrangler secret put RESEND_API_KEY || true
-          fi
-          if [ -n "$ADMIN_TOKEN" ]; then
-            # [必须] 管理接口鉴权凭据（评论审核 / 弹幕管理 / 广播 / DDoS 查询），缺失即线上鉴权失效。
-            echo "$ADMIN_TOKEN" | npx wrangler secret put ADMIN_TOKEN
-          fi
-          if [ -n "$OWNER_EMAIL" ]; then
-            # [可容忍] 未配置时回退硬编码站长邮箱。
-            echo "$OWNER_EMAIL" | npx wrangler secret put OWNER_EMAIL || true
-          fi
-          if [ -n "$EMAIL_FROM" ]; then
-            # [可容忍] 未配置时回退默认发件人身份。
-            echo "$EMAIL_FROM" | npx wrangler secret put EMAIL_FROM || true
-          fi
-          if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
-            # [必须] Cloudflare API 凭据（DDoS 防护与安全日志查询），缺失即该接口不可用。
-            echo "$CLOUDFLARE_API_TOKEN" | npx wrangler secret put CF_API_TOKEN
-          fi
-          if [ -n "$CLOUDFLARE_ZONE_ID" ]; then
-            # [可容忍] 仅 Zone 标识，未配置时由 index.js 自动定位可用 Zone。
-            echo "$CLOUDFLARE_ZONE_ID" | npx wrangler secret put CF_ZONE_ID || true
-          fi
-          if [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            # [可容忍] 仅账号标识，未配置时可经 API Token 派生。
-            echo "$CLOUDFLARE_ACCOUNT_ID" | npx wrangler secret put CF_ACCOUNT_ID || true
-          fi
-          # 弹幕审核 Telegram 通知（复用 Bot 的凭据：BOT_TOKEN / CHAT_ID）
-          if [ -n "$TG_BOT_TOKEN" ]; then
-            # [可容忍] 未配置时静默跳过 Telegram 通知，弹幕仍可经 /dm 命令管理。
-            echo "$TG_BOT_TOKEN" | npx wrangler secret put TELEGRAM_BOT_TOKEN || true
-          fi
-          if [ -n "$TG_CHAT_ID" ]; then
-            # [可容忍] 同上，仅影响通知推送。
-            echo "$TG_CHAT_ID" | npx wrangler secret put TELEGRAM_CHAT_ID || true
-          fi
-          # 评论 SSO 身份验签候选密钥（与 zk-bff / 认证中心对齐，验签失败自动降级游客）
-          if [ -n "$JWT_SECRET" ]; then
-            # [必须] SSO 验签候选密钥，缺失会使已登录用户被静默降级为游客。
-            echo "$JWT_SECRET" | npx wrangler secret put JWT_SECRET
-          fi
-          if [ -n "$AUTH_SECRET" ]; then
-            # [必须] SSO 验签候选密钥（同时是邮件网关 Token 的回退来源）。
-            echo "$AUTH_SECRET" | npx wrangler secret put AUTH_SECRET
-          fi
-          if [ -n "$SSO_SECRET" ]; then
-            # [必须] SSO 验签候选密钥，三把候选密钥任一缺失都会收窄验签范围。
-            echo "$SSO_SECRET" | npx wrangler secret put SSO_SECRET
-          fi
-          # 天御服务端凭据：任一提供时必须成对，写入失败终止部署。
-          if [ -n "$TENCENTCLOUD_SECRET_ID" ] || [ -n "$TENCENTCLOUD_SECRET_KEY" ]; then
-            if [ -z "$TENCENTCLOUD_SECRET_ID" ] || [ -z "$TENCENTCLOUD_SECRET_KEY" ]; then
-              echo "::error::Tencent TMS requires both SecretId and SecretKey"
-              exit 1
-            fi
-            printf '%s' "$TENCENTCLOUD_SECRET_ID" | npx wrangler secret put TENCENTCLOUD_SECRET_ID
-            printf '%s' "$TENCENTCLOUD_SECRET_KEY" | npx wrangler secret put TENCENTCLOUD_SECRET_KEY
-          fi
-          if [ -n "$TENCENTCLOUD_TOKEN" ]; then
-            printf '%s' "$TENCENTCLOUD_TOKEN" | npx wrangler secret put TENCENTCLOUD_TOKEN
-          fi
-          if [ -n "$TENCENT_TMS_BIZ_TYPE" ]; then
-            printf '%s' "$TENCENT_TMS_BIZ_TYPE" | npx wrangler secret put TENCENT_TMS_BIZ_TYPE
-          fi
-        env:
-          MAIL_GATEWAY_TOKEN: ${{ secrets.MAIL_GATEWAY_TOKEN }}
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          MAIL_GATEWAY_URL: ${{ secrets.MAIL_GATEWAY_URL }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
-          OWNER_EMAIL: ${{ secrets.OWNER_EMAIL }}
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-          TG_BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          TG_CHAT_ID: ${{ secrets.CHAT_ID }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          SSO_SECRET: ${{ secrets.SSO_SECRET }}
-          TENCENTCLOUD_SECRET_ID: ${{ secrets.TENCENTCLOUD_SECRET_ID }}
-          TENCENTCLOUD_SECRET_KEY: ${{ secrets.TENCENTCLOUD_SECRET_KEY }}
-          TENCENTCLOUD_TOKEN: ${{ secrets.TENCENTCLOUD_TOKEN }}
-          TENCENT_TMS_BIZ_TYPE: ${{ secrets.TENCENT_TMS_BIZ_TYPE }}
-
-      - name: Deploy Worker
-        run: npx wrangler deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          set -euo pipefail
+          target="$SERVER_USER@$SERVER_HOST"
+          baseline=$(ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o ConnectTimeout=15 "$target" 'cat /opt/yaoxi-workers/.blog-api-deploy-sha 2>/dev/null || true')
+          baseline="${baseline:-8dc110e606dbbb10266ce557f41ad9f322cd94ec}"
+          [[ "$baseline" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::Invalid deployed revision"; exit 1; }
+          git cat-file -e "$baseline^{commit}"
+          mkdir -p /tmp/blog-api-release
+          git diff --binary "$baseline" "$GITHUB_SHA" -- blog-api/src/ > /tmp/blog-api-release/changes.patch
+          git diff --name-only -z "$baseline" "$GITHUB_SHA" -- blog-api/src/ > /tmp/blog-api-release/changed-paths
+          cp scripts/deploy-blog-api.mjs /tmp/blog-api-release/
+          tar -C /tmp/blog-api-release -czf - changes.patch changed-paths deploy-blog-api.mjs |
+            ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o ConnectTimeout=15 "$target" \
+              "set -eu; release=\$(mktemp -d /tmp/blog-api-release.XXXXXX); trap 'rm -rf \"\$release\"' EXIT; tar -xzf - -C \"\$release\"; node \"\$release/deploy-blog-api.mjs\" \"\$release\" '$GITHUB_SHA'"

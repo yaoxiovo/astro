@@ -13,6 +13,7 @@ jobs:
     # 置 0 关闭该提示；这不影响任何步骤的退出码，失败仍会让工作流变红。
     env:
       COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -87,7 +88,7 @@ jobs:
           echo "Deployment to Linux Server completed successfully!"
 
       - name: Deploy to Firebase (Optional)
-        if: ${{ secrets.FIREBASE_TOKEN != '' }}
+        if: ${{ env.FIREBASE_TOKEN != '' }}
         continue-on-error: true
         uses: w9jds/firebase-action@v2.2.2
         with:
