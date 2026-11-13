@@ -87,7 +87,8 @@ function makeDb(handlers = {}) {
 			return stmt;
 		},
 		async batch(stmts) {
-			calls.push({ batch: stmts.length });
+			calls.push({ batch: stmts.length, statements: stmts });
+			if (handlers.batch) return handlers.batch(stmts);
 			return stmts.map(() => ({ meta: { changes: 1 } }));
 		},
 	};
@@ -307,6 +308,133 @@ describe("评论审核状态机 (moderate)", () => {
 /* ================= 3. 投稿核心 ================= */
 
 describe("评论投稿 (submit)", () => {
+	it("写库失败不应占用去重键，重试必须重新送审", async () => {
+		let writes = 0;
+		let checks = 0;
+		const { db } = makeDb({
+			batch: (stmts) => {
+				if (++writes === 1) throw new Error("test database unavailable");
+				return stmts.map(() => ({ meta: { changes: 1 } }));
+			},
+		});
+		const kv = makeKv();
+		const mod = createCommentsModule(
+			makeDeps({
+				getStorageKv: () => kv,
+				moderateText: async () => {
+					checks++;
+					return { suggestion: "Pass" };
+				},
+			}),
+		);
+		const payload = { post: "demo", t: "retry" };
+		const failed = await mod.handleSubmit(makeRequest(payload), { DB: db });
+		assert.equal(failed.status, 500);
+		assert.equal(kv.store.size, 0);
+		const retried = await mod.handleSubmit(makeRequest(payload), { DB: db });
+		assert.equal(retried.status, 200);
+		assert.equal(checks, 2);
+		assert.equal(kv.store.size, 1);
+	});
+
+	for (const [suggestion, autoFlag, expectedStatus, expectedMode] of [
+		["Pass", "true", "approved", "live"],
+		["Pass", "false", "pending", "pending"],
+		["Review", "true", "pending", "pending"],
+		["Error", "true", "pending", "pending"],
+		["Block", "true", "rejected", undefined],
+	]) {
+		it(`天御 ${suggestion} / 自动放行 ${autoFlag} 应写入 ${expectedStatus} 并保留审计`, async () => {
+			const { db, calls } = makeDb();
+			const kv = makeKv();
+			const moderation = {
+				provider: "tencent-tms",
+				suggestion,
+				requestId: "req-test",
+			};
+			const mod = createCommentsModule(
+				makeDeps({
+					getStorageKv: () => kv,
+					moderateText: async (_, text) => {
+						assert.equal(text, "昵称\n测试正文\n段落摘录");
+						return moderation;
+					},
+				}),
+			);
+			const response = await mod.handleSubmit(
+				makeRequest({ post: "demo", a: "昵称", t: "测试正文", x: "段落摘录" }),
+				{ DB: db, DANMAKU_AUTO_APPROVE: autoFlag },
+			);
+			assert.equal(response.status, suggestion === "Block" ? 422 : 200);
+			assert.equal(response.data.mode, expectedMode);
+			assert.equal(response.data.ok, suggestion !== "Block");
+			const batch = calls.find((call) => call.batch).statements;
+			assert.equal(batch[0]._bound[10], expectedStatus);
+			assert.deepEqual(JSON.parse(batch[1]._bound[2]).moderation, moderation);
+			assert.equal(kv.store.size, suggestion === "Block" ? 0 : 1);
+			if (suggestion === "Block") {
+				assert.equal(response.data.error, "content_rejected");
+				const retry = await mod.handleSubmit(
+					makeRequest({
+						post: "demo",
+						a: "昵称",
+						t: "测试正文",
+						x: "段落摘录",
+					}),
+					{ DB: db },
+				);
+				assert.equal(retry.status, 422, "被拒绝内容重复提交不能伪装成待审成功");
+			}
+		});
+	}
+
+	it("开启天御却缺密钥时，真实客户端应强制待审并覆盖自动放行", async () => {
+		const { db, calls } = makeDb();
+		const mod = createCommentsModule(makeDeps());
+		const response = await mod.handleSubmit(
+			makeRequest({ post: "demo", t: "hello" }),
+			{ DB: db, TENCENT_TMS_ENABLED: "true", DANMAKU_AUTO_APPROVE: "true" },
+		);
+		assert.equal(response.data.mode, "pending");
+		const audit = JSON.parse(
+			calls.find((call) => call.batch).statements[1]._bound[2],
+		);
+		assert.equal(audit.moderation.error, "not_configured");
+	});
+
+	it("旧弹幕投稿与楼中楼回复均必须经过天御，登录昵称也纳入检测", async () => {
+		const { db } = makeDb({
+			first: () => ({
+				id: "abc123xyz",
+				post: "demo",
+				status: "approved",
+				kind: "comment",
+				author: "parent",
+			}),
+		});
+		const seen = [];
+		const mod = createCommentsModule(
+			makeDeps({
+				resolveIdentity: async () => ({ sub: "reader", username: "认证昵称" }),
+				moderateText: async (_, text) => {
+					seen.push(text);
+					return { suggestion: "Review" };
+				},
+			}),
+		);
+		const legacy = await mod.handleLegacySubmit(
+			makeRequest({ post: "demo", t: "弹幕", a: "伪造昵称" }),
+			{ DB: db, DANMAKU_AUTO_APPROVE: "true" },
+		);
+		const reply = await mod.handleSubmit(
+			makeRequest({ post: "demo", t: "回复", parentId: "abc123xyz" }),
+			{ DB: db, DANMAKU_AUTO_APPROVE: "true" },
+		);
+		assert.equal(legacy.data.mode, "pending");
+		assert.equal(reply.data.mode, "pending");
+		assert.deepEqual(seen, ["认证昵称\n弹幕\n", "认证昵称\n回复\n"]);
+	});
+
 	it("蜜罐命中应假成功且不写库", async () => {
 		const { db, calls } = makeDb();
 		const mod = createCommentsModule(makeDeps());

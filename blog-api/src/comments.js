@@ -22,6 +22,8 @@
  *           存储等基础能力，resolveIdentity 为 jwt.js 的 SSO 身份解析。
  */
 
+import { moderateTencentText } from "./tencent-tms.js";
+
 const BLOG_ORIGIN = "https://blog.yaoxi.wiki";
 
 const CM_CONFIG = {
@@ -69,6 +71,7 @@ export function createCommentsModule(deps) {
 		checkRateLimit,
 		htmlEsc,
 		resolveIdentity,
+		moderateText = moderateTencentText,
 	} = deps;
 
 	/** 校验并归一化文章 slug（防路径穿越 / 非法值） */
@@ -143,7 +146,7 @@ export function createCommentsModule(deps) {
 	 * Telegram 审核通知：待审内容推送至站长（cm:ok / cm:no 内联按钮）
 	 * 未配置 TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 时静默跳过（仍可经 /dm 命令管理）
 	 */
-	async function notifyTelegram(env, row, mode, parentAuthor) {
+	async function notifyTelegram(env, row, mode, parentAuthor, moderation) {
 		const token = env?.TELEGRAM_BOT_TOKEN;
 		const chatId = env?.TELEGRAM_CHAT_ID;
 		if (!token || !chatId) return;
@@ -164,6 +167,9 @@ export function createCommentsModule(deps) {
 					? `\n📍 锚定第 ${row.p + 1} 段`
 					: "";
 		const colorLine = row.kind === "danmaku" ? ` · 🎨 <code>${htmlEsc(row.color || CM_COLORS[0])}</code>` : "";
+		const moderationLine = moderation?.suggestion && moderation.suggestion !== "Disabled"
+			? `\n🛡 天御：${htmlEsc(moderation.suggestion)}${moderation.label ? ` · ${htmlEsc(moderation.label)}` : ""}${moderation.error ? ` · ${htmlEsc(moderation.error)}` : ""}`
+			: "";
 		const tail =
 			mode === "live"
 				? "\n\n✅ 已直接展示（DANMAKU_AUTO_APPROVE 模式）"
@@ -171,7 +177,7 @@ export function createCommentsModule(deps) {
 		const text =
 			`${head}\n\n` +
 			`📄 ${htmlEsc(row.post)}\n` +
-			`${identityLine}${colorLine}${replyLine}${anchorLine}\n` +
+			`${identityLine}${colorLine}${replyLine}${anchorLine}${moderationLine}\n` +
 			`🔗 <a href="${BLOG_ORIGIN}/posts/${encodeURIComponent(row.post).replace(/%2F/gi, "/")}/">打开文章</a>` +
 			`\n\n──────────\n<b>${htmlEsc(row.body)}</b>` +
 			tail;
@@ -385,18 +391,21 @@ export function createCommentsModule(deps) {
 
 		// 去重指纹：同文章 + 同类型 + 同回复目标 + 同内容，10 分钟内只收一次
 		const kv = getStorageKv(env);
+		const dupKey = `cm:dup:${fingerprint(`${post}|${kind}|${parentId || ""}|${text}`)}`;
 		if (kv) {
-			const dupKey = `cm:dup:${fingerprint(`${post}|${kind}|${parentId || ""}|${text}`)}`;
 			try {
 				if (await kv.get(dupKey)) {
 					return json({ ok: true, mode: "pending", message: "刚刚已经发送过相同内容啦喵~" });
 				}
-				await kv.put(dupKey, "1", { expirationTtl: CM_CONFIG.DUP_TTL });
 			} catch {}
 		}
 
-		const autoApprove = ["1", "true", "yes"].includes(String(env?.DANMAKU_AUTO_APPROVE || "").toLowerCase());
-		const status = autoApprove ? "approved" : "pending";
+		// Audit displayed text, including the user-supplied anchor excerpt; no IP or JWT is sent.
+		const moderation = await moderateText(env, `${username || author}\n${text}\n${excerpt}`);
+		const blocked = moderation.suggestion === "Block";
+		const mayApprove = moderation.suggestion === "Pass" || moderation.suggestion === "Disabled";
+		const autoApprove = mayApprove && ["1", "true", "yes"].includes(String(env?.DANMAKU_AUTO_APPROVE || "").toLowerCase());
+		const status = blocked ? "rejected" : autoApprove ? "approved" : "pending";
 		const id = genId();
 		const now = Date.now();
 		const ipHash = await hashIp(env, ip);
@@ -411,15 +420,24 @@ export function createCommentsModule(deps) {
 					.bind(id, post, kind, p, excerpt, text, author, color, userSub, username, status, parentId, rootId, ipHash, ua, now),
 				db
 					.prepare("INSERT INTO comment_events (comment_id, action, actor, meta, created_at) VALUES (?, 'create', ?, ?, ?)")
-					.bind(id, userSub || "guest", JSON.stringify({ kind, mode: autoApprove ? "auto-approved" : "pending" }), now),
+					.bind(id, userSub || "guest", JSON.stringify({ kind, mode: blocked ? "rejected" : autoApprove ? "auto-approved" : "pending", moderation }), now),
 			]);
 		} catch (e) {
 			console.warn("[comments] 提交写库失败:", e);
 			return json({ error: "db_error", message: "存储故障，稍后再试喵" }, 500);
 		}
 
+		if (blocked) {
+			return json({ ok: false, error: "content_rejected", message: "内容未通过安全审核，请修改后再提交喵~" }, 422);
+		}
+		// Only mark successfully accepted submissions, so failures and rejected text cannot
+		// poison the dedup key and make a retry look like an accepted pending comment.
+		if (kv) {
+			try { await kv.put(dupKey, "1", { expirationTtl: CM_CONFIG.DUP_TTL }); } catch {}
+		}
+
 		const notifyRow = { id, post, kind, p, x: excerpt, body: text, author, color, username, user_sub: userSub };
-		if (ctx?.waitUntil) ctx.waitUntil(notifyTelegram(env, notifyRow, autoApprove ? "live" : "pending", parentAuthor));
+		if (ctx?.waitUntil) ctx.waitUntil(notifyTelegram(env, notifyRow, autoApprove ? "live" : "pending", parentAuthor, moderation));
 
 		return json({
 			ok: true,

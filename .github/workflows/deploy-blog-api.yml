@@ -25,6 +25,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Test comment moderation
+        run: node --test ../tests/tencent-tms.test.mjs ../tests/comments.test.mjs ../tests/ddos-auth.test.mjs
+
       - name: Install wrangler
         run: npm i -D wrangler --no-audit --no-fund
 
@@ -163,6 +166,21 @@ jobs:
             # [必须] SSO 验签候选密钥，三把候选密钥任一缺失都会收窄验签范围。
             echo "$SSO_SECRET" | npx wrangler secret put SSO_SECRET
           fi
+          # 天御服务端凭据：任一提供时必须成对，写入失败终止部署。
+          if [ -n "$TENCENTCLOUD_SECRET_ID" ] || [ -n "$TENCENTCLOUD_SECRET_KEY" ]; then
+            if [ -z "$TENCENTCLOUD_SECRET_ID" ] || [ -z "$TENCENTCLOUD_SECRET_KEY" ]; then
+              echo "::error::Tencent TMS requires both SecretId and SecretKey"
+              exit 1
+            fi
+            printf '%s' "$TENCENTCLOUD_SECRET_ID" | npx wrangler secret put TENCENTCLOUD_SECRET_ID
+            printf '%s' "$TENCENTCLOUD_SECRET_KEY" | npx wrangler secret put TENCENTCLOUD_SECRET_KEY
+          fi
+          if [ -n "$TENCENTCLOUD_TOKEN" ]; then
+            printf '%s' "$TENCENTCLOUD_TOKEN" | npx wrangler secret put TENCENTCLOUD_TOKEN
+          fi
+          if [ -n "$TENCENT_TMS_BIZ_TYPE" ]; then
+            printf '%s' "$TENCENT_TMS_BIZ_TYPE" | npx wrangler secret put TENCENT_TMS_BIZ_TYPE
+          fi
         env:
           MAIL_GATEWAY_TOKEN: ${{ secrets.MAIL_GATEWAY_TOKEN }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
@@ -178,6 +196,10 @@ jobs:
           TG_CHAT_ID: ${{ secrets.CHAT_ID }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           SSO_SECRET: ${{ secrets.SSO_SECRET }}
+          TENCENTCLOUD_SECRET_ID: ${{ secrets.TENCENTCLOUD_SECRET_ID }}
+          TENCENTCLOUD_SECRET_KEY: ${{ secrets.TENCENTCLOUD_SECRET_KEY }}
+          TENCENTCLOUD_TOKEN: ${{ secrets.TENCENTCLOUD_TOKEN }}
+          TENCENT_TMS_BIZ_TYPE: ${{ secrets.TENCENT_TMS_BIZ_TYPE }}
 
       - name: Deploy Worker
         run: npx wrangler deploy

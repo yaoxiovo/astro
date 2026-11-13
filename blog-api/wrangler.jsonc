@@ -38,7 +38,10 @@
 		}
 	],
 	"vars": {
-		// 互动内容（弹幕/评论）免审开关：true 时投稿直接上墙；默认 false 走 Telegram 人工审核流
-		"DANMAKU_AUTO_APPROVE": "false"
+		// 天御开启时，仅 Pass 可自动上墙；Review / 调用异常始终人工待审，Block 拒绝。
+		"DANMAKU_AUTO_APPROVE": "false",
+		// 配好 TENCENTCLOUD_SECRET_ID / TENCENTCLOUD_SECRET_KEY 后再开启。
+		"TENCENT_TMS_ENABLED": "true",
+		"TENCENT_TMS_REGION": "ap-guangzhou"
 	}
 }
