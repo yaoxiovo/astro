@@ -25,17 +25,22 @@
     "updatedAt": "2026-11-10",
     "source": "kkwebtoon 全彩条漫典藏镜像",
     "order": 100,
-    "imageBaseUrl": "https://yaoxi.hnxianxin.cn",
+    "imageBaseUrl": "https://blog-s3-cf.yaoxi.wiki",
     "imageSources": [
       {
         "id": "cdn",
-        "label": "yaoxi.hnxianxin.cn",
-        "baseUrl": "https://yaoxi.hnxianxin.cn"
+        "label": "Cloudflare 优选",
+        "baseUrl": "https://blog-s3-cf.yaoxi.wiki"
       },
       {
-        "id": "r2",
-        "label": "blog-s3.yaoxiovo.cn",
-        "baseUrl": "https://blog-s3.yaoxiovo.cn"
+        "id": "eo",
+        "label": "EdgeOne",
+        "baseUrl": "https://blog-s3-eo.yaoxi.wiki"
+      },
+      {
+        "id": "esa",
+        "label": "阿里云 ESA",
+        "baseUrl": "https://blog-s3-esa.yaoxi.wiki"
       }
     ]
   }

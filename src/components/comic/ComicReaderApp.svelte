@@ -9,6 +9,10 @@ import type {
 	ComicSeriesMeta,
 	ComicWidthPreset,
 } from "../../types/comic";
+import {
+	clearComicCacheTarget,
+	comicCacheTarget,
+} from "../../utils/comic-cache-state";
 import { resolveComicImageUrl } from "../../utils/comic-core.mjs";
 import {
 	getComicReaderPrefs,
@@ -27,6 +31,7 @@ let widthPreset: ComicWidthPreset = "standard";
 let gapless = true;
 let showPageNums = true;
 let imageSource = "cdn";
+let cacheMounted = false;
 
 let currentPage = 1;
 let immersive = false;
@@ -48,6 +53,18 @@ $: imageSources = meta.imageSources?.length
 	: [{ id: "cdn", label: "默认线路", baseUrl: meta.imageBaseUrl || "" }];
 $: totalPages = pages.length;
 $: currentPageObj = pages[currentPage - 1] ?? pages[0];
+$: if (cacheMounted && currentPageObj) {
+	comicCacheTarget.set({
+		context: `${meta.slug}/${chapter.slug}`,
+		title: `${meta.title} · ${chapter.title}`,
+		page: currentPageObj.page,
+		source: (
+			imageSources.find((source) => source.id === imageSource) ||
+			imageSources[0]
+		).label,
+		url: resolveImageSrc(currentPageObj, imageSource),
+	});
+}
 $: progressPercent =
 	totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0;
 
@@ -370,6 +387,7 @@ onMount(() => {
 	imageSource = imageSources.some((source) => source.id === prefs.imageSource)
 		? prefs.imageSource
 		: imageSources[0].id;
+	cacheMounted = true;
 
 	markChapterAsRead(meta.slug, chapter.slug);
 	syncProgress(1);
@@ -384,6 +402,7 @@ onMount(() => {
 });
 
 onDestroy(() => {
+	clearComicCacheTarget(`${meta.slug}/${chapter.slug}`);
 	observer?.disconnect();
 	if (typeof window !== "undefined") {
 		window.removeEventListener("keydown", handleKeydown);

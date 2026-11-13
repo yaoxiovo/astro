@@ -57,13 +57,16 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 		it("自有资源域名应保留 Astro 路径并匹配 R2 对象键", () => {
 			const pathname =
 				"/comics/huyao-xiaohongniang/chapters/0001/page-0001.webp";
-			const url = resolveComicImageUrl(pathname, "https://yaoxi.hnxianxin.cn");
-			assert.strictEqual(url, `https://yaoxi.hnxianxin.cn${pathname}`);
+			const url = resolveComicImageUrl(
+				pathname,
+				"https://blog-s3-cf.yaoxi.wiki",
+			);
+			assert.strictEqual(url, `https://blog-s3-cf.yaoxi.wiki${pathname}`);
 			assert.strictEqual(new URL(url).pathname.slice(1), pathname.slice(1));
 			assert.throws(() =>
 				resolveComicImageUrl(
 					"https://other.example/image.webp",
-					"https://yaoxi.hnxianxin.cn",
+					"https://blog-s3-cf.yaoxi.wiki",
 				),
 			);
 			assert.throws(() =>
@@ -178,11 +181,21 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 			assert.ok(!("bannerFallback" in huyao));
 			assert.deepEqual(
 				huyao.imageSources.map((s) => s.baseUrl),
-				["https://yaoxi.hnxianxin.cn", "https://blog-s3.yaoxiovo.cn"],
+				[
+					"https://blog-s3-cf.yaoxi.wiki",
+					"https://blog-s3-eo.yaoxi.wiki",
+					"https://blog-s3-esa.yaoxi.wiki",
+				],
 			);
 
 			const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
 			assert.strictEqual(manifest.chapters.length, 785);
+			assert.strictEqual(huyao.imageBaseUrl, huyao.imageSources[0].baseUrl);
+			assert.deepEqual(manifest.meta.imageSources, huyao.imageSources);
+			assert.strictEqual(manifest.meta.imageBaseUrl, huyao.imageBaseUrl);
+			const index = JSON.parse(fs.readFileSync(indexPath, "utf-8"));
+			assert.deepEqual(index.meta.imageSources, huyao.imageSources);
+			assert.strictEqual(index.meta.imageBaseUrl, huyao.imageBaseUrl);
 
 			let countedPages = 0;
 			for (const ch of manifest.chapters) {

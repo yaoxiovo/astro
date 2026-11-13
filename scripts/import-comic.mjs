@@ -341,17 +341,24 @@ export function importComicDataset(options = {}) {
 				"根据古典小说记载，世上有人有妖，妖会与人相恋。妖寿命千万年，人的寿命有限；人会投胎转世，但投胎以后不记得上辈子的爱。痴情的妖便会前往涂山向狐妖“购买”转世续缘之术，令转世后的恋人回忆起前世记忆。全彩典藏版完整收录全篇正传、番外剧场与创作公告。",
 		),
 		cover: `/comics/${slug}/cover.webp`,
-		imageBaseUrl: String(options.imageBaseUrl || "https://yaoxi.hnxianxin.cn"),
+		imageBaseUrl: String(
+			options.imageBaseUrl || "https://blog-s3-cf.yaoxi.wiki",
+		),
 		imageSources: [
 			{
 				id: "cdn",
-				label: "yaoxi.hnxianxin.cn",
-				baseUrl: "https://yaoxi.hnxianxin.cn",
+				label: "Cloudflare 优选",
+				baseUrl: "https://blog-s3-cf.yaoxi.wiki",
 			},
 			{
-				id: "r2",
-				label: "blog-s3.yaoxiovo.cn",
-				baseUrl: "https://blog-s3.yaoxiovo.cn",
+				id: "eo",
+				label: "EdgeOne",
+				baseUrl: "https://blog-s3-eo.yaoxi.wiki",
+			},
+			{
+				id: "esa",
+				label: "阿里云 ESA",
+				baseUrl: "https://blog-s3-esa.yaoxi.wiki",
 			},
 		],
 		banner: `/comics/${slug}/banner.webp`,
