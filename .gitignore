@@ -7,8 +7,8 @@ dist/
 src/data/wiki/
 public/api/wiki/
 
-# 章节图片由自有 R2 桶提供，不进入 Git 仓库或静态构建。
-public/comics/*/chapters/
+# 漫画图片由香港云 / R2 提供，不进入 Git 仓库或静态构建。
+public/comics/
 
 # generated types
 .astro/
@@ -56,3 +56,10 @@ ori
 
 # 旧资源分块草稿
 comic-assets/
+
+# 本地协作记录、一次性扫描报告及停用工作流
+.agent-teams/
+.external-links-report.json
+/外链扫描报告.md
+/外链逐条清单.md
+.github/workflows/*.yml-nouse

@@ -142,7 +142,7 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 	});
 
 	describe("4. 《狐妖小红娘》已导入数据清单校验", () => {
-		it("catalog、index、manifest、api 与封面横幅资源应完整存在", () => {
+		it("漫画目录和图片清单应完整，封面横幅使用 CDN", () => {
 			const catalogPath = path.join(ROOT_DIR, "src/data/comics/catalog.json");
 			const indexPath = path.join(
 				ROOT_DIR,
@@ -156,25 +156,22 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 				ROOT_DIR,
 				"public/api/comics/huyao-xiaohongniang/chapters.json",
 			);
-			const coverPath = path.join(
-				ROOT_DIR,
-				"public/comics/huyao-xiaohongniang/cover.webp",
-			);
-			const bannerPath = path.join(
-				ROOT_DIR,
-				"public/comics/huyao-xiaohongniang/banner.webp",
-			);
-
 			assert.ok(fs.existsSync(catalogPath), "缺少 catalog.json");
 			assert.ok(fs.existsSync(indexPath), "缺少 index.json");
 			assert.ok(fs.existsSync(manifestPath), "缺少 manifest.json");
 			assert.ok(fs.existsSync(apiPath), "缺少 public/api chapters.json");
-			assert.ok(fs.existsSync(coverPath), "缺少 cover.webp");
-			assert.ok(fs.existsSync(bannerPath), "缺少 banner.webp");
 
 			const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf-8"));
 			const huyao = catalog.find((c) => c.slug === "huyao-xiaohongniang");
 			assert.ok(huyao, "catalog.json 未包含 huyao-xiaohongniang");
+			assert.strictEqual(
+				resolveComicImageUrl(huyao.cover, huyao.imageBaseUrl),
+				"https://blog-s3-cf.yaoxi.wiki/comics/huyao-xiaohongniang/cover.webp",
+			);
+			assert.strictEqual(
+				resolveComicImageUrl(huyao.banner, huyao.imageBaseUrl),
+				"https://blog-s3-cf.yaoxi.wiki/comics/huyao-xiaohongniang/banner.webp",
+			);
 			assert.strictEqual(huyao.totalChapters, 785);
 			assert.strictEqual(huyao.totalPages, 10405);
 			assert.ok(!("coverFallback" in huyao));
@@ -196,6 +193,9 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 			const index = JSON.parse(fs.readFileSync(indexPath, "utf-8"));
 			assert.deepEqual(index.meta.imageSources, huyao.imageSources);
 			assert.strictEqual(index.meta.imageBaseUrl, huyao.imageBaseUrl);
+			const api = JSON.parse(fs.readFileSync(apiPath, "utf-8"));
+			assert.deepEqual(api.meta.imageSources, huyao.imageSources);
+			assert.strictEqual(api.meta.imageBaseUrl, huyao.imageBaseUrl);
 
 			let countedPages = 0;
 			for (const ch of manifest.chapters) {
