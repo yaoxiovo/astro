@@ -4,7 +4,7 @@ import { siteConfig } from "@/config";
 
 const ssoConfig = siteConfig.sso || {
 	enable: true,
-	authUrl: "https://account.yaoxiovo.cn",
+	authUrl: "https://account.yaoxi.wiki",
 	clientId: "yaoxi-blog",
 };
 ---
@@ -23,7 +23,7 @@ const ssoConfig = siteConfig.sso || {
     if (!window.yaoxiAuth) {
       window.yaoxiAuth = new window.YaoxiAuth({
         clientId: ssoConfig.clientId || "yaoxi-blog",
-        authUrl: ssoConfig.authUrl || "https://account.yaoxiovo.cn",
+        authUrl: ssoConfig.authUrl || "https://account.yaoxi.wiki",
         mode: "popup",
         targetDomain: window.location.hostname,
         scope: "openid profile email admin",
