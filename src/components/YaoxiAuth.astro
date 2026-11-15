@@ -1,5 +1,5 @@
 ---
-// YaoxiAuth.astro — 耀西统一身份认证 (account.yaoxiovo.cn SSO) 客户端初始化与状态管理
+// YaoxiAuth.astro — 耀西统一身份认证 (account.yaoxi.wiki SSO) 客户端初始化与状态管理
 import { siteConfig } from "@/config";
 
 const ssoConfig = siteConfig.sso || {
@@ -51,6 +51,7 @@ const ssoConfig = siteConfig.sso || {
         const result = await window.yaoxiAuth.login({ mode });
         console.log("[YaoxiAuth] 认证成功，用户信息:", result.user);
         syncAuthState();
+        void syncSiteAccount();
 
         const rawRole = String(result.user?.role || "").toLowerCase();
         const roles = Array.isArray(result.user?.roles) ? result.user.roles.map((r) => String(r).toLowerCase()) : [];
@@ -85,6 +86,48 @@ const ssoConfig = siteConfig.sso || {
       return window.yaoxiAuth ? window.yaoxiAuth.getUser() : null;
     };
 
+    function renderAvatar(element, user, fallback) {
+      if (!element) return;
+      const initial = (user?.name || user?.username || user?.sub || fallback).trim().charAt(0).toUpperCase();
+      element.textContent = initial;
+      element.style.overflow = "hidden";
+      try {
+        const picture = new URL(user?.picture || user?.avatar || "");
+        if (picture.origin !== "https://account.yaoxi.wiki" || !/^\/avatar\/[a-f0-9]{64}\.webp$/.test(picture.pathname) || picture.search || picture.hash) return;
+        const img = document.createElement("img"); img.src = picture.href; img.alt = "账号头像";
+        img.className = "w-full h-full object-cover rounded-full"; img.referrerPolicy = "no-referrer";
+        img.addEventListener("error", () => { element.textContent = initial; }, { once: true });
+        element.replaceChildren(img);
+      } catch {}
+    }
+
+    async function syncSiteAccount() {
+      const auth = window.yaoxiAuth;
+      const token = auth?.getToken?.();
+      if (!token) return;
+      const state = window.__blogSiteAccountSync;
+      if (state?.token === token && Date.now() - state.at < 300000) return;
+      window.__blogSiteAccountSync = { token, at: Date.now() };
+      try {
+        const response = await fetch("https://blog-api.yaoxi.cloud/api/account/sync", {
+          method: "POST", headers: { Authorization: `Bearer ${token}` }, cache: "no-store",
+        });
+        if (!response.ok) throw new Error("账号资料同步暂不可用");
+        const data = await response.json();
+        if (auth.getToken() !== token || !data.profile) return;
+        const user = auth.getUser();
+        if (user) {
+          user.picture = data.profile.avatarUrl || "";
+          localStorage.setItem((auth.storagePrefix || "yaoxi_auth_") + "user", JSON.stringify(user));
+          syncAuthState();
+        }
+        window.dispatchEvent(new CustomEvent("blog:account:change", { detail: data.profile }));
+      } catch (error) {
+        window.__blogSiteAccountSync = null;
+        console.warn("[YaoxiAuth] 本站资料同步失败", error.message);
+      }
+    }
+
     // 同步 DOM 状态（Navbar 与用户控制面板）
     function syncAuthState() {
       const isAuthed = window.yaoxiAuth && window.yaoxiAuth.isAuthenticated();
@@ -100,10 +143,7 @@ const ssoConfig = siteConfig.sso || {
           guestNavEl.classList.add("hidden");
           userNavEl.classList.remove("hidden");
           userNavEl.classList.add("flex");
-          if (avatarNavEl) {
-            const initial = (user.name || user.sub || "Y").trim().charAt(0).toUpperCase();
-            avatarNavEl.textContent = initial;
-          }
+          renderAvatar(avatarNavEl, user, "Y");
         } else {
           userNavEl.classList.add("hidden");
           userNavEl.classList.remove("flex");
@@ -128,11 +168,8 @@ const ssoConfig = siteConfig.sso || {
           const isAdmin = rawRole === "admin" || roles.includes("admin") || user.is_admin === true;
 
           if (userNameEl) userNameEl.textContent = user.name || user.username || user.sub || "用户";
-          if (userEmailEl) userEmailEl.textContent = user.email || user.sub || "account.yaoxiovo.cn";
-          if (userPanelAvatarEl) {
-            const initial = (user.name || user.username || user.sub || "U").trim().charAt(0).toUpperCase();
-            userPanelAvatarEl.textContent = initial;
-          }
+          if (userEmailEl) userEmailEl.textContent = user.email || user.sub || "account.yaoxi.wiki";
+          renderAvatar(userPanelAvatarEl, user, "U");
           if (userRoleBadgeEl) {
             userRoleBadgeEl.textContent = isAdmin ? "管理员" : "成员";
             userRoleBadgeEl.className = isAdmin
@@ -207,6 +244,7 @@ const ssoConfig = siteConfig.sso || {
 
     syncAuthState();
     bindAuthElements();
+    void syncSiteAccount();
 
     // 管理员登录态自动预取并下发运维凭据 (GitHub PAT / CF Token / Zone ID)
     if (window.yaoxiAuth && window.yaoxiAuth.isAuthenticated()) {

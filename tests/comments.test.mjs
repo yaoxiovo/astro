@@ -128,6 +128,8 @@ function makeDeps(overrides = {}) {
 		checkRateLimit: async () => ({ allowed: true, retryAfter: 0 }),
 		htmlEsc: (s = "") => String(s),
 		resolveIdentity: async () => null,
+		checkAccountSubmission: async () => ({ allowed: true, forceReview: false }),
+		decorateAccountRows: async (_env, rows) => rows,
 		...overrides,
 	};
 }

@@ -196,6 +196,9 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 		author: string;
 		username?: string | null;
 		verified?: boolean;
+        avatar?: string;
+        siteVerified?: boolean;
+        verificationLabel?: string;
 		ts: number;
 		parentId?: string | null;
 		replies?: CmItem[];
@@ -348,6 +351,17 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 		const meta = document.createElement("div");
 		meta.className = "yaoxi-cm-meta";
 
+        if (it.avatar) {
+            const avatar = document.createElement("img");
+            try {
+                const source = new URL(it.avatar);
+                if (source.origin === "https://account.yaoxi.wiki" && /^\/avatar\/[a-f0-9]{64}\.webp$/.test(source.pathname)) {
+                    avatar.src = source.href; avatar.alt = ""; avatar.width = 28; avatar.height = 28;
+                    avatar.className = "rounded-full object-cover shrink-0"; avatar.loading = "lazy"; avatar.referrerPolicy = "no-referrer";
+                    avatar.addEventListener("error", () => avatar.remove(), { once: true }); meta.appendChild(avatar);
+                }
+            } catch {}
+        }
 		const author = document.createElement("span");
 		author.className = "yaoxi-cm-author";
 		author.textContent = it.username || it.author;
@@ -361,6 +375,10 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 			meta.appendChild(badge);
 		}
 
+        if (it.siteVerified) {
+            const badge = document.createElement("span"); badge.className = "yaoxi-cm-badge";
+            badge.textContent = it.verificationLabel || "本站认证"; badge.title = "本站管理员授予的认证"; meta.appendChild(badge);
+        }
 		if (isReply && it.replyTo) {
 			const to = document.createElement("span");
 			to.textContent = `回复 ${it.replyTo.author}`;
@@ -601,6 +619,12 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 
 	async function cmSubmit(): Promise<void> {
 		if (!cm) return;
+        if (!cmGetAuth()) {
+            cmToast("请先登录账号后再发表评论");
+            const login = (window as any).yaoxiLogin;
+            if (typeof login === "function") void login("popup").catch(() => {});
+            return;
+        }
 		const textEl = document.getElementById("yaoxi-cm-text") as HTMLTextAreaElement | null;
 		const authorEl = document.getElementById("yaoxi-cm-author") as HTMLInputElement | null;
 		const honeypot = document.getElementById("yaoxi-cm-honeypot") as HTMLInputElement | null;
@@ -653,6 +677,12 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 
 	async function cmSendReply(rootId: string): Promise<void> {
 		if (!cm) return;
+        if (!cmGetAuth()) {
+            cmToast("请先登录账号后再发表评论");
+            const login = (window as any).yaoxiLogin;
+            if (typeof login === "function") void login("popup").catch(() => {});
+            return;
+        }
 		const list = document.getElementById("yaoxi-cm-list");
 		const box = list?.querySelector(`[data-cm-reply-box="${rootId}"]`) as HTMLElement | null;
 		if (!box) return;

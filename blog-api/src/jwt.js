@@ -1,7 +1,7 @@
 /**
  * 瑶曦评论 · SSO 身份验签（零依赖 WebCrypto 实现）
  *
- * 目标：让 blog-api 也能验证认证中心（account.yaoxiovo.cn）下发的读者 JWT，
+ * 目标：让 blog-api 也能验证认证中心（account.yaoxi.wiki）下发的读者 JWT，
  *       为评论投稿绑定可信身份。验签语义与 zk-bff 的 requireAuth 严格对齐：
  *       候选密钥顺序 JWT_SECRET → AUTH_SECRET → SSO_SECRET，任一验签通过即为可信身份。
  *
@@ -139,7 +139,18 @@ export async function resolveIdentity(request, env) {
 
 	const raw = payload.username ?? payload.name ?? payload.displayName ?? sub;
 	const username = String(raw == null ? "" : raw).slice(0, 32);
-	return { sub, username };
+	return {
+		sub,
+		username,
+		...(payload.picture ? { picture: getAvatarUrl(payload.picture) } : {}),
+		...(payload.name ? { displayName: String(payload.name).slice(0, 64) } : {}),
+		...(String(payload.role || "").toLowerCase() === "admin" ||
+		(Array.isArray(payload.roles) &&
+			payload.roles.some((role) => String(role).toLowerCase() === "admin")) ||
+		payload.is_admin === true
+			? { isAdmin: true }
+			: {}),
+	};
 }
 
 /** Browser moderation uses a verified SSO administrator; never expose ADMIN_TOKEN. */
@@ -153,4 +164,24 @@ export async function isCommentAdmin(request, env) {
 		roles.some((role) => String(role).toLowerCase() === "admin") ||
 		user.is_admin === true
 	);
+}
+
+/** Only serve avatars published by our identity provider; never accept arbitrary URL schemes. */
+export function getAvatarUrl(value) {
+	if (typeof value !== "string" || value.length > 300) return "";
+	try {
+		const url = new URL(value);
+		if (
+			url.origin !== "https://account.yaoxi.wiki" ||
+			url.username ||
+			url.password ||
+			url.search ||
+			url.hash ||
+			!/^\/avatar\/[a-f0-9]{64}\.webp$/.test(url.pathname)
+		)
+			return "";
+		return url.href;
+	} catch {
+		return "";
+	}
 }

@@ -28,6 +28,7 @@
  * 所有 API 响应带 CORS（Access-Control-Allow-Origin: *）。
  */
 
+import { createSiteAccountsModule } from "./site-accounts.js";
 import { createCommentsModule } from "./comments.js";
 import { resolveIdentity } from "./jwt.js";
 import {
@@ -321,6 +322,8 @@ const num = (v, dft) => {
 /* ================= 评论系统（D1 统一互动存储，取代原 KV 弹幕模块） =================
  * 旧 danmaku.js 已退役（仅保留文件作迁移期参考），/api/danmaku/* 由下方兼容层承接。
  */
+
+const siteAccounts = createSiteAccountsModule({ json, requireAdmin });
 
 const comments = createCommentsModule({
 	json,
@@ -1588,6 +1591,9 @@ export default {
 			return handleContact(request, env, url);
 		}
 
+        if (url.pathname === "/api/account/sync" || url.pathname.startsWith("/api/admin/accounts")) {
+            return siteAccounts.handle(request, env, url);
+        }
 		// 评论系统：列表 / 投稿 / 撤回 / 待审 / 状态机 / 审计 / 迁移
 		if (url.pathname === "/api/comments" && request.method === "GET") {
 			return comments.handleList(request, env, url);

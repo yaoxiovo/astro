@@ -494,6 +494,12 @@ const { slug, api = "https://blog-api.yaoxi.cloud" } = Astro.props;
 
 	async function dmSubmit(): Promise<void> {
 		if (!dm) return;
+        if (!dmGetAuth()) {
+            dmToast("请先登录账号后再发表弹幕");
+            const login = (window as any).yaoxiLogin;
+            if (typeof login === "function") void login("popup").catch(() => {});
+            return;
+        }
 		const sendBtn = document.getElementById("yaoxi-dm-send") as HTMLButtonElement | null;
 		const textInput = document.getElementById("yaoxi-dm-text") as HTMLInputElement | null;
 		const authorInput = document.getElementById("yaoxi-dm-author") as HTMLInputElement | null;

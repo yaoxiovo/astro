@@ -22,6 +22,7 @@
  *           存储等基础能力，resolveIdentity 为 jwt.js 的 SSO 身份解析。
  */
 
+import { checkAccountSubmission as accountCheck, decorateAccountRows as accountDecorate } from "./site-accounts.js";
 import { isCommentAdmin } from "./jwt.js";
 import { moderateTencentText } from "./tencent-tms.js";
 
@@ -73,6 +74,8 @@ export function createCommentsModule(deps) {
 		htmlEsc,
 		resolveIdentity,
 		moderateText = moderateTencentText,
+        checkAccountSubmission = accountCheck,
+        decorateAccountRows = accountDecorate,
 	} = deps;
 
 	/** 校验并归一化文章 slug（防路径穿越 / 非法值） */
@@ -126,6 +129,9 @@ export function createCommentsModule(deps) {
 			author: row.author,
 			username: row.username || null,
 			verified: !!row.user_sub,
+            avatar: row.avatar_url || "",
+            siteVerified: !!row.site_verified,
+            verificationLabel: row.verification_label || "",
 			ts: row.created_at,
 			parentId: row.parent_id || null,
 			rootId: row.root_id || null,
@@ -264,7 +270,7 @@ export function createCommentsModule(deps) {
 			db.prepare(`SELECT COUNT(*) AS n FROM comments WHERE ${totalWhere.join(" AND ")}`).bind(...totalArgs).first(),
 		]);
 
-		const rootRows = rootsRes.results || [];
+		const rootRows = await decorateAccountRows(env, rootsRes.results || []);
 		const items = rootRows.map((r) => {
 			const it = rowToItem(r);
 			if (identity && r.user_sub === identity.sub) it.mine = true;
@@ -281,7 +287,7 @@ export function createCommentsModule(deps) {
 				)
 				.bind(...ids)
 				.all();
-			const replyRows = repliesRes.results || [];
+			const replyRows = await decorateAccountRows(env, repliesRes.results || []);
 
 			const authorById = new Map();
 			for (const r of rootRows) authorById.set(r.id, { author: r.username || r.author, verified: !!r.user_sub });
@@ -339,6 +345,9 @@ export function createCommentsModule(deps) {
 		}
 
 		const identity = await resolveIdentity(request, env);
+
+        const accountPolicy = await checkAccountSubmission(request, env, identity, kind);
+        if (!accountPolicy.allowed) return json({ ok: false, error: accountPolicy.error, message: accountPolicy.message }, accountPolicy.status);
 
 		// 回复目标（仅评论支持楼中楼；弹幕不可回复）
 		let parentId = null;
@@ -404,7 +413,7 @@ export function createCommentsModule(deps) {
 		// Audit displayed text, including the user-supplied anchor excerpt; no IP or JWT is sent.
 		const moderation = await moderateText(env, `${username || author}\n${text}\n${excerpt}`);
 		const blocked = moderation.suggestion === "Block";
-		const autoApprove = moderation.suggestion === "Pass";
+		const autoApprove = moderation.suggestion === "Pass" && !accountPolicy.forceReview;
 		const status = blocked ? "rejected" : autoApprove ? "approved" : "pending";
 		const id = genId();
 		const now = Date.now();
@@ -519,7 +528,7 @@ export function createCommentsModule(deps) {
   }
   const result = await db.prepare(`SELECT * FROM comments WHERE ${where.join(" AND ")} ORDER BY created_at DESC, id DESC LIMIT ?`).bind(...args, 51).all();
   const rows = result.results || [];
-  const page = rows.slice(0, 50);
+  const page = await decorateAccountRows(env, rows.slice(0, 50));
   return json({ items: page.map(row => ({ ...rowToItem(row), post: row.post, status: row.status })), hasMore: rows.length > 50 }, 200, { "Cache-Control": "no-store" });
  }
 
@@ -544,7 +553,7 @@ export function createCommentsModule(deps) {
 			.bind(...args, CM_CONFIG.PENDING_LIST_MAX)
 			.all();
 
-		return json({ total: (res.results || []).length, items: (res.results || []).map(rowToItem) });
+		return json({ total: (res.results || []).length, items: (await decorateAccountRows(env, res.results || [])).map(rowToItem) });
 	}
 
 	/** POST /api/comments/moderate — 状态机流转：approve / reject / delete / restore（管理员） */

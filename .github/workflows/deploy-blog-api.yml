@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: 22
       - name: Test comment moderation
-        run: node --test tests/tencent-tms.test.mjs tests/comments.test.mjs tests/ddos-auth.test.mjs
+        run: node --test tests/tencent-tms.test.mjs tests/comments.test.mjs tests/ddos-auth.test.mjs tests/site-accounts.test.mjs
 
       - name: Configure SSH
         env:
