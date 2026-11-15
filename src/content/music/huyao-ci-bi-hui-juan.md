@@ -4,7 +4,7 @@ artist: "Lethe"
 comics: ["huyao-xiaohongniang"]
 songType: "附属歌曲"
 src: "https://blog-api.yaoxi.wiki/comic-media/huyao-ci-bi-hui-juan.mp3"
-cover: "https://blog-s3-cf.yaoxi.wiki/comics/huyao-xiaohongniang/cover.webp"
+cover: "/music/covers/huyao-lethe-embedded.jpg"
 lrc: "/music/lrc/huyao-ci-bi-hui-juan.lrc"
 published: 2026-11-15T00:00:00.000Z
 author: "瑶曦"

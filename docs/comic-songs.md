@@ -23,3 +23,5 @@ published: 2026-11-15
 ## 已收录资源
 
 已收录用户提供的 14 首 Lethe 歌曲，均关联《狐妖小红娘》。歌词保存在 `public/music/lrc/huyao-*.lrc`。音频由 `https://blog-api.yaoxi.wiki/comic-media/` 提供，对应服务器 `/www/wwwroot/blog-comic-media/`；该目录独立于前端部署目录，不受 rsync 清理影响。Nginx 扩展配置为 `/www/server/panel/vhost/nginx/extension/blog-api.yaoxi.wiki/comic-media.conf`，支持 Range、7 天缓存和跨域读取。原始文件保留在 `/www/wwwroot/111/`。
+
+歌曲封面从各 MP3 的内嵌图片原样提取，不重新编码。当前 14 首音频的内嵌封面完全相同（640 × 640 JPEG），统一引用 `public/music/covers/huyao-lethe-embedded.jpg`。
