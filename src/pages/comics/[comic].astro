@@ -1,4 +1,5 @@
 ---
+import { getCollection } from "astro:content";
 import type { ComicSeriesIndex } from "@/types/comic";
 import ComicDirectoryApp from "@components/comic/ComicDirectoryApp.svelte";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
@@ -29,6 +30,7 @@ export function getStaticPaths() {
 
 const { series } = Astro.props;
 const { meta, chapters } = series;
+const songs = (await getCollection("music")).filter((song) => song.data.comics.includes(meta.slug));
 const firstChapter = chapters[0];
 const latestChapter = chapters[chapters.length - 1];
 ---
@@ -158,6 +160,25 @@ const latestChapter = chapters[chapters.length - 1];
 					</div>
 				</div>
 			</div>
+		</section>
+
+		<section aria-labelledby="comic-songs-title" class="card-base p-6 bg-[var(--card-bg)] border border-black/5 dark:border-white/10 rounded-2xl">
+			<h2 id="comic-songs-title" class="text-lg font-bold text-black/90 dark:text-white/90 mb-4">附属歌曲 <span class="text-sm font-normal text-black/50 dark:text-white/50">{songs.length} 首</span></h2>
+			{songs.length > 0 ? (
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+					{songs.map((song) => (
+						<a href={`/music/${song.slug}/`} class="flex items-center gap-3 p-3 rounded-xl bg-black/5 dark:bg-white/5 hover:text-[var(--primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 transition-colors">
+							<img src={song.data.cover || meta.cover} alt="" loading="lazy" width="56" height="56" class="w-14 h-14 rounded-lg object-cover" />
+							<div class="min-w-0 flex-1">
+								<h3 class="font-semibold truncate">{song.data.title}</h3>
+								<p class="text-xs text-black/60 dark:text-white/60 truncate">{song.data.artist}{song.data.songType && ` · ${song.data.songType}`}</p>
+								<p class="text-xs text-[var(--primary)] mt-1">{song.data.lrc ? "听歌 · 查看歌词" : "查看歌曲详情"}</p>
+							</div>
+							<Icon name="material-symbols:chevron-right-rounded" class="text-xl shrink-0" />
+						</a>
+					))}
+				</div>
+			) : <p class="text-sm text-black/50 dark:text-white/50">暂未收录附属歌曲。</p>}
 		</section>
 
 		<!-- Svelte 交互式章节目录（百话分卷 + 即时检索 + 已读记忆） -->

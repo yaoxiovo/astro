@@ -200,15 +200,14 @@ const { src, title, artist, cover = "/favicon.svg", lrc } = Astro.props;
           return;
         }
         
-        lyricList.innerHTML = lyricArray.map((line, idx) => `
-          <div 
-            class="lyric-line transition-all duration-300 text-center py-1.5 px-4 text-neutral-500 dark:text-neutral-500 text-sm md:text-base cursor-pointer hover:text-neutral-800 dark:hover:text-neutral-800 rounded-lg hover:bg-neutral-100/80 active:scale-98 select-none" 
-            data-index="${idx}" 
-            data-time="${line.time}"
-          >
-            ${line.text}
-          </div>
-        `).join('');
+        lyricList.replaceChildren(...lyricArray.map((line, idx) => {
+          const element = document.createElement('div');
+          element.className = 'lyric-line transition-all duration-300 text-center py-1.5 px-4 text-neutral-500 text-sm md:text-base cursor-pointer hover:text-neutral-800 rounded-lg hover:bg-neutral-100/80 select-none';
+          element.dataset.index = String(idx);
+          element.dataset.time = String(line.time);
+          element.textContent = line.text;
+          return element;
+        }));
       }
 
       if (lrcData) {

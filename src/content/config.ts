@@ -59,6 +59,9 @@ const musicCollection = defineCollection({
 	schema: z.object({
 		title: z.string(),
 		artist: z.string(),
+		/** 关联漫画的 slug，可同时属于多个漫画。 */
+		comics: z.array(z.string()).default([]),
+		songType: z.string().optional(),
 		src: z.string(),
 		cover: z.string().optional(),
 		lrc: z.string().optional(),
