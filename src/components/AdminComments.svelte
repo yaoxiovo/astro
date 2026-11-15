@@ -148,6 +148,8 @@ onMount(() => {
 		message = "登录状态已变化，请刷新列表。";
 	};
 	window.addEventListener("admin:comments:open", open);
+	if (!document.getElementById("panel-comments")?.classList.contains("hidden"))
+		open();
 	window.addEventListener("yaoxi:auth:change", authChange);
 	return () => {
 		requestVersion++;
