@@ -22,6 +22,7 @@
  *           存储等基础能力，resolveIdentity 为 jwt.js 的 SSO 身份解析。
  */
 
+import { isCommentAdmin } from "./jwt.js";
 import { moderateTencentText } from "./tencent-tms.js";
 
 const BLOG_ORIGIN = "https://blog.yaoxi.wiki";
@@ -403,8 +404,7 @@ export function createCommentsModule(deps) {
 		// Audit displayed text, including the user-supplied anchor excerpt; no IP or JWT is sent.
 		const moderation = await moderateText(env, `${username || author}\n${text}\n${excerpt}`);
 		const blocked = moderation.suggestion === "Block";
-		const mayApprove = moderation.suggestion === "Pass" || moderation.suggestion === "Disabled";
-		const autoApprove = mayApprove && ["1", "true", "yes"].includes(String(env?.DANMAKU_AUTO_APPROVE || "").toLowerCase());
+		const autoApprove = moderation.suggestion === "Pass";
 		const status = blocked ? "rejected" : autoApprove ? "approved" : "pending";
 		const id = genId();
 		const now = Date.now();
@@ -437,7 +437,7 @@ export function createCommentsModule(deps) {
 		}
 
 		const notifyRow = { id, post, kind, p, x: excerpt, body: text, author, color, username, user_sub: userSub };
-		if (ctx?.waitUntil) ctx.waitUntil(notifyTelegram(env, notifyRow, autoApprove ? "live" : "pending", parentAuthor, moderation));
+		if (env?.COMMENT_TELEGRAM_NOTIFY === "true" && ctx?.waitUntil) ctx.waitUntil(notifyTelegram(env, notifyRow, autoApprove ? "live" : "pending", parentAuthor, moderation));
 
 		return json({
 			ok: true,
@@ -495,9 +495,37 @@ export function createCommentsModule(deps) {
 		return json({ ok: true, action: "delete", post: row.post, message: "已撤回喵~" });
 	}
 
+
+ /** GET /api/comments/manage — private, status-filtered administration with cursor pagination. */
+ async function handleManage(request, env, url) {
+  if (!(await requireAdmin(request, env)) && !(await isCommentAdmin(request, env)))
+   return json({ error: "unauthorized", message: "请使用管理员账号登录" }, 401);
+  const db = getDb(env);
+  if (!db) return json({ error: "db_not_configured", message: "评论存储未配置" }, 500);
+  const status = url.searchParams.get("status") || "pending";
+  const kind = url.searchParams.get("kind") || "all";
+  if (!["pending", "approved", "rejected", "deleted"].includes(status) || !["all", "comment", "danmaku"].includes(kind))
+   return json({ error: "invalid_filter", message: "筛选条件无效" }, 400);
+  const where = ["status = ?"];
+  const args = [status];
+  if (kind !== "all") { where.push("kind = ?"); args.push(kind); }
+  const before = url.searchParams.get("before");
+  const beforeId = url.searchParams.get("beforeId");
+  if (before !== null) {
+   if (!Number.isSafeInteger(Number(before)) || Number(before) <= 0 || !CM_ID_RE.test(beforeId || ""))
+    return json({ error: "invalid_cursor", message: "分页参数无效" }, 400);
+   where.push("(created_at < ? OR (created_at = ? AND id < ?))");
+   args.push(Number(before), Number(before), beforeId);
+  }
+  const result = await db.prepare(`SELECT * FROM comments WHERE ${where.join(" AND ")} ORDER BY created_at DESC, id DESC LIMIT ?`).bind(...args, 51).all();
+  const rows = result.results || [];
+  const page = rows.slice(0, 50);
+  return json({ items: page.map(row => ({ ...rowToItem(row), post: row.post, status: row.status })), hasMore: rows.length > 50 }, 200, { "Cache-Control": "no-store" });
+ }
+
 	/** GET /api/comments/pending — 待审列表（管理员） */
 	async function handlePending(request, env, url) {
-		if (!requireAdmin(request, env)) {
+		if (!(await requireAdmin(request, env)) && !(await isCommentAdmin(request, env))) {
 			return json({ error: "unauthorized", message: "缺少管理员鉴权令牌" }, 401);
 		}
 		const db = getDb(env);
@@ -521,7 +549,7 @@ export function createCommentsModule(deps) {
 
 	/** POST /api/comments/moderate — 状态机流转：approve / reject / delete / restore（管理员） */
 	async function handleModerate(request, env) {
-		if (!requireAdmin(request, env)) {
+		if (!(await requireAdmin(request, env)) && !(await isCommentAdmin(request, env))) {
 			return json({ error: "unauthorized", message: "缺少管理员鉴权令牌" }, 401);
 		}
 
@@ -563,7 +591,7 @@ export function createCommentsModule(deps) {
 
 	/** GET /api/comments/events — 审计流水（管理员，可按 comment_id 过滤） */
 	async function handleEvents(request, env, url) {
-		if (!requireAdmin(request, env)) {
+		if (!(await requireAdmin(request, env)) && !(await isCommentAdmin(request, env))) {
 			return json({ error: "unauthorized", message: "缺少管理员鉴权令牌" }, 401);
 		}
 		const db = getDb(env);
@@ -758,6 +786,7 @@ export function createCommentsModule(deps) {
 		handleLegacySubmit,
 		handleLegacyGet,
 		handleDelete,
+		handleManage,
 		handlePending,
 		handleModerate,
 		handleEvents,

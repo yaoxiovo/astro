@@ -339,7 +339,9 @@ describe("评论投稿 (submit)", () => {
 
 	for (const [suggestion, autoFlag, expectedStatus, expectedMode] of [
 		["Pass", "true", "approved", "live"],
-		["Pass", "false", "pending", "pending"],
+		["Pass", "false", "approved", "live"],
+		["Pass", undefined, "approved", "live"],
+		["Disabled", "true", "pending", "pending"],
 		["Review", "true", "pending", "pending"],
 		["Error", "true", "pending", "pending"],
 		["Block", "true", "rejected", undefined],
@@ -486,7 +488,7 @@ describe("评论投稿 (submit)", () => {
 		assert.equal(calls.filter((c) => c.batch).length, 1);
 	});
 
-	it("DANMAKU_AUTO_APPROVE=true 时直接上墙（mode=live）", async () => {
+	it("未启用文本检测时即使旧自动开关开启也必须待审", async () => {
 		const { db } = makeDb();
 		const mod = createCommentsModule(makeDeps());
 		const res = await mod.handleSubmit(
@@ -495,7 +497,7 @@ describe("评论投稿 (submit)", () => {
 			null,
 			null,
 		);
-		assert.equal(res.data.mode, "live");
+		assert.equal(res.data.mode, "pending");
 	});
 
 	it("去重窗口内重复内容应返回「已发送过」且不写库", async () => {
@@ -832,5 +834,145 @@ describe("KV 弹幕迁移 (migrate)", () => {
 		const mod2 = createCommentsModule(makeDeps());
 		const noDb = await mod2.handleMigrate(makeRequest({}), {});
 		assert.equal(noDb.status, 500);
+	});
+});
+
+describe("/admin 评论审核鉴权与列表", () => {
+	const secret = "comment-admin-test-secret";
+	const tokenFor = (role) =>
+		makeToken(
+			{ sub: "test-user", role, exp: Math.floor(Date.now() / 1000) + 300 },
+			secret,
+		);
+	it("管理员 SSO 可管理，普通成员、伪造角色和匿名请求不可读取私有列表", async () => {
+		const { db, calls } = makeDb({
+			all: () => [
+				{
+					id: "abc123",
+					post: "demo",
+					kind: "comment",
+					status: "pending",
+					body: "hello",
+					author: "guest",
+					created_at: 100,
+					ip_hash: "private",
+				},
+			],
+		});
+		const mod = createCommentsModule(
+			makeDeps({ requireAdmin: async () => false }),
+		);
+		const env = { DB: db, JWT_SECRET: secret };
+		for (const token of [
+			undefined,
+			await tokenFor("member"),
+			await makeToken(
+				{
+					sub: "evil",
+					role: "admin",
+					exp: Math.floor(Date.now() / 1000) + 300,
+				},
+				"wrong-secret",
+			),
+		]) {
+			assert.equal(
+				(
+					await mod.handleManage(
+						makeRequest(null, { token }),
+						env,
+						new URL("https://example.com?status=pending"),
+					)
+				).status,
+				401,
+			);
+		}
+		assert.equal(calls.length, 0);
+		const response = await mod.handleManage(
+			makeRequest(null, { token: await tokenFor("admin") }),
+			env,
+			new URL("https://example.com?status=pending"),
+		);
+		assert.equal(response.status, 200);
+		assert.equal(response.data.items[0].post, "demo");
+		assert.equal(response.data.items[0].status, "pending");
+		assert.equal(response.data.items[0].ip_hash, undefined);
+	});
+	it("状态与类型过滤及同时间戳游标使用绑定参数，拒绝非法状态", async () => {
+		const rows = Array.from({ length: 51 }, (_, i) => ({
+			id: `abc${String(i).padStart(3, "0")}`,
+			created_at: 100,
+			status: "approved",
+		}));
+		const { db, calls } = makeDb({ all: () => rows });
+		const mod = createCommentsModule(makeDeps());
+		const response = await mod.handleManage(
+			makeRequest(),
+			{ DB: db },
+			new URL(
+				"https://example.com?status=approved&kind=comment&before=100&beforeId=abc123",
+			),
+		);
+		assert.equal(response.data.items.length, 50);
+		assert.equal(response.data.hasMore, true);
+		assert.deepEqual(calls[0].args, [
+			"approved",
+			"comment",
+			100,
+			100,
+			"abc123",
+			51,
+		]);
+		assert.equal(
+			(
+				await mod.handleManage(
+					makeRequest(),
+					{ DB: db },
+					new URL("https://example.com?status=invalid"),
+				)
+			).status,
+			400,
+		);
+		assert.equal(
+			(
+				await mod.handleManage(
+					makeRequest(),
+					{ DB: db },
+					new URL("https://example.com?before=1"),
+				)
+			).status,
+			400,
+		);
+	});
+	it("管理员 SSO 可一键通过，成员不能更改状态", async () => {
+		const { db, calls } = makeDb({
+			first: () => ({
+				id: "abc123",
+				status: "pending",
+				post: "demo",
+				kind: "comment",
+			}),
+		});
+		const mod = createCommentsModule(makeDeps({ requireAdmin: () => false }));
+		const env = { DB: db, JWT_SECRET: secret };
+		const body = { id: "abc123", action: "approve" };
+		assert.equal(
+			(
+				await mod.handleModerate(
+					makeRequest(body, { token: await tokenFor("member") }),
+					env,
+				)
+			).status,
+			401,
+		);
+		assert.equal(calls.length, 0);
+		const response = await mod.handleModerate(
+			makeRequest(body, { token: await tokenFor("admin") }),
+			env,
+		);
+		assert.equal(response.data.status, "approved");
+		assert.equal(
+			calls.find((call) => call.batch).statements[1]._bound[1],
+			"approve",
+		);
 	});
 });

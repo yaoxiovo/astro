@@ -17,7 +17,10 @@ const MAX_TOKEN_LENGTH = 4096;
 
 /** base64url → Uint8Array（兼容缺省 padding） */
 function b64urlToBytes(input) {
-	const s = String(input).replace(/-/g, "+").replace(/_/g, "/").replace(/\s+/g, "");
+	const s = String(input)
+		.replace(/-/g, "+")
+		.replace(/_/g, "/")
+		.replace(/\s+/g, "");
 	const padded = s.length % 4 === 0 ? s : s + "=".repeat(4 - (s.length % 4));
 	const bin = atob(padded);
 	const bytes = new Uint8Array(bin.length);
@@ -38,7 +41,11 @@ function claimsValid(payload) {
 	if (typeof payload.exp !== "number") return false;
 	const now = Math.floor(Date.now() / 1000);
 	if (now > payload.exp + CLOCK_TOLERANCE_SEC) return false;
-	if (typeof payload.nbf === "number" && now + CLOCK_TOLERANCE_SEC < payload.nbf) return false;
+	if (
+		typeof payload.nbf === "number" &&
+		now + CLOCK_TOLERANCE_SEC < payload.nbf
+	)
+		return false;
 	return true;
 }
 
@@ -47,7 +54,13 @@ function claimsValid(payload) {
  * 使用 WebCrypto HMAC verify（实现层保证常数时间比较，防时序侧信道）。
  */
 export async function verifyJwt(token, secrets) {
-	if (!token || typeof token !== "string" || !Array.isArray(secrets) || secrets.length === 0) return null;
+	if (
+		!token ||
+		typeof token !== "string" ||
+		!Array.isArray(secrets) ||
+		secrets.length === 0
+	)
+		return null;
 
 	const parts = token.split(".");
 	if (parts.length !== 3) return null;
@@ -78,7 +91,12 @@ export async function verifyJwt(token, secrets) {
 				false,
 				["verify"],
 			);
-			const ok = await crypto.subtle.verify("HMAC", key, signature, signingInput);
+			const ok = await crypto.subtle.verify(
+				"HMAC",
+				key,
+				signature,
+				signingInput,
+			);
 			if (ok) return claimsValid(payload) ? payload : null;
 		} catch {
 			// 密钥材料异常：尝试下一个候选
@@ -122,4 +140,17 @@ export async function resolveIdentity(request, env) {
 	const raw = payload.username ?? payload.name ?? payload.displayName ?? sub;
 	const username = String(raw == null ? "" : raw).slice(0, 32);
 	return { sub, username };
+}
+
+/** Browser moderation uses a verified SSO administrator; never expose ADMIN_TOKEN. */
+export async function isCommentAdmin(request, env) {
+	const token = extractBearerToken(request);
+	const user = token ? await verifyJwt(token, getCandidateSecrets(env)) : null;
+	if (!user?.sub) return false;
+	const roles = Array.isArray(user.roles) ? user.roles : [];
+	return (
+		String(user.role || "").toLowerCase() === "admin" ||
+		roles.some((role) => String(role).toLowerCase() === "admin") ||
+		user.is_admin === true
+	);
 }

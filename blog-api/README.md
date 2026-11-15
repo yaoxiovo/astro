@@ -108,7 +108,7 @@
 
 > 💡 **评论存储**：D1 数据库 `yaoxi-blog-d1`（与 zk-bff 共享），迁移文件在 `migrations/`，CI 部署时自动执行 `wrangler d1 migrations apply`。
 
-> 💡 **互动免审开关**：`wrangler.jsonc` 的 `DANMAKU_AUTO_APPROVE` var 设为 `"true"` 时跳过人工审核直接上墙（默认 `"false"`，同时作用于弹幕与评论）。未配置 Telegram 凭据时，投稿仍会进入待审队列，可用 `POST /api/comments/moderate` 手动处理。
+> 💡 **旧互动免审开关（已停用）**：`wrangler.jsonc` 的 `DANMAKU_AUTO_APPROVE` var 设为 `"true"` 时跳过人工审核直接上墙（默认 `"false"`，同时作用于弹幕与评论）。未配置 Telegram 凭据时，投稿仍会进入待审队列，可用 `POST /api/comments/moderate` 手动处理。
 
 > 💡 **本地调试/开发模式**：当未配置 `RESEND_API_KEY` 时，Worker 自动进入 Mock 模式，在控制台打印邮件内容而不真正投递，完全不会报错或中断。
 
@@ -118,3 +118,5 @@
 
 推送代码至 `main` 分支（`blog-api/**` 发生变更）将自动触发 **Deploy Blog API** 工作流，全自动完成 KV 绑定、Secrets 同步和 Worker 部署。
 访问域名：`https://blog-api.yaoxi.cloud`
+
+评论审核已迁入 `/admin/` 的「评论审核」面板，支持单条与批量操作；腾讯云 `Pass` 默认自动通过，其他结果按安全策略进入待审或拒绝。旧 `DANMAKU_AUTO_APPROVE` 不再生效，详见 `docs/tencent-tms.md`。

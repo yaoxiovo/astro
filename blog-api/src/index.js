@@ -1598,6 +1598,9 @@ export default {
 		if (url.pathname === "/api/comments/delete" && request.method === "POST") {
 			return comments.handleDelete(request, env);
 		}
+        if (url.pathname === "/api/comments/manage" && request.method === "GET") {
+            return comments.handleManage(request, env, url);
+        }
 		if (url.pathname === "/api/comments/pending" && request.method === "GET") {
 			return comments.handlePending(request, env, url);
 		}

@@ -49,3 +49,11 @@
 `node --test tests/tencent-tms.test.mjs tests/comments.test.mjs tests/ddos-auth.test.mjs` 只执行 Node 测试，不运行构建；所有腾讯响应均为测试桩，不消耗真实接口额度。配置真实凭据后还需在目标运行环境验证真实 Pass / Review / Block 策略与 RequestId；未配置密钥前不能视为线上已启用。
 
 官方依据：[TextModeration](https://cloud.tencent.com/document/api/1124/51860)、[TC3 签名方法 v3](https://cloud.tencent.com/document/product/213/30654)。
+
+## 评论审核后台（2026-11-15）
+
+管理员登录 `/admin/` 后进入「评论审核」，按待审核、已通过、已拒绝、已删除筛选评论与弹幕，支持单条操作或勾选后批量通过、拒绝、删除、恢复。删除为软删除，保留审核流水。列表每次加载 50 条，可继续加载。
+
+`GET /api/comments/manage?status=pending&kind=all` 返回后台列表，仅接受已验签的管理员 SSO 或服务端管理令牌。前端只发送自己的登录令牌，不接触服务端 ADMIN_TOKEN。普通成员和匿名请求不能读取后台列表或执行审核。
+
+默认审核策略：腾讯云返回 `Pass` 自动展示，`Review`、请求异常、未启用检测时待人工复核，`Block` 拒绝。旧 `DANMAKU_AUTO_APPROVE` 开关不再控制评论系统，不能绕过腾讯云检测。旧待审内容不会批量追溯自动放行。评论审核以后台为入口；Telegram 通知默认关闭，只有显式配置 `COMMENT_TELEGRAM_NOTIFY=true` 才发送。

@@ -1,5 +1,6 @@
 ---
 import { getSortedPosts } from "@/utils/content-utils";
+import AdminComments from "@components/AdminComments.svelte";
 import Layout from "@layouts/Layout.astro";
 import { umamiConfig } from "../config";
 
@@ -229,11 +230,13 @@ const safeInitialPostsJson = JSON.stringify(initialPosts).replace(
       <button type="button" id="tab-mode-novel" class="px-4 py-2 rounded-xl text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
         <span>📖 小说连载发布 (Novel)</span>
       </button>
+      <button type="button" id="tab-mode-comments" class="px-4 py-2 rounded-xl text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all cursor-pointer">💬 评论审核</button>
       <button type="button" id="tab-mode-analytics" class="px-4 py-2 rounded-xl text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
         <span>📊 流量大盘 (Live Analytics)</span>
       </button>
     </div>
 
+    <div id="panel-comments" class="hidden mb-6"><AdminComments client:load /></div>
     <!-- 编辑模式指示横幅 (默认隐藏) -->
     <div id="editing-mode-banner" class="hidden mb-5 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-4 animate-fade-in">
       <div class="flex items-center gap-3 min-w-0">
@@ -2564,6 +2567,15 @@ ${content.trim()}
       if (tabModeNovel) tabModeNovel.className = mode === 'novel' ? tabActiveClass : tabInactiveClass;
       if (tabModeAnalytics) tabModeAnalytics.className = mode === 'analytics' ? tabActiveClass : tabInactiveClass;
 
+      const commentsPanel = document.getElementById('panel-comments');
+      const commentsTab = document.getElementById('tab-mode-comments');
+      if (commentsTab) commentsTab.className = mode === 'comments' ? tabActiveClass : tabInactiveClass;
+      commentsPanel?.classList.toggle('hidden', mode !== 'comments');
+      if (mode === 'comments') {
+        [panelPostEditor, panelPostManage, panelMomentEditor, panelNovel, panelAnalytics, editingModeBanner, btnPublish].forEach(el => el?.classList.add('hidden'));
+        window.dispatchEvent(new Event('admin:comments:open'));
+        return;
+      }
       if (mode === 'post') {
         panelPostEditor?.classList.remove('hidden');
         panelPostManage?.classList.add('hidden');
@@ -2611,6 +2623,7 @@ ${content.trim()}
       }
     }
 
+    document.getElementById('tab-mode-comments')?.addEventListener('click', () => setEditorMode('comments'));
     tabModePost?.addEventListener('click', () => setEditorMode('post'));
     tabModeManage?.addEventListener('click', () => setEditorMode('manage'));
     tabModeMoment?.addEventListener('click', () => setEditorMode('moment'));
