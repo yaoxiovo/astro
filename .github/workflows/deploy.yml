@@ -2,91 +2,107 @@ name: Build and Deploy Astro
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
+
+concurrency:
+  group: astro-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    # corepack 在非交互环境下下载 packageManager 指定的 pnpm 前会要求确认，
-    # 置 0 关闭该提示；这不影响任何步骤的退出码，失败仍会让工作流变红。
     env:
       COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
       FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+      SERVER_HOST: "43.128.137.8"
+      SERVER_USER: ${{ secrets.SERVER_USER || 'root' }}
+      SERVER_TARGET_DIR: /www/wwwroot/blog.yaoxi.wiki
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
-
-      - name: Enable Corepack (pnpm via packageManager)
+      - name: Enable pnpm
         run: corepack enable
-
-      # 必须用 pnpm：pnpm.patchedDependencies 对 astro 的补丁（patches/astro.patch）
-      # 只有 pnpm 会应用，npm 会静默跳过并让构建产物与本地分叉。
-      - name: Install Dependencies
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Build Astro
+      - name: Build complete blog artifacts on GitHub
         run: pnpm run build
         env:
-          # 官印签名私钥（Ed25519 PEM 或 base64(PEM)）；未配置时构建自动跳过签发并保留既有 manifest
           SEAL_PRIVATE_KEY: ${{ secrets.SEAL_PRIVATE_KEY }}
-
-      - name: Deploy to Linux Server via Rsync
+      - name: Validate complete website output
+        run: |
+          test -s dist/index.html
+          test -d dist/_astro
+          test -s dist/comics/huyao-xiaohongniang/0001/index.html
+          test -s dist/js/yaoxi-one-tap.js
+      - name: Configure SSH deployment
         env:
           SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
-          SERVER_HOST: ${{ secrets.SERVER_HOST || '43.128.137.8' }}
-          SERVER_USER: ${{ secrets.SERVER_USER || 'root' }}
-          SERVER_TARGET_DIR: ${{ secrets.SERVER_TARGET_DIR || '/www/wwwroot/blog-api.yaoxi.wiki' }}
         run: |
-          if [ -z "$SERVER_SSH_KEY" ]; then
-            echo "::error::SERVER_SSH_KEY is not configured in GitHub Secrets! Please add it in Repository Settings."
+          test -n "$SERVER_SSH_KEY" || { echo '::error::SERVER_SSH_KEY is missing'; exit 1; }
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          python3 - <<'PY'
+          import os, base64, pathlib
+          raw = os.environ['SERVER_SSH_KEY'].strip()
+          key = raw.replace(chr(92) + 'n', chr(10)) if 'BEGIN' in raw else base64.b64decode(raw).decode()
+          p = pathlib.Path.home() / '.ssh/deploy_key'
+          p.write_text(key.strip() + '\n')
+          p.chmod(0o600)
+          PY
+          printf '%s\n' '43.128.137.8 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ+S5l945iCPH7vbvoEAkKzwsBq5zKJvltWRlTQJu3Hp' > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          ssh-keygen -l -f ~/.ssh/deploy_key
+      - name: Incrementally upload the complete site
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          RELEASE_DIR="/www/blog-releases/$DEPLOY_SHA"
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$SERVER_USER@$SERVER_HOST" "mkdir -p '$RELEASE_DIR'"
+          # Complete artifact set; checksums and hard links avoid retransmitting unchanged files.
+          rsync -a --checksum --no-owner --no-group --no-times --chmod=D755,F644 \
+            --delete --link-dest="$SERVER_TARGET_DIR" \
+            -e 'ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes' \
+            dist/ "$SERVER_USER@$SERVER_HOST:$RELEASE_DIR/"
+      - name: Atomically activate and verify release
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$SERVER_USER@$SERVER_HOST" \
+            bash -s -- "/www/blog-releases/$DEPLOY_SHA" "$SERVER_TARGET_DIR" "$GITHUB_RUN_ID" <<'REMOTE'
+          set -euo pipefail
+          release="$1"; target="$2"; run_id="$3"
+          test -s "$release/index.html"
+          test -d "$release/_astro"
+          test -s "$release/comics/huyao-xiaohongniang/0001/index.html"
+          chown -R www:www "$release"
+          previous=''
+          if [ -L "$target" ]; then
+            previous="$(readlink -f "$target")"
+          elif [ -d "$target" ]; then
+            previous="/www/blog-releases/bootstrap-$run_id"
+            mv "$target" "$previous"
+          fi
+          ln -s "$release" "$target.next-$run_id"
+          mv -Tf "$target.next-$run_id" "$target"
+          if ! curl --noproxy '*' --fail --silent --show-error \
+            --resolve blog.yaoxi.wiki:443:127.0.0.1 https://blog.yaoxi.wiki/ -o /dev/null; then
+            if [ -n "$previous" ]; then
+              ln -s "$previous" "$target.rollback-$run_id"
+              mv -Tf "$target.rollback-$run_id" "$target"
+            fi
+            echo 'Release health check failed; previous release restored.' >&2
             exit 1
           fi
-
-          echo "Setting up SSH deploy key..."
-          mkdir -p ~/.ssh
-          python3 -c '
-          import sys, base64
-          raw = sys.stdin.read().strip()
-          if "BEGIN" in raw:
-              raw = raw.replace("\\n", "\n")
-              out = raw.strip() + "\n"
-          else:
-              try:
-                  out = base64.b64decode(raw).decode("utf-8").strip() + "\n"
-              except Exception:
-                  out = raw.strip() + "\n"
-          with open("/tmp/deploy_key", "w") as f:
-              f.write(out)
-          ' <<< "$SERVER_SSH_KEY"
-          mv /tmp/deploy_key ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-
-          echo "Validating deploy key format..."
-          ssh-keygen -l -f ~/.ssh/deploy_key || { echo "::error::Private key format is invalid! Please verify SERVER_SSH_KEY secret."; exit 1; }
-
-          echo "Testing SSH connection to $SERVER_USER@$SERVER_HOST..."
-          ssh -v -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 -o BatchMode=yes $SERVER_USER@$SERVER_HOST "uname -a" || {
-            echo "::error::SSH authentication failed! Please check if the private key matches ~/.ssh/authorized_keys on the server."
-            exit 1
-          }
-
-          echo "Synchronizing static dist artifacts to $SERVER_HOST:$SERVER_TARGET_DIR..."
-          rsync -avz --delete --exclude=".user.ini" --exclude=".htaccess" --exclude=".well-known" --exclude="/comics/*/chapters" -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15" dist/ $SERVER_USER@$SERVER_HOST:$SERVER_TARGET_DIR/
-
-          echo "Setting file permissions on remote server..."
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=15 $SERVER_USER@$SERVER_HOST "chown -R www:www $SERVER_TARGET_DIR && chmod -R 755 $SERVER_TARGET_DIR"
-
-          echo "Deployment to Linux Server completed successfully!"
-
+          printf 'Activated %s\n' "$release"
+          REMOTE
       - name: Deploy to Firebase (Optional)
         if: ${{ env.FIREBASE_TOKEN != '' }}
         continue-on-error: true
