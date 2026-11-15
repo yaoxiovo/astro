@@ -30,7 +30,9 @@ export function getStaticPaths() {
 
 const { series } = Astro.props;
 const { meta, chapters } = series;
-const songs = (await getCollection("music")).filter((song) => song.data.comics.includes(meta.slug));
+const songs = (await getCollection("music")).filter((song) =>
+	song.data.comics.includes(meta.slug),
+);
 const firstChapter = chapters[0];
 const latestChapter = chapters[chapters.length - 1];
 ---

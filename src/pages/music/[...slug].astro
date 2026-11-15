@@ -16,7 +16,9 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await entry.render();
-const relatedComics = getComicCatalog().filter((comic) => entry.data.comics.includes(comic.slug));
+const relatedComics = getComicCatalog().filter((comic) =>
+	entry.data.comics.includes(comic.slug),
+);
 ---
 
 <MainGridLayout title={`${entry.data.title} - 听歌随笔`} description={`关于 ${entry.data.title} 的沉浸式听歌随笔喵`} noindex>
