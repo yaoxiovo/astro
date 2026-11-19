@@ -142,7 +142,10 @@ try {
         async function checkServer(url) {
             try {
                 const targetUrl = normalizeUrl(url) || window.location.href;
-                const response = await fetch(targetUrl, { method: "HEAD" });
+                const response = await fetch(targetUrl, { method: "HEAD", cache: "no-store" });
+                if (response.headers.has('eo-log-uuid') || response.headers.has('eo-cache-status')) {
+                    return 'edgeone';
+                }
                 return response.headers.get('server');
             } catch (error) {
                 console.warn(`Failed to fetch server info for ${url}:`, error);
