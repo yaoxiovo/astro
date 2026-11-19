@@ -16,13 +16,13 @@
     "description": "根据古典小说记载，世上有人有妖，妖会与人相恋。妖寿命千万年，人的寿命有限；人会投胎转世，但投胎以后不记得上辈子的爱。痴情的妖便会前往涂山向狐妖“购买”转世续缘之术，令转世后的恋人回忆起前世记忆。全彩典藏版完整收录全篇正传、番外剧场与创作公告。",
     "cover": "/comics/huyao-xiaohongniang/cover.webp",
     "banner": "/comics/huyao-xiaohongniang/banner.webp",
-    "totalChapters": 785,
-    "mainChapters": 744,
+    "totalChapters": 840,
+    "mainChapters": 799,
     "extraChapters": 18,
     "noticeChapters": 23,
-    "totalPages": 10405,
-    "totalBytes": 1469010808,
-    "updatedAt": "2026-11-10",
+    "totalPages": 11222,
+    "totalBytes": 1665333952,
+    "updatedAt": "2026-11-19",
     "source": "kkwebtoon 全彩条漫典藏镜像",
     "order": 100,
     "imageBaseUrl": "https://blog-s3-cf.yaoxi.wiki",
@@ -5539,6 +5539,391 @@
       "title": "总648·天赋怪从来不讲道理",
       "kind": "main",
       "pageCount": 14
+    },
+    {
+      "index": 786,
+      "slug": "0786",
+      "title": "总649·阡陌无形剑",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 787,
+      "slug": "0787",
+      "title": "总650·我有",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 788,
+      "slug": "0788",
+      "title": "651·真是邪恶",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 789,
+      "slug": "0789",
+      "title": "总652·它们已经是成熟的狐妖",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 790,
+      "slug": "0790",
+      "title": "总653·我可是有很多人疼的！",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 791,
+      "slug": "0791",
+      "title": "总654·走亲戚",
+      "kind": "main",
+      "pageCount": 13
+    },
+    {
+      "index": 792,
+      "slug": "0792",
+      "title": "总655·傲来雾",
+      "kind": "main",
+      "pageCount": 13
+    },
+    {
+      "index": 793,
+      "slug": "0793",
+      "title": "总656·齐天比高",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 794,
+      "slug": "0794",
+      "title": "总657·我看他是诚心要",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 795,
+      "slug": "0795",
+      "title": "总658·把自己坑入修罗场了",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 796,
+      "slug": "0796",
+      "title": "总659·站上战场",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 797,
+      "slug": "0797",
+      "title": "总660· “我是谁”",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 798,
+      "slug": "0798",
+      "title": "总661·回应",
+      "kind": "main",
+      "pageCount": 19
+    },
+    {
+      "index": 799,
+      "slug": "0799",
+      "title": "总662·陷阱",
+      "kind": "main",
+      "pageCount": 16
+    },
+    {
+      "index": 800,
+      "slug": "0800",
+      "title": "总663·三戒尺三更见",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 801,
+      "slug": "0801",
+      "title": "总664·相守之力",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 802,
+      "slug": "0802",
+      "title": "总665·别来惹我",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 803,
+      "slug": "0803",
+      "title": "总666·结绳记事",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 804,
+      "slug": "0804",
+      "title": "总667·我就是你",
+      "kind": "main",
+      "pageCount": 17
+    },
+    {
+      "index": 805,
+      "slug": "0805",
+      "title": "总668·那是你认为",
+      "kind": "main",
+      "pageCount": 21
+    },
+    {
+      "index": 806,
+      "slug": "0806",
+      "title": "总669·差异才是诀窍！",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 807,
+      "slug": "0807",
+      "title": "总670·人类的一大步",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 808,
+      "slug": "0808",
+      "title": "671·值得如此大风险？",
+      "kind": "main",
+      "pageCount": 16
+    },
+    {
+      "index": 809,
+      "slug": "0809",
+      "title": "总672·一起去！",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 810,
+      "slug": "0810",
+      "title": "总673·盟主巡边",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 811,
+      "slug": "0811",
+      "title": "总674·东方一怒",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 812,
+      "slug": "0812",
+      "title": "总675·盟主师侄",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 813,
+      "slug": "0813",
+      "title": "总676·双双被擒？",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 814,
+      "slug": "0814",
+      "title": "总677·骗进来杀",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 815,
+      "slug": "0815",
+      "title": "总678·天麻之王",
+      "kind": "main",
+      "pageCount": 16
+    },
+    {
+      "index": 816,
+      "slug": "0816",
+      "title": "总679·龙游浅滩",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 817,
+      "slug": "0817",
+      "title": "总680·对等交换",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 818,
+      "slug": "0818",
+      "title": "总681·失忆阵线联盟",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 819,
+      "slug": "0819",
+      "title": "总682·你有张良计我有过墙梯",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 820,
+      "slug": "0820",
+      "title": "总683·所图甚大",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 821,
+      "slug": "0821",
+      "title": "总684·一界之助",
+      "kind": "main",
+      "pageCount": 16
+    },
+    {
+      "index": 822,
+      "slug": "0822",
+      "title": "总685·你们真是专家？",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 823,
+      "slug": "0823",
+      "title": "总686·沽名钓誉？",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 824,
+      "slug": "0824",
+      "title": "总687·天门的愉快生活",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 825,
+      "slug": "0825",
+      "title": "总688·你的愿望",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 826,
+      "slug": "0826",
+      "title": "总689·这一瞬的自由",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 827,
+      "slug": "0827",
+      "title": "总690·绝境？",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 828,
+      "slug": "0828",
+      "title": "总691·最坏的场面",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 829,
+      "slug": "0829",
+      "title": "总692·云朵记得",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 830,
+      "slug": "0830",
+      "title": "总693·别吃了！！！",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 831,
+      "slug": "0831",
+      "title": "总694·待我思考两天",
+      "kind": "main",
+      "pageCount": 16
+    },
+    {
+      "index": 832,
+      "slug": "0832",
+      "title": "总695·一码归一码",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 833,
+      "slug": "0833",
+      "title": "总696·大锤80小锤40",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 834,
+      "slug": "0834",
+      "title": "总697·我有在意",
+      "kind": "main",
+      "pageCount": 17
+    },
+    {
+      "index": 835,
+      "slug": "0835",
+      "title": "总698·赶尽杀绝",
+      "kind": "main",
+      "pageCount": 15
+    },
+    {
+      "index": 836,
+      "slug": "0836",
+      "title": "总699·从没打过这么富裕的仗！",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 837,
+      "slug": "0837",
+      "title": "总700·来相思树下",
+      "kind": "main",
+      "pageCount": 16
+    },
+    {
+      "index": 838,
+      "slug": "0838",
+      "title": "总701·白茫茫中的相遇",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 839,
+      "slug": "0839",
+      "title": "总702·你是谁？",
+      "kind": "main",
+      "pageCount": 14
+    },
+    {
+      "index": 840,
+      "slug": "0840",
+      "title": "总703·再见爱人",
+      "kind": "main",
+      "pageCount": 15
     }
   ]
 }
