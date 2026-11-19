@@ -7,7 +7,9 @@ import "../styles/music.css";
 const songs = (await getCollection("music")).sort(
 	(a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
 );
-const featured = [...songs].sort((a, b) => b.data.likes - a.data.likes).slice(0, 3);
+const featured = [...songs]
+	.sort((a, b) => b.data.likes - a.data.likes)
+	.slice(0, 3);
 const lead = featured[0];
 ---
 
