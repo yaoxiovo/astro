@@ -5,6 +5,7 @@ import MusicCard from "@components/widget/MusicCard.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getComicCatalog } from "@utils/comic-utils";
 import { Icon } from "astro-icon/components";
+import "../../styles/music.css";
 
 export async function getStaticPaths() {
 	const musicEntries = await getCollection("music");
@@ -15,47 +16,41 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
+const songs = (await getCollection("music")).sort(
+	(a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
+);
+const index = songs.findIndex((song) => song.slug === entry.slug);
+const previous = songs[index - 1];
+const next = songs[index + 1];
 const { Content } = await entry.render();
 const relatedComics = getComicCatalog().filter((comic) =>
 	entry.data.comics.includes(comic.slug),
 );
 ---
 
-<MainGridLayout title={`${entry.data.title} - 听歌随笔`} description={`关于 ${entry.data.title} 的沉浸式听歌随笔喵`} noindex>
-  <div class="w-full flex flex-col gap-6">
-    <!-- 返回音乐馆按钮 (磨砂玻璃微悬浮) -->
-    <div class="flex justify-start">
-      <a 
-        href="/music" 
-        class="flex items-center gap-2 py-2 px-4 rounded-xl text-neutral-700 dark:text-neutral-300 hover:text-[var(--primary)] backdrop-blur-xl bg-white/30 dark:bg-black/10 border border-black/5 dark:border-white/10 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 font-semibold text-sm"
-      >
-        <Icon name="material-symbols:arrow-back-ios-new-rounded" class="w-4 h-4" />
-        <span>返回音乐馆</span>
-      </a>
-    </div>
-
-    {relatedComics.length > 0 && (
-      <nav aria-label="所属漫画" class="card-base p-4 rounded-2xl flex flex-wrap items-center gap-3 text-sm">
-        <span class="text-black/50 dark:text-white/50">所属漫画</span>
-        {relatedComics.map((comic) => <a href={`/comics/${comic.slug}/`} class="text-[var(--primary)] hover:underline">{comic.title} · 返回漫画目录</a>)}
-        {entry.data.songType && <span class="text-xs">{entry.data.songType}</span>}
+<MainGridLayout title={`${entry.data.title} - 音乐馆`} description={`收听 ${entry.data.artist} 的《${entry.data.title}》`} image={entry.data.cover} noindex>
+  <div class="music-room" data-wide-layout>
+    <nav class="music-detail-nav" aria-label="音乐馆导航">
+      <a href="/music/">← 音乐馆</a>
+      {relatedComics.map((comic) => <a href={`/comics/${comic.slug}/`}>{comic.title}</a>)}
+      {entry.data.songType && <span>{entry.data.songType}</span>}
+    </nav>
+    <MusicCard
+      src={entry.data.src}
+      title={entry.data.title}
+      artist={entry.data.artist}
+      cover={entry.data.cover}
+      lrc={entry.data.lrc}
+    />
+    {(previous || next) && (
+      <nav class="music-detail-nav music-neighbors" aria-label="切换歌曲">
+        {previous && <a href={`/music/${previous.slug}/`}>上一首 · {previous.data.title}</a>}
+        {next && <a href={`/music/${next.slug}/`}>下一首 · {next.data.title}</a>}
       </nav>
     )}
-
-    <!-- 上方：音乐卡片组件 -->
-    <div class="w-full relative z-10">
-      <MusicCard 
-        src={entry.data.src} 
-        title={entry.data.title} 
-        artist={entry.data.artist} 
-        cover={entry.data.cover}
-        lrc={entry.data.lrc}
-      />
-    </div>
-
     <!-- 下方：随笔展示区 -->
-    <div class="backdrop-blur-xl bg-white/80 dark:bg-white/85 border border-white/80 rounded-2xl p-8 shadow-md flex flex-col gap-4 text-neutral-800 dark:text-neutral-800">
-      <div class="flex items-center justify-between border-b border-neutral-200 pb-4 mb-2">
+    <div class="music-notes music-section">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-2">
         <div class="flex items-center gap-3">
           <img 
             src={entry.data.avatar || profileConfig.avatar} 
@@ -64,38 +59,41 @@ const relatedComics = getComicCatalog().filter((comic) =>
           />
           <div class="flex flex-col">
             <span class="font-bold text-sm text-[var(--primary)]">{entry.data.author}</span>
-            <span class="text-[10px] text-neutral-500 font-mono mt-0.5">
+            <span class="text-[10px] text-[var(--music-muted)] font-mono mt-0.5">
               发布于 {entry.data.published.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
             </span>
           </div>
         </div>
-        <div class="text-xs text-neutral-500 font-mono">
+        <div class="text-xs text-[var(--music-muted)] font-mono">
           来自 {entry.data.source}
         </div>
       </div>
 
       <!-- 渲染 Markdown 正文 -->
-      <article class="prose prose-neutral dark:prose-invert max-w-none text-neutral-800 dark:text-neutral-800 leading-relaxed font-normal">
+      <article class="prose prose-invert max-w-none leading-relaxed font-normal">
         <Content />
       </article>
 
       <!-- 底部发布来源与交互按键 -->
-      <div class="flex items-center justify-between border-t border-neutral-200/80 pt-4 mt-6 text-xs text-neutral-500 dark:text-neutral-500 relative z-10">
-        <span class="font-mono">来自 {entry.data.source}</span>
+      <div class="flex items-center justify-between border-t border-white/10 pt-4 mt-6 text-xs text-[var(--music-muted)] relative z-10">
+        <span>听歌随笔</span>
 
         <div class="flex items-center gap-4">
           <!-- 点赞按钮 -->
           <button 
-            class="music-moment-like-btn flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50 active:scale-90 group text-neutral-500 dark:text-neutral-500 transition-all duration-200"
+            class="music-moment-like-btn flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50 active:scale-90 group text-[var(--music-muted)] transition-all duration-200"
             data-id={entry.id}
+            type="button"
+            aria-label="点赞"
+            aria-pressed="false"
           >
             <Icon name="fa6-regular:heart" class="like-icon w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110" />
-            <span class="like-count font-semibold font-mono text-neutral-600 dark:text-neutral-400">{entry.data.likes}</span>
+            <span class="like-count font-semibold font-mono text-[var(--music-muted)]">{entry.data.likes}</span>
           </button>
 
           <!-- 分享按钮 -->
           <button 
-            class="music-moment-share-btn flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50 active:scale-90 text-neutral-500 dark:text-neutral-500 hover:text-[var(--primary)] transition-all duration-200"
+            class="music-moment-share-btn flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50 active:scale-90 text-[var(--music-muted)] hover:text-[var(--primary)] transition-all duration-200"
             data-id={entry.id}
             data-content={`【瑶曦的听歌日志】今天推荐一首《${entry.data.title}》- ${entry.data.artist}。来自网页端听歌链接：${entry.data.src}`}
           >
@@ -116,36 +114,38 @@ const relatedComics = getComicCatalog().filter((comic) =>
       const id = btn.dataset.id;
       const countSpan = btn.querySelector(".like-count");
       const icon = btn.querySelector(".like-icon");
-      if (!id || !countSpan || !icon) return;
+      if (!id || !countSpan || !icon || btn.dataset.bound) return;
 
       const storageKey = `music-moment-liked-${id}`;
       let isLiked = localStorage.getItem(storageKey) === "true";
       let baseLikes = parseInt(countSpan.textContent || "0", 10);
 
       if (isLiked) {
-        icon.classList.remove("text-neutral-400", "dark:text-neutral-500");
+        countSpan.textContent = String(baseLikes + 1);
+        btn.setAttribute("aria-pressed", "true");
+        icon.classList.remove("text-neutral-400", "dark:text-[var(--music-muted)]");
         icon.classList.add("text-red-500", "fill-red-500");
         icon.setAttribute("style", "color: rgb(239, 68, 68);");
       }
 
-      if (btn.dataset.bound) return;
       btn.dataset.bound = "true";
 
       btn.addEventListener("click", () => {
         isLiked = !isLiked;
+        btn.setAttribute("aria-pressed", String(isLiked));
         localStorage.setItem(storageKey, isLiked ? "true" : "false");
         
         let newCount = isLiked ? baseLikes + 1 : baseLikes;
         countSpan.textContent = newCount.toString();
 
         if (isLiked) {
-          icon.classList.remove("text-neutral-400", "dark:text-neutral-500");
+          icon.classList.remove("text-neutral-400", "dark:text-[var(--music-muted)]");
           icon.classList.add("text-red-500", "fill-red-500");
           icon.setAttribute("style", "color: rgb(239, 68, 68); transform: scale(1.2); transition: transform 0.2s;");
           showToast("点赞成功了喵~ ❤️");
         } else {
           icon.classList.remove("text-red-500", "fill-red-500");
-          icon.classList.add("text-neutral-400", "dark:text-neutral-500");
+          icon.classList.add("text-neutral-400", "dark:text-[var(--music-muted)]");
           icon.setAttribute("style", "color: ''; transform: scale(1.0); transition: transform 0.2s;");
         }
       });

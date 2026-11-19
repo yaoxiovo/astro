@@ -92,7 +92,7 @@ const mainPanelTop = siteConfig.banner.enable
             </a>}
 
 
-            <SideBar class="mb-4 row-start-2 col-span-2 lg:row-start-1 lg:col-span-1 lg:max-w-[17.5rem] onload-animation" headings={headings}></SideBar>
+            <SideBar class="main-grid-sidebar mb-4 row-start-2 col-span-2 lg:row-start-1 lg:col-span-1 lg:max-w-[17.5rem] onload-animation" headings={headings}></SideBar>
 
             <main id="swup-container" class="transition-swup-fade row-start-1 col-span-2 lg:row-start-1 lg:col-span-1 overflow-visible min-w-0">
                 <div id="content-wrapper" class="onload-animation">
@@ -132,3 +132,13 @@ const mainPanelTop = siteConfig.banner.enable
     </div>
 </div>
 </Layout>
+<style>
+    :global(.main-grid-sidebar:has(+ main [data-wide-layout])) {
+        display: none;
+    }
+
+    main:has([data-wide-layout]),
+    main:has([data-wide-layout]) + .footer {
+        grid-column: 1 / -1;
+    }
+</style>

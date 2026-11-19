@@ -1,196 +1,82 @@
 ---
 import { getCollection } from "astro:content";
-import { profileConfig, siteConfig } from "@/config";
-import MusicCard from "@components/widget/MusicCard.astro";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { Icon } from "astro-icon/components";
+import "../styles/music.css";
 
-const musicMoments = (await getCollection("music")).sort(
+const songs = (await getCollection("music")).sort(
 	(a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
 );
-
-// 热歌 TOP 3：按 likes 降序（并列时按发布时间倒序）
-const topSongs = [...musicMoments]
-	.sort(
-		(a, b) =>
-			(b.data.likes || 0) - (a.data.likes || 0) ||
-			b.data.published.valueOf() - a.data.published.valueOf(),
-	)
-	.slice(0, 3);
-
-function getFriendlyTime(date: Date) {
-	const now = new Date();
-	const diffMs = now.getTime() - date.getTime();
-	const diffMins = Math.floor(diffMs / (1000 * 60));
-	const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-	if (diffMins < 60) {
-		return diffMins <= 1 ? "刚刚" : `${diffMins} 分钟前`;
-	}
-	if (diffHours < 24) {
-		return `${diffHours} 小时前`;
-	}
-	if (diffDays === 1) {
-		return "昨天";
-	}
-	if (diffDays === 2) {
-		return "前天";
-	}
-	return date.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
-}
+const featured = [...songs].sort((a, b) => b.data.likes - a.data.likes).slice(0, 3);
+const lead = featured[0];
 ---
 
-<MainGridLayout title="音乐馆" description="瑶曦的沉浸式音乐朋友圈" noindex>
-  <div class="w-full flex flex-col gap-6">
-    <!-- 朋友圈头部大 Banner -->
-    <div class="card-base w-full relative h-48 md:h-64 rounded-2xl overflow-hidden shadow-md border border-white/40 group">
-      <!-- 背景图 -->
-      <img 
-        src={siteConfig.banner.src} 
-        alt="Music Banner" 
-        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-      />
-      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
-      
-      <!-- 磨砂玻璃大标题 -->
-      <div class="absolute left-6 bottom-6 md:left-8 md:bottom-8 flex flex-col gap-1 relative z-10 text-white">
-        <h1 class="text-3xl md:text-4xl font-black tracking-wider flex items-center gap-2 drop-shadow-md">
-          <Icon name="material-symbols:library-music-rounded" class="text-2xl md:text-3xl text-[var(--primary)] animate-pulse" />
-          <span>音乐馆</span>
-        </h1>
-        <p class="text-xs md:text-sm text-white/70 font-light tracking-widest uppercase">
-          Music Moments & Live Lyrics
-        </p>
-      </div>
-
-      <!-- 用户信息 (浮动在右下角，经典朋友圈设计) -->
-      <div class="absolute right-6 -bottom-5 md:right-8 flex items-end gap-3 z-20">
-        <span class="text-white font-bold text-base md:text-lg mb-6 drop-shadow-md tracking-wide">瑶曦</span>
-        <div class="relative group/avatar">
-          <img 
-            src={profileConfig.avatar} 
-            alt="Avatar" 
-            class="w-16 h-16 md:w-20 md:h-20 rounded-2xl object-cover border-4 border-white/90 shadow-xl"
-          />
-          <div class="absolute -bottom-1.5 -right-1.5 bg-yellow-500 rounded-full p-0.5 border-2 border-white shadow-md">
-            <svg viewBox="0 0 24 24" class="w-4 h-4 text-white" aria-label="Verified account" role="img"><g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.918-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.337 2.25c-.416-.165-.866-.25-1.336-.25-2.21 0-3.918 1.792-3.918 4 0 .495.084.965.238 1.4-1.273.65-2.148 2.02-2.148 3.6 0 1.46.728 2.76 1.848 3.52-.06.335-.09.68-.09 1.03 0 2.21 1.71 3.998 3.918 3.998.47 0 .92-.084(1.336-.25.52 1.333 1.817 2.25 3.337 2.25s2.816-.917 3.337-2.25c.416.165.866.25 1.336.25 2.21 0 3.918-1.792 3.918-4 0-.35-.03-.695-.09-1.03 1.12-.76 1.848-2.06 1.848-3.52z" fill="currentColor"></path><path d="M10.89 16.03L7.75 12.87l1.41-1.41 1.73 1.73 4.95-4.95 1.41 1.41-6.36 6.38z" fill="#fff"></path></g></svg>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 占位高度补全 -->
-    <div class="h-4"></div>
-
-    <!-- 热歌 TOP 3 -->
-    {topSongs.length > 0 && (
-      <div class="card-base w-full px-6 py-4 rounded-2xl shadow-md border border-white/40 relative z-10">
-        <div class="flex items-center gap-2 font-bold text-[var(--primary)] mb-3">
-          <span class="animate-pulse">🔥</span> 音乐馆热歌 TOP {topSongs.length}
-          <span class="text-xs font-normal text-[var(--text-color-light)]">按点赞数排行</span>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {topSongs.map((song, i) => (
-            <a
-              href={`/music/${song.slug}/`}
-              class="group flex items-center gap-3 p-3 rounded-xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/5 hover:border-[var(--primary)] hover:shadow-md transition-all duration-300"
-            >
-              <span class={`shrink-0 w-7 text-center text-lg font-black ${i === 0 ? 'text-red-500' : i === 1 ? 'text-orange-400' : 'text-yellow-500'}`}>
-                {i + 1}
-              </span>
-              <img
-                src={song.data.cover || "/favicon.svg"}
-                alt={song.data.title}
-                class="shrink-0 w-12 h-12 rounded-lg object-cover ring-2 ring-white/50 dark:ring-white/10"
-              />
-              <span class="flex-1 min-w-0">
-                <span class="block text-sm font-bold text-neutral-800 dark:text-neutral-200 truncate group-hover:text-[var(--primary)] transition-colors">
-                  {song.data.title}
-                </span>
-                <span class="block text-xs text-neutral-500 dark:text-neutral-400 truncate">
-                  {song.data.artist}
-                </span>
-              </span>
-              <span class="shrink-0 flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                <Icon name="fa6-solid:heart" class="w-3 h-3 text-red-500" />
-                {song.data.likes || 0}
-              </span>
-            </a>
-          ))}
-        </div>
-      </div>
-    )}
-
-    <div class="h-4"></div>
-
-    <!-- 音乐馆歌曲列表 (两列网格布局) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-      {musicMoments.map((moment) => {
-        // 提取说说第一行作为摘要
-        const firstLine = moment.body.trim().split('\n')[0] || "暂无随笔内容...";
-        const displaySummary = firstLine.length > 35 ? firstLine.substring(0, 35) + "..." : firstLine;
-        
-        return (
-          <a 
-            href={`/music/${moment.slug}/`}
-            class="group relative flex items-center gap-5 p-4 rounded-2xl backdrop-blur-xl bg-white/70 dark:bg-zinc-900/60 border border-white/80 dark:border-white/5 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-[var(--primary)] dark:hover:border-[var(--primary)] transition-all duration-300 overflow-hidden"
-          >
-            <!-- 晶莹发光渐变背景 -->
-            <div class="absolute inset-0 bg-gradient-to-tr from-white/10 via-white/20 to-white/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-
-            <!-- 歌曲封面缩略图 -->
-            <div class="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 shadow-md ring-2 ring-white/50 dark:ring-white/10 group-hover:scale-105 transition-transform duration-500">
-              <img 
-                src={moment.data.cover || "/favicon.svg"} 
-                alt={moment.data.title} 
-                class="w-full h-full object-cover"
-              />
-              <!-- 悬浮播放图标遮罩 -->
-              <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <Icon name="material-symbols:play-arrow-rounded" class="text-white text-3xl" />
-              </div>
-            </div>
-
-            <!-- 歌曲基本信息 -->
-            <div class="flex flex-col justify-between flex-grow h-24 py-1">
-              <div>
-                <h3 class="font-bold text-base text-neutral-800 dark:text-neutral-200 tracking-wide line-clamp-1 group-hover:text-[var(--primary)] transition-colors duration-300">
-                  {moment.data.title}
-                </h3>
-                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1 line-clamp-1">
-                  {moment.data.artist}
-                </p>
-              </div>
-
-              <!-- 底部随笔摘要与发布信息 -->
-              <div class="flex flex-col gap-1">
-                <!-- 随笔一句话摘要 -->
-                <p class="text-[11px] text-neutral-400 dark:text-neutral-500 line-clamp-1 italic font-light">
-                  "{displaySummary}"
-                </p>
-                
-                <!-- 底部作者/时间/点赞 -->
-                <div class="flex items-center justify-between text-[10px] text-neutral-400 dark:text-neutral-500 mt-1">
-                  <div class="flex items-center gap-1.5">
-                    <span class="font-semibold text-[var(--primary)]">@{moment.data.author}</span>
-                    <span>•</span>
-                    <span>{getFriendlyTime(moment.data.published)}</span>
-                  </div>
-                  <div class="flex items-center gap-1">
-                    <Icon name="fa6-regular:heart" class="w-2.5 h-2.5" />
-                    <span>{moment.data.likes}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </a>
-        );
-      })}
-    </div>
-    <!-- 强行在首页渲染隐藏播放器，防止 Astro 编译时将播放器 JS 脚本 Tree-shaking 过滤，确保全局 Swup 事件在首屏即注册成功喵 -->
-    <div class="hidden">
-      <MusicCard src="" title="" artist="" />
-    </div>
-  </div>
+<MainGridLayout title="音乐馆" description="收听瑶曦收藏的歌曲、同步歌词与听歌随笔" noindex>
+	<div class="music-room" data-wide-layout>
+		<header class="music-hero">
+			{lead?.data.cover && <img class="music-backdrop" src={lead.data.cover} alt="" fetchpriority="high" />}
+			<div class="music-hero-copy">
+				<h1>音乐馆</h1>
+				{lead && (
+					<a class="music-cta" href={`/music/${lead.slug}/`}>
+						<Icon name="material-symbols:play-arrow-rounded" />
+						<span>去听《{lead.data.title}》</span>
+					</a>
+				)}
+			</div>
+		</header>
+		{featured.length > 0 && (
+			<section class="music-section" aria-labelledby="music-featured">
+				<h2 id="music-featured">热门歌曲</h2>
+				<div class="music-featured">
+					{featured.map(({ slug, data }) => (
+						<a href={`/music/${slug}/`} class="music-tile">
+							<img src={data.cover || "/favicon.svg"} alt="" loading="lazy" decoding="async" />
+							<span><strong>{data.title}</strong><small>{data.artist}</small></span>
+							<Icon name="material-symbols:play-arrow-rounded" />
+						</a>
+					))}
+				</div>
+			</section>
+		)}
+		<section class="music-section music-library" aria-labelledby="music-library">
+			<div class="music-library-head">
+				<h2 id="music-library">全部歌曲 <small>{songs.length} 首</small></h2>
+				<label class="music-search">
+					<Icon name="material-symbols:search-rounded" />
+					<input type="search" placeholder="搜索歌曲、歌手" aria-label="搜索歌曲、歌手" data-track-search />
+				</label>
+			</div>
+			<ul>
+				{songs.map(({ slug, data }) => (
+					<li data-track-key={`${data.title} ${data.artist} ${data.songType ?? ""}`.toLowerCase()}>
+						<a href={`/music/${slug}/`} class="music-tile">
+							<img src={data.cover || "/favicon.svg"} alt="" loading="lazy" decoding="async" />
+							<span><strong>{data.title}</strong><small>{data.artist}</small></span>
+							{data.songType && <small class="music-track-type">{data.songType}</small>}
+							<Icon name="material-symbols:play-arrow-rounded" />
+						</a>
+					</li>
+				))}
+			</ul>
+			<p data-track-empty role="status" hidden>没有找到匹配的歌曲。</p>
+		</section>
+	</div>
 </MainGridLayout>
+
+<script>
+	document.addEventListener("input", (event) => {
+		const input = event.target;
+		if (!(input instanceof HTMLInputElement) || !input.matches("[data-track-search]")) return;
+		const library = input.closest(".music-library");
+		if (!library) return;
+		const query = input.value.trim().toLowerCase();
+		let matches = 0;
+		for (const track of library.querySelectorAll<HTMLElement>("[data-track-key]")) {
+			track.hidden = !track.dataset.trackKey?.includes(query);
+			if (!track.hidden) matches++;
+		}
+		const empty = library.querySelector<HTMLElement>("[data-track-empty]");
+		if (empty) empty.hidden = matches > 0;
+	});
+</script>
