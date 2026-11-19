@@ -76,37 +76,48 @@ try {
 
         function createServerEntry(config) {
             const div = document.createElement('div');
-            div.className = 'flex items-center justify-center';
+            div.className = 'flex flex-col items-center gap-1';
+
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-center';
+            div.appendChild(row);
 
             const label = document.createElement('span');
             label.className = 'text-black/30 dark:text-white/30 text-xs mr-1';
             label.innerText = `${config.text}：`;
-            div.appendChild(label);
+            row.appendChild(label);
 
             const valueSpan = document.createElement('span');
             valueSpan.className = 'server-value text-black/30 dark:text-white/30 text-xs';
             valueSpan.innerText = '检测中...';
-            div.appendChild(valueSpan);
+            row.appendChild(valueSpan);
 
             const iconImg = document.createElement('img');
             iconImg.className = 'server-icon h-4 ml-1 hidden';
             iconImg.alt = 'Server Icon';
-            div.appendChild(iconImg);
+            row.appendChild(iconImg);
 
-            return { div, valueSpan, iconImg };
+            const credit = document.createElement('span');
+            credit.className = 'hidden text-black/30 dark:text-white/30 text-xs';
+            credit.textContent = '腾讯云提供云计算服务';
+            div.appendChild(credit);
+
+            return { div, valueSpan, iconImg, credit };
         }
 
         function updateEntryDisplay(elements, server) {
-            const { valueSpan, iconImg } = elements;
+            const { valueSpan, iconImg, credit } = elements;
+            const isEdgeOne = server?.toLowerCase().includes('edgeone');
+            credit.classList.toggle('hidden', !isEdgeOne);
             
             if (server) {
                 const serverLower = server.toLowerCase();
                 let iconSrc = null;
 
-                if (serverLower.includes('esa')) {
-                    iconSrc = '/cdn/esa.svg';
-                } else if (serverLower.includes('edgeone')) {
+                if (isEdgeOne) {
                     iconSrc = '/cdn/eo.svg';
+                } else if (serverLower.includes('esa')) {
+                    iconSrc = '/cdn/esa.svg';
                 } else if (serverLower.includes('cloudflare')) {
                     iconSrc = '/cdn/cf.svg';
                 }
@@ -114,7 +125,8 @@ try {
                 if (iconSrc) {
                     iconImg.src = iconSrc;
                     iconImg.classList.remove('hidden');
-                    valueSpan.classList.add('hidden');
+                    valueSpan.innerText = isEdgeOne ? 'Tencent Edgeone' : server;
+                    valueSpan.classList.toggle('hidden', !isEdgeOne);
                 } else {
                     valueSpan.innerText = server;
                     iconImg.classList.add('hidden');
