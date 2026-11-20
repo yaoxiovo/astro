@@ -75,7 +75,7 @@ const dateLabel = published.toLocaleDateString("zh-CN", {
 		<MusicCard src={src} title={title} artist={artist} cover={cover} lrc={lrc} />
 
 		<div class="music-detail-grid">
-			<music-notes class="music-notes">
+			<music-notes class="music-notes card-base">
 				<div class="music-section-head">
 					<h2>听歌随笔</h2>
 					<div class="music-note-actions">
@@ -104,7 +104,7 @@ const dateLabel = published.toLocaleDateString("zh-CN", {
 			</music-notes>
 
 			{neighbors.length > 0 && (
-				<nav class="music-neighbors" aria-labelledby="music-neighbors-heading">
+				<nav class="music-neighbors card-base" aria-labelledby="music-neighbors-heading">
 					<h2 id="music-neighbors-heading">相邻曲目</h2>
 					{neighbors.map(({ song, label, icon }) => (
 						<a class="music-track" href={`/music/${song.slug}/`}>

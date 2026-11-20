@@ -12,7 +12,7 @@ interface Props {
 const { src, title, artist, cover, lrc } = Astro.props;
 ---
 
-<music-player class="music-player" data-lrc={lrc}>
+<music-player class="music-player card-base" data-lrc={lrc}>
 	<div class="music-deck">
 		<div class="music-art">
 			{cover
@@ -32,7 +32,7 @@ const { src, title, artist, cover, lrc } = Astro.props;
 			<button type="button" data-skip="-5" aria-label="后退 5 秒" title="后退 5 秒">
 				<Icon name="material-symbols:replay-5-rounded" />
 			</button>
-			<button type="button" class="music-play" data-play aria-label="播放" title="播放">
+			<button type="button" class="music-play btn-regular" data-play aria-label="播放" title="播放">
 				<Icon name="material-symbols:play-arrow-rounded" />
 				<Icon name="material-symbols:pause-rounded" />
 			</button>

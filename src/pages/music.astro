@@ -26,7 +26,7 @@ const comicNames = new Map(comics.map(({ slug, title }) => [slug, title]));
 
 <MainGridLayout title="音乐馆" description="收听瑶曦收藏的歌曲、同步歌词与听歌随笔" noindex>
 	<music-library class="music-room" data-wide-layout>
-		<header class="music-hero">
+		<header class="music-hero card-base">
 			<div class="music-hero-copy">
 				<h1>音乐馆</h1>
 				{lead && (
@@ -34,7 +34,7 @@ const comicNames = new Map(comics.map(({ slug, title }) => [slug, title]));
 						<p class="music-feature-label">精选单曲</p>
 						<p class="music-hero-title">{lead.data.title}</p>
 						<p class="music-hero-artist">{lead.data.artist}</p>
-						<a class="music-cta" href={`/music/${lead.slug}/`}>
+						<a class="music-cta btn-regular" href={`/music/${lead.slug}/`}>
 							<Icon name="material-symbols:play-arrow-rounded" />
 							<span>前往收听</span>
 						</a>
@@ -49,7 +49,7 @@ const comicNames = new Map(comics.map(({ slug, title }) => [slug, title]));
 		</header>
 
 		<div class="music-library-grid">
-			<section class="music-library" aria-labelledby="music-library-heading">
+			<section class="music-library card-base" aria-labelledby="music-library-heading">
 				<div class="music-section-head">
 					<h2 id="music-library-heading">曲库</h2>
 					<p class="music-count" data-track-count role="status">{songs.length} 首歌曲</p>
@@ -93,7 +93,7 @@ const comicNames = new Map(comics.map(({ slug, title }) => [slug, title]));
 			</section>
 
 			{picks.length > 0 && (
-				<aside class="music-picks" aria-labelledby="music-picks-heading">
+				<aside class="music-picks card-base" aria-labelledby="music-picks-heading">
 					<h2 id="music-picks-heading">也值得一听</h2>
 					<div class="music-picks-list">
 						{picks.map(({ slug, data }) => (
