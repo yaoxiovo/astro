@@ -16,186 +16,173 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
+const {
+	title,
+	artist,
+	cover,
+	src,
+	lrc,
+	author,
+	avatar,
+	published,
+	source,
+	likes,
+	songType,
+} = entry.data;
 const songs = (await getCollection("music")).sort(
 	(a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
 );
 const index = songs.findIndex((song) => song.slug === entry.slug);
-const previous = songs[index - 1];
-const next = songs[index + 1];
+const neighbors = [
+	{
+		song: songs[index - 1],
+		label: "上一首",
+		icon: "material-symbols:skip-previous-rounded",
+	},
+	{
+		song: songs[index + 1],
+		label: "下一首",
+		icon: "material-symbols:skip-next-rounded",
+	},
+].filter(({ song }) => song);
 const { Content } = await entry.render();
 const relatedComics = getComicCatalog().filter((comic) =>
 	entry.data.comics.includes(comic.slug),
 );
+const dateLabel = published.toLocaleDateString("zh-CN", {
+	year: "numeric",
+	month: "long",
+	day: "numeric",
+	timeZone: "UTC",
+});
 ---
 
-<MainGridLayout title={`${entry.data.title} - 音乐馆`} description={`收听 ${entry.data.artist} 的《${entry.data.title}》`} image={entry.data.cover} noindex>
-  <div class="music-room" data-wide-layout>
-    <nav class="music-detail-nav" aria-label="音乐馆导航">
-      <a href="/music/">← 音乐馆</a>
-      {relatedComics.map((comic) => <a href={`/comics/${comic.slug}/`}>{comic.title}</a>)}
-      {entry.data.songType && <span>{entry.data.songType}</span>}
-    </nav>
-    <MusicCard
-      src={entry.data.src}
-      title={entry.data.title}
-      artist={entry.data.artist}
-      cover={entry.data.cover}
-      lrc={entry.data.lrc}
-    />
-    {(previous || next) && (
-      <nav class="music-detail-nav music-neighbors" aria-label="切换歌曲">
-        {previous && <a href={`/music/${previous.slug}/`}>上一首 · {previous.data.title}</a>}
-        {next && <a href={`/music/${next.slug}/`}>下一首 · {next.data.title}</a>}
-      </nav>
-    )}
-    <!-- 下方：随笔展示区 -->
-    <div class="music-notes music-section">
-      <div class="flex items-center justify-between border-b border-white/10 pb-4 mb-2">
-        <div class="flex items-center gap-3">
-          <img 
-            src={entry.data.avatar || profileConfig.avatar} 
-            alt={entry.data.author} 
-            class="w-10 h-10 rounded-xl object-cover ring-2 ring-white"
-          />
-          <div class="flex flex-col">
-            <span class="font-bold text-sm text-[var(--primary)]">{entry.data.author}</span>
-            <span class="text-[10px] text-[var(--music-muted)] font-mono mt-0.5">
-              发布于 {entry.data.published.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
-            </span>
-          </div>
-        </div>
-        <div class="text-xs text-[var(--music-muted)] font-mono">
-          来自 {entry.data.source}
-        </div>
-      </div>
+<MainGridLayout title={`${title} - 音乐馆`} description={`收听 ${artist} 的《${title}》`} image={cover} noindex>
+	<div class="music-room" data-wide-layout>
+		<nav class="music-detail-nav" aria-label="音乐馆导航">
+			<a class="music-back-link" href="/music/">
+				<Icon name="material-symbols:arrow-back-rounded" />
+				音乐馆
+			</a>
+			{(relatedComics.length > 0 || songType) && (
+				<div class="music-detail-tags">
+					{relatedComics.map((comic) => <a href={`/comics/${comic.slug}/`}>{comic.title}<Icon name="material-symbols:arrow-outward-rounded" /></a>)}
+					{songType && <span>{songType}</span>}
+				</div>
+			)}
+		</nav>
 
-      <!-- 渲染 Markdown 正文 -->
-      <article class="prose prose-invert max-w-none leading-relaxed font-normal">
-        <Content />
-      </article>
+		<MusicCard src={src} title={title} artist={artist} cover={cover} lrc={lrc} />
 
-      <!-- 底部发布来源与交互按键 -->
-      <div class="flex items-center justify-between border-t border-white/10 pt-4 mt-6 text-xs text-[var(--music-muted)] relative z-10">
-        <span>听歌随笔</span>
+		<div class="music-detail-grid">
+			<music-notes class="music-notes">
+				<div class="music-section-head">
+					<h2>听歌随笔</h2>
+					<div class="music-note-actions">
+						<button type="button" data-note-like={entry.id} aria-label="点赞" aria-pressed="false" disabled>
+							<Icon name="fa6-regular:heart" />
+							<span data-like-count={likes}>{likes}</span>
+						</button>
+						<button type="button" data-note-share={`【瑶曦的听歌日志】今天推荐一首《${title}》- ${artist}。来自网页端听歌链接：${src}`} disabled>
+							<Icon name="fa6-solid:share-nodes" />
+							分享
+						</button>
+					</div>
+				</div>
+				<div class="music-byline">
+					{author && <img src={avatar || profileConfig.avatar} alt="" width="40" height="40" loading="lazy" />}
+					<div>
+						{author && <strong>{author}</strong>}
+						<time datetime={published.toISOString()}>{dateLabel}</time>
+					</div>
+					{source && <span class="music-note-source">来自 {source}</span>}
+				</div>
+				<article class="music-note-body prose max-w-none">
+					<Content />
+				</article>
+				<p class="music-note-status" data-note-status role="status" hidden></p>
+			</music-notes>
 
-        <div class="flex items-center gap-4">
-          <!-- 点赞按钮 -->
-          <button 
-            class="music-moment-like-btn flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50 active:scale-90 group text-[var(--music-muted)] transition-all duration-200"
-            data-id={entry.id}
-            type="button"
-            aria-label="点赞"
-            aria-pressed="false"
-          >
-            <Icon name="fa6-regular:heart" class="like-icon w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110" />
-            <span class="like-count font-semibold font-mono text-[var(--music-muted)]">{entry.data.likes}</span>
-          </button>
-
-          <!-- 分享按钮 -->
-          <button 
-            class="music-moment-share-btn flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800/50 active:scale-90 text-[var(--music-muted)] hover:text-[var(--primary)] transition-all duration-200"
-            data-id={entry.id}
-            data-content={`【瑶曦的听歌日志】今天推荐一首《${entry.data.title}》- ${entry.data.artist}。来自网页端听歌链接：${entry.data.src}`}
-          >
-            <Icon name="fa6-solid:share-nodes" class="w-3.5 h-3.5" />
-            <span>分享</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+			{neighbors.length > 0 && (
+				<nav class="music-neighbors" aria-labelledby="music-neighbors-heading">
+					<h2 id="music-neighbors-heading">相邻曲目</h2>
+					{neighbors.map(({ song, label, icon }) => (
+						<a class="music-track" href={`/music/${song.slug}/`}>
+							<span class="music-track-art">
+								{song.data.cover
+									? <img src={song.data.cover} alt="" width="48" height="48" loading="lazy" />
+									: <Icon name="material-symbols:music-note-rounded" />}
+							</span>
+							<span class="music-track-copy"><small>{label}</small><strong>{song.data.title}</strong></span>
+							<Icon name={icon} class="music-neighbor-icon" />
+						</a>
+					))}
+				</nav>
+			)}
+		</div>
+	</div>
 </MainGridLayout>
 
 <script>
-  function initMusicDetails() {
-    const likeBtns = document.querySelectorAll(".music-moment-like-btn");
-    
-    likeBtns.forEach((btn: any) => {
-      const id = btn.dataset.id;
-      const countSpan = btn.querySelector(".like-count");
-      const icon = btn.querySelector(".like-icon");
-      if (!id || !countSpan || !icon || btn.dataset.bound) return;
+	class MusicNotes extends HTMLElement {
+		private lifecycle?: AbortController;
 
-      const storageKey = `music-moment-liked-${id}`;
-      let isLiked = localStorage.getItem(storageKey) === "true";
-      let baseLikes = parseInt(countSpan.textContent || "0", 10);
+		connectedCallback() {
+			if (this.lifecycle) return;
+			const like = this.querySelector<HTMLButtonElement>("[data-note-like]");
+			const count = this.querySelector<HTMLElement>("[data-like-count]");
+			const share = this.querySelector<HTMLButtonElement>("[data-note-share]");
+			const status = this.querySelector<HTMLElement>("[data-note-status]");
+			if (!like || !count || !share || !status) return;
 
-      if (isLiked) {
-        countSpan.textContent = String(baseLikes + 1);
-        btn.setAttribute("aria-pressed", "true");
-        icon.classList.remove("text-neutral-400", "dark:text-[var(--music-muted)]");
-        icon.classList.add("text-red-500", "fill-red-500");
-        icon.setAttribute("style", "color: rgb(239, 68, 68);");
-      }
+			this.lifecycle = new AbortController();
+			const options = { signal: this.lifecycle.signal };
+			const key = `music-moment-liked-${like.dataset.noteLike}`;
+			const baseLikes = Number(count.dataset.likeCount);
+			let liked = false;
+			try {
+				liked = localStorage.getItem(key) === "true";
+			} catch {
+				// 点赞仍可在当前页面使用。
+			}
 
-      btn.dataset.bound = "true";
+			const renderLike = () => {
+				like.setAttribute("aria-pressed", String(liked));
+				count.textContent = String(baseLikes + Number(liked));
+			};
+			renderLike();
+			like.disabled = false;
+			share.disabled = false;
 
-      btn.addEventListener("click", () => {
-        isLiked = !isLiked;
-        btn.setAttribute("aria-pressed", String(isLiked));
-        localStorage.setItem(storageKey, isLiked ? "true" : "false");
-        
-        let newCount = isLiked ? baseLikes + 1 : baseLikes;
-        countSpan.textContent = newCount.toString();
+			like.addEventListener("click", () => {
+				liked = !liked;
+				renderLike();
+				try {
+					localStorage.setItem(key, String(liked));
+				} catch {
+					// 点赞仍可在当前页面使用。
+				}
+			}, options);
 
-        if (isLiked) {
-          icon.classList.remove("text-neutral-400", "dark:text-[var(--music-muted)]");
-          icon.classList.add("text-red-500", "fill-red-500");
-          icon.setAttribute("style", "color: rgb(239, 68, 68); transform: scale(1.2); transition: transform 0.2s;");
-          showToast("点赞成功了喵~ ❤️");
-        } else {
-          icon.classList.remove("text-red-500", "fill-red-500");
-          icon.classList.add("text-neutral-400", "dark:text-[var(--music-muted)]");
-          icon.setAttribute("style", "color: ''; transform: scale(1.0); transition: transform 0.2s;");
-        }
-      });
-    });
+			share.addEventListener("click", async () => {
+				let message: string;
+				try {
+					await navigator.clipboard.writeText(share.dataset.noteShare ?? "");
+					message = "推荐语与音频链接已复制。";
+				} catch {
+					message = "无法复制音频链接。";
+				}
+				if (options.signal.aborted) return;
+				status.hidden = false;
+				status.textContent = message;
+			}, options);
+		}
 
-    const shareBtns = document.querySelectorAll(".music-moment-share-btn");
-    shareBtns.forEach((btn: any) => {
-      const content = btn.dataset.content;
-      if (btn.dataset.bound) return;
-      btn.dataset.bound = "true";
+		disconnectedCallback() {
+			this.lifecycle?.abort();
+			this.lifecycle = undefined;
+		}
+	}
 
-      btn.addEventListener("click", () => {
-        if (!content) return;
-        navigator.clipboard.writeText(content)
-          .then(() => {
-            showToast("推荐语与音频直链已复制到剪贴板喵~ 📋");
-          })
-          .catch((err) => {
-            console.error("Copy failed:", err);
-            showToast("复制失败了喵，请手动复制吧...");
-          });
-      });
-    });
-
-    function showToast(message: string) {
-      let oldToast = document.querySelector(".glass-toast");
-      if (oldToast) oldToast.remove();
-
-      const toast = document.createElement("div");
-      toast.className = "glass-toast fixed bottom-12 left-1/2 -translate-x-1/2 px-5 py-3 rounded-2xl backdrop-blur-xl bg-white/90 border border-white/60 text-neutral-800 text-xs md:text-sm font-semibold shadow-lg z-[9999] transition-all duration-300 opacity-0 translate-y-3 pointer-events-none";
-      toast.textContent = message;
-      document.body.appendChild(toast);
-
-      setTimeout(() => {
-        toast.classList.remove("opacity-0", "translate-y-3");
-        toast.classList.add("opacity-100", "translate-y-0");
-      }, 50);
-
-      setTimeout(() => {
-        toast.classList.remove("opacity-100", "translate-y-0");
-        toast.classList.add("opacity-0", "translate-y-3");
-        setTimeout(() => toast.remove(), 300);
-      }, 2200);
-    }
-  }
-
-  // 立即执行一次以兼容 Swup 单页应用路由异步加载
-  initMusicDetails();
-
-  document.addEventListener("DOMContentLoaded", initMusicDetails);
-  document.addEventListener("swup:contentReplaced", initMusicDetails);
-  document.addEventListener("swup:page:view", initMusicDetails);
+	if (!customElements.get("music-notes")) customElements.define("music-notes", MusicNotes);
 </script>

@@ -1,84 +1,161 @@
 ---
 import { getCollection } from "astro:content";
 import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getComicCatalog } from "@utils/comic-utils";
 import { Icon } from "astro-icon/components";
 import "../styles/music.css";
 
 const songs = (await getCollection("music")).sort(
 	(a, b) => b.data.published.valueOf() - a.data.published.valueOf(),
 );
-const featured = [...songs]
-	.sort((a, b) => b.data.likes - a.data.likes)
-	.slice(0, 3);
-const lead = featured[0];
+const ranked = [...songs].sort((a, b) => b.data.likes - a.data.likes);
+const lead = ranked[0];
+const seenCovers = new Set([lead?.data.cover]);
+const picks = [];
+for (const song of ranked.slice(1)) {
+	if (!song.data.cover || seenCovers.has(song.data.cover)) continue;
+	picks.push(song);
+	seenCovers.add(song.data.cover);
+	if (picks.length === 2) break;
+}
+const comics = getComicCatalog().filter((comic) =>
+	songs.some((song) => song.data.comics.includes(comic.slug)),
+);
+const comicNames = new Map(comics.map(({ slug, title }) => [slug, title]));
 ---
 
 <MainGridLayout title="音乐馆" description="收听瑶曦收藏的歌曲、同步歌词与听歌随笔" noindex>
-	<div class="music-room" data-wide-layout>
+	<music-library class="music-room" data-wide-layout>
 		<header class="music-hero">
-			{lead?.data.cover && <img class="music-backdrop" src={lead.data.cover} alt="" fetchpriority="high" />}
 			<div class="music-hero-copy">
 				<h1>音乐馆</h1>
 				{lead && (
-					<a class="music-cta" href={`/music/${lead.slug}/`}>
-						<Icon name="material-symbols:play-arrow-rounded" />
-						<span>去听《{lead.data.title}》</span>
-					</a>
+					<div class="music-hero-track">
+						<p class="music-feature-label">精选单曲</p>
+						<p class="music-hero-title">{lead.data.title}</p>
+						<p class="music-hero-artist">{lead.data.artist}</p>
+						<a class="music-cta" href={`/music/${lead.slug}/`}>
+							<Icon name="material-symbols:play-arrow-rounded" />
+							<span>前往收听</span>
+						</a>
+					</div>
 				)}
 			</div>
-		</header>
-		{featured.length > 0 && (
-			<section class="music-section" aria-labelledby="music-featured">
-				<h2 id="music-featured">热门歌曲</h2>
-				<div class="music-featured">
-					{featured.map(({ slug, data }) => (
-						<a href={`/music/${slug}/`} class="music-tile">
-							<img src={data.cover || "/favicon.svg"} alt="" loading="lazy" decoding="async" />
-							<span><strong>{data.title}</strong><small>{data.artist}</small></span>
-							<Icon name="material-symbols:play-arrow-rounded" />
-						</a>
-					))}
+			{lead?.data.cover && (
+				<div class="music-hero-art">
+					<img src={lead.data.cover} alt="" fetchpriority="high" width="360" height="360" />
 				</div>
+			)}
+		</header>
+
+		<div class="music-library-grid">
+			<section class="music-library" aria-labelledby="music-library-heading">
+				<div class="music-section-head">
+					<h2 id="music-library-heading">曲库</h2>
+					<p class="music-count" data-track-count role="status">{songs.length} 首歌曲</p>
+				</div>
+				<div class="music-filters" data-track-filters hidden>
+					<label class="music-search">
+						<Icon name="material-symbols:search-rounded" />
+						<input type="search" placeholder="搜索歌曲、歌手或作品" aria-label="搜索歌曲、歌手或作品" data-track-search />
+					</label>
+					{comics.length > 0 && (
+						<label class="music-filter">
+							<select aria-label="按作品筛选" data-track-collection>
+								<option value="">全部作品</option>
+								{comics.map(({ slug, title }) => <option value={slug}>{title}</option>)}
+							</select>
+							<Icon name="material-symbols:expand-more-rounded" />
+						</label>
+					)}
+				</div>
+				<ul class="music-tracks">
+					{songs.map(({ slug, data }) => (
+						<li
+							data-track-key={[data.title, data.artist, data.songType, ...data.comics.map((comic) => comicNames.get(comic))].join(" ").toLowerCase()}
+							data-track-comics={data.comics.join(" ")}
+						>
+							<a href={`/music/${slug}/`} class="music-track">
+								<span class="music-track-art">
+									{data.cover
+										? <img src={data.cover} alt="" width="48" height="48" loading="lazy" decoding="async" />
+										: <Icon name="material-symbols:music-note-rounded" />}
+								</span>
+								<span class="music-track-copy"><strong>{data.title}</strong><small>{data.artist}</small></span>
+								{data.songType && <small class="music-track-type">{data.songType}</small>}
+								<span class="music-track-action"><Icon name="material-symbols:play-arrow-rounded" /></span>
+							</a>
+						</li>
+					))}
+				</ul>
+				<p class="music-empty" data-track-empty hidden>没有找到匹配的歌曲。</p>
+				{songs.length === 0 && <p class="music-empty">曲库暂无歌曲。</p>}
 			</section>
-		)}
-		<section class="music-section music-library" aria-labelledby="music-library">
-			<div class="music-library-head">
-				<h2 id="music-library">全部歌曲 <small>{songs.length} 首</small></h2>
-				<label class="music-search">
-					<Icon name="material-symbols:search-rounded" />
-					<input type="search" placeholder="搜索歌曲、歌手" aria-label="搜索歌曲、歌手" data-track-search />
-				</label>
-			</div>
-			<ul>
-				{songs.map(({ slug, data }) => (
-					<li data-track-key={`${data.title} ${data.artist} ${data.songType ?? ""}`.toLowerCase()}>
-						<a href={`/music/${slug}/`} class="music-tile">
-							<img src={data.cover || "/favicon.svg"} alt="" loading="lazy" decoding="async" />
-							<span><strong>{data.title}</strong><small>{data.artist}</small></span>
-							{data.songType && <small class="music-track-type">{data.songType}</small>}
-							<Icon name="material-symbols:play-arrow-rounded" />
-						</a>
-					</li>
-				))}
-			</ul>
-			<p data-track-empty role="status" hidden>没有找到匹配的歌曲。</p>
-		</section>
-	</div>
+
+			{picks.length > 0 && (
+				<aside class="music-picks" aria-labelledby="music-picks-heading">
+					<h2 id="music-picks-heading">也值得一听</h2>
+					<div class="music-picks-list">
+						{picks.map(({ slug, data }) => (
+							<a class="music-pick" href={`/music/${slug}/`}>
+								<div class="music-pick-art">
+									<img src={data.cover} alt="" width="280" height="280" loading="lazy" decoding="async" />
+								</div>
+								<div class="music-pick-meta">
+									<span class="music-track-copy"><strong>{data.title}</strong><small>{data.artist}</small></span>
+									<Icon name="material-symbols:arrow-outward-rounded" />
+								</div>
+							</a>
+						))}
+					</div>
+				</aside>
+			)}
+		</div>
+	</music-library>
 </MainGridLayout>
 
 <script>
-	document.addEventListener("input", (event) => {
-		const input = event.target;
-		if (!(input instanceof HTMLInputElement) || !input.matches("[data-track-search]")) return;
-		const library = input.closest(".music-library");
-		if (!library) return;
-		const query = input.value.trim().toLowerCase();
-		let matches = 0;
-		for (const track of library.querySelectorAll<HTMLElement>("[data-track-key]")) {
-			track.hidden = !track.dataset.trackKey?.includes(query);
-			if (!track.hidden) matches++;
+	class MusicLibrary extends HTMLElement {
+		private lifecycle?: AbortController;
+
+		connectedCallback() {
+			if (this.lifecycle) return;
+			const filters = this.querySelector<HTMLElement>("[data-track-filters]");
+			const search = this.querySelector<HTMLInputElement>("[data-track-search]");
+			const collection = this.querySelector<HTMLSelectElement>("[data-track-collection]");
+			const count = this.querySelector<HTMLElement>("[data-track-count]");
+			const empty = this.querySelector<HTMLElement>("[data-track-empty]");
+			const tracks = this.querySelectorAll<HTMLElement>("[data-track-key]");
+			if (!filters || !search || !count || !empty || !tracks.length) return;
+			this.lifecycle = new AbortController();
+			const options = { signal: this.lifecycle.signal };
+
+			const update = () => {
+				const query = search.value.trim().toLowerCase();
+				const selectedComic = collection?.value;
+				let matches = 0;
+				for (const track of tracks) {
+					const matchesQuery = track.dataset.trackKey?.includes(query);
+					const matchesComic = !selectedComic || track.dataset.trackComics?.split(" ").includes(selectedComic);
+					track.hidden = !(matchesQuery && matchesComic);
+					if (!track.hidden) matches++;
+				}
+				count.textContent = `${matches} 首歌曲`;
+				empty.hidden = matches > 0;
+			};
+
+			search.addEventListener("input", update, options);
+			collection?.addEventListener("change", update, options);
+			window.addEventListener("pageshow", update, options);
+			filters.hidden = false;
+			update();
 		}
-		const empty = library.querySelector<HTMLElement>("[data-track-empty]");
-		if (empty) empty.hidden = matches > 0;
-	});
+
+		disconnectedCallback() {
+			this.lifecycle?.abort();
+			this.lifecycle = undefined;
+		}
+	}
+
+	if (!customElements.get("music-library")) customElements.define("music-library", MusicLibrary);
 </script>

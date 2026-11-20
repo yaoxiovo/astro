@@ -13,9 +13,12 @@ const { src, title, artist, cover, lrc } = Astro.props;
 ---
 
 <music-player class="music-player" data-lrc={lrc}>
-	{cover && <img class="music-backdrop" src={cover} alt="" fetchpriority="high" />}
 	<div class="music-deck">
-		<img class="music-art" src={cover || "/favicon.svg"} alt="" />
+		<div class="music-art">
+			{cover
+				? <img src={cover} alt="" width="360" height="360" fetchpriority="high" />
+				: <Icon name="material-symbols:music-note-rounded" />}
+		</div>
 		<div class="music-track-title">
 			<h1>{title}</h1>
 			<p>{artist}</p>
@@ -29,7 +32,7 @@ const { src, title, artist, cover, lrc } = Astro.props;
 			<button type="button" data-skip="-5" aria-label="后退 5 秒" title="后退 5 秒">
 				<Icon name="material-symbols:replay-5-rounded" />
 			</button>
-			<button type="button" class="music-cta" data-play aria-label="播放" title="播放">
+			<button type="button" class="music-play" data-play aria-label="播放" title="播放">
 				<Icon name="material-symbols:play-arrow-rounded" />
 				<Icon name="material-symbols:pause-rounded" />
 			</button>
@@ -39,10 +42,13 @@ const { src, title, artist, cover, lrc } = Astro.props;
 		</div>
 		<p class="music-status" data-status role="status" hidden></p>
 	</div>
-	<section class="music-lyrics" aria-label="同步歌词">
-		<h2>歌词</h2>
+	<section class="music-lyrics" aria-labelledby="music-lyrics-heading">
+		<div class="music-lyrics-head">
+			<h2 id="music-lyrics-heading">同步歌词</h2>
+			<Icon name="material-symbols:lyrics-rounded" />
+		</div>
 		<div class="music-lyrics-scroll" data-lyrics>
-			<p>{lrc ? "正在加载歌词…" : "暂无歌词"}</p>
+			<p class="music-lyric-message">{lrc ? "正在加载歌词…" : "暂无歌词"}</p>
 		</div>
 	</section>
 </music-player>
@@ -106,6 +112,8 @@ const { src, title, artist, cover, lrc } = Astro.props;
 			};
 			const syncProgress = () => {
 				seek.value = String(audio.currentTime);
+				const progress = seek.disabled ? 0 : Math.min(audio.currentTime / audio.duration, 1);
+				seek.style.setProperty("--music-progress", `${progress * 100}%`);
 				current.textContent = formatTime(audio.currentTime);
 				let index = times.length - 1;
 				while (index >= 0 && times[index] > audio.currentTime) index--;
