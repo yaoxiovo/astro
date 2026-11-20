@@ -172,8 +172,8 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 				resolveComicImageUrl(huyao.banner, huyao.imageBaseUrl),
 				"https://blog-s3-cf.yaoxi.wiki/comics/huyao-xiaohongniang/banner.webp",
 			);
-			assert.strictEqual(huyao.totalChapters, 785);
-			assert.strictEqual(huyao.totalPages, 10405);
+			assert.strictEqual(huyao.totalChapters, 840);
+			assert.strictEqual(huyao.totalPages, 11222);
 			assert.ok(!("coverFallback" in huyao));
 			assert.ok(!("bannerFallback" in huyao));
 			assert.deepEqual(
@@ -186,7 +186,7 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 			);
 
 			const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
-			assert.strictEqual(manifest.chapters.length, 785);
+			assert.strictEqual(manifest.chapters.length, huyao.totalChapters);
 			assert.strictEqual(huyao.imageBaseUrl, huyao.imageSources[0].baseUrl);
 			assert.deepEqual(manifest.meta.imageSources, huyao.imageSources);
 			assert.strictEqual(manifest.meta.imageBaseUrl, huyao.imageBaseUrl);
@@ -210,7 +210,7 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 					assert.ok(!("sourceUrl" in ch));
 				}
 			}
-			assert.strictEqual(countedPages, 10405);
+			assert.strictEqual(countedPages, huyao.totalPages);
 
 			// 抽样校验首尾话物理图片文件是否落盘（chapters/ 在 .gitignore 中忽略，仅在本地存在章节图片目录时校验）
 			const chaptersDir = path.join(
