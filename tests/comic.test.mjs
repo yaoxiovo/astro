@@ -197,6 +197,28 @@ describe("漫画板块核心逻辑与数据导入完整性测试 (Comic Core & M
 			assert.deepEqual(api.meta.imageSources, huyao.imageSources);
 			assert.strictEqual(api.meta.imageBaseUrl, huyao.imageBaseUrl);
 
+			assert.deepEqual(api.chapters, index.chapters);
+			assert.deepEqual(
+				manifest.chapters.map(({ index, slug, title, kind, pageCount }) => ({
+					index,
+					slug,
+					title,
+					kind,
+					pageCount,
+				})),
+				index.chapters,
+			);
+			const mainChapters = filterAndSortChapters(index.chapters, {
+				kind: "main",
+			});
+			const affectedEpisodeNumbers = mainChapters
+				.filter((chapter) => chapter.index >= 730 && chapter.index <= 757)
+				.map((chapter) => Number(chapter.title.match(/总(\d+)/)?.[1]));
+			assert.deepEqual(
+				affectedEpisodeNumbers,
+				Array.from({ length: 27 }, (_, offset) => 598 + offset),
+			);
+
 			let countedPages = 0;
 			for (const ch of manifest.chapters) {
 				assert.ok(ch.pages.length > 0, `章节 ${ch.slug} 不应为空`);
